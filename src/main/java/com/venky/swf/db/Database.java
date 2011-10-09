@@ -1,0 +1,294 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.venky.swf.db;
+
+import com.venky.core.util.ObjectUtil;
+import com.venky.core.util.PackageUtil;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.table.Table;
+import com.venky.swf.routing.Config;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Stack;
+
+
+/**
+ *
+ * @author venky
+ */
+public class Database {
+
+    private Database() {
+        
+    }
+    
+    private static ThreadLocal<Database>  _instance = new ThreadLocal<Database>(); 
+    public static Database getInstance(){
+        if (_instance.get() == null){
+            Database db= new Database();
+            _instance.set(db);
+            db.migrateTables();
+        }
+        return _instance.get();
+    }
+    
+    private String getSchema(){
+        return Config.instance().getProperty("swf.jdbc.dbschema");
+    }
+    private Connection createConnection() throws SQLException, ClassNotFoundException{
+        String jdbcurl = Config.instance().getProperty("swf.jdbc.url");
+        String userid = Config.instance().getProperty("swf.jdbc.userid");
+        String password = Config.instance().getProperty("swf.jdbc.password");
+        String schema = getSchema();
+        String driver = Config.instance().getProperty("swf.jdbc.driver");
+        Class<?> driverClass = Class.forName(driver);
+        helper = JdbcTypeHelper.instance(driverClass);
+        Properties info = new Properties();
+        info.setProperty("user", userid);
+        info.setProperty("password", password);
+        
+        
+        Connection conn  = DriverManager.getConnection(jdbcurl,info);
+        conn.setAutoCommit(false);
+        if (!ObjectUtil.isVoid(schema)){
+            PreparedStatement stmt = conn.prepareStatement("set schema ?");
+            stmt.setString(1, schema);
+            stmt.executeUpdate();
+        }
+        
+        return conn;
+    }
+
+    private JdbcTypeHelper helper = null ;
+    
+    public JdbcTypeHelper getJdbcTypeHelper(){
+        return helper;
+    }
+    
+    
+    public void shutdown() {
+        String jdbcurl = Config.instance().getProperty("swf.jdbc.url");
+        String driver = Config.instance().getProperty("swf.jdbc.driver");
+        if (driver.contains("derby")){
+            try {
+                jdbcurl = jdbcurl + ";shutdown=true";
+                String userid = Config.instance().getProperty("swf.jdbc.userid");
+                String password = Config.instance().getProperty("swf.jdbc.password");
+                Properties info = new Properties();
+                info.setProperty("user", userid);
+                info.setProperty("password", password);
+                DriverManager.getConnection(jdbcurl,info);
+            } catch (SQLException ex) {
+                if (ex.getSQLState().equals("08006") && ex.getErrorCode() == 45000){
+                    System.out.println("Derby db closed!");
+                }else {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+    }
+    
+    private Connection connection = null; 
+    public void open(){
+        assert (getConnection() != null);
+        assert connection != null;
+    }
+    
+    public void close(){
+        closeConnection();
+        assert connection == null;
+    }
+    public Connection getConnection(){ 
+        if (connection == null){
+            try {
+                connection = createConnection();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        return connection;
+    }
+    
+    private void closeConnection(){
+        if (connection != null){
+            try {
+                connection.rollback();
+                connection.close();
+            }catch (SQLException ex){
+                throw new RuntimeException(ex);
+            }finally{
+                connection = null;
+            }
+        }
+    }
+    
+    
+    private Map<String,Table> tables = new HashMap<String,Table>();
+    public <M extends Model> Table<M> getTable(Class<M> modelClass){
+        return getTable(Table.tableName(modelClass));
+    }
+    public Table getTable(String tableName){
+        return tables.get(tableName);
+    }
+    public Set<String> getTableNames(){ 
+        return tables.keySet();
+    }
+    public void migrateTables() {
+        boolean dbModified = false;
+        loadTables(dbModified);
+        for (Table table: tables.values()){
+            if (!table.isExistingInDatabase()){
+                table.createTable();
+                dbModified = true;
+            }else if (table.getModelClass() == null){
+                table.dropTable();
+                dbModified = true;
+            }else {
+                dbModified = table.sync();
+            }
+        }
+        loadTables(dbModified);
+    }
+    
+    private void loadTables(boolean reload){
+        if (reload){
+            tables.clear();
+        }
+        if (!tables.isEmpty()){
+            return;
+        }
+        loadTablesFromDB();
+        loadTablesFromModel();
+    }
+    private void loadTablesFromDB(){
+        try {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            ResultSet tablesResultSet = meta.getTables(null, getSchema(), null, null);
+            while (tablesResultSet.next()){
+                String tableName = tablesResultSet.getString("TABLE_NAME");
+                Table table = new Table(tableName);
+                table.setExistingInDatabase(true);
+                tables.put(tableName,table);
+                ResultSet columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
+                while(columnResultSet.next()){
+                    String columnName  = columnResultSet.getString("COLUMN_NAME");
+                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    private void loadTablesFromModel(){ 
+        
+        Set<String> modelClasses = new HashSet<String>();
+        URL url1ToInspect = getClass().getClassLoader().getResource("config/swf.properties");
+        if (url1ToInspect.getProtocol().equals("file")){
+            try {
+                url1ToInspect = new URL(url1ToInspect.toString().substring(0,url1ToInspect.toString().length()-"config/swf.properties".length()));
+            } catch (MalformedURLException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        
+        URL url2ToInspect = getClass().getClassLoader().getResource("com/venky/swf/db/model/Model.class");
+        
+        for (String root : Config.instance().getModelPackageRoots()){
+            modelClasses.addAll(PackageUtil.getClasses(url1ToInspect, root.replace('.', '/')));
+            modelClasses.addAll(PackageUtil.getClasses(url2ToInspect, root.replace('.', '/')));
+        }
+        
+        for (String className : modelClasses){
+            try {
+                Class modelClass = Class.forName(className);
+                if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
+                    Table table = new Table(modelClass);
+                    if (!tables.containsKey(table.getTableName())){
+                        table.setExistingInDatabase(false);
+                        tables.put(table.getTableName(), table);
+                    }
+                }
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+    
+    private Stack<Transaction> transactionStack = new Stack<Transaction>();
+    public Transaction createTransaction() throws SQLException{ 
+        Transaction transaction = new Transaction();
+        transactionStack.push(transaction);
+        return transaction;
+    }
+    
+    public Transaction getCurrentTransaction() throws SQLException{ 
+        if (transactionStack.isEmpty()){
+            createTransaction();
+        }
+        return transactionStack.peek();
+    }
+
+    
+    public class Transaction{
+        private Savepoint savepoint = null;
+        private RuntimeException ex = null; 
+        
+        public Transaction() throws SQLException{
+            int transactionNo = transactionStack.size();
+            ex = new RuntimeException("Transaction " + transactionNo + " not completed ");
+            savepoint = getConnection().setSavepoint(String.valueOf(transactionNo));
+        }
+        
+        public void commit() throws SQLException{ 
+            getConnection().releaseSavepoint(savepoint);
+            savepoint = getConnection().setSavepoint(String.valueOf(transactionStack.size()));
+            updateTransactionStack();
+        }
+        
+        public void rollback() throws SQLException {
+            getConnection().rollback(savepoint);
+            updateTransactionStack();
+        }
+        
+        private void updateTransactionStack() throws SQLException{
+            Transaction t = transactionStack.peek();
+            if (t != this){ 
+                throw ex;
+            }
+            transactionStack.pop();
+            if (transactionStack.isEmpty()){
+                getConnection().commit();
+            }
+        }
+        
+        public PreparedStatement createStatement(String sql) throws SQLException{ 
+            return getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        }
+        public PreparedStatement createStatement(String sql,String[] columnNames) throws SQLException{ 
+            return getConnection().prepareStatement(sql, columnNames);
+        }
+        
+        
+        
+    }
+
+}
