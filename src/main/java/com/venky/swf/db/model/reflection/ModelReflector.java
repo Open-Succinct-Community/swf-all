@@ -32,6 +32,7 @@ import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 
@@ -115,6 +116,15 @@ public class ModelReflector<M extends Model> {
         }
         return methods;
 
+    }
+    
+    public String getDescriptionColumn(){
+    	String column = "name";
+    	HAS_DESCRIPTION_COLUMN descColumn = reflectedModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+    	if (descColumn != null){
+    		column = descColumn.value();
+    	}
+    	return column;
     }
     public List<Method> getFieldGetters(){
         return getMethods(getFieldGetterMatcher());

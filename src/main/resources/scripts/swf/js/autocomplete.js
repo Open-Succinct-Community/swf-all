@@ -31,3 +31,7 @@ $(function(){
   });
 });
 
+$(function() {
+    $('form:first *:input[type!=hidden]:first').focus();
+});
+

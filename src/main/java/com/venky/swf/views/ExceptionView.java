@@ -24,14 +24,12 @@ public class ExceptionView extends HtmlView{
 
     @Override
     protected void createBody(Body b) {
-    	/*
         StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
         th.printStackTrace(w);
-		*/
     	
         Label lbl = new Label();
-        lbl.setText(th.getMessage());
+        lbl.setText(sw.toString());
         b.addControl(lbl);
         
     }

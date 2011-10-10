@@ -221,7 +221,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             Object value = record.get(field);
             Method getter = reflector.getFieldGetter(field);
             if (!isFieldValid(getter, value, message)) {
-                totalMessage.append("<br/>").append(field).append(":").append(message);
+                totalMessage.append("<br/>").append(field).append("=").append(value).append(":").append(message);
                 ret = false;
             }
         }

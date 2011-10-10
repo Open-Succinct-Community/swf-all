@@ -139,7 +139,7 @@ public class JdbcTypeHelper {
 			N n = (N)o; 
 			double fract = n.doubleValue() - Math.floor(n.doubleValue()); 
 			DecimalFormat fmt = new DecimalFormat("##############.0000");
-			if (DoubleUtils.compareTo(fract*100 ,Math.floor(fract*100))<= 0){
+			if (DoubleUtils.compareTo(fract ,Math.round(fract*100.0)/100.0)<= 0){
 				fmt = new DecimalFormat("##############.00");
 			}
 			return fmt.format(n.doubleValue());

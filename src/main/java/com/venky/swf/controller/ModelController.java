@@ -125,6 +125,9 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View autocomplete(String value) {
-        return super.autocomplete(modelClass, "name", value);
+    	ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+        return super.autocomplete(modelClass, reflector.getDescriptionColumn(), value);
     }
+    
+    
 }

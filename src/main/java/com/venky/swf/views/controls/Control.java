@@ -21,15 +21,19 @@ public class Control extends Properties {
      * 
      */
     private static final long serialVersionUID = 1464298453429814631L;
+    private long nextId(){
+    	return new Object().hashCode();
+    }
 
     public Control(String tag, String... pairs) {
         this.tag = tag;
         setProperty("class", getClass().getSimpleName().toLowerCase());
-        setProperty("id", String.valueOf(hashCode()));
+        setProperty("id", String.valueOf(nextId()));
 
         Properties p = ObjectUtil.createProperties(true, pairs);
         putAll(p);
     }
+    
     public void addClass(String className){
     	setProperty("class", getProperty("class") + " " + className);
     }

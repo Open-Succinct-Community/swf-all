@@ -4,16 +4,10 @@
  */
 package com.venky.swf.db;
 
-import com.venky.core.util.ObjectUtil;
-import com.venky.core.util.PackageUtil;
-import com.venky.swf.db.model.Model;
-import com.venky.swf.db.table.Table;
-import com.venky.swf.routing.Config;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +20,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
+
+import com.venky.core.util.PackageUtil;
+import com.venky.swf.configuration.Installer;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.table.Table;
+import com.venky.swf.routing.Config;
 
 
 /**
@@ -51,6 +51,9 @@ public class Database {
     private String getSchema(){
         return Config.instance().getProperty("swf.jdbc.dbschema");
     }
+    private boolean isSchemaToBeSetOnConnection(){
+    	return Boolean.valueOf(Config.instance().getProperty("swf.jdbc.dbschema.setonconnection"));
+    }
     private Connection createConnection() throws SQLException, ClassNotFoundException{
         String jdbcurl = Config.instance().getProperty("swf.jdbc.url");
         String userid = Config.instance().getProperty("swf.jdbc.userid");
@@ -66,11 +69,13 @@ public class Database {
         
         Connection conn  = DriverManager.getConnection(jdbcurl,info);
         conn.setAutoCommit(false);
-        if (!ObjectUtil.isVoid(schema)){
+        if (isSchemaToBeSetOnConnection()){
             PreparedStatement stmt = conn.prepareStatement("set schema ?");
             stmt.setString(1, schema);
             stmt.executeUpdate();
         }
+        
+        
         
         return conn;
     }
@@ -166,8 +171,18 @@ public class Database {
             }
         }
         loadTables(dbModified);
+        ensureFactorySettings();
     }
-    
+    private void ensureFactorySettings(){
+    	String installerName = Config.instance().getProperty("swf.default.configuration.installer");
+    	try {
+			Installer installer = (Installer)Class.forName(installerName).newInstance();
+			installer.install();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+    	
+    }
     private void loadTables(boolean reload){
         if (reload){
             tables.clear();
@@ -211,6 +226,13 @@ public class Database {
         }
         
         URL url2ToInspect = getClass().getClassLoader().getResource("com/venky/swf/db/model/Model.class");
+        if (url2ToInspect.getProtocol().equals("file")){
+            try {
+                url2ToInspect = new URL(url2ToInspect.toString().substring(0,url2ToInspect.toString().length()-"com/venky/swf/db/model/Model.class".length()));
+            } catch (MalformedURLException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         
         for (String root : Config.instance().getModelPackageRoots()){
             modelClasses.addAll(PackageUtil.getClasses(url1ToInspect, root.replace('.', '/')));

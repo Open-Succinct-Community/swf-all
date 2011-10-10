@@ -4,8 +4,13 @@
  */
 package com.venky.swf.views.model;
 
+import java.lang.reflect.Method;
+import java.util.List;
+
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.routing.Path;
+import com.venky.swf.views.controls.page.Body;
 
 /**
  *
@@ -25,5 +30,22 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
     @Override
     protected String getFormAction(){
         return "back";
+    }
+    
+    protected void createBody (Body b){
+    	super.createBody(b);
+        for (Method childGetter: getReflector().getChildGetters()){
+        	Class childClass = getReflector().getChildModelClass(childGetter);
+        	List<Model> children;
+			try {
+				children = (List<Model>)childGetter.invoke(getRecord());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+        	
+        	new ModelListView<Model>(new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase()), 
+        			childClass, null, children).createBody(b);
+        }
+
     }
 }

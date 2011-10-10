@@ -40,8 +40,15 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         this.record = record;
     }
     
+    
 
-    public int getNumFieldsPerRow() {
+    public M getRecord() {
+		return record;
+	}
+
+
+
+	public int getNumFieldsPerRow() {
         return numFieldsPerRow;
     }
 
@@ -125,18 +132,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         c = buttonRow.createColumn(getNumColumnsPerRow());
         Submit sbm = new Submit();
         c.addControl(sbm);
-        for (Method childGetter: getReflector().getChildGetters()){
-        	Class childClass = getReflector().getChildModelClass(childGetter);
-        	List<Model> children;
-			try {
-				children = (List<Model>)childGetter.invoke(record);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-        	
-        	new ModelListView<Model>(new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase()), 
-        			childClass, null, children).createBody(b);
-        }
     }
     
     
