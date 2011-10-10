@@ -18,7 +18,6 @@ import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.layout.Div;
-import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
@@ -53,7 +52,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         Row header = table.createHeader();
         Column action = header.createColumn(3); 
         action.setText("Action");
-        action.setProperty("width", "2%");
+        action.setProperty("width", "1%");
         for (String fieldName : getIncludedFields()) {
             if (isFieldVisible(fieldName)) {
                 header.createColumn().setText(getFieldLiteral(fieldName));
@@ -150,7 +149,5 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         select.createOption("20","20");
         select.createOption("30","30");
         form.addControl(select);
-        
-        b.addControl(new LineBreak());
     }
 }
