@@ -75,7 +75,11 @@ public class ModelController<M extends Model> extends Controller {
     	v.setRedirectUrl(getPath().getBackTarget());
     	return v;
     }
-    public View save() {
+    
+    private boolean isNew(){ 
+        return ObjectUtil.isVoid(getPath().getRequest().getParameter("ID"));
+    }
+    private void persistInDB(){
         HttpServletRequest request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Cannot call save in any other method other than POST");
@@ -121,6 +125,10 @@ public class ModelController<M extends Model> extends Controller {
 
         }
         record.save();
+    }
+    
+    public View save() {
+    	persistInDB();
         return back();
     }
 

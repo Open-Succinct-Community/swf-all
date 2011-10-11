@@ -59,7 +59,7 @@ public class Controller {
                 newSession.setAttribute("user", users.get(0));
                 return new RedirectorView(getPath(), "dashboard");
             }else {
-                throw new RuntimeException("Login incorrect!");
+                throw new RuntimeException("Num Users: " + users.size() + "Login incorrect!");
             }
         }
     }
