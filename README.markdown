@@ -11,6 +11,8 @@ Installing
 ------------
 
 git clone git://github.com/venkatramanm/swf-all.git 
+git submodule init
+git submodule update
 
 cd swf-all
 
