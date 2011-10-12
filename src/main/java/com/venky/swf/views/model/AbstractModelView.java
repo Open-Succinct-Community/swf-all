@@ -79,11 +79,6 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         Object value = null;
         try {
             value = getter.invoke(record);
-            COLUMN_DEF def = getter.getAnnotation(COLUMN_DEF.class);
-            if (value == null && def != null){
-            	StandardDefault defKey = def.value();
-            	value = StandardDefaulter.getDefaultValue(defKey);
-            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

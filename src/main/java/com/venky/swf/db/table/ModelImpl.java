@@ -18,6 +18,9 @@ import java.util.Map;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
@@ -71,6 +74,11 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             if (!virtualFields.contains(fieldName)){
                 Object value = record.get(fieldName);
                 TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(retType).getTypeConverter();
+                COLUMN_DEF def = method.getAnnotation(COLUMN_DEF.class);
+                if (value == null && def != null){
+                	StandardDefault defKey = def.value();
+                	value = StandardDefaulter.getDefaultValue(defKey);
+                }
                 if (value == null) {
                     return converter.valueOf(null);
                 } else if (retType.isInstance(value)) {

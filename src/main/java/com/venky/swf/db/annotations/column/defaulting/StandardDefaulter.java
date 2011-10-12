@@ -24,6 +24,12 @@ public class StandardDefaulter {
 			case CURRENT_DATE:
 				ret = new Date(System.currentTimeMillis());
 				break;
+			case BOOLEAN_FALSE: 
+				ret = false; 
+				break;
+			case BOOLEAN_TRUE:
+				ret = true; 
+				break;
 		}
 		return ret;
 	}

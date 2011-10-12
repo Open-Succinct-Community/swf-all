@@ -4,8 +4,10 @@ public enum StandardDefault {
 	NULL,
 	STR_NONE,
 	STR_BLANK,
-
+	
 	ZERO,
 	ONE,
-	CURRENT_DATE
+	CURRENT_DATE,
+	BOOLEAN_TRUE,
+	BOOLEAN_FALSE
 }
