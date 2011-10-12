@@ -1,6 +1,9 @@
 [submodule "core"]
 	path = core
-	url = ./core
+	url = git@github.com:venkatramanm/core.git
 [submodule "swf"]
 	path = swf
-	url = ./swf/
+	url = git@github.com:venkatramanm/swf.git
+[submodule "swf-archetype"]
+	path = swf-archetype
+	url = git@github.com:venkatramanm/swf-archetype.git
