@@ -14,8 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -215,7 +216,7 @@ public class Database {
     
     private void loadTablesFromModel(){ 
         
-        Set<String> modelClasses = new HashSet<String>();
+        List<String> modelClasses = new ArrayList<String>();
         URL url1ToInspect = getClass().getClassLoader().getResource("config/swf.properties");
         if (url1ToInspect.getProtocol().equals("file")){
             try {
