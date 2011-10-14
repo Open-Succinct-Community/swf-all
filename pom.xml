@@ -10,5 +10,6 @@
 		<module>core</module>
 		<module>swf</module>
 		<module>swf-archetype</module>
+		<module>swf-plugin</module>
   </modules>
 </project>
