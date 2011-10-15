@@ -258,7 +258,7 @@ public class ModelReflector<M extends Model> {
             TypeRef<?> typeRef = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType());
             assert typeRef != null;
             cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
-            cd.setNullable(isNullable != null ? isNullable.value() : true);
+            cd.setNullable(isNullable != null ? isNullable.value() : !getter.getReturnType().isPrimitive());
             cd.setSize(size == null? typeRef.getSize() : size.value());
             cd.setScale(digits == null ? typeRef.getScale() : digits.value());
             cd.setAutoIncrement(isAutoIncrement == null? false : true);

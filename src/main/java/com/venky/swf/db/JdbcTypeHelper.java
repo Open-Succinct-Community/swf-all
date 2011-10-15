@@ -146,6 +146,9 @@ public class JdbcTypeHelper {
     }
     public abstract static class NumericConverter<N extends Number> extends NumberConverter<N> {
 		public String toString(Object o){
+			if (o == null){
+				return "";
+			}
 			N n = (N)o; 
 			double fract = n.doubleValue() - Math.floor(n.doubleValue()); 
 			DecimalFormat fmt = new DecimalFormat("##############.0000");
@@ -245,7 +248,7 @@ public class JdbcTypeHelper {
         }
 
         public String toString(Object date) {
-            return DateUtils.getDateStr((java.util.Date) date);
+            return date == null ? "" :DateUtils.getDateStr((java.util.Date) date);
         }
         @Override
 		public String getDisplayClassName() {
@@ -264,7 +267,7 @@ public class JdbcTypeHelper {
         }
 
         public String toString(Object time) {
-            return DateUtils.getTimeStr((java.util.Date) time);
+            return time == null ? "" : DateUtils.getTimeStr((java.util.Date) time);
         }
         
         @Override
@@ -284,7 +287,7 @@ public class JdbcTypeHelper {
         }
 
         public String toString(Object ts) {
-            return DateUtils.getTimestampStr((java.util.Date) ts);
+            return ts == null ? "" : DateUtils.getTimestampStr((java.util.Date) ts);
         }
         @Override
 		public String getDisplayClassName() {
@@ -314,7 +317,7 @@ public class JdbcTypeHelper {
         }
 
         public String toString(Object in) {
-            return StringUtil.read((InputStream) in);
+            return in == null ? "" : StringUtil.read((InputStream) in);
         }
         
         @Override
@@ -345,7 +348,7 @@ public class JdbcTypeHelper {
         }
 
         public String toString(Object reader) {
-            return StringUtil.read((Reader) reader);
+            return reader == null ? "" : StringUtil.read((Reader) reader);
         }
         @Override
 		public String getDisplayClassName() {

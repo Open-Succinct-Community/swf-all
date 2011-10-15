@@ -18,6 +18,7 @@ import java.util.Map;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
@@ -29,6 +30,7 @@ import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValid
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 
 /**
  *
@@ -73,14 +75,16 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
                 Object value = record.get(fieldName);
-                TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(retType).getTypeConverter();
+                TypeRef<?> ref =Database.getInstance().getJdbcTypeHelper().getTypeRef(retType);
+                TypeConverter<?> converter = ref.getTypeConverter();
                 COLUMN_DEF def = method.getAnnotation(COLUMN_DEF.class);
                 if (value == null && def != null){
                 	StandardDefault defKey = def.value();
                 	value = StandardDefaulter.getDefaultValue(defKey);
                 }
+                ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
                 if (value == null) {
-                    return converter.valueOf(null);
+                	return cd.isNullable() ? null : converter.valueOf(null);
                 } else if (retType.isInstance(value)) {
                     return value;
                 } else {
