@@ -21,7 +21,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -130,6 +129,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
     	}else {
     		extendingClass = table.getModelClass().getName();
     		if (extendingClass.equals(packageName + "." +Table.getSimpleModelClassName(table.getTableName()))){
+    			imports.add("com.venky.swf.db.model.Model");
     			extendingClass = "Model";
     		}
     		if (table.getModelClass().getName().startsWith("com.venky.swf.db.model")){
@@ -143,12 +143,12 @@ public class ModelGeneratorMojo extends AbstractMojo {
     		List<TypeRef<?>> refs = helper.getTypeRefs(cd.getJDBCType());
     		TypeRef<?> ref = null; 
     		for (TypeRef<?>r :refs){
+				ref = r;
     			if (cd.isNullable() ){
     				if (!r.getJavaClass().isPrimitive()){
-    					ref = r;break;
+    					break;
     				}
     			}else{
-    				ref=r;
     				if (r.getJavaClass().isPrimitive()){
     					break;
     				}
