@@ -162,7 +162,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
 			
     		if (ref == null){
     			code.add("\tpublic Unknown get"+camelfieldName+"();" );
-    			code.add("\tpublic void set"+camelfieldName+"(Unknown " + camelfieldName + ");" );
+    			code.add("\tpublic void set"+camelfieldName+"(Unknown " + StringUtil.camelize(cd.getName(),false) + ");" );
     		}else {
     			String getterPrefix = "get";
     			if (boolean.class.isAssignableFrom(ref.getJavaClass()) || Boolean.class.isAssignableFrom(ref.getJavaClass()) ){
@@ -172,7 +172,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
         			imports.add(ref.getJavaClass().getName());
     			}
     			code.add("\tpublic "+ ref.getJavaClass().getSimpleName() + " " + getterPrefix +  camelfieldName + "();");
-    			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + camelfieldName + ");");
+    			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(cd.getName(),false) + ");");
     		}
     	}
     	code.add("}");
