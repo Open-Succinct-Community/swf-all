@@ -6,7 +6,7 @@
 	url = git://github.com/venkatramanm/swf.git
 [submodule "swf-archetype"]
 	path = swf-archetype
-	url = git://github.com:venkatramanm/swf-archetype.git
+	url = git://github.com/venkatramanm/swf-archetype.git
 [submodule "swf-maven-plugin"]
 	path = swf-maven-plugin
-	url = git://github.com:venkatramanm/swf-maven-plugin.git
+	url = git://github.com/venkatramanm/swf-maven-plugin.git
