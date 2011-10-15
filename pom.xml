@@ -10,6 +10,6 @@
 		<module>core</module>
 		<module>swf</module>
 		<module>swf-archetype</module>
-		<module>swf-plugin</module>
+		<module>swf-maven-plugin</module>
   </modules>
 </project>
