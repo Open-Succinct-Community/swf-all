@@ -39,12 +39,17 @@ public class Database {
         
     }
     
-    private static ThreadLocal<Database>  _instance = new ThreadLocal<Database>(); 
+    private static ThreadLocal<Database>  _instance = new ThreadLocal<Database>();
     public static Database getInstance(){
+    	return getInstance(true);
+    }
+    public static Database getInstance(boolean migrate){
         if (_instance.get() == null){
             Database db= new Database();
             _instance.set(db);
-            db.migrateTables();
+            if (migrate){
+            	db.migrateTables();
+            }
         }
         return _instance.get();
     }
@@ -148,7 +153,12 @@ public class Database {
     
     
     private Map<String,Table> tables = new HashMap<String,Table>();
-    public <M extends Model> Table<M> getTable(Class<M> modelClass){
+    
+    public Map<String, Table> getTables() {
+		return tables;
+	}
+
+	public <M extends Model> Table<M> getTable(Class<M> modelClass){
         return getTable(Table.tableName(modelClass));
     }
     public Table getTable(String tableName){
@@ -157,6 +167,7 @@ public class Database {
     public Set<String> getTableNames(){ 
         return tables.keySet();
     }
+
     public void migrateTables() {
         boolean dbModified = false;
         loadTables(dbModified);
@@ -184,7 +195,7 @@ public class Database {
 		}
     	
     }
-    private void loadTables(boolean reload){
+    public void loadTables(boolean reload){
         if (reload){
             tables.clear();
         }
@@ -194,19 +205,20 @@ public class Database {
         loadTablesFromDB();
         loadTablesFromModel();
     }
+    
     private void loadTablesFromDB(){
         try {
             DatabaseMetaData meta = getConnection().getMetaData();
             ResultSet tablesResultSet = meta.getTables(null, getSchema(), null, null);
             while (tablesResultSet.next()){
                 String tableName = tablesResultSet.getString("TABLE_NAME");
-                Table table = new Table(tableName);
+                Table table = new Table(tableName.toUpperCase());
                 table.setExistingInDatabase(true);
-                tables.put(tableName,table);
+                tables.put(table.getTableName(),table);
                 ResultSet columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
                 while(columnResultSet.next()){
                     String columnName  = columnResultSet.getString("COLUMN_NAME");
-                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
+                    table.getColumnDescriptor(columnName.toUpperCase(),true).load(columnResultSet);
                 }
             }
         } catch (SQLException ex) {
@@ -271,6 +283,8 @@ public class Database {
     }
 
     
+
+    
     public class Transaction{
         private Savepoint savepoint = null;
         private RuntimeException ex = null; 
@@ -309,9 +323,9 @@ public class Database {
         public PreparedStatement createStatement(String sql,String[] columnNames) throws SQLException{ 
             return getConnection().prepareStatement(sql, columnNames);
         }
-        
-        
-        
+
+    
+    
     }
 
 }

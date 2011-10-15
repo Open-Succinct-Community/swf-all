@@ -34,7 +34,11 @@ public class Table<M extends Model> {
     private final String tableName ;
     private final Class<M> modelClass;
     private final ModelReflector<M> reflector;
-    private boolean existingInDatabase = false;
+    public ModelReflector<M> getReflector() {
+		return reflector;
+	}
+
+	private boolean existingInDatabase = false;
 
     public boolean isExistingInDatabase() {
         return existingInDatabase;
@@ -69,14 +73,16 @@ public class Table<M extends Model> {
     public static String tableName(String modelClassSimpleName){
         return StringUtil.underscorize(StringUtil.pluralize(modelClassSimpleName));
     }
-    
+    public static String getSimpleModelClassName(String tableName){
+    	return StringUtil.camelize(StringUtil.singularize(tableName));
+    }
     public static Class<?> modelClass(String tableName){
         for (String root : Config.instance().getModelPackageRoots()){
             String className = root ; 
             if (!root.endsWith(".")){
                 className += "."; 
             }
-            className += StringUtil.camelize(StringUtil.singularize(tableName));
+            className += getSimpleModelClassName(tableName);
             
             try {
                 return Class.forName(className);
@@ -139,12 +145,15 @@ public class Table<M extends Model> {
         
     }
     
+    public static final String FIELDS_ADDED = "ADD";
+    public static final String FIELDS_DROPPED = "DROP";
+    public static final String FIELDS_MODIFIED = "ALTER";
     
-    private Map<String,Set<String>> getFieldsAltered(){
+    public Map<String,Set<String>> getFieldsAltered(){
         Map<String,Set<String>> fieldsAltered = new HashMap<String, Set<String>>();
-        fieldsAltered.put("ADD", new HashSet<String>());
-        fieldsAltered.put("DROP", new HashSet<String>());
-        fieldsAltered.put("ALTER", new HashSet<String>());
+        fieldsAltered.put(FIELDS_ADDED, new HashSet<String>());
+        fieldsAltered.put(FIELDS_DROPPED, new HashSet<String>());
+        fieldsAltered.put(FIELDS_MODIFIED, new HashSet<String>());
         List<String> fields = reflector.getRealFields();
         Iterator<String> fieldIterator = fields.iterator();
         while( fieldIterator.hasNext() ){
@@ -153,14 +162,14 @@ public class Table<M extends Model> {
             ColumnDescriptor modelColumn = reflector.getColumnDescriptor(getter);
             ColumnDescriptor tableColumn = getColumnDescriptor(modelColumn.getName());
             if (tableColumn == null){
-                fieldsAltered.get("ADD").add(fieldName);
+                fieldsAltered.get(FIELDS_ADDED).add(fieldName);
             }else if (!modelColumn.equals(tableColumn)){
-                fieldsAltered.get("ALTER").add(fieldName);
+                fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
             }
         }
         for (ColumnDescriptor tableColumn : getColumnDescriptors()){ 
             if (!fields.contains(tableColumn.getName())){
-                fieldsAltered.get("DROP").add(tableColumn.getName());
+                fieldsAltered.get(FIELDS_DROPPED).add(tableColumn.getName());
             }
         }
         return fieldsAltered;
@@ -168,9 +177,9 @@ public class Table<M extends Model> {
     public boolean sync(){
         try {
             Map<String,Set<String>> fields = getFieldsAltered();
-            Set<String> addedFields = fields.get("ADD");
-            Set<String> droppedFields = fields.get("DROP");
-            Set<String> alteredFields = fields.get("ALTER");
+            Set<String> addedFields = fields.get(FIELDS_ADDED);
+            Set<String> droppedFields = fields.get(FIELDS_DROPPED);
+            Set<String> alteredFields = fields.get(FIELDS_MODIFIED);
             if (addedFields.isEmpty() && droppedFields.isEmpty() && alteredFields.isEmpty()){
                 return false;
             }
@@ -253,7 +262,7 @@ public class Table<M extends Model> {
         }
         
         public String getName(){
-            return (String)get("COLUMN_NAME");
+            return ((String)get("COLUMN_NAME")).toUpperCase();
         }
         
         public int getJDBCType(){ 

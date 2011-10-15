@@ -89,6 +89,9 @@ public class MySqlHelper extends JdbcTypeHelper{
             registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.CLOB,
                             "CLOB", 0, 0, new ReaderConverter()));
 
+            registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.LONGVARCHAR,
+                    "LONGVARCHAR", 0, 0, new ReaderConverter()));
+
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
                             "BLOB", 0, 0, new InputStreamConverter()));
 

@@ -16,7 +16,9 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.venky.core.date.DateUtils;
@@ -37,6 +39,7 @@ public class JdbcTypeHelper {
         int size;
         int scale;
         TypeConverter<M> typeConverter;
+        Class<?> javaClass;
 
         public TypeRef(int jdbcType, String sqlType, int size, int scale,
                 TypeConverter<M> typeConverter) {
@@ -63,6 +66,13 @@ public class JdbcTypeHelper {
             return scale;
         }
 
+        public Class<?> getJavaClass(){
+        	return javaClass;
+        }
+        
+        public void setJavaClass(Class<?> javaClass){
+        	this.javaClass = javaClass;
+        }
         public TypeConverter<M> getTypeConverter() {
             return typeConverter;
         }
@@ -361,6 +371,7 @@ public class JdbcTypeHelper {
 
     private final Map<Class<?>, TypeRef<?>> jdbcSQLType = new HashMap<Class<?>, TypeRef<?>>();
     protected void registerjdbcSQLType(Class clazz, TypeRef ref) {
+    	ref.setJavaClass(clazz);
         jdbcSQLType.put(clazz, ref);
     }
 
@@ -382,14 +393,25 @@ public class JdbcTypeHelper {
         return null;
     }
 
-    public TypeRef<?> getTypeRef(int jdbcType) {
+    public List<TypeRef<?>> getTypeRefs(int jdbcType) {
+    	List<TypeRef<?>> list = new ArrayList<TypeRef<?>>();
         for (TypeRef<?> ref : jdbcSQLType.values()) {
             if (ref.jdbcType == jdbcType) {
-                return ref;
+            	list.add(ref);
             }
         }
-        return null;
+        return list;
     }
+    public TypeRef<?> getTypeRef(int jdbcType) {
+    	List<TypeRef<?>> refs = getTypeRefs(jdbcType);
+    	if (refs.isEmpty()){
+    		return null;
+    	}else{
+    		return refs.get(0);
+    	}
+    }
+    
+    
     
     public String getAutoIncrementInstruction() {
         return "";
