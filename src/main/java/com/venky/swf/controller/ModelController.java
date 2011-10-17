@@ -45,12 +45,12 @@ public class ModelController<M extends Model> extends Controller {
     }
     
 
-    public View show(long id) {
+    public View show(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
         return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
     }
 
-    public View edit(long id) {
+    public View edit(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
         return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
     }
@@ -62,7 +62,7 @@ public class ModelController<M extends Model> extends Controller {
         return dashboard(mev);
     }
 
-    public View destroy(long id){ 
+    public View destroy(int id){ 
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record != null){
             record.destroy();
@@ -86,14 +86,14 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         String id = getPath().getRequest().getParameter("ID");
-        String versionNo = getPath().getRequest().getParameter("VERSION");
+        String lockId = getPath().getRequest().getParameter("LOCK_ID");
         M record = null;
         if (ObjectUtil.isVoid(id)) {
             record = Database.getInstance().getTable(modelClass).newRecord();
         } else {
-            record = Database.getInstance().getTable(modelClass).get(Long.valueOf(id));
-            if (!ObjectUtil.isVoid(versionNo)) {
-                if (record.getVersion() != Long.parseLong(versionNo)) {
+            record = Database.getInstance().getTable(modelClass).get(Integer.valueOf(id));
+            if (!ObjectUtil.isVoid(lockId)) {
+                if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
                 }
             }
@@ -102,7 +102,7 @@ public class ModelController<M extends Model> extends Controller {
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         List<String> fields = reflector.getFields();
         fields.remove("ID");
-        fields.remove("VERSION");
+        fields.remove("LOCK_ID");
         
         Enumeration<String> e = getPath().getRequest().getParameterNames();
         while (e.hasMoreElements()) {

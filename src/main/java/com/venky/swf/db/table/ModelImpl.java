@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -42,7 +43,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     private Class<M> modelClass = null;
     private M proxy = null;
     private ModelReflector<M> reflector = null;
-    private List<String> virtualFields = new ArrayList<String>();
+    private List<String> virtualFields = new IgnoreCaseList();
 
     public Record getRecord() {
 		return record;
@@ -74,7 +75,11 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         if (ModelReflector.getFieldGetterMatcher().matches(method)) {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
-                Object value = record.get(fieldName);
+                ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
+                String columnName = cd.getName();
+
+                Object value = record.get(columnName);
+
                 TypeRef<?> ref =Database.getInstance().getJdbcTypeHelper().getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
                 COLUMN_DEF def = method.getAnnotation(COLUMN_DEF.class);
@@ -82,7 +87,6 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
                 	StandardDefault defKey = def.value();
                 	value = StandardDefaulter.getDefaultValue(defKey);
                 }
-                ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
                 if (value == null) {
                 	return cd.isNullable() ? null : converter.valueOf(null);
                 } else if (retType.isInstance(value)) {
@@ -94,7 +98,8 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         } else if (ModelReflector.getFieldSetterMatcher().matches(method) ) {
             String fieldName = StringUtil.underscorize(mName.substring(3));
             if (!virtualFields.contains(fieldName)){
-                return record.put(fieldName, args[0]);
+                String columnName = getReflector().getColumnDescriptor(fieldName).getName(); 
+                return record.put(columnName, args[0]);
             }
         } else if (ModelReflector.getParentGetterMatcher().matches(method)) {
             return getParent(method);
@@ -124,9 +129,9 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	
     	Method parentIdGetter = this.reflector.getFieldGetter(parentIdFieldName);
     	
-    	long parentId;
+    	int parentId;
 		try {
-			parentId = Long.valueOf((Long)parentIdGetter.invoke(proxy));
+			parentId = Integer.valueOf((Integer)parentIdGetter.invoke(proxy));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} 
@@ -158,8 +163,9 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     }
     public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName){
     	Query q = new Query(childClass);
-    	long parentId = proxy.getId();
-    	return q.select().where(parentIdFieldName + " =  ? " , new BindVariable(parentId)).execute();
+    	int parentId = proxy.getId();
+    	String parentIdColumnName = ModelReflector.instance(childClass).getColumnDescriptor(parentIdFieldName).getName();
+    	return q.select().where(parentIdColumnName + " =  ? " , new BindVariable(parentId)).execute();
     }
 
     public void setProxy(M proxy) {
@@ -264,37 +270,43 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     public void destroy() {
         Query q = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
-        q.add("delete from ").add(table.getTableName()).add(" where id = ? and version = ? ", new BindVariable(proxy.getId()), new BindVariable(proxy.getVersion()));
+        q.add("delete from ").add(table.getTableName()).add(" where ").add(getReflector().getColumnDescriptor("id").getName()).add(" = ? ")
+        		.add(" and ").add(getReflector().getColumnDescriptor("lock_id").getName()).add(" = ? ");
+        q.add(new BindVariable(proxy.getId()), new BindVariable(proxy.getLockId()));
         q.executeUpdate();
     }
 
     private void update() {
-        long oldVersion = proxy.getVersion();
-        long newVersion = oldVersion + 1;
+        int oldLockId = proxy.getLockId();
+        int newLockId = oldLockId + 1;
 
         Query q = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
         q.add("update ").add(table.getTableName()).add(" set  ");
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
-            String field = fI.next();
-            q.add(field).add(" = ? ", new BindVariable(record.get(field),
-                    reflector.getColumnDescriptor(field).getJDBCType()));
+            String columnName = fI.next();
+            q.add(columnName).add(" = ? ", new BindVariable(record.get(columnName),
+                    table.getColumnDescriptor(columnName).getJDBCType()));
             q.add(",");
         }
-        q.add(" version = ? ", new BindVariable(newVersion));
+        
+        String idColumn = getReflector().getColumnDescriptor("id").getName();
+        String lockidColumn = getReflector().getColumnDescriptor("lock_id").getName();
+        
+        q.add(lockidColumn).add(" = ? ", new BindVariable(newLockId));
         q.add(" ");
-        q.add(" where id = ? ", new BindVariable(proxy.getId()));
-        q.add(" and version = ? ", new BindVariable(oldVersion));
+        q.where(idColumn).add(" = ? ", new BindVariable(proxy.getId()));
+        q.and(lockidColumn).add(" = ? ", new BindVariable(oldLockId));
 
         q.executeUpdate();
 
-        proxy.setVersion(newVersion);
+        proxy.setLockId(newLockId);
         record.startTracking();
     }
 
     private void create() {
-        proxy.setVersion(0);
+        proxy.setLockId(0);
         Query insertSQL = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
         insertSQL.add("insert into ").add(table.getTableName()).add("(");

@@ -4,8 +4,6 @@
  */
 package com.venky.swf.db.table;
 
-import java.io.InputStream;
-import java.io.Reader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,7 +38,7 @@ public class Query {
     }
     
     public Query select(Class modelClass){
-        return select(Table.tableName(modelClass));
+        return select(Database.getInstance().getTable(modelClass).getTableName());
     }
     
     public Query select(String tableName){

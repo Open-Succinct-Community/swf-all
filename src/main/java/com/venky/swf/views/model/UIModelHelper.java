@@ -8,17 +8,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.venky.swf.db.model.Model;
+import com.venky.core.collections.*;
 
 /**
  *
  * @author venky
  */
 public class UIModelHelper {
-    private final static Set<String> defaultProtectedFields = new HashSet<String>() ;
-    private final static Set<String> defaultHiddenFields = new HashSet<String>() ;
+    private final static Set<String> defaultProtectedFields = new IgnoreCaseSet();
+    private final static Set<String> defaultHiddenFields = new IgnoreCaseSet();
     static {
     	defaultHiddenFields.add("ID");
-        defaultHiddenFields.add("VERSION");
+        defaultHiddenFields.add("LOCK_ID");
     }
     
     

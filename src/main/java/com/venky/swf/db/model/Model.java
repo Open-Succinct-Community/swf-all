@@ -14,10 +14,11 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 public interface Model {
     @IS_NULLABLE(false)
     @IS_AUTOINCREMENT
-    public long getId();
+    public int getId();
     
-    public long getVersion();
-    public void setVersion(long version);
+    
+    public int getLockId();
+    public void setLockId(int lockid);
     
     public void save();
     public void destroy();

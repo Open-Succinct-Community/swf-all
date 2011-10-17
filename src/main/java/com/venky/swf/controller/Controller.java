@@ -47,12 +47,14 @@ public class Controller {
         }else if (getPath().getSession() != null){
     		return new RedirectorView(getPath(), "dashboard");
 		}else{ 
-            String username = getPath().getRequest().getParameter("username");
+            String username = getPath().getRequest().getParameter("name");
             String password = getPath().getRequest().getParameter("password");
             Table<User> userTable = Database.getInstance().getTable(User.class);
             Query q = new Query();
             q.select(userTable.getTableName());
-            q.add(" where (username = ? or email_id = ?) ",new BindVariable(username), new BindVariable(username)).add(" and password = ? ",new BindVariable(password));
+            String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor("name").getName();
+            String passwordColumn = ModelReflector.instance(User.class).getColumnDescriptor("password").getName();
+            q.add(" where " + nameColumn + " = ? ",new BindVariable(username)).add(" and " + passwordColumn + " = ? ",new BindVariable(password));
             List<User> users  = q.execute(User.class);
             if (users.size() == 1){
                 HttpSession newSession = getPath().getRequest().getSession(true);
@@ -110,8 +112,12 @@ public class Controller {
         System.out.println("Parameter:" + value);
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         Query q = new Query();
-        q.select(Table.tableName(modelClass));
-        q.add(" WHERE ").add(fieldName).add(" like ?", new BindVariable("%"+value+"%"));
+        Table<?> table = Database.getInstance().getTable(modelClass);
+
+        q.select(table.getTableName());
+        String columnName = reflector.getColumnDescriptor(fieldName).getName();
+        
+        q.add(" WHERE ").add(columnName).add(" like ?", new BindVariable("%"+value+"%"));
         List<M> records = q.execute(modelClass);
         for (M record:records){
             try {

@@ -29,7 +29,7 @@ public class LoginView extends HtmlView{
 
         Label lbluser = new Label("User: ");
         TextBox txtUser = new TextBox();
-        txtUser.setProperty("name", "username");
+        txtUser.setProperty("name", "name");
 
         Row row = table.createRow();
         row.createColumn().addControl(lbluser);

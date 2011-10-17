@@ -5,20 +5,22 @@
 package com.venky.swf.db.table;
 
 import java.lang.reflect.Method;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
@@ -105,32 +107,37 @@ public class Table<M extends Model> {
     public void dropTable(){
         try {
             Transaction txn = Database.getInstance().getCurrentTransaction();
-            PreparedStatement ps = txn.createStatement("drop table " + getTableName());
-            ps.executeUpdate();
-            ps.close();
-            txn.commit();
-        } catch (SQLException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-    
-    public void createTable() {
-        try {
-            Transaction txn = Database.getInstance().getCurrentTransaction();
-            Query q = new Query(); 
-            q.add("create table " + tableName + "(");
-            createFields(q);
-            q.add(", primary key (id)");
-            q.add(")");
+            Query q = new Query();
+            q.add("drop table").add(getTableName());
             q.executeUpdate();
             txn.commit();
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
     }
+    public void createTable() {
+        try {
+            Transaction txn = Database.getInstance().getCurrentTransaction();
+            Query q = createTableQuery();
+            q.executeUpdate();
+            txn.commit();
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    private Query createTableQuery(){
+        Query q = new Query(); 
+        q.add("create table ");
+        q.add(getTableName() + "(");
+        createFields(q);
+        if (getReflector().getRealFields().contains("id")){
+            q.add(", primary key ("+ getReflector().getColumnDescriptor("id").getName() +")");
+        }
+        q.add(")");
+        return q;
+    }
     
     private void createFields(Query q){
-
         List<String> fields = reflector.getRealFields();
         Iterator<String> fieldIterator = fields.iterator();
         while( fieldIterator.hasNext() ){
@@ -146,30 +153,32 @@ public class Table<M extends Model> {
     }
     
     public static final String FIELDS_ADDED = "ADD";
-    public static final String FIELDS_DROPPED = "DROP";
+    public static final String COLUMNS_DROPPED = "DROP";
     public static final String FIELDS_MODIFIED = "ALTER";
     
     public Map<String,Set<String>> getFieldsAltered(){
-        Map<String,Set<String>> fieldsAltered = new HashMap<String, Set<String>>();
-        fieldsAltered.put(FIELDS_ADDED, new HashSet<String>());
-        fieldsAltered.put(FIELDS_DROPPED, new HashSet<String>());
-        fieldsAltered.put(FIELDS_MODIFIED, new HashSet<String>());
+        Map<String,Set<String>> fieldsAltered = new IgnoreCaseMap<Set<String>>();
+        fieldsAltered.put(FIELDS_ADDED, new IgnoreCaseSet());
+        fieldsAltered.put(COLUMNS_DROPPED, new IgnoreCaseSet());
+        fieldsAltered.put(FIELDS_MODIFIED, new IgnoreCaseSet());
         List<String> fields = reflector.getRealFields();
+        List<String> columns = reflector.getRealColumns();
         Iterator<String> fieldIterator = fields.iterator();
         while( fieldIterator.hasNext() ){
             String fieldName = fieldIterator.next();
-            Method getter = reflector.getFieldGetter(fieldName);
-            ColumnDescriptor modelColumn = reflector.getColumnDescriptor(getter);
+            ColumnDescriptor modelColumn = reflector.getColumnDescriptor(fieldName);
             ColumnDescriptor tableColumn = getColumnDescriptor(modelColumn.getName());
             if (tableColumn == null){
                 fieldsAltered.get(FIELDS_ADDED).add(fieldName);
             }else if (!modelColumn.equals(tableColumn)){
-                fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
+            	System.out.println(modelColumn);
+            	System.out.println(tableColumn);
+            	fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
             }
         }
         for (ColumnDescriptor tableColumn : getColumnDescriptors()){ 
-            if (!fields.contains(tableColumn.getName())){
-                fieldsAltered.get(FIELDS_DROPPED).add(tableColumn.getName());
+            if (!columns.contains(tableColumn.getName())){
+                fieldsAltered.get(COLUMNS_DROPPED).add(tableColumn.getName());
             }
         }
         return fieldsAltered;
@@ -178,21 +187,19 @@ public class Table<M extends Model> {
         try {
             Map<String,Set<String>> fields = getFieldsAltered();
             Set<String> addedFields = fields.get(FIELDS_ADDED);
-            Set<String> droppedFields = fields.get(FIELDS_DROPPED);
+            Set<String> droppedColumns = fields.get(COLUMNS_DROPPED);
             Set<String> alteredFields = fields.get(FIELDS_MODIFIED);
-            if (addedFields.isEmpty() && droppedFields.isEmpty() && alteredFields.isEmpty()){
+            if (addedFields.isEmpty() && droppedColumns.isEmpty() && alteredFields.isEmpty()){
                 return false;
             }
             
             Transaction txn = Database.getInstance().getCurrentTransaction();
-            droppedFields.addAll(alteredFields);
-            for (String fieldName:droppedFields){
+            for (String columnName:droppedColumns){
                 Query q = new Query();
-                q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add(fieldName);
+                q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add(columnName);
                 q.executeUpdate();
             }
 
-            addedFields.addAll(alteredFields);
             for (String fieldName:addedFields){
                 Query q = new Query();
                 q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
@@ -200,6 +207,73 @@ public class Table<M extends Model> {
                 q.executeUpdate();
             }
             
+            boolean idTypeChanged = false;
+            for (String fieldName:alteredFields){
+            	if (fieldName.equalsIgnoreCase("ID")){
+            		idTypeChanged = true;
+            		continue;
+            	}
+            	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
+            	String columnName = cd.getName();
+            	Query q = new Query();
+            	
+                q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
+                q.add("NEW_" + cd.toString());
+                q.executeUpdate();
+                
+            	q = new Query();
+            	q.add("update ").add(getTableName()).add(" SET NEW_"+columnName + " =  " + columnName);
+            	q.executeUpdate();
+            	
+            	q = new Query();
+            	q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add(columnName);
+                q.executeUpdate();
+                
+                q = new Query();
+                q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
+                q.add(cd.toString());
+                q.executeUpdate();
+                
+                q = new Query();
+            	q.add("update ").add(getTableName()).add(" SET "+columnName + " =  NEW_" + columnName);
+            	q.executeUpdate();
+                
+                q = new Query();
+            	q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add("NEW_" + columnName);
+                q.executeUpdate();
+            }
+
+            if (idTypeChanged){
+            	// Rare event. Drop and recreate table.
+            	Query q = new Query(); 
+            	q.add("create table temp_" + getTableName()).add(" as (select * from "+ getTableName() + ")") ;
+            	q.executeUpdate();
+            	
+                q = new Query();
+                q.add("drop table ").add(getTableName());
+                q.executeUpdate();
+                
+                q= createTableQuery();
+                q.executeUpdate();
+                
+                q = new Query();
+                q.add("insert into ").add(getTableName()).add("(");
+                Iterator<String> columnIterator = reflector.getRealColumns().iterator();
+                while (columnIterator.hasNext()){
+                	q.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+                }
+                q.add(") select ");
+                columnIterator = reflector.getRealColumns().iterator();
+                while (columnIterator.hasNext()){
+                	q.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+                }
+                q.add(" from temp_" + getTableName());
+                q.executeUpdate();
+                
+                q = new Query();
+                q.add("drop table temp_" + getTableName());
+                q.execute();
+            }
             txn.commit();
             return true;
         } catch (SQLException ex) {
@@ -208,9 +282,10 @@ public class Table<M extends Model> {
     }
     
     
-    public M get(long id) {
+    public M get(int id) {
         Query q = new Query();
-        q.select(tableName).add(" where id = ? ", new BindVariable(id));
+        String idColumn = getReflector().getColumnDescriptor("id").getName();
+        q.select(tableName).where(idColumn).add(" = ? ", new BindVariable(id));
         List<M> result = q.execute(getModelClass());
         if (result.isEmpty()){
             return null;
@@ -222,7 +297,7 @@ public class Table<M extends Model> {
         return ModelImpl.getProxy(modelClass,new Record());
     }
 
-    Map<String,ColumnDescriptor> columnDescriptors = new HashMap<String, ColumnDescriptor>();
+    Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();
     
     public Set<String> getColumnNames(){ 
         return columnDescriptors.keySet();
@@ -243,7 +318,7 @@ public class Table<M extends Model> {
     }
 
     public String[] getAutoIncrementColumns(){ 
-        Set<String> columns = new HashSet<String>();
+        Set<String> columns = new IgnoreCaseSet();
         for (String name :getColumnNames()){ 
             if (getColumnDescriptor(name).isAutoIncrement()){ 
                 columns.add(name);
@@ -262,7 +337,7 @@ public class Table<M extends Model> {
         }
         
         public String getName(){
-            return ((String)get("COLUMN_NAME")).toUpperCase();
+            return ((String)get("COLUMN_NAME"));
         }
         
         public int getJDBCType(){ 
@@ -358,6 +433,7 @@ public class Table<M extends Model> {
                 buff.append(Database.getInstance().getJdbcTypeHelper().getAutoIncrementInstruction());
             }
             
+            
             return buff.toString();
         }
 
@@ -367,7 +443,7 @@ public class Table<M extends Model> {
                 return false;
             }
             ColumnDescriptor othercd = (ColumnDescriptor)other;
-            return  toString().equals(othercd.toString()) ;
+            return  toString().equalsIgnoreCase(othercd.toString()) ;
         }
 
         @Override

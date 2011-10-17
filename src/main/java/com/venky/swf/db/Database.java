@@ -15,13 +15,13 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
 
+import com.venky.core.collections.*;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.model.Model;
@@ -152,17 +152,19 @@ public class Database {
     }
     
     
-    private Map<String,Table> tables = new HashMap<String,Table>();
+    private Map<String,Table<?>> tables = new IgnoreCaseMap<Table<?>>();
     
-    public Map<String, Table> getTables() {
+    public Map<String, Table<?>> getTables() {
 		return tables;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <M extends Model> Table<M> getTable(Class<M> modelClass){
-        return getTable(Table.tableName(modelClass));
+        return (Table<M>)getTable(Table.tableName(modelClass));
     }
-    public Table getTable(String tableName){
-        return tables.get(tableName);
+    @SuppressWarnings("unchecked")
+	public <M extends Model> Table<M> getTable(String tableName){
+        return (Table<M>)tables.get(tableName);
     }
     public Set<String> getTableNames(){ 
         return tables.keySet();
@@ -171,7 +173,7 @@ public class Database {
     public void migrateTables() {
         boolean dbModified = false;
         loadTables(dbModified);
-        for (Table table: tables.values()){
+        for (Table<?> table: tables.values()){
             if (!table.isExistingInDatabase()){
                 table.createTable();
                 dbModified = true;
@@ -212,13 +214,13 @@ public class Database {
             ResultSet tablesResultSet = meta.getTables(null, getSchema(), null, null);
             while (tablesResultSet.next()){
                 String tableName = tablesResultSet.getString("TABLE_NAME");
-                Table table = new Table(tableName.toUpperCase());
+                Table table = new Table(tableName);
                 table.setExistingInDatabase(true);
                 tables.put(table.getTableName(),table);
                 ResultSet columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
                 while(columnResultSet.next()){
                     String columnName  = columnResultSet.getString("COLUMN_NAME");
-                    table.getColumnDescriptor(columnName.toUpperCase(),true).load(columnResultSet);
+                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
                 }
             }
         } catch (SQLException ex) {
@@ -254,7 +256,7 @@ public class Database {
         
         for (String className : modelClasses){
             try {
-                Class modelClass = Class.forName(className);
+                Class<?> modelClass = Class.forName(className);
                 if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
                     Table table = new Table(modelClass);
                     if (!tables.containsKey(table.getTableName())){

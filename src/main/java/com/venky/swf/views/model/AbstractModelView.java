@@ -29,6 +29,7 @@ import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
+import com.venky.core.collections.*;
 
 /**
  *
@@ -39,7 +40,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     Class<M> modelClass;
     ModelReflector<M> reflector;
     
-	List<String> includedFields = new ArrayList<String>();
+    List<String> includedFields = new IgnoreCaseList();
 
     public AbstractModelView(Path path, Class<M> modelClass, final String[] includedFields) {
         super(path);
@@ -53,8 +54,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     }
     
     public ModelReflector<M> getReflector() {
-		return reflector;
-	}
+        return reflector;
+    }
     
     public List<String> getIncludedFields() {
         return includedFields;
@@ -63,7 +64,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     public Class<M> getModelClass() {
         return modelClass;
     }
-    private Map<String, Method> getterMap = new HashMap<String, Method>();
+    private Map<String, Method> getterMap = new IgnoreCaseMap<Method>();
 
     public Method getFieldGetter(String fieldName) {
         Method getter = getterMap.get(fieldName);
@@ -110,44 +111,44 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     }
     
     protected boolean isFieldPassword(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	return  getter.isAnnotationPresent(PASSWORD.class);
+        Method getter = getFieldGetter(fieldName);
+        return  getter.isAnnotationPresent(PASSWORD.class);
 
     }
     protected String getParentDescription(Method parentIdGetter, Model record) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Method parentModelGetter = ModelReflector.getParentModelGetterFor(parentIdGetter);
         
         if (parentModelGetter != null){
-	    	Model parentModel = (Model)parentModelGetter.invoke(record);
-	    	if (parentModel != null){
-	    		Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType(); 
-	    		HAS_DESCRIPTION_COLUMN hdc = parentModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-	    		if (hdc != null){
-	    			String descriptionColumn = hdc.value();
-	        		assert (ModelReflector.instance(parentModelClass).getFields().contains(descriptionColumn));
-	
-	        		Object descValue = ModelReflector.instance(parentModelClass).getFieldGetter(descriptionColumn).invoke(parentModel);
-	    			return StringUtil.valueOf(descValue);
-	    		}
-	    	}
+            Model parentModel = (Model)parentModelGetter.invoke(record);
+            if (parentModel != null){
+                Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType(); 
+                HAS_DESCRIPTION_COLUMN hdc = parentModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+                if (hdc != null){
+                    String descriptionColumn = hdc.value();
+                    assert (ModelReflector.instance(parentModelClass).getFields().contains(descriptionColumn));
+    
+                    Object descValue = ModelReflector.instance(parentModelClass).getFieldGetter(descriptionColumn).invoke(parentModel);
+                    return StringUtil.valueOf(descValue);
+                }
+            }
         }
         return null;
     }
 
     protected String getFieldLiteral(String fieldName){
-    	String fieldLiteral =  StringUtil.camelize(fieldName);
+        String fieldLiteral =  StringUtil.camelize(fieldName);
 
-    	Method parentModelgetter = ModelReflector.getParentModelGetterFor(reflector.getFieldGetter(fieldName));
-    	if (parentModelgetter != null) {
-    		Class<?> parentModel = parentModelgetter.getReturnType();
-    		HAS_DESCRIPTION_COLUMN hdc = parentModel.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-    		if (hdc != null){
-    			fieldLiteral = parentModelgetter.getName().substring("get".length()) ;
-    		}
-    	}
-    	
-    	return fieldLiteral;
-    	
+        Method parentModelgetter = ModelReflector.getParentModelGetterFor(reflector.getFieldGetter(fieldName));
+        if (parentModelgetter != null) {
+            Class<?> parentModel = parentModelgetter.getReturnType();
+            HAS_DESCRIPTION_COLUMN hdc = parentModel.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+            if (hdc != null){
+                fieldLiteral = parentModelgetter.getName().substring("get".length()) ;
+            }
+        }
+        
+        return fieldLiteral;
+        
     }
 
 }

@@ -4,13 +4,13 @@
  */
 package com.venky.swf.menu;
 
+import java.util.Set;
+
 import com.venky.swf.db.Database;
-import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.page.Menu;
-import java.util.Set;
 
 /**
  *
@@ -22,7 +22,7 @@ public class DefaultMenuBuilder implements MenuBuilder{
         Menu appmenu  = new Menu();
         User user = (User)path.getSession().getAttribute("user");
         
-        appmenu.createMenuItem(user.getUsername(), userMenu(user));
+        appmenu.createMenuItem(user.getName(), userMenu(user));
         appmenu.createMenuItem("Manage", modelMenu());
         return appmenu;
     }

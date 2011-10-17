@@ -4,15 +4,15 @@
  */
 package com.venky.swf.views.controls.page.text;
 
-import com.venky.core.string.StringUtil;
+import java.lang.reflect.Method;
+
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.Table;
 import com.venky.swf.views.controls.Control;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  *
@@ -30,13 +30,15 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     private TextBox description = null; 
     public AutoCompleteText(Class<M> modelClass){
         this.modelClass = modelClass;
+        Table<M> table = Database.getInstance().getTable(modelClass);
+        
         HAS_DESCRIPTION_COLUMN hdc = modelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
         if (hdc != null){
-	        descriptionColumn = hdc.value().toUpperCase();
+	        descriptionColumn = hdc.value();
 	        assert (ModelReflector.instance(modelClass).getFields().contains(descriptionColumn));
             
 	        this.description = new TextBox();
-            description.setAutocompleteServiceURL("/"+StringUtil.underscorize(modelClass.getSimpleName()).toLowerCase()+"/autocomplete/" );
+            description.setAutocompleteServiceURL("/"+table.getTableName().toLowerCase()+"/autocomplete/" );
         }
         setVisible(false);
     }
@@ -64,7 +66,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     public void setValue(Object value){
         super.setValue(value);
         if (description != null && !ObjectUtil.isVoid(value)){
-            M model = Database.getInstance().getTable(modelClass).get(Long.valueOf(String.valueOf(value)));
+            M model = Database.getInstance().getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
                 ModelReflector<M> reflector = ModelReflector.instance(modelClass);
                 Method descriptionGetter = reflector.getFieldGetter(descriptionColumn);

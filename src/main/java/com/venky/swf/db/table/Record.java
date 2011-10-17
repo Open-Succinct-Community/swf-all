@@ -12,13 +12,14 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import com.venky.core.collections.*;
 
 /**
  *
  * @author venky
  */
 public class Record {
-    private HashMap<String,Object> fieldValues = new HashMap<String, Object>();
+    private HashMap<String,Object> fieldValues = new IgnoreCaseMap<Object>();
     
     public Set<String> getFieldNames(){
         return fieldValues.keySet();
@@ -51,7 +52,7 @@ public class Record {
         }
     }
     
-    private SortedSet<String> dirtyFields = new TreeSet<String>();
+    private SortedSet<String> dirtyFields = new IgnoreCaseSet();
     boolean newRecord = false; 
     void startTracking(){
         dirtyFields.clear();

@@ -22,6 +22,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -85,26 +86,26 @@ public class ModelReflector<M extends Model> {
         
     }
     private List<Method> getDeclaredMethods(Class<?> forClass){ 
-    	List<Method> methods = new ArrayList<Method>(); 
-    	methods.addAll(Arrays.asList(forClass.getDeclaredMethods()));
-    	try {
-			ClassReader reader = new ClassReader(getClass().getClassLoader().getResourceAsStream(forClass.getName().replace('.', '/')+ ".class"));
-			ModelVisitor mv = new ModelVisitor();
-			reader.accept(mv, 0);
+        List<Method> methods = new ArrayList<Method>(); 
+        methods.addAll(Arrays.asList(forClass.getDeclaredMethods()));
+        try {
+            ClassReader reader = new ClassReader(getClass().getClassLoader().getResourceAsStream(forClass.getName().replace('.', '/')+ ".class"));
+            ModelVisitor mv = new ModelVisitor();
+            reader.accept(mv, 0);
 
-			final Map<String,Integer> mSeq = mv.getMethodSequenceMap();
-			Collections.sort(methods,new Comparator<Method>(){
-				public int compare(Method o1, Method o2) {
-					return mSeq.get(o1.getName()).compareTo(mSeq.get(o2.getName()));
-				}
-			});
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
-    	
-    	return methods;
+            final Map<String,Integer> mSeq = mv.getMethodSequenceMap();
+            Collections.sort(methods,new Comparator<Method>(){
+                public int compare(Method o1, Method o2) {
+                    return mSeq.get(o1.getName()).compareTo(mSeq.get(o2.getName()));
+                }
+            });
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        
+        return methods;
     }
     
     public final List<Method> getMethods(MethodMatcher matcher){
@@ -119,12 +120,12 @@ public class ModelReflector<M extends Model> {
     }
     
     public String getDescriptionColumn(){
-    	String column = "name";
-    	HAS_DESCRIPTION_COLUMN descColumn = reflectedModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-    	if (descColumn != null){
-    		column = descColumn.value();
-    	}
-    	return column;
+        String column = "name";
+        HAS_DESCRIPTION_COLUMN descColumn = reflectedModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+        if (descColumn != null){
+            column = descColumn.value();
+        }
+        return column;
     }
     public List<Method> getFieldGetters(){
         return getMethods(getFieldGetterMatcher());
@@ -142,41 +143,54 @@ public class ModelReflector<M extends Model> {
         return getMethods(getChildrenGetterMatcher());
     }
 
-    private List<String> allfields = new ArrayList<String>();
+    private List<String> allfields = new IgnoreCaseList();
     private void loadAllFields(){
         if (!allfields.isEmpty()){
-        	return;
+            return;
         }
-    	synchronized (allfields) {
-			if (!allfields.isEmpty()){
-				return;
-			}
+        synchronized (allfields) {
+            if (!allfields.isEmpty()){
+                return;
+            }
             List<Method> fieldGetters = getFieldGetters();
             for (Method fieldGetter : fieldGetters){
-            	allfields.add(getFieldName(fieldGetter));
+                allfields.add(getFieldName(fieldGetter));
             }
-		}
+        }
     }
     public List<String> getFields(){
-    	loadAllFields();
-        return new ArrayList<String>(allfields);
+       loadAllFields();
+       return new IgnoreCaseList(allfields);
     }
     
     public List<String> getRealFields(){
-    	return getFields(new RealFieldMatcher());
+        return getFields(new RealFieldMatcher());
     }
     public List<String> getVirtualFields(){
-    	return getFields(new VirtualFieldMatcher());
+        return getFields(new VirtualFieldMatcher());
     }
     public List<String> getFields(FieldMatcher matcher){
-    	loadAllFields();
-    	List<String> fields = new ArrayList<String>();
+        loadAllFields();
+        List<String> fields = new IgnoreCaseList();
         for (String field: allfields){
-        	if (matcher == null || matcher.matches(getColumnDescriptor(field))){
-        		fields.add(field);
-    		}
+            if (matcher == null || matcher.matches(getColumnDescriptor(field))){
+                fields.add(field);
+            }
         }
         return fields;
+    }
+    public List<String> getRealColumns(){
+    	loadAllFields();
+    	return getColumns(new RealFieldMatcher());
+    }
+    
+    public List<String> getColumns(FieldMatcher matcher){
+    	List<String> fields = getFields(matcher);
+    	List<String> columns = new IgnoreCaseList();
+    	for (String field:fields){
+    		columns.add(getColumnDescriptor(field).getName());
+    	}
+    	return columns;
     }
     
     public String getFieldName(Method method){
@@ -215,13 +229,13 @@ public class ModelReflector<M extends Model> {
     public Method getFieldSetter(String fieldName){
         try {
             Method getter = getFieldGetter(fieldName);
-        	
+            
             String mName = "set"+StringUtil.camelize(fieldName);
             Method setter = reflectedModelClass.getMethod(mName,getter.getReturnType());
             if (getFieldSetterMatcher().matches(setter)){
-            	return setter; 
+                return setter; 
             }else {
-            	throw new RuntimeException(setter.getName() +" not recognized as a setter. Check Parameters and return type" );
+                throw new RuntimeException(setter.getName() +" not recognized as a setter. Check Parameters and return type" );
             }
         } catch (NoSuchMethodException ex) {
             throw new RuntimeException(ex);
@@ -263,7 +277,7 @@ public class ModelReflector<M extends Model> {
             cd.setScale(digits == null ? typeRef.getScale() : digits.value());
             cd.setAutoIncrement(isAutoIncrement == null? false : true);
             cd.setVirtual(isVirtual == null ? false : isVirtual.value());
-        	columnDescriptors.put(getter,cd);
+            columnDescriptors.put(getter,cd);
         }
         return cd;
     }
@@ -297,18 +311,18 @@ public class ModelReflector<M extends Model> {
         public boolean matches(Method method);
     }
     public static interface FieldMatcher {
-    	public boolean matches(ColumnDescriptor cd);
+        public boolean matches(ColumnDescriptor cd);
     }
 
     private static class RealFieldMatcher implements FieldMatcher {
-		public boolean matches(ColumnDescriptor cd) {
-			return !cd.isVirtual();
-		}
+        public boolean matches(ColumnDescriptor cd) {
+            return !cd.isVirtual();
+        }
     }
     private static class VirtualFieldMatcher implements FieldMatcher {
-		public boolean matches(ColumnDescriptor cd) {
-			return cd.isVirtual();
-		}
+        public boolean matches(ColumnDescriptor cd) {
+            return cd.isVirtual();
+        }
     }
     private static class GetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
@@ -316,7 +330,7 @@ public class ModelReflector<M extends Model> {
             Class<?> retType = method.getReturnType();
             Class<?>[] paramTypes = method.getParameterTypes();
             if (  ((mName.startsWith("get") && retType != null) || 
-                    mName.startsWith("is") && boolean.class == retType) &&
+                    mName.startsWith("is") && (boolean.class == retType || Boolean.class == retType) ) &&
                     (paramTypes == null || paramTypes.length == 0)){
                  return true;
             }
@@ -428,7 +442,8 @@ public class ModelReflector<M extends Model> {
             return null;
         }
         String methodName = parentIdGetter.getName();
-        if (methodName.startsWith("get") && methodName.endsWith("Id") && !methodName.equals("getId") && (parentIdGetter.getReturnType() == long.class || parentIdGetter.getReturnType() == Long.class)){
+        if (methodName.startsWith("get") && methodName.endsWith("Id") && !methodName.equals("getId") && 
+        		(parentIdGetter.getReturnType() == int.class || parentIdGetter.getReturnType() == Integer.class)){
             String parentModelMethodName = methodName.substring(0,methodName.length()-"Id".length());
             try {
                 Method parentModelGetter = modelClass.getMethod(parentModelMethodName);
@@ -444,61 +459,60 @@ public class ModelReflector<M extends Model> {
     
     private class ModelVisitor implements ClassVisitor {
         private Map<String, Integer> methodSequenceMap = new HashMap<String, Integer>();
-    	
-		public Map<String, Integer> getMethodSequenceMap() {
-			return methodSequenceMap;
-		}
+        
+        public Map<String, Integer> getMethodSequenceMap() {
+            return methodSequenceMap;
+        }
 
-		public void visit(int version, int access, String name,
-				String signature, String superName, String[] interfaces) {
-			// TODO Auto-generated method stub
-			
-		}
+        public void visit(int version, int access, String name,
+                String signature, String superName, String[] interfaces) {
+            // TODO Auto-generated method stub
+            
+        }
 
-		public void visitSource(String source, String debug) {
-			// TODO Auto-generated method stub
-			
-		}
+        public void visitSource(String source, String debug) {
+            // TODO Auto-generated method stub
+            
+        }
 
-		public void visitOuterClass(String owner, String name, String desc) {
-			// TODO Auto-generated method stub
-			
-		}
+        public void visitOuterClass(String owner, String name, String desc) {
+            // TODO Auto-generated method stub
+            
+        }
 
-		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-			// TODO Auto-generated method stub
-			return null;
-		}
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            // TODO Auto-generated method stub
+            return null;
+        }
 
-		public void visitAttribute(Attribute attr) {
-			// TODO Auto-generated method stub
-			
-		}
+        public void visitAttribute(Attribute attr) {
+            // TODO Auto-generated method stub
+            
+        }
 
-		public void visitInnerClass(String name, String outerName,
-				String innerName, int access) {
-			// TODO Auto-generated method stub
-			
-		}
+        public void visitInnerClass(String name, String outerName,
+                String innerName, int access) {
+            // TODO Auto-generated method stub
+            
+        }
 
-		public FieldVisitor visitField(int access, String name, String desc,
-				String signature, Object value) {
-			// TODO Auto-generated method stub
-			return null;
-		}
+        public FieldVisitor visitField(int access, String name, String desc,
+                String signature, Object value) {
+            // TODO Auto-generated method stub
+            return null;
+        }
 
-		public MethodVisitor visitMethod(int access, String name, String desc,
-				String signature, String[] exceptions) {
-			// TODO Auto-generated method stub
-			methodSequenceMap.put(name,methodSequenceMap.size());
-			return null;
-		}
+        public MethodVisitor visitMethod(int access, String name, String desc,
+                String signature, String[] exceptions) {
+            // TODO Auto-generated method stub
+            methodSequenceMap.put(name,methodSequenceMap.size());
+            return null;
+        }
 
-		public void visitEnd() {
-			// TODO Auto-generated method stub
-			
-		}
-    	
+        public void visitEnd() {
+            // TODO Auto-generated method stub
+            
+        }
     }
     
 
