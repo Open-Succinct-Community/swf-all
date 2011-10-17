@@ -29,10 +29,15 @@ import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 
+import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
+import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
@@ -69,12 +74,12 @@ public class ModelGeneratorMojo extends AbstractMojo {
     public void generateModels(File directory) throws MojoExecutionException{
         Database db =Database.getInstance(false);
         db.loadTables(true);
-        for (Table table: db.getTables().values()){
+        for (Table<?> table: db.getTables().values()){
             generateModelClass(table, directory);
         }
     }
     
-    private void generateModelClass(Table table,File directory) throws MojoExecutionException{
+    private void generateModelClass(Table<?> table,File directory) throws MojoExecutionException{
     	String simpleModelClassName = Table.getSimpleModelClassName(table.getTableName());
     	String fQModelClassName = null; 
     	StringBuilder packageName = new StringBuilder(Config.instance().getModelPackageRoots().get(0));
@@ -117,7 +122,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
     }
     private void writeFile(OutputStreamWriter osw,Table<?> table,String packageName){
     	JdbcTypeHelper helper = Database.getInstance().getJdbcTypeHelper();
-		Set<String> fieldsPresentInFrameworkModel = new HashSet<String>();
+		Set<String> fieldsPresentInFrameworkModel = new IgnoreCaseSet();
 		fieldsPresentInFrameworkModel.addAll(ModelReflector.instance(Model.class).getRealFields());
 		
     	Set<String> imports = new HashSet<String>();
@@ -171,6 +176,21 @@ public class ModelGeneratorMojo extends AbstractMojo {
     			if (!ref.getJavaClass().isPrimitive() && !ref.getJavaClass().getPackage().getName().startsWith("java.lang")){
         			imports.add(ref.getJavaClass().getName());
     			}
+    			code.add("\t");
+    			if (!cd.isNullable()){
+    				imports.add(IS_NULLABLE.class.getName());
+    				code.add("\t@IS_NULLABLE(false)");
+    			}
+    			if (cd.getSize() > 0){
+    				imports.add(COLUMN_SIZE.class.getName());
+    				code.add("\t@COLUMN_SIZE("+cd.getSize()+")");
+    			}
+    			if (cd.getScale() > 0){
+    				imports.add(DECIMAL_DIGITS.class.getName());
+    				code.add("\t@DECIMAL_DIGITS("+cd.getScale() +")");
+    			}
+    			imports.add(COLUMN_NAME.class.getName());
+    			code.add("\t@COLUMN_NAME(\""+ cd.getName() + "\")");
     			code.add("\tpublic "+ ref.getJavaClass().getSimpleName() + " " + getterPrefix +  camelfieldName + "();");
     			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(cd.getName(),false) + ");");
     		}
