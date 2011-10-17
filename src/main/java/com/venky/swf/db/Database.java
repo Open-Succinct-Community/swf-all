@@ -192,6 +192,7 @@ public class Database {
     	try {
 			Installer installer = (Installer)Class.forName(installerName).newInstance();
 			installer.install();
+			Database.getInstance().getCurrentTransaction().commit();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
