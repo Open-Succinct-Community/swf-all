@@ -39,8 +39,8 @@ public class Router extends AbstractHandler {
         
         try {
             View view = p.invoke();
-            view.write();
             Database.getInstance().getCurrentTransaction().commit();
+            view.write();
         }catch(Exception e){
         	try { 
         		Database.getInstance().getCurrentTransaction().rollback();
