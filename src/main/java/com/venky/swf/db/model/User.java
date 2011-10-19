@@ -19,4 +19,6 @@ public interface User extends Model{
     @PASSWORD
     public String getPassword();
     public void setPassword(String password);
+    
+    public boolean authenticate(String password);
 }

@@ -8,6 +8,7 @@ public enum StandardDefault {
 	ZERO,
 	ONE,
 	CURRENT_DATE,
+	CURRENT_TIMESTAMP,
 	BOOLEAN_TRUE,
 	BOOLEAN_FALSE
 }

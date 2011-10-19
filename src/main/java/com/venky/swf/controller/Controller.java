@@ -49,21 +49,31 @@ public class Controller {
 		}else{ 
             String username = getPath().getRequest().getParameter("name");
             String password = getPath().getRequest().getParameter("password");
-            Table<User> userTable = Database.getInstance().getTable(User.class);
-            Query q = new Query();
-            q.select(userTable.getTableName());
-            String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor("name").getName();
-            String passwordColumn = ModelReflector.instance(User.class).getColumnDescriptor("password").getName();
-            q.add(" where " + nameColumn + " = ? ",new BindVariable(username)).add(" and " + passwordColumn + " = ? ",new BindVariable(password));
-            List<User> users  = q.execute(User.class);
-            if (users.size() == 1){
+            User user = getUser(username);
+            if (user != null && user.authenticate(password)){
                 HttpSession newSession = getPath().getRequest().getSession(true);
-                newSession.setAttribute("user", users.get(0));
+                newSession.setAttribute("user", user);
                 return new RedirectorView(getPath(), "dashboard");
             }else {
-                throw new RuntimeException("Num Users: " + users.size() + "Login incorrect!");
+                throw new RuntimeException("Login incorrect!");
             }
         }
+    }
+    protected Class<? extends User> getUserClass(){
+    	return User.class;
+    }
+    protected User getUser(String username){
+		Table<? extends User> userTable = Database.getInstance().getTable(getUserClass());
+        Query q = new Query();
+        q.select(userTable.getTableName());
+        String nameColumn = ModelReflector.instance(getUserClass()).getColumnDescriptor("name").getName();
+        q.add(" where " + nameColumn + " = ? ",new BindVariable(username));
+        
+		List<? extends User> users  = q.execute(getUserClass());
+        if (users.size() == 1){
+        	return users.get(0);
+        }
+        return null;
     }
     
     public View logout(){

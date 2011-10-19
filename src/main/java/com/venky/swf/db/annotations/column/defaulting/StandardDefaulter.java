@@ -1,6 +1,7 @@
 package com.venky.swf.db.annotations.column.defaulting;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 public class StandardDefaulter {
 	public static Object getDefaultValue(StandardDefault defaultKey){
@@ -23,6 +24,9 @@ public class StandardDefaulter {
 				break;
 			case CURRENT_DATE:
 				ret = new Date(System.currentTimeMillis());
+				break;
+			case CURRENT_TIMESTAMP:
+				ret = new Timestamp(System.currentTimeMillis());
 				break;
 			case BOOLEAN_FALSE: 
 				ret = false; 

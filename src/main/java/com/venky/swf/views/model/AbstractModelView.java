@@ -6,19 +6,17 @@ package com.venky.swf.views.model;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.PASSWORD;
-import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
-import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -29,7 +27,6 @@ import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
-import com.venky.core.collections.*;
 
 /**
  *
@@ -87,7 +84,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         Class<?> returnType = getter.getReturnType();
         TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
         Input control = null;
-        if (boolean.class.isAssignableFrom(returnType)) {
+        if (boolean.class.isAssignableFrom(returnType) || Boolean.class.isAssignableFrom(returnType)) {
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
@@ -107,7 +104,16 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     }
 
     protected boolean isFieldVisible(String fieldName) {
-        return !UIModelHelper.getDefaultHiddenFields(modelClass).contains(fieldName);
+        return !isFieldHidden(fieldName);
+    }
+    protected boolean isFieldHidden(String fieldName){
+    	boolean hidden = false; 
+        hidden = UIModelHelper.getDefaultHiddenFields(modelClass).contains(fieldName);
+        if (!hidden){
+        	Method getter = getFieldGetter(fieldName);
+        	hidden = getter.isAnnotationPresent(HIDDEN.class);
+        }
+        return hidden;
     }
     
     protected boolean isFieldPassword(String fieldName){

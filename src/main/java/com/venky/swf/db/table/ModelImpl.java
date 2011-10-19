@@ -21,7 +21,6 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
-import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
@@ -82,11 +81,6 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 
                 TypeRef<?> ref =Database.getInstance().getJdbcTypeHelper().getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
-                COLUMN_DEF def = method.getAnnotation(COLUMN_DEF.class);
-                if (value == null && def != null){
-                	StandardDefault defKey = def.value();
-                	value = StandardDefaulter.getDefaultValue(defKey);
-                }
                 if (value == null) {
                 	return cd.isNullable() ? null : converter.valueOf(null);
                 } else if (retType.isInstance(value)) {
@@ -129,15 +123,16 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	
     	Method parentIdGetter = this.reflector.getFieldGetter(parentIdFieldName);
     	
-    	int parentId;
+    	Integer parentId;
 		try {
-			parentId = Integer.valueOf((Integer)parentIdGetter.invoke(proxy));
+			parentId = (Integer)parentIdGetter.invoke(proxy);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException(parentIdFieldName,e);
 		} 
-    	
-    	
-        P parent = Database.getInstance().getTable(parentClass).get(parentId);
+		P parent = null;
+		if (parentId != null) {
+			parent = Database.getInstance().getTable(parentClass).get(parentId);
+		}
         return parent;
     }
     
@@ -261,6 +256,18 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         StringBuilder errmsg = new StringBuilder();
         if (!isModelValid(errmsg)) {
             throw new RuntimeException(errmsg.toString());
+        }
+        
+        for (String field:reflector.getRealFields()){
+        	String columnName = reflector.getColumnDescriptor(field).getName();
+        	if (record.get(columnName) == null){
+        		Method fieldGetter = reflector.getFieldGetter(field);
+        		COLUMN_DEF cdef = fieldGetter.getAnnotation(COLUMN_DEF.class);
+        		if (cdef != null){
+        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value());
+        			record.put(columnName,defaultValue);
+        		}
+        	}
         }
     }
 

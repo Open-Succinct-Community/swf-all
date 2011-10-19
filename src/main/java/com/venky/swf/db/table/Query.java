@@ -89,6 +89,7 @@ public class Query {
         PreparedStatement st = null;
         try {
             st = prepare();
+            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query.toString());
             List<M> result = new ArrayList<M>();
             if (st.execute()){
                 ResultSet rs = st.getResultSet();

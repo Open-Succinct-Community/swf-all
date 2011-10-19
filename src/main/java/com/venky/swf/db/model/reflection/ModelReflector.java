@@ -12,8 +12,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -82,7 +85,6 @@ public class ModelReflector<M extends Model> {
                 modelClass = modelClass.getInterfaces()[0];
             }
         }while(modelClass != null);
-
         
     }
     private List<Method> getDeclaredMethods(Class<?> forClass){ 
@@ -156,6 +158,18 @@ public class ModelReflector<M extends Model> {
             for (Method fieldGetter : fieldGetters){
                 allfields.add(getFieldName(fieldGetter));
             }
+            //Retain later presence of fields.
+            Collections.reverse(allfields);
+            Set<String> fieldSet = new HashSet<String>();
+            Iterator<String> fieldIterator = allfields.iterator();
+            while (fieldIterator.hasNext()){
+            	String fieldName = fieldIterator.next();
+            	if (fieldSet.contains(fieldName)){
+            		fieldIterator.remove();
+            	}
+            	fieldSet.add(fieldName);
+            }
+            Collections.reverse(allfields);
         }
     }
     public List<String> getFields(){

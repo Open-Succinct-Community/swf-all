@@ -35,6 +35,9 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
     protected void createBody (Body b){
     	super.createBody(b);
         for (Method childGetter: getReflector().getChildGetters()){
+        	if (!List.class.isAssignableFrom(childGetter.getReturnType())){
+        		continue;
+        	}
         	Class childClass = getReflector().getChildModelClass(childGetter);
         	List<Model> children;
 			try {
