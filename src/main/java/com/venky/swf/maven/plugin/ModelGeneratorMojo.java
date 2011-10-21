@@ -122,8 +122,8 @@ public class ModelGeneratorMojo extends AbstractMojo {
     }
     private void writeFile(OutputStreamWriter osw,Table<?> table,String packageName){
     	JdbcTypeHelper helper = Database.getInstance().getJdbcTypeHelper();
-		Set<String> fieldsPresentInFrameworkModel = new IgnoreCaseSet();
-		fieldsPresentInFrameworkModel.addAll(ModelReflector.instance(Model.class).getRealFields());
+		Set<String> columnsPresentInFrameworkModel = new IgnoreCaseSet();
+		columnsPresentInFrameworkModel.addAll(ModelReflector.instance(Model.class).getRealColumns());
 		
     	Set<String> imports = new HashSet<String>();
     	List<String> code = new ArrayList<String>();
@@ -138,7 +138,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
     			extendingClass = "Model";
     		}
     		if (table.getModelClass().getName().startsWith("com.venky.swf.db.model")){
-        		fieldsPresentInFrameworkModel.addAll(table.getReflector().getRealFields());
+        		columnsPresentInFrameworkModel.addAll(table.getReflector().getRealColumns());
     		}
     	}
     	code.add("public interface " + Table.getSimpleModelClassName(table.getTableName()) + " extends " + extendingClass + "{");
@@ -159,7 +159,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
     				}
     			}
     		}
-			if (fieldsPresentInFrameworkModel.contains(cd.getName())){
+			if (columnsPresentInFrameworkModel.contains(cd.getName())){
 				continue; //Framework definition must stay.
 			}
     		
