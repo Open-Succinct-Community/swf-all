@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 
@@ -33,6 +34,9 @@ public class Query {
     
     List<BindVariable> parameters = new ArrayList<BindVariable>();
     
+    public void clearParameters(){
+    	parameters.clear();
+    }
     public Query select(){
         return select(modelClass);
     }
@@ -89,7 +93,7 @@ public class Query {
         PreparedStatement st = null;
         try {
             st = prepare();
-            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query.toString());
+            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", toString());
             List<M> result = new ArrayList<M>();
             if (st.execute()){
                 ResultSet rs = st.getResultSet();
@@ -140,7 +144,7 @@ public class Query {
         return executeUpdate(null);
     }
     public int executeUpdate(Record generatedKeyValues,String... generatedKeyColumns){ 
-        Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query.toString());
+        Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", toString());
         PreparedStatement st = null;
         try {
             st = prepare(generatedKeyColumns);
@@ -164,5 +168,20 @@ public class Query {
             }
         }
         
+    }
+    
+    @Override
+    public String toString(){
+    	StringBuilder builder = new StringBuilder(query);
+    	int index = builder.indexOf("?");
+    	int p = 0;
+    	while (index >= 0) {
+    		String pStr = StringUtil.valueOf(parameters.get(p).getValue());
+    		builder.replace(index, index+1, pStr);
+    		p+=1;
+    		index = builder.indexOf("?",index+pStr.length());
+    	}
+    	
+    	return builder.toString();
     }
 }

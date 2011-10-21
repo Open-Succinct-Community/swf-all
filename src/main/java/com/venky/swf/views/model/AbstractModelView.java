@@ -107,14 +107,9 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         return !isFieldHidden(fieldName);
     }
     protected boolean isFieldHidden(String fieldName){
-    	boolean hidden = false; 
-        hidden = UIModelHelper.getDefaultHiddenFields(modelClass).contains(fieldName);
-        if (!hidden){
-        	Method getter = getFieldGetter(fieldName);
-        	hidden = getter.isAnnotationPresent(HIDDEN.class);
-        }
-        return hidden;
-    }
+    	Method getter = getFieldGetter(fieldName);
+    	return getter.isAnnotationPresent(HIDDEN.class);
+	}
     
     protected boolean isFieldPassword(String fieldName){
         Method getter = getFieldGetter(fieldName);

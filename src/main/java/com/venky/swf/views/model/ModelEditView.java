@@ -136,6 +136,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     
     
     protected boolean isFieldEditable(String fieldName){
-        return isFieldVisible(fieldName) && !UIModelHelper.getDefaultProtectedFields(modelClass).contains(fieldName) && !getReflector().getVirtualFields().contains(fieldName);
+        return isFieldVisible(fieldName) && !getReflector().getVirtualFields().contains(fieldName);
     }
 }

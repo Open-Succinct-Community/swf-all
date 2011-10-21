@@ -103,6 +103,8 @@ public class ModelController<M extends Model> extends Controller {
         List<String> fields = reflector.getFields();
         fields.remove("ID");
         fields.remove("LOCK_ID");
+        fields.remove("UPDATED_AT");
+        fields.remove("UPDATER_USER_ID");
         
         Enumeration<String> e = getPath().getRequest().getParameterNames();
         while (e.hasMoreElements()) {
@@ -124,6 +126,10 @@ public class ModelController<M extends Model> extends Controller {
             }
 
         }
+        if (isNew()){
+        	record.setCreatorUserId(getSessionUser().getId());
+    	}
+        record.setUpdaterUserId(getSessionUser().getId());
         record.save();
     }
     

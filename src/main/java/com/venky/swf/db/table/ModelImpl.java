@@ -318,19 +318,19 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         Table<M> table = Database.getInstance().getTable(modelClass);
         insertSQL.add("insert into ").add(table.getTableName()).add("(");
 
-        Iterator<String> fieldIterator = record.getDirtyFields().iterator();
+        Iterator<String> columnIterator = record.getDirtyFields().iterator();
         StringBuilder values = new StringBuilder();
-        while (fieldIterator.hasNext()) {
-            String fieldName = fieldIterator.next();
+        while (columnIterator.hasNext()) {
+            String columnName = columnIterator.next();
 
-            insertSQL.add(fieldName);
+            insertSQL.add(columnName);
             values.append("?");
-            if (fieldIterator.hasNext()) {
+            if (columnIterator.hasNext()) {
                 insertSQL.add(",");
                 values.append(",");
             }
-            insertSQL.add(new BindVariable(record.get(fieldName),
-                    reflector.getColumnDescriptor(fieldName).getJDBCType()));
+            insertSQL.add(new BindVariable(record.get(columnName),
+                    table.getColumnDescriptor(columnName).getJDBCType()));
         }
 
         insertSQL.add(" ) ").add("values (").add(values.toString()).add(")");

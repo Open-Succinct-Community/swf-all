@@ -59,6 +59,9 @@ public class Controller {
             }
         }
     }
+    protected User getSessionUser(){
+    	return (User)getPath().getSession().getAttribute("user");
+    }
     protected Class<? extends User> getUserClass(){
     	return User.class;
     }
