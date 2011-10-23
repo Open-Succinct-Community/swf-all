@@ -41,15 +41,28 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
     @Override
     protected void createBody(Body b) {
-        Link create = new Link();
+    	Table container = new Table();
+    	container.addClass("hfill");
+    	b.addControl(container);
+    	Row header = container.createHeader();
+    	Column newLink = header.createColumn();
+
+    	Link create = new Link();
         create.setUrl(getPath().controllerPath()+"/blank");
         create.addControl(new Image("/resources/images/blank.png"));
+    	newLink.addControl(create);
+    	
+    	newLink.addControl(new Label(getModelClass().getSimpleName()));
         
-        b.addControl(create);
-
+    	Row rowContainingTable = container.createRow();
+    	Column columnContainingTable = rowContainingTable.createColumn();
+    	
+    	
         Table table = new Table();
+        columnContainingTable.addControl(table);
+        
         table.setProperty("class", "tablesorter");
-        Row header = table.createHeader();
+        header = table.createHeader();
         Column action = header.createColumn(3); 
         action.setText("Action");
         action.setProperty("width", "1%");
@@ -110,8 +123,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             }
         }
 
-        b.addControl(table);
-        
         Div pager = new Div();
         b.addControl(pager);
 

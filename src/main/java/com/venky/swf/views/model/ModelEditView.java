@@ -100,11 +100,11 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	Table table = new Table();
         form.addControl(table);
         Iterator<String> field = getIncludedFields().iterator();
-        List<Input> hiddenFields = new ArrayList<Input>();
+        List<Control> hiddenFields = new ArrayList<Control>();
         while (field.hasNext()){
             String fieldName = field.next();
             Label fieldLabel = new Label(getFieldLiteral(fieldName));
-            Input fieldData = getInputControl(fieldName, record);
+            Control fieldData = getInputControl(fieldName, record);
             if (isFieldEditable(fieldName)){
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
@@ -124,7 +124,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             r.createColumn(getNumColumnsPerRow() - r.numColumns());
         }
         Column c = r.getLastColumn();
-        for (Input hiddenField: hiddenFields){
+        for (Control hiddenField: hiddenFields){
             c.addControl(hiddenField);
         }
         
@@ -136,6 +136,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     
     
     protected boolean isFieldEditable(String fieldName){
-        return isFieldVisible(fieldName) && !getReflector().getVirtualFields().contains(fieldName);
+        return isFieldVisible(fieldName) && !isFieldVirtual(fieldName) && !isFieldProtected(fieldName);
     }
 }

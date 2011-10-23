@@ -73,14 +73,70 @@ public class Path {
         this.response = response;
     }
     
-    
     public Path(String target) {
         this.target = target;
         StringTokenizer stok = new StringTokenizer(target, "/");
         while (stok.hasMoreTokens()) {
             pathelements.add(stok.nextToken());
         }
+        
+        int pathElementSize = pathelements.size();
+        for (int i = 0 ; i < pathElementSize ; i++){
+        	String token = pathelements.get(i);
+        	String camelizedToken = camelize(token);
+        	Class<?> modelClass = getModelClass(camelizedToken);
+        	if (modelClass != null){
+        		ModelInfo info = new ModelInfo(modelClass);
+        		modelElements.add(info);
+        		if (i <pathElementSize -1){
+	        		info.setAction(pathelements.get(i+1));
+	        		i+= 1;
+        		}
+        		try {
+        			if (i < pathElementSize - 1){
+	        			info.setId(Integer.valueOf(pathelements.get(i+1)));
+	        			i+=1;
+        			}
+        		}catch (NumberFormatException ex){
+        			//
+        		}
+        	}
+    	}
         loadControllerClassName();
+    }
+    
+    public static class ModelInfo{
+    	private Class<?> modelClass;
+    	private Integer id;
+    	private String action = "index";
+    	public ModelInfo(Class<?> modelClass){
+    		this.modelClass= modelClass;
+    	}
+		public Class<?> getModelClass() {
+			return modelClass;
+		}
+		public void setModelClass(Class<?> modelClass) {
+			this.modelClass = modelClass;
+		}
+		public Integer getId() {
+			return id;
+		}
+		public void setId(Integer id) {
+			this.id = id;
+		}
+		public String getAction() {
+			return action;
+		}
+		public void setAction(String action) {
+			this.action = action;
+		}
+    	
+    }
+    
+    List<ModelInfo> modelElements = new ArrayList<Path.ModelInfo>();
+    
+    public List<ModelInfo> getModelElements(){
+    	return modelElements;
     }
     
 
@@ -138,7 +194,8 @@ public class Path {
         		backTarget.append(pathelements.get(i));
         	}
     	}
-    	if (backTarget.length() == 0){
+    	if (backTarget.length() == 0 || backTarget.toString().equals("/app")){
+    		backTarget.setLength(0);
     		backTarget.append(controllerPath()).append("/index");
     	}
     	return backTarget.toString();

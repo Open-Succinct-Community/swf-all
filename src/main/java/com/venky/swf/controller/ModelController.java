@@ -6,10 +6,12 @@ package com.venky.swf.controller;
 
 import java.lang.reflect.Method;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -17,6 +19,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Query;
 import com.venky.swf.routing.Path;
+import com.venky.swf.routing.Path.ModelInfo;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
@@ -30,17 +33,58 @@ import com.venky.swf.views.model.ModelShowView;
 public class ModelController<M extends Model> extends Controller {
 
     private Class<M> modelClass;
-
+    private ModelReflector<M> reflector ;
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
+    	reflector = ModelReflector.instance(modelClass);
+        
     }
+    public String getWhereClause(){
+    	StringBuilder where = new StringBuilder();
+		List<Method> parentGetters = reflector.getParentModelGetters();
+		List<ModelInfo> modelElements =getPath().getModelElements();
 
+		//TODO Correct parent id identification based on action. 
+		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){ // The last model is self.
+    		ModelInfo mi = miIter.next();
+    		if(!miIter.hasNext()){
+    			//last model is self.
+    			break;
+    		}
+    		
+    		StringBuilder parentWhere = new StringBuilder();
+    		
+    		for (Method parentGetter: parentGetters){
+    	    	Class<?> parentModelClass = parentGetter.getReturnType();
+        		if (parentModelClass == mi.getModelClass()){
+        	    	String parentIdFieldName =  StringUtil.underscorize(parentGetter.getName().substring(3) +"Id");
+        	    	String parentIdColumnName = reflector.getColumnDescriptor(parentIdFieldName).getName();
+        	    	
+        			if (parentWhere.length() > 0){
+        				parentWhere.append(" OR ");
+        			}
+        			parentWhere.append(parentIdColumnName).append(" = ").append(mi.getId());
+        		}
+    		}
+    		
+    		if (parentWhere.length() > 0){
+    			if (where.length() > 0){
+        			where.append(" AND ");
+    			}
+    			where.append("(").append(parentWhere).append(") ");
+    		}
+    	}
+		if (where.length() == 0){
+			where.append(" 1 = 1");
+		}
+    	return where.toString();
+		    	
+    }
     @Override
     public View index() {
         Query q = new Query(modelClass);
-		//TODO VENKY Add to filter for parent model ids based on path information.
-        List<M> records = q.select().execute();
+        List<M> records = q.select().where(getWhereClause()).execute();
         return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
     }
     
@@ -57,7 +101,29 @@ public class ModelController<M extends Model> extends Controller {
 
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
-        ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
+		List<ModelInfo> modelElements =getPath().getModelElements();
+		//TODO Correct parent id identification based on action. 
+		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
+    		ModelInfo mi = miIter.next();
+    		if(!miIter.hasNext()){
+    			//last model is self.
+    			break;
+    		}
+    		for (Method parentGetter: reflector.getParentModelGetters()){
+    	    	Class<?> parentModelClass = parentGetter.getReturnType();
+        		if (parentModelClass == mi.getModelClass()){
+        	    	String parentIdFieldName =  reflector.getReferredModelIdFieldName(parentGetter);
+        	    	Method parentIdSetter =  reflector.getFieldSetter(parentIdFieldName);
+        	    	try {
+						parentIdSetter.invoke(record, mi.getId());
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+        		}
+    		}
+		}
+
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
         mev.getIncludedFields().remove("ID");
         return dashboard(mev);
     }
@@ -140,7 +206,7 @@ public class ModelController<M extends Model> extends Controller {
 
     public View autocomplete(String value) {
     	ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-        return super.autocomplete(modelClass, reflector.getDescriptionColumn(), value);
+        return super.autocomplete(modelClass,getWhereClause(), reflector.getDescriptionColumn(), value);
     }
     
     

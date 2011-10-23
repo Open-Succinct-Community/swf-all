@@ -5,12 +5,16 @@
 package com.venky.swf.views.model;
 
 import java.lang.reflect.Method;
+import java.util.Iterator;
 import java.util.List;
 
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls.page.layout.LineBreak;
 
 /**
  *
@@ -45,9 +49,17 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
-        	
+			List<String> includedFields = ModelReflector.instance(childClass).getFields();
+        	Iterator<String> fi = includedFields.iterator();
+        	while (fi.hasNext()){
+        		String field = fi.next();
+        		if (field.endsWith(StringUtil.underscorize(getModelClass().getSimpleName() +"Id"))){
+        			fi.remove();
+        		}
+        	}
+        	b.addControl(new LineBreak());
         	new ModelListView<Model>(new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase()), 
-        			childClass, null, children).createBody(b);
+        			childClass, includedFields.toArray(new String[]{}), children).createBody(b);
         }
 
     }

@@ -13,6 +13,7 @@ import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTED;
 
 /**
  *
@@ -31,6 +32,7 @@ public interface Model {
     
 	@COLUMN_SIZE(10)
 	@COLUMN_NAME("updater_id")
+	@PROTECTED
 	public Integer getUpdaterUserId();
 	public void setUpdaterUserId(Integer updaterUserId);
 	public User getUpdaterUser();
@@ -44,6 +46,7 @@ public interface Model {
 
 	@COLUMN_SIZE(10)
 	@COLUMN_NAME("creator_id")
+	@PROTECTED
 	public Integer getCreatorUserId();
 	public void setCreatorUserId(Integer creatorUserId);
 	public User getCreatorUser();

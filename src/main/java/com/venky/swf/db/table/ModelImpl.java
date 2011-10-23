@@ -71,7 +71,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
 
-        if (ModelReflector.getFieldGetterMatcher().matches(method)) {
+        if (getReflector().getFieldGetterMatcher().matches(method)) {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
                 ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
@@ -89,19 +89,19 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
                     return converter.valueOf(value);
                 }
             }
-        } else if (ModelReflector.getFieldSetterMatcher().matches(method) ) {
+        } else if (getReflector().getFieldSetterMatcher().matches(method) ) {
             String fieldName = StringUtil.underscorize(mName.substring(3));
             if (!virtualFields.contains(fieldName)){
                 String columnName = getReflector().getColumnDescriptor(fieldName).getName(); 
                 return record.put(columnName, args[0]);
             }
-        } else if (ModelReflector.getParentGetterMatcher().matches(method)) {
+        } else if (getReflector().getReferredModelGetterMatcher().matches(method)) {
             return getParent(method);
-        } else if (ModelReflector.getChildrenGetterMatcher().matches(method)) {
+        } else if (getReflector().getChildrenGetterMatcher().matches(method)) {
             if (Model.class.isAssignableFrom(method.getReturnType())){
                 return getChild((Class<? extends Model>) method.getReturnType());
             }else {
-                return getChildren(ModelReflector.getChildModelClass(method));
+                return getChildren(getReflector().getChildModelClass(method));
             }
         }
 

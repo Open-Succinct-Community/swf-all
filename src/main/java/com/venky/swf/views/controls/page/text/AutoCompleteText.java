@@ -29,6 +29,9 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     private String descriptionColumn = null ;
     private TextBox description = null; 
     public AutoCompleteText(Class<M> modelClass){
+    	this(modelClass,"");
+    }
+    public AutoCompleteText(Class<M> modelClass,String urlPrefix){
         this.modelClass = modelClass;
         Table<M> table = Database.getInstance().getTable(modelClass);
         
@@ -38,7 +41,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 	        assert (ModelReflector.instance(modelClass).getFields().contains(descriptionColumn));
             
 	        this.description = new TextBox();
-            description.setAutocompleteServiceURL("/"+table.getTableName().toLowerCase()+"/autocomplete/" );
+            description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
         }
         setVisible(false);
     }

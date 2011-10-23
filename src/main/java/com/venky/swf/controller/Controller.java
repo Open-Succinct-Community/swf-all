@@ -118,7 +118,7 @@ public class Controller {
         return new BytesView(getPath(), baos.toByteArray());
     }
     
-    public <M extends Model> View autocomplete(Class<M> modelClass, String fieldName ,String value){
+    public <M extends Model> View autocomplete(Class<M> modelClass, String baseWhereClause, String fieldName ,String value){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         XMLElement elem = null ;
@@ -130,7 +130,7 @@ public class Controller {
         q.select(table.getTableName());
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
         
-        q.add(" WHERE ").add(columnName).add(" like ?", new BindVariable("%"+value+"%"));
+        q.where(baseWhereClause).and(columnName).add(" like ?", new BindVariable("%"+value+"%"));
         List<M> records = q.execute(modelClass);
         for (M record:records){
             try {

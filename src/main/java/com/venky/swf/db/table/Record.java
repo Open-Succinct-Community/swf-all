@@ -4,22 +4,23 @@
  */
 package com.venky.swf.db.table;
 
-import com.venky.core.util.ObjectUtil;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
-import com.venky.core.collections.*;
+
+import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.collections.IgnoreCaseSet;
+import com.venky.core.util.ObjectUtil;
 
 /**
  *
  * @author venky
  */
 public class Record {
-    private HashMap<String,Object> fieldValues = new IgnoreCaseMap<Object>();
+    private Map<String,Object> fieldValues = new IgnoreCaseMap<Object>();
     
     public Set<String> getFieldNames(){
         return fieldValues.keySet();

@@ -104,4 +104,40 @@ public class Control extends Properties {
     public void setText(String value) {
         this.text = value;
     }
+    
+    public String getName(){ 
+        return getProperty("name");
+    }
+
+    public void setName(final String name){
+        setProperty("name", name);
+    }
+
+    public void setValue(final Object value){
+        setProperty("value", StringUtil.valueOf(value));
+    }
+    
+    public String getValue(){
+        return getProperty("value");
+    }
+    public final void setEnabled(final boolean enabled){
+        if (enabled){
+            remove("disabled");
+        }else {
+            setProperty("disabled", !enabled);
+        }
+    }
+    
+    public boolean isEnabled(){
+        return !containsKey("disabled");
+    }
+
+    public void setVisible(final boolean visible){
+    	addClass("hidden");
+    }
+
+    public boolean isVisible(){ 
+        return !getProperty("class").contains(" hidden ");
+    }
+
 }

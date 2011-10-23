@@ -9,23 +9,28 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
-import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.PasswordText;
+import com.venky.swf.views.controls.page.text.Select;
 import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
@@ -72,7 +77,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         return getter;
     }
 
-    public Input getInputControl(String fieldName, M record) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public Control getInputControl(String fieldName, M record) {
         Method getter = getFieldGetter(fieldName);
         Object value = null;
         try {
@@ -83,19 +89,29 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
 
         Class<?> returnType = getter.getReturnType();
         TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
-        Input control = null;
+        Control control = null;
         if (boolean.class.isAssignableFrom(returnType) || Boolean.class.isAssignableFrom(returnType)) {
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
         } else {
-            Method parentModelGetter = ModelReflector.getParentModelGetterFor(getter);
+            Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);
             if (parentModelGetter != null){
-                control = new AutoCompleteText(ModelReflector.getParentModelClass(parentModelGetter));
+                control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().getBackTarget());
             }else if (isFieldPassword(fieldName)){
                 control = new PasswordText();
+            }else if (isFieldEnumeration(fieldName)){
+                Select select = new Select();
+                Enumeration enumeration = getFieldGetter(fieldName).getAnnotation(Enumeration.class) ;
+                StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
+                
+                while (allowedValues.hasMoreTokens()){
+                	String nextAllowedValue = allowedValues.nextToken();
+                	select.createOption(nextAllowedValue, nextAllowedValue);
+                }
+                control = select;
             }else {
-                control = new TextBox();
+            	control = new TextBox();
             }
             control.setValue(converter.toString(value));
         }
@@ -114,15 +130,32 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     protected boolean isFieldPassword(String fieldName){
         Method getter = getFieldGetter(fieldName);
         return  getter.isAnnotationPresent(PASSWORD.class);
-
     }
+    
+    protected boolean isFieldProtected(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return getter.isAnnotationPresent(PROTECTED.class);
+    }
+    
+    protected boolean isFieldVirtual(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return getter.isAnnotationPresent(IS_VIRTUAL.class);
+    }
+    
+    protected boolean isFieldEnumeration(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return getter.isAnnotationPresent(Enumeration.class);
+    }
+    
+    
     protected String getParentDescription(Method parentIdGetter, Model record) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        Method parentModelGetter = ModelReflector.getParentModelGetterFor(parentIdGetter);
+        Method parentModelGetter = getReflector().getReferredModelGetterFor(parentIdGetter);
         
         if (parentModelGetter != null){
             Model parentModel = (Model)parentModelGetter.invoke(record);
             if (parentModel != null){
-                Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType(); 
+                @SuppressWarnings("unchecked")
+				Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType(); 
                 HAS_DESCRIPTION_COLUMN hdc = parentModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
                 if (hdc != null){
                     String descriptionColumn = hdc.value();
@@ -139,7 +172,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     protected String getFieldLiteral(String fieldName){
         String fieldLiteral =  StringUtil.camelize(fieldName);
 
-        Method parentModelgetter = ModelReflector.getParentModelGetterFor(reflector.getFieldGetter(fieldName));
+        Method parentModelgetter = getReflector().getReferredModelGetterFor(reflector.getFieldGetter(fieldName));
         if (parentModelgetter != null) {
             Class<?> parentModel = parentModelgetter.getReturnType();
             HAS_DESCRIPTION_COLUMN hdc = parentModel.getAnnotation(HAS_DESCRIPTION_COLUMN.class);

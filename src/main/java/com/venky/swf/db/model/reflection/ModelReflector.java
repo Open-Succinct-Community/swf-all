@@ -36,6 +36,7 @@ import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.validations.Mandatory;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
@@ -137,10 +138,13 @@ public class ModelReflector<M extends Model> {
         return getMethods(getFieldSetterMatcher());
     }
     
-    public List<Method> getParentGetters(){ 
-        return getMethods(getParentGetterMatcher());
+    public List<Method> getReferredModelGetters(){ 
+        return getMethods(getReferredModelGetterMatcher());
     }
     
+    public List<Method> getParentModelGetters(){
+    	return getMethods(getParentModelGetterMatcher());
+    }
     public List<Method> getChildGetters(){
         return getMethods(getChildrenGetterMatcher());
     }
@@ -296,54 +300,60 @@ public class ModelReflector<M extends Model> {
         return cd;
     }
     
-    private static final MethodMatcher getterMatcher = new GetterMatcher();
-    public static MethodMatcher getGetterMatcher(){
+    private final MethodMatcher getterMatcher = new GetterMatcher();
+    public  MethodMatcher getGetterMatcher(){
         return getterMatcher;
     }
 
-    private static final MethodMatcher fieldGetterMatcher = new FieldGetterMatcher();
-    public static MethodMatcher getFieldGetterMatcher() {
+    private final MethodMatcher fieldGetterMatcher = new FieldGetterMatcher();
+    public MethodMatcher getFieldGetterMatcher() {
         return fieldGetterMatcher;
     }
     
-    private static final MethodMatcher fieldSetterMatcher = new FieldSetterMatcher();
-    public static MethodMatcher getFieldSetterMatcher() {
+    private final MethodMatcher fieldSetterMatcher = new FieldSetterMatcher();
+    public MethodMatcher getFieldSetterMatcher() {
         return fieldSetterMatcher;
     }
     
-    private static final MethodMatcher parentGetterMatcher=  new ParentGetterMatcher();
-    public static MethodMatcher getParentGetterMatcher(){ 
-        return parentGetterMatcher;
+    private final MethodMatcher referredModelGetterMatcher=  new ReferredModelGetterMatcher();
+    public MethodMatcher getReferredModelGetterMatcher(){ 
+        return referredModelGetterMatcher;
     }
     
-    private static final MethodMatcher childrenGetterMatcher=  new ChildrenGetterMatcher();
-    public static MethodMatcher getChildrenGetterMatcher(){ 
+    private final MethodMatcher parentModelGetterMatcher = new ParentModelGetterMatcher();
+    
+    private MethodMatcher getParentModelGetterMatcher() {
+    	return parentModelGetterMatcher;
+    }
+    
+    private final MethodMatcher childrenGetterMatcher=  new ChildrenGetterMatcher();
+    public MethodMatcher getChildrenGetterMatcher(){ 
         return childrenGetterMatcher;
     }
 
-    public static interface MethodMatcher {
+    public interface MethodMatcher {
         public boolean matches(Method method);
     }
-    public static interface FieldMatcher {
+    public interface FieldMatcher {
         public boolean matches(ColumnDescriptor cd);
     }
 
-    private static class RealFieldMatcher implements FieldMatcher {
+    private class RealFieldMatcher implements FieldMatcher {
         public boolean matches(ColumnDescriptor cd) {
             return !cd.isVirtual();
         }
     }
-    private static class VirtualFieldMatcher implements FieldMatcher {
+    private class VirtualFieldMatcher implements FieldMatcher {
         public boolean matches(ColumnDescriptor cd) {
             return cd.isVirtual();
         }
     }
-    private static class GetterMatcher implements MethodMatcher{
+    private class GetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
             String mName = method.getName();
             Class<?> retType = method.getReturnType();
             Class<?>[] paramTypes = method.getParameterTypes();
-            if (  ((mName.startsWith("get") && retType != null) || 
+            if (  ((mName.startsWith("get") && retType != Void.TYPE) || 
                     mName.startsWith("is") && (boolean.class == retType || Boolean.class == retType) ) &&
                     (paramTypes == null || paramTypes.length == 0)){
                  return true;
@@ -353,14 +363,27 @@ public class ModelReflector<M extends Model> {
         }
     }
     
-    private static class ParentGetterMatcher implements MethodMatcher{
+    private class ReferredModelGetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
-            return getParentModelClass(method) != null;
+            return getReferredModelClass(method) != null;
         }
     }
-    public static Class<? extends Model> getChildModelClass(Method method){
+    
+    private class ParentModelGetterMatcher extends ReferredModelGetterMatcher{
+    	public boolean matches(Method method){
+            boolean isReferredModelGetter =  super.matches(method);
+            if (isReferredModelGetter){
+            	String referredModelIdFieldName = getReferredModelIdFieldName(method);
+            	return getFieldGetter(referredModelIdFieldName).isAnnotationPresent(Mandatory.class);
+            }
+            return isReferredModelGetter;
+        }
+    }
+        
+    public Class<? extends Model> getChildModelClass(Method method){
         Class<?> possibleChildClass = null;
-        Class<? extends Model> parentModelClass = (Class<? extends Model>)method.getDeclaringClass();
+        @SuppressWarnings("unchecked")
+		Class<? extends Model> parentModelClass = (Class<? extends Model>)method.getDeclaringClass();
         if (!Model.class.isAssignableFrom(parentModelClass)){
             return null;
         }
@@ -385,14 +408,15 @@ public class ModelReflector<M extends Model> {
         }
         return null;
     }
-    private static class ChildrenGetterMatcher implements MethodMatcher{
+    
+    private class ChildrenGetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
             return (getChildModelClass(method) != null);
         }
     }
     
     
-    private static class FieldGetterMatcher extends GetterMatcher{ 
+    private class FieldGetterMatcher extends GetterMatcher{ 
         @Override
         public boolean matches(Method method){
             if (super.matches(method) && 
@@ -405,7 +429,7 @@ public class ModelReflector<M extends Model> {
         }
     }
 
-    public static class SetterMatcher implements MethodMatcher{
+    private class SetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
             String mName = method.getName();
             Class<?> retType = method.getReturnType();
@@ -418,7 +442,7 @@ public class ModelReflector<M extends Model> {
 
         }
     }
-    private static class FieldSetterMatcher extends SetterMatcher{ 
+    private class FieldSetterMatcher extends SetterMatcher{ 
         @Override
         public boolean matches(Method method){
             if (super.matches(method) && Database.getInstance().getJdbcTypeHelper().getTypeRef(method.getParameterTypes()[0]) != null){
@@ -429,40 +453,44 @@ public class ModelReflector<M extends Model> {
         }
     }
 
-    public static Class<? extends Model> getParentModelClass(Method method){
+    public Class<? extends Model> getReferredModelClass(Method method){
         Class<? extends Model> modelClass = (Class<? extends Model>)method.getDeclaringClass();
         if (!Model.class.isAssignableFrom(modelClass)){
             return null;
         }
         ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
-        Class<? extends Model> parentClass = null;
-        Class<?> possibleParentClass = method.getReturnType();
-        if (getGetterMatcher().matches(method) && Model.class.isAssignableFrom(possibleParentClass)){
-            String parentIdFieldName = StringUtil.underscorize(method.getName().substring(3) + "Id");
-            if (reflector.getFields().contains(parentIdFieldName)){
-                parentClass = (Class<? extends Model>)possibleParentClass;
+        Class<? extends Model> referredModelClass = null;
+        Class<?> possibleReferredModelClass = method.getReturnType();
+        if (Model.class.isAssignableFrom(possibleReferredModelClass) && getGetterMatcher().matches(method)){
+            String referredIdFieldName = getReferredModelIdFieldName(method);
+            if (reflector.getFields().contains(referredIdFieldName)){
+                referredModelClass = (Class<? extends Model>)possibleReferredModelClass;
             }
          }
-        return parentClass;
+        return referredModelClass;
         
     }
     
-    public static Method getParentModelGetterFor(Method parentIdGetter){
-        Class<? extends Model> modelClass = (Class<? extends Model>)parentIdGetter.getDeclaringClass();
+    public String getReferredModelIdFieldName(Method parentGetter){
+    	return StringUtil.underscorize(parentGetter.getName().substring(3) + "Id");
+    }
+    
+    public Method getReferredModelGetterFor(Method referredModelIdGetter){
+        Class<? extends Model> modelClass = (Class<? extends Model>)referredModelIdGetter.getDeclaringClass();
         if (!Model.class.isAssignableFrom(modelClass)){
             return null;
         }
-        if (!getFieldGetterMatcher().matches(parentIdGetter)){
+        if (!getFieldGetterMatcher().matches(referredModelIdGetter)){
             return null;
         }
-        String methodName = parentIdGetter.getName();
+        String methodName = referredModelIdGetter.getName();
         if (methodName.startsWith("get") && methodName.endsWith("Id") && !methodName.equals("getId") && 
-        		(parentIdGetter.getReturnType() == int.class || parentIdGetter.getReturnType() == Integer.class)){
-            String parentModelMethodName = methodName.substring(0,methodName.length()-"Id".length());
+        		(referredModelIdGetter.getReturnType() == int.class || referredModelIdGetter.getReturnType() == Integer.class)){
+            String referredModelMethodName = methodName.substring(0,methodName.length()-"Id".length());
             try {
-                Method parentModelGetter = modelClass.getMethod(parentModelMethodName);
-                if (Model.class.isAssignableFrom(parentModelGetter.getReturnType())){
-                    return parentModelGetter;
+                Method referredModelGetter = modelClass.getMethod(referredModelMethodName);
+                if (Model.class.isAssignableFrom(referredModelGetter.getReturnType())){
+                    return referredModelGetter;
                 }
             } catch (Exception ex) {
                 //
@@ -480,51 +508,51 @@ public class ModelReflector<M extends Model> {
 
         public void visit(int version, int access, String name,
                 String signature, String superName, String[] interfaces) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         public void visitSource(String source, String debug) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         public void visitOuterClass(String owner, String name, String desc) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
         public void visitAttribute(Attribute attr) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         public void visitInnerClass(String name, String outerName,
                 String innerName, int access) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         public FieldVisitor visitField(int access, String name, String desc,
                 String signature, Object value) {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
         public MethodVisitor visitMethod(int access, String name, String desc,
                 String signature, String[] exceptions) {
-            // TODO Auto-generated method stub
+            
             methodSequenceMap.put(name,methodSequenceMap.size());
             return null;
         }
 
         public void visitEnd() {
-            // TODO Auto-generated method stub
+            
             
         }
     }

@@ -39,8 +39,18 @@ div.nav li ul ul {
     margin-left: 15em;
 }
 
-
+.hidden {
+	visibility:hidden;
+}
+.hfill {
+	width: 100%;
+}
+.hfill tr th {
+	text-align: left;
+}
 /* Styling based on Database types*/
 .number {
 	text-align: right; 
 }
+
+
