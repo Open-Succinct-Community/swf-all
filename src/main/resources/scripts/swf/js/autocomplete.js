@@ -32,6 +32,6 @@ $(function(){
 });
 
 $(function() {
-    $('form:first *:input[type!=hidden]:first').focus();
+    $('form:first *:input[type!=hidden]:not([disabled]):first').focus();
 });
 

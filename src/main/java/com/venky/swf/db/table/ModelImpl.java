@@ -82,7 +82,13 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
                 TypeRef<?> ref =Database.getInstance().getJdbcTypeHelper().getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (value == null) {
-                	return cd.isNullable() ? null : converter.valueOf(null);
+                	Object defaultValue = null;
+                	COLUMN_DEF colDef = method.getAnnotation(COLUMN_DEF.class);
+                	if (colDef != null){
+                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value());
+                	}
+
+                	return cd.isNullable() ? defaultValue : converter.valueOf(defaultValue);
                 } else if (retType.isInstance(value)) {
                     return value;
                 } else {

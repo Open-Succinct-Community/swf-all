@@ -263,6 +263,9 @@ public class JdbcTypeHelper {
             if (ObjectUtil.isVoid(o)) {
                 return null;
             }
+            if (o instanceof Time){
+            	return new Time(((Time)o).getTime());
+            }
             return new Time(DateUtils.getTime(StringUtil.valueOf(o)).getTime());
         }
 
@@ -282,6 +285,9 @@ public class JdbcTypeHelper {
         public Timestamp valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return null;
+            }
+            if (o instanceof Timestamp){ 
+            	return new Timestamp(((Timestamp)o).getTime());
             }
             return new Timestamp(DateUtils.getDate(StringUtil.valueOf(o)).getTime());
         }
