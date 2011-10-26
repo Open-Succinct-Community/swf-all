@@ -5,18 +5,17 @@
 package com.venky.swf.db.model.reflection;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
@@ -66,7 +65,71 @@ public class ModelReflector<M extends Model> {
     }
     
     private Class<M> reflectedModelClass  = null;
-    private List<Method> allMethods = new ArrayList<Method>();
+    
+    private Map<Method,String> methodSignature = new HashMap<Method, String>();
+    private Map<String,List<Method>> methodsWithSameSignature = new HashMap<String, List<Method>>();
+    private List<Method> allMethods = null;
+    
+    private String getMethodSignature(Method method){
+    	String ret = methodSignature.get(method);
+    	if (ret != null){
+    		return ret;
+    	}
+    	int modifiers = method.getModifiers();
+    	StringBuilder sign = new StringBuilder();
+		sign.append(Modifier.isPublic(modifiers) ? "public " : Modifier.isProtected(modifiers) ? "protected " : Modifier.isPrivate(modifiers)? "private " : "");
+		sign.append(method.getReturnType().toString() + " ");
+		sign.append(method.getName() + "(");
+		Class<?>[] pt = method.getParameterTypes();
+		for (int i = 0 ; i< pt.length ; i++ ){
+			if (i > 0){
+				sign.append(",");
+			}
+			sign.append(pt[i]);
+		}
+		sign.append(")");
+
+    	
+		ret = sign.toString();
+    	methodSignature.put(method, ret);
+    	return ret;
+    }
+    private List<Method> getMethodsForSignature(String signature){
+    	List<Method> methods = methodsWithSameSignature.get(signature);
+    	if (methods == null){
+    		methods = new ArrayList<Method>();
+    		methodsWithSameSignature.put(signature, methods);
+    	}
+    	return methods;
+    }
+    
+    public boolean isAnnotationPresent(Method method, Class<? extends Annotation> annotationClass){
+    	if (method.isAnnotationPresent(annotationClass)){
+    		return true;
+    	}
+    	boolean present = false;
+    	List<Method> methods = getMethodsForSignature(getMethodSignature(method)); 
+    	for (int i = 0 ; !present && i < methods.size() ; i ++){
+    		Method m = methods.get(i);
+    		present = m.isAnnotationPresent(annotationClass);
+    	}
+    	return present;
+    }
+    
+    public <T extends Annotation> T getAnnotation(Method method,Class<T> annotationClass){
+    	if (method.isAnnotationPresent(annotationClass)){
+    		return method.getAnnotation(annotationClass);
+    	}
+    	T annotation = null;
+    	List<Method> methods = getMethodsForSignature(getMethodSignature(method)); 
+    	for (int i = 0 ; annotation == null && i < methods.size() ; i ++){
+    		Method m = methods.get(i);
+    		annotation = m.getAnnotation(annotationClass);
+    	}
+    	return annotation;
+    }
+    
+    
     private ModelReflector(Class<M> reflectedModelClass){
         this.reflectedModelClass = reflectedModelClass;
         if (!Model.class.isAssignableFrom(reflectedModelClass)){
@@ -74,11 +137,24 @@ public class ModelReflector<M extends Model> {
         }
         
         Class<?> modelClass = reflectedModelClass;
+        allMethods = new ArrayList<Method>(modelClass.getMethods().length);
         do {
             if (modelClass.getInterfaces().length > 1){
                 throw new RuntimeException ("Model interfaces must extend atmost one model Interface");
             }
-            allMethods.addAll(0,getDeclaredMethods(modelClass));
+            int index = 0;
+            for (Method m :getDeclaredMethods(modelClass)){
+            	List<Method> methodsForSignature = getMethodsForSignature(getMethodSignature(m));
+            	if (methodsForSignature.isEmpty()){
+            		if (modelClass.equals(Model.class)){
+            			allMethods.add(m);
+            		}else {
+            			allMethods.add(index,m);
+                		index++;
+            		}
+            	}
+            	methodsForSignature.add(m);
+            }
             
             if (modelClass.getInterfaces().length == 0){
                 modelClass = null ;
@@ -162,18 +238,6 @@ public class ModelReflector<M extends Model> {
             for (Method fieldGetter : fieldGetters){
                 allfields.add(getFieldName(fieldGetter));
             }
-            //Retain later presence of fields.
-            Collections.reverse(allfields);
-            Set<String> fieldSet = new HashSet<String>();
-            Iterator<String> fieldIterator = allfields.iterator();
-            while (fieldIterator.hasNext()){
-            	String fieldName = fieldIterator.next();
-            	if (fieldSet.contains(fieldName)){
-            		fieldIterator.remove();
-            	}
-            	fieldSet.add(fieldName);
-            }
-            Collections.reverse(allfields);
         }
     }
     public List<String> getFields(){
@@ -276,13 +340,13 @@ public class ModelReflector<M extends Model> {
         ColumnDescriptor cd = columnDescriptors.get(getter);
         
         if (cd == null){
-            COLUMN_NAME name = getter.getAnnotation(COLUMN_NAME.class);
-            COLUMN_SIZE size = getter.getAnnotation(COLUMN_SIZE.class);
-            DATA_TYPE type = getter.getAnnotation(DATA_TYPE.class);
-            DECIMAL_DIGITS digits = getter.getAnnotation(DECIMAL_DIGITS.class);
-            IS_NULLABLE isNullable = getter.getAnnotation(IS_NULLABLE.class);
-            IS_AUTOINCREMENT isAutoIncrement = getter.getAnnotation(IS_AUTOINCREMENT.class);
-            IS_VIRTUAL isVirtual = getter.getAnnotation(IS_VIRTUAL.class);
+            COLUMN_NAME name = getAnnotation(getter,COLUMN_NAME.class);
+            COLUMN_SIZE size = getAnnotation(getter,COLUMN_SIZE.class);
+            DATA_TYPE type = getAnnotation(getter,DATA_TYPE.class);
+            DECIMAL_DIGITS digits = getAnnotation(getter,DECIMAL_DIGITS.class);
+            IS_NULLABLE isNullable = getAnnotation(getter,IS_NULLABLE.class);
+            IS_AUTOINCREMENT isAutoIncrement = getAnnotation(getter,IS_AUTOINCREMENT.class);
+            IS_VIRTUAL isVirtual = getAnnotation(getter,IS_VIRTUAL.class);
             
             cd = new ColumnDescriptor();
             cd.setName(name == null ? getFieldName(getter) : name.value());
@@ -374,11 +438,12 @@ public class ModelReflector<M extends Model> {
             boolean isReferredModelGetter =  super.matches(method);
             if (isReferredModelGetter){
             	String referredModelIdFieldName = getReferredModelIdFieldName(method);
-            	return getFieldGetter(referredModelIdFieldName).isAnnotationPresent(Mandatory.class);
+            	return isAnnotationPresent(getFieldGetter(referredModelIdFieldName),Mandatory.class);
             }
             return isReferredModelGetter;
         }
     }
+    
         
     public Class<? extends Model> getChildModelClass(Method method){
         Class<?> possibleChildClass = null;

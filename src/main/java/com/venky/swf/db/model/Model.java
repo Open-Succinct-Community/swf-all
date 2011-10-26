@@ -40,7 +40,7 @@ public interface Model {
 	@COLUMN_NAME("updated_at")
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.CURRENT_TIMESTAMP)
-	@HIDDEN
+	@PROTECTED
 	public Timestamp getUpdatedAt();
 	public void setUpdatedAt(Timestamp updatedAt);
 
@@ -54,10 +54,11 @@ public interface Model {
 	@COLUMN_NAME("created_at")
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.CURRENT_TIMESTAMP)
-	@HIDDEN
+	@PROTECTED
 	public Timestamp getCreatedAt();
 	public void setCreatedAt(Timestamp createdAt);
     	
     public void save();
     public void destroy();
+    public void init();
 }

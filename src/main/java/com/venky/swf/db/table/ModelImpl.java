@@ -63,7 +63,6 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         this.virtualFields = reflector.getVirtualFields();
         record.startTracking();
     }
-
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         setProxy(modelClass.cast(proxy));
 
@@ -83,7 +82,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (value == null) {
                 	Object defaultValue = null;
-                	COLUMN_DEF colDef = method.getAnnotation(COLUMN_DEF.class);
+                	COLUMN_DEF colDef = getReflector().getAnnotation(method,COLUMN_DEF.class);
                 	if (colDef != null){
                 		defaultValue = StandardDefaulter.getDefaultValue(colDef.value());
                 	}
@@ -221,6 +220,9 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         afterSave();
 
     }
+    public void init(){
+    	
+    }
     private final static List<FieldValidator<? extends Annotation>> validators = new ArrayList<FieldValidator<? extends Annotation>>();
 
     static {
@@ -252,7 +254,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         Iterator<FieldValidator<? extends Annotation>> i = validators.iterator();
         while (i.hasNext()) {
             FieldValidator<? extends Annotation> v = i.next();
-            ret = v.isValid(getter.getAnnotation(v.getAnnotationClass()), value, message) && ret;
+            ret = v.isValid(getReflector().getAnnotation(getter,v.getAnnotationClass()), value, message) && ret;
         }
         return ret;
 
@@ -268,7 +270,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         	String columnName = reflector.getColumnDescriptor(field).getName();
         	if (record.get(columnName) == null){
         		Method fieldGetter = reflector.getFieldGetter(field);
-        		COLUMN_DEF cdef = fieldGetter.getAnnotation(COLUMN_DEF.class);
+        		COLUMN_DEF cdef = reflector.getAnnotation(fieldGetter,COLUMN_DEF.class);
         		if (cdef != null){
         			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value());
         			record.put(columnName,defaultValue);

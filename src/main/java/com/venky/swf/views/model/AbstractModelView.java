@@ -102,7 +102,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
                 control = new PasswordText();
             }else if (isFieldEnumeration(fieldName)){
                 Select select = new Select();
-                Enumeration enumeration = getFieldGetter(fieldName).getAnnotation(Enumeration.class) ;
+                Enumeration enumeration = getReflector().getAnnotation(getFieldGetter(fieldName),Enumeration.class) ;
                 StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
                 
                 while (allowedValues.hasMoreTokens()){
@@ -124,27 +124,27 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     }
     protected boolean isFieldHidden(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return getter.isAnnotationPresent(HIDDEN.class);
+    	return getReflector().isAnnotationPresent(getter,HIDDEN.class);
 	}
     
     protected boolean isFieldPassword(String fieldName){
         Method getter = getFieldGetter(fieldName);
-        return  getter.isAnnotationPresent(PASSWORD.class);
+        return  getReflector().isAnnotationPresent(getter,PASSWORD.class);
     }
     
     protected boolean isFieldProtected(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return getter.isAnnotationPresent(PROTECTED.class);
+    	return getReflector().isAnnotationPresent(getter,PROTECTED.class);
     }
     
     protected boolean isFieldVirtual(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return getter.isAnnotationPresent(IS_VIRTUAL.class);
+    	return getReflector().isAnnotationPresent(getter,IS_VIRTUAL.class);
     }
     
     protected boolean isFieldEnumeration(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return getter.isAnnotationPresent(Enumeration.class);
+    	return getReflector().isAnnotationPresent(getter,Enumeration.class);
     }
     
     
