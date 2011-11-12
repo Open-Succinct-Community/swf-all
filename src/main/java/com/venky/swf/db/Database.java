@@ -4,6 +4,8 @@
  */
 package com.venky.swf.db;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
@@ -15,13 +17,15 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
 
-import com.venky.core.collections.*;
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.model.Model;
@@ -205,8 +209,8 @@ public class Database {
         if (!tables.isEmpty()){
             return;
         }
-        loadTablesFromDB();
         loadTablesFromModel();
+        loadTablesFromDB();
     }
     
     private void loadTablesFromDB(){
@@ -217,7 +221,7 @@ public class Database {
                 String tableName = tablesResultSet.getString("TABLE_NAME");
                 Table table = new Table(tableName);
                 table.setExistingInDatabase(true);
-                tables.put(table.getTableName(),table);
+                tables.put(table.getTableName(),table); // Override from db.
                 ResultSet columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
                 while(columnResultSet.next()){
                     String columnName  = columnResultSet.getString("COLUMN_NAME");
@@ -228,31 +232,14 @@ public class Database {
             throw new RuntimeException(ex);
         }
     }
-    
+
     private void loadTablesFromModel(){ 
-        
         List<String> modelClasses = new ArrayList<String>();
-        URL url1ToInspect = getClass().getClassLoader().getResource("config/swf.properties");
-        if (url1ToInspect.getProtocol().equals("file")){
-            try {
-                url1ToInspect = new URL(url1ToInspect.toString().substring(0,url1ToInspect.toString().length()-"config/swf.properties".length()));
-            } catch (MalformedURLException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        
-        URL url2ToInspect = getClass().getClassLoader().getResource("com/venky/swf/db/model/Model.class");
-        if (url2ToInspect.getProtocol().equals("file")){
-            try {
-                url2ToInspect = new URL(url2ToInspect.toString().substring(0,url2ToInspect.toString().length()-"com/venky/swf/db/model/Model.class".length()));
-            } catch (MalformedURLException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
         
         for (String root : Config.instance().getModelPackageRoots()){
-            modelClasses.addAll(PackageUtil.getClasses(url1ToInspect, root.replace('.', '/')));
-            modelClasses.addAll(PackageUtil.getClasses(url2ToInspect, root.replace('.', '/')));
+        	for (URL url:Config.instance().getResouceBaseUrls()){
+        		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
+        	}
         }
         
         for (String className : modelClasses){
@@ -260,10 +247,8 @@ public class Database {
                 Class<?> modelClass = Class.forName(className);
                 if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
                     Table table = new Table(modelClass);
-                    if (!tables.containsKey(table.getTableName())){
-                        table.setExistingInDatabase(false);
-                        tables.put(table.getTableName(), table);
-                    }
+                    table.setExistingInDatabase(false);
+                    tables.put(table.getTableName(), table);
                 }
             } catch (ClassNotFoundException ex) {
                 throw new RuntimeException(ex);
