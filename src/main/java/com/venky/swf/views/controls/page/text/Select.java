@@ -7,6 +7,11 @@ import com.venky.swf.views.controls.Control;
 public class Select extends Control {
 
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2372577592146683305L;
+
 	public Select() {
 		super("select");
 	}
@@ -18,6 +23,11 @@ public class Select extends Control {
 	}
 	
 	public static class Option extends Control {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2609222149783319414L;
 
 		public Option(String text,Object value) {
 			super("option");

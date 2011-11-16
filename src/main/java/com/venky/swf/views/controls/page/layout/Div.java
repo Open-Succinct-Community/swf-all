@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Div extends Control{
-    public Div(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 6649563897900036286L;
+
+	public Div(){
         super("div");
     }
 }

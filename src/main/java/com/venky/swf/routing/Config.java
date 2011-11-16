@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import com.venky.swf.configuration.Installer;
-
 /**
  *
  * @author venky
@@ -53,7 +51,6 @@ public class Config {
     
     private List<String> modelPackages = null;
     private List<URL> resourceBaseurls = null;
-    private List<Installer> installers = null;
     public List<URL> getResouceBaseUrls(){
     	loadModelPackageRoots();
     	return resourceBaseurls;

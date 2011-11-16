@@ -10,7 +10,12 @@ package com.venky.swf.views.controls.page.text;
  */
 public class TextBox extends Input{
     
-    public void setAutocompleteServiceURL(String autoCompleteServiceURL){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1921218232626387317L;
+
+	public void setAutocompleteServiceURL(String autoCompleteServiceURL){
         setProperty("autoCompleteUrl", autoCompleteServiceURL);
     }
     

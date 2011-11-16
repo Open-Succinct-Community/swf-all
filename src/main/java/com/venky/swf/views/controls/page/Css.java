@@ -9,7 +9,12 @@ package com.venky.swf.views.controls.page;
  * @author venky
  */
 public class Css extends Link{
-    public Css(String path){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2322338613044053185L;
+
+	public Css(String path){
         super("link",path);
         setProperty("rel", "stylesheet");
     }

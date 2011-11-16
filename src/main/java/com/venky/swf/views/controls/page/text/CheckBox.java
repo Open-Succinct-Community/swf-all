@@ -4,7 +4,6 @@
  */
 package com.venky.swf.views.controls.page.text;
 
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.views.controls.Control;
 
 /**
@@ -12,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class CheckBox extends Input{
-    public CheckBox(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6483565209752648614L;
+
+	public CheckBox(){
         super();
         setValue(true);
     }

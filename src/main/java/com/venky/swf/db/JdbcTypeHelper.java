@@ -384,10 +384,6 @@ public class JdbcTypeHelper {
         jdbcSQLType.put(clazz, ref);
     }
 
-    private TypeRef<?> defaultTypeRef() {
-        return jdbcSQLType.get(String.class);
-    }
-
     public TypeRef<?> getTypeRef(Class<?> javaClass) {
         TypeRef<?> ref = jdbcSQLType.get(javaClass);
         if (ref != null) {

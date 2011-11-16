@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class HorizontalLine extends Control{
-    public HorizontalLine(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2047243585057357790L;
+
+	public HorizontalLine(){
         super("hr");
     }
 }

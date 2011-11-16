@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class LineBreak extends Control{
-    public LineBreak(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6199331344023994589L;
+
+	public LineBreak(){
         super("br");
     }
 }

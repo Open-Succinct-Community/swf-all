@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Head extends Control{
-    public Head(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7816462193972290996L;
+
+	public Head(){
         super("head");
     }
 }

@@ -13,7 +13,12 @@ import com.venky.swf.views.controls.Control;
  */
 public abstract class Input extends Control{
 
-    public Input(final String... pairs){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -8634729125408675615L;
+
+	public Input(final String... pairs){
         super("input",pairs);
         setVisible(true);
         setEnabled(true);

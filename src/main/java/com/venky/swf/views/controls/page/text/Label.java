@@ -12,7 +12,11 @@ import com.venky.swf.views.controls.Control;
  */
 public class Label extends Control {
     
-    public Label(String label){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1200402798314532864L;
+	public Label(String label){
         this();
         this.setText(label);
     }

@@ -11,7 +11,11 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Script extends Control{
-    public Script(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7111734907607331737L;
+	public Script(){
         this(null);
     }
     public Script(String source){

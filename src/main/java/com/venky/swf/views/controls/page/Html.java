@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Html extends Control{
-    public Html(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4344103356327805227L;
+
+	public Html(){
         super("html");
     }
 }

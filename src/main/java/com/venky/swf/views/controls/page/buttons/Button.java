@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Button extends Control {
-    public Button(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7093207099887224426L;
+
+	public Button(){
         super("input");
         setProperty("type", "button");
     }

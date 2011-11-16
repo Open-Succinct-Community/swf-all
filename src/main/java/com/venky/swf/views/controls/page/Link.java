@@ -11,7 +11,11 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Link extends Control{
-    public  Link(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -4400380426867221125L;
+	public  Link(){
         this(null);
     }
     public Link(String url){

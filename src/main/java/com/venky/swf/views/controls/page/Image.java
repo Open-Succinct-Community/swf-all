@@ -11,7 +11,12 @@ import com.venky.swf.views.controls.Control;
  * @author venky
  */
 public class Image extends Control{
-    public Image(String imageUrl){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2715552311460845810L;
+
+	public Image(String imageUrl){
         super("img");
         setProperty("src", imageUrl);
     }
