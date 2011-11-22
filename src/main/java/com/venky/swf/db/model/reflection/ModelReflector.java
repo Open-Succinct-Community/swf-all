@@ -129,38 +129,62 @@ public class ModelReflector<M extends Model> {
     	return annotation;
     }
     
-    
-    private ModelReflector(Class<M> reflectedModelClass){
-        this.reflectedModelClass = reflectedModelClass;
-        if (!Model.class.isAssignableFrom(reflectedModelClass)){
-            throw new RuntimeException(reflectedModelClass + " is not extending Model! ");
+    private void loadAllInterfaces(Class<?> interfaceClass,List<Class<?>> interfaces){
+    	interfaces.add(interfaceClass);
+    	for (Class<?> infcClass: interfaceClass.getInterfaces()){
+    		loadAllInterfaces(infcClass, interfaces);
+    	}
+    }
+    private Class<?> getParentModelInterface(Class<?> aClass,List<Class<?>> otherInterfaces){
+        if (!Model.class.isAssignableFrom(aClass)){
+            throw new RuntimeException(aClass + " is not extending Model! ");
         }
         
+    	List<Class<?>> modelInterfaces = new ArrayList<Class<?>>();
+    	for (Class<?> infc: aClass.getInterfaces()){
+    		if (Model.class.isAssignableFrom(infc)){
+    			modelInterfaces.add(infc);
+    		}else{ 
+    			loadAllInterfaces(infc,otherInterfaces);
+			}
+    	}
+    	
+    	if (modelInterfaces.isEmpty()){
+    		return null;
+    	}else if (modelInterfaces.size() > 1){
+    		throw new RuntimeException ("Model interfaces must extend atmost one model Interface");
+    	}
+    	else {
+    		return modelInterfaces.get(0);
+    	}
+    }
+    private ModelReflector(Class<M> reflectedModelClass){
         Class<?> modelClass = reflectedModelClass;
-        allMethods = new ArrayList<Method>(modelClass.getMethods().length);
+        List<Class<?>> interfaces = new ArrayList<Class<?>>();
+        this.reflectedModelClass = reflectedModelClass;
+        this.allMethods = new ArrayList<Method>(modelClass.getMethods().length);
+        
         do {
-            if (modelClass.getInterfaces().length > 1){
-                throw new RuntimeException ("Model interfaces must extend atmost one model Interface");
-            }
-            int index = 0;
-            for (Method m :getDeclaredMethods(modelClass)){
-            	List<Method> methodsForSignature = getMethodsForSignature(getMethodSignature(m));
-            	if (methodsForSignature.isEmpty()){
-            		if (modelClass.equals(Model.class)){
-            			allMethods.add(m);
-            		}else {
-            			allMethods.add(index,m);
-                		index++;
-            		}
-            	}
-            	methodsForSignature.add(m);
-            }
-            
-            if (modelClass.getInterfaces().length == 0){
-                modelClass = null ;
-            }else {
-                modelClass = modelClass.getInterfaces()[0];
-            }
+        	interfaces.clear();
+        	interfaces.add(modelClass);
+        	Class<?> parentModelClass = getParentModelInterface(modelClass,interfaces);
+        	int index = 0;
+        	for (Class<?> clazz: interfaces){
+                for (Method m :getDeclaredMethods(clazz)){
+                	List<Method> methodsForSignature = getMethodsForSignature(getMethodSignature(m));
+                	if (methodsForSignature.isEmpty()){
+                		if (clazz.equals(Model.class)){
+                			allMethods.add(m);
+                		}else {
+                			allMethods.add(index,m);
+                    		index++;
+                		}
+                	}
+                	methodsForSignature.add(m);
+                }
+        		
+        	}
+            modelClass = parentModelClass;
         }while(modelClass != null);
         
     }

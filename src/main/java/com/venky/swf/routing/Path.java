@@ -148,25 +148,32 @@ public class Path {
         if (controllerClassName != null){
             return;
         }
-        for (int i = pathelements.size() - 1; i >= 0; i--) {
+        
+        boolean controllerFound = false;
+        for (int i = pathelements.size() - 1; i >= 0 && !controllerFound; i--) {
             String pe = pathelements.get(i);
             String camelizedPe = camelize(pe);
-            String clazzName = Config.instance().getProperty(Config.CONTROLLER_PACKAGE_ROOT) + "." + camelizedPe + "Controller";
-            if (getClass(clazzName) != null) {
-                controllerClassName = clazzName;
-                controllerPathIndex = i ;
-                break;
-            }else {
-                Class<?> modelClass = getModelClass(camelizedPe);
-                if (modelClass != null){
-                    controllerClassName = ModelController.class.getName();
+            for (String controllerPackageRoot: Config.instance().getControllerPackageRoots()){
+                String clazzName = controllerPackageRoot + "." + camelizedPe + "Controller";
+                if (getClass(clazzName) != null) {
+                    controllerClassName = clazzName;
                     controllerPathIndex = i ;
-                    break;
+                    controllerFound = true;
+                }else {
+                    Class<?> modelClass = getModelClass(camelizedPe);
+                    if (modelClass != null){
+                        controllerClassName = ModelController.class.getName();
+                        controllerPathIndex = i ;
+                        controllerFound = true;
+                    }
+                }
+                if (controllerFound){
+                	break;
                 }
             }
         }
         if (controllerClassName == null) {
-            controllerClassName = Config.instance().getProperty(Config.CONTROLLER_PACKAGE_ROOT) + ".AppController";
+            controllerClassName = Config.instance().getControllerPackageRoots().get(0) + ".AppController";
             pathelements.add(0, "app");
             controllerPathIndex = 0;
         }
