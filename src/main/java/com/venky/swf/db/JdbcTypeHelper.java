@@ -95,7 +95,7 @@ public class JdbcTypeHelper {
             if (ObjectUtil.isVoid(s)) {
                 return false;
             }
-            return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1"));
+            return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y"));
         }
 
 		@Override
