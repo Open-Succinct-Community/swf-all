@@ -40,15 +40,18 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
         		continue;
         	}
         	Class childClass = getReflector().getChildModelClass(childGetter);
-        	List<Model> children;
-			try {
-				children = (List<Model>)childGetter.invoke(getRecord());
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-        	b.addControl(new LineBreak());
-        	new ModelListView<Model>(new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase()), 
-        			childClass,null, children).createBody(b);
+        	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase());
+        	if (childPath.canAccessControllerAction()){
+            	List<Model> children;
+    			try {
+    				children = (List<Model>)childGetter.invoke(getRecord());
+    			} catch (Exception e) {
+    				throw new RuntimeException(e);
+    			}
+            	b.addControl(new LineBreak());
+            	new ModelListView<Model>(childPath, 
+            			childClass,null, children).createBody(b);
+        	}
         }
 
     }

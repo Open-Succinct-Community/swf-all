@@ -102,7 +102,6 @@ public class ModelController<M extends Model> extends Controller {
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
 		List<ModelInfo> modelElements =getPath().getModelElements();
-		//TODO Correct parent id identification based on action. 
 		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
     		ModelInfo mi = miIter.next();
     		if(!miIter.hasNext()){

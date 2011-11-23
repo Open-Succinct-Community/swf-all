@@ -17,10 +17,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.string.StringUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 
@@ -47,6 +50,9 @@ public class Path {
         TARGET_LOGOUT.add("/logout");
         TARGET_LOGOUT.add("/app/logout");
         
+    }
+    public User getSessionUser(){
+    	return (User)getSession().getAttribute("user");
     }
 
     public HttpSession getSession() {
@@ -268,6 +274,7 @@ public class Path {
         }
     }
     
+    public static final String ALLOW_CONTROLLER_ACTION = "allow.controller.action" ; 
 
     public View invoke() {
         if (getSession() == null && !TARGET_LOGIN.contains(getTarget()) && !getTarget().startsWith("/resources")){ 
@@ -278,6 +285,7 @@ public class Path {
         for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
+            	ensureControllerActionAccess();
             	try {
                     if (m.getParameterTypes().length == 0 && parameter() == null){
                         return (View)m.invoke(controller());
@@ -294,6 +302,29 @@ public class Path {
             }
         }
     	throw new RuntimeException("Donot know how to invoke controller action" + getTarget()) ;
+    }
+    
+    private void ensureControllerActionAccess() throws AccessDeniedException{
+    	ensureControllerActionAccess(controllerPathElement(),action(),getSessionUser()); 
+    }
+    public boolean canAccessControllerAction(){
+    	return canAccessControllerAction(action());
+    }
+    public boolean canAccessControllerAction(String actionPathElement){
+    	return canAccessControllerAction(controllerPathElement(), actionPathElement, getSessionUser());
+    }
+    
+    private static void ensureControllerActionAccess(String controllerPathElement,String actionPathElement,User user) throws AccessDeniedException{
+    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, controllerPathElement,actionPathElement,user);
+    }
+    
+    private static boolean canAccessControllerAction(String controllerPathElement,String actionPathElement,User user){
+    	try {
+    		ensureControllerActionAccess(controllerPathElement,actionPathElement,user);
+    	}catch (AccessDeniedException ex){
+    		return false;
+    	}
+    	return true;
     }
 
     private Class getControllerClass() {

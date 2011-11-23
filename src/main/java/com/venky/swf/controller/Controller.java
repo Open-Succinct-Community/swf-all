@@ -59,10 +59,10 @@ public class Controller {
             }
         }
     }
-    protected User getSessionUser(){
-    	return (User)getPath().getSession().getAttribute("user");
+    public User getSessionUser(){
+    	return (User)getPath().getSessionUser();
     }
-    protected Class<? extends User> getUserClass(){
+    public Class<? extends User> getUserClass(){
     	return User.class;
     }
     protected User getUser(String username){

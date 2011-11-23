@@ -47,10 +47,12 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	Row header = container.createHeader();
     	Column newLink = header.createColumn();
 
-    	Link create = new Link();
-        create.setUrl(getPath().controllerPath()+"/blank");
-        create.addControl(new Image("/resources/images/blank.png"));
-    	newLink.addControl(create);
+    	if (getPath().canAccessControllerAction("blank") && getPath().canAccessControllerAction("save")){
+        	Link create = new Link();
+            create.setUrl(getPath().controllerPath()+"/blank");
+            create.addControl(new Image("/resources/images/blank.png"));
+        	newLink.addControl(create);
+    	}
     	
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
         
@@ -74,22 +76,35 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
         for (M record : records) {
             Row row = table.createRow();
-            Link edit = new Link();
-            edit.setUrl(getPath().controllerPath()+"/edit/"+record.getId());
-            edit.addControl(new Image("/resources/images/edit.png"));
             
-            Link show = new Link();
-            show.setUrl(getPath().controllerPath()+"/show/"+record.getId());
-            show.addControl(new Image("/resources/images/show.png"));
+            if (getPath().canAccessControllerAction("show")){
+	            Link show = new Link();
+	            show.setUrl(getPath().controllerPath()+"/show/"+record.getId());
+	            show.addControl(new Image("/resources/images/show.png"));
+	            row.createColumn().addControl(show);
+            }else {
+            	row.createColumn();
+            }
             
-
-            Link destroy = new Link();
-            destroy.setUrl(getPath().controllerPath()+"/destroy/"+record.getId());
-            destroy.addControl(new Image("/resources/images/destroy.png"));
+            if (getPath().canAccessControllerAction("edit") && getPath().canAccessControllerAction("save")){
+                Link edit = new Link();
+                edit.setUrl(getPath().controllerPath()+"/edit/"+record.getId());
+                edit.addControl(new Image("/resources/images/edit.png"));
+                row.createColumn().addControl(edit);
+            }else {
+            	row.createColumn();
+            }
             
-            row.createColumn().addControl(show);
-            row.createColumn().addControl(edit);
-            row.createColumn().addControl(destroy);
+            
+            if (getPath().canAccessControllerAction("destroy")){
+	            Link destroy = new Link();
+	            destroy.setUrl(getPath().controllerPath()+"/destroy/"+record.getId());
+	            destroy.addControl(new Image("/resources/images/destroy.png"));
+	            row.createColumn().addControl(destroy);
+            }else {
+            	row.createColumn();
+            }
+            
             
             for (String fieldName : getIncludedFields()) {
                 try {

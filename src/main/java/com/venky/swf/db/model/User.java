@@ -21,4 +21,5 @@ public interface User extends Model{
     public void setPassword(String password);
     
     public boolean authenticate(String password);
+    public static final String USER_AUTHENTICATE = "user.authenticate" ;
 }

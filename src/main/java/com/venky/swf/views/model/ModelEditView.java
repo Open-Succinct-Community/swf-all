@@ -84,7 +84,11 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     }
 
     protected String getFormAction(){ 
-        return "save";
+    	if (getPath().canAccessControllerAction("save")){
+    		return "save";
+    	}else {
+    		return "back";
+    	}
     }
     @Override
     protected void createBody(Body b) {
