@@ -10,3 +10,6 @@
 [submodule "swf-maven-plugin"]
 	path = swf-maven-plugin
 	url = git://github.com/venkatramanm/swf-maven-plugin.git
+[submodule "swf-plugin-security"]
+	path = swf-plugin-security
+	url = ./swf-plugin-security

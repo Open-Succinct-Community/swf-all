@@ -11,5 +11,6 @@
 		<module>swf</module>
 		<module>swf-archetype</module>
 		<module>swf-maven-plugin</module>
+		<module>swf-plugin-security</module>
   </modules>
 </project>
