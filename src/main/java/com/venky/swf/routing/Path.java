@@ -52,6 +52,9 @@ public class Path {
         
     }
     public User getSessionUser(){
+    	if (getSession() == null){
+    		return null;
+    	}
     	return (User)getSession().getAttribute("user");
     }
 
@@ -275,17 +278,30 @@ public class Path {
     }
     
     public static final String ALLOW_CONTROLLER_ACTION = "allow.controller.action" ; 
-
+    
+    public boolean isUserLoggedOn(){
+    	return getSessionUser() != null; 
+    }
+    public boolean isLoginPage(){
+    	return TARGET_LOGIN.contains(getTarget());
+    }
+    public boolean isSecuredPage(){
+    	return !isUnsecuredPage();
+    }
+    public boolean isUnsecuredPage(){
+    	return isLoginPage() || getTarget().startsWith("/resources");
+    }
     public View invoke() {
-        if (getSession() == null && !TARGET_LOGIN.contains(getTarget()) && !getTarget().startsWith("/resources")){ 
-        	// Resources is primarily to ensure scripts and css in login view itself are not redirected.
+        if (!isUserLoggedOn() && isSecuredPage()){ 
             return new RedirectorView(this, "","login");
         }
 
         for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
-            	ensureControllerActionAccess();
+            	if (isSecuredPage()){
+            		ensureControllerActionAccess();
+            	}
             	try {
                     if (m.getParameterTypes().length == 0 && parameter() == null){
                         return (View)m.invoke(controller());
@@ -304,20 +320,13 @@ public class Path {
     	throw new RuntimeException("Donot know how to invoke controller action" + getTarget()) ;
     }
     
-    private void ensureControllerActionAccess() throws AccessDeniedException{
-    	ensureControllerActionAccess(controllerPathElement(),action(),getSessionUser()); 
-    }
     public boolean canAccessControllerAction(){
     	return canAccessControllerAction(action());
     }
     public boolean canAccessControllerAction(String actionPathElement){
     	return canAccessControllerAction(controllerPathElement(), actionPathElement, getSessionUser());
     }
-    
-    private static void ensureControllerActionAccess(String controllerPathElement,String actionPathElement,User user) throws AccessDeniedException{
-    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, controllerPathElement,actionPathElement,user);
-    }
-    
+
     private static boolean canAccessControllerAction(String controllerPathElement,String actionPathElement,User user){
     	try {
     		ensureControllerActionAccess(controllerPathElement,actionPathElement,user);
@@ -326,6 +335,14 @@ public class Path {
     	}
     	return true;
     }
+    
+    private void ensureControllerActionAccess() throws AccessDeniedException{
+    	ensureControllerActionAccess(controllerPathElement(),action(),getSessionUser()); 
+    }
+    private static void ensureControllerActionAccess(String controllerPathElement,String actionPathElement,User user) throws AccessDeniedException{
+    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, controllerPathElement,actionPathElement,user);
+    }
+    
 
     private Class getControllerClass() {
         return getClass(getControllerClassName());

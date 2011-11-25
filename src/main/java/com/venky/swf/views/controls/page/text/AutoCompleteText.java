@@ -35,15 +35,17 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         this.modelClass = modelClass;
         Table<M> table = Database.getInstance().getTable(modelClass);
         
+        descriptionColumn = "NAME";
+
         HAS_DESCRIPTION_COLUMN hdc = modelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
         if (hdc != null){
 	        descriptionColumn = hdc.value();
-	        assert (ModelReflector.instance(modelClass).getFields().contains(descriptionColumn));
-            
+        }
+        if (ModelReflector.instance(modelClass).getFields().contains(descriptionColumn)){
 	        this.description = new TextBox();
             description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
+            setVisible(false);
         }
-        setVisible(false);
     }
     public Class<M> getModelClass(){
         return modelClass;

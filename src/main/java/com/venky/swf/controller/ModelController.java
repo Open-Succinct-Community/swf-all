@@ -184,7 +184,11 @@ public class ModelController<M extends Model> extends Controller {
                 TypeRef<?> typeRef = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 
                 try {
-                    setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
+                	if (ObjectUtil.isVoid(value) && reflector.getColumnDescriptor(getter).isNullable()){
+                        setter.invoke(record, getter.getReturnType().cast(null));
+            		}else {
+                        setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
+                	}
                 } catch (Exception e1) {
                     throw new RuntimeException(e1);
                 }

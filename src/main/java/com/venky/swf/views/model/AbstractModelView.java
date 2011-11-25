@@ -14,6 +14,7 @@ import java.util.StringTokenizer;
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
@@ -113,7 +114,9 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             }else {
             	control = new TextBox();
             }
-            control.setValue(converter.toString(value));
+            if (!ObjectUtil.isVoid(value)){
+            	control.setValue(converter.toString(value));
+            }
         }
         control.setName(fieldName);
         return control;
