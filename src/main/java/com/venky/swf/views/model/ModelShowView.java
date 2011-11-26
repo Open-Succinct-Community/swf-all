@@ -41,6 +41,9 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
         	}
         	Class childClass = getReflector().getChildModelClass(childGetter);
         	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase());
+        	childPath.setRequest(getPath().getRequest());
+        	childPath.setResponse(getPath().getResponse());
+        	childPath.setSession(getPath().getSession());
         	if (childPath.canAccessControllerAction()){
             	List<Model> children;
     			try {
