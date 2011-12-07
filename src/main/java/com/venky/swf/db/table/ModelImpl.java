@@ -29,6 +29,7 @@ import com.venky.swf.db.annotations.column.validations.processors.MandatoryValid
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 
@@ -175,6 +176,17 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     public M getProxy() {
 		return proxy;
 	}
+    
+    public boolean isAccessibleBy(User user){
+    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(modelClass);
+    	for (String fieldName:columnNameValues.keySet()){
+    		List values = columnNameValues.get(fieldName);
+    		if (!values.isEmpty() && !values.contains(record.get(fieldName))) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
 
 	private static Map<Class<?>,Class<?>> modelImplMap = new HashMap<Class<?>, Class<?>>();
     

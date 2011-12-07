@@ -61,4 +61,5 @@ public interface Model {
     public void save();
     public void destroy();
     public void init();
+    public boolean isAccessibleBy(User user);
 }

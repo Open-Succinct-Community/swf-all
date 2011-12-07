@@ -13,18 +13,14 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.routing.Path;
+import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
-import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
-import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.Label;
-import com.venky.swf.views.controls.page.text.Select;
-import com.venky.swf.views.controls.page.text.Select.Option;
-import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
  *
@@ -65,8 +61,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         
         table.setProperty("class", "tablesorter");
         header = table.createHeader();
-        Column action = header.createColumn(3); 
-        action.setText("Action");
+        Column action = header.createColumn(); 
+        action.setText("V");
+        action.setProperty("width", "1%");
+        action = header.createColumn(); 
+        action.setText("M");
+        action.setProperty("width", "1%");
+        action = header.createColumn(); 
+        action.setText("D");
         action.setProperty("width", "1%");
         for (String fieldName : getIncludedFields()) {
             if (isFieldVisible(fieldName)) {
@@ -114,18 +116,29 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                     	Method getter = getFieldGetter(fieldName);
                         Object value = getter.invoke(record);
                         TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
-                        Label control = null;
+                        Control control = null;
                         String sValue = converter.toString(value);
                         if (isFieldPassword(fieldName)){
                         	sValue = sValue.replaceAll(".", "\\*");
                         }
                         String parentDescription = getParentDescription(getter, record) ;
                         if (!ObjectUtil.isVoid(parentDescription)){
+                        	Object parentId = getter.invoke(record);
+                        	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
+                        	String tableName = Database.getInstance().getTable(parentModelClass).getTableName().toLowerCase();
                         	sValue = parentDescription;
+                        	
+                        	Path parentTarget = getPath().createRelativePath("/" + tableName + "/show/" +  String.valueOf(parentId));
+                        	if (parentTarget.canAccessControllerAction()){
+                            	control = new Link(parentTarget.getTarget());
+                            	control.setText(sValue);
+                        	}else {
+                        		control = new Label(sValue);
+                        	}
                         }else {
                             column.addClass(converter.getDisplayClassName());
+                            control = new Label(sValue);
                         }
-                        control = new Label(sValue);
                         column.addControl(control);
                     }
                 } catch (IllegalAccessException ex) {
@@ -137,43 +150,5 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                 }
             }
         }
-
-        Div pager = new Div();
-        b.addControl(pager);
-
-        table.setProperty("pagerid", pager.getId());
-        pager.setProperty("class", "pager");
-
-        Form form = new Form();
-        pager.addControl(form);
-        
-        Image i = new Image("/resources/scripts/jquery.tablesorter/addons/pager/icons/first.png");
-        i.setProperty("class", "first");
-        form.addControl(i);
-        
-        i = new Image("/resources/scripts/jquery.tablesorter/addons/pager/icons/prev.png");
-        i.setProperty("class", "prev");
-        form.addControl(i);
-        
-        TextBox pageDisplay = new TextBox();
-        pageDisplay.setProperty("class","pagedisplay");
-        form.addControl(pageDisplay);
-        
-        i = new Image("/resources/scripts/jquery.tablesorter/addons/pager/icons/next.png");
-        i.setProperty("class", "next");
-        form.addControl(i);
-
-        i = new Image("/resources/scripts/jquery.tablesorter/addons/pager/icons/last.png");
-        i.setProperty("class", "last");
-        form.addControl(i);
-
-        Select select = new Select();
-        select.setProperty("class", "pagesize");
-        select.createOption("5","5");
-        Option defaultOption = select.createOption("10","10");
-        defaultOption.setProperty("selected", "selected");
-        select.createOption("20","20");
-        select.createOption("30","30");
-        form.addControl(select);
     }
 }

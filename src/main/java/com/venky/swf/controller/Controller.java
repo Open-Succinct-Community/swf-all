@@ -4,28 +4,28 @@
  */
 package com.venky.swf.controller;
 
-import com.venky.swf.db.Database;
-import com.venky.swf.db.table.BindVariable;
-import com.venky.swf.db.table.Query;
-import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.User;
-import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.Table;
-import com.venky.swf.routing.Path;
-import com.venky.swf.views.BytesView;
-import com.venky.swf.views.RedirectorView;
-import com.venky.swf.views.View;
-import com.venky.swf.views.DashboardView;
-import com.venky.swf.views.HtmlView;
-import com.venky.swf.views.login.LoginView;
-import com.venky.xml.XMLDocument;
-import com.venky.xml.XMLElement;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+
 import javax.servlet.http.HttpSession;
+
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.Query;
+import com.venky.swf.routing.Path;
+import com.venky.swf.views.BytesView;
+import com.venky.swf.views.DashboardView;
+import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.RedirectorView;
+import com.venky.swf.views.View;
+import com.venky.swf.views.login.LoginView;
+import com.venky.xml.XMLDocument;
+import com.venky.xml.XMLElement;
 
 /**
  *
@@ -66,9 +66,8 @@ public class Controller {
     	return User.class;
     }
     protected User getUser(String username){
-		Table<? extends User> userTable = Database.getInstance().getTable(getUserClass());
-        Query q = new Query();
-        q.select(userTable.getTableName());
+        Query q = new Query(getUserClass());
+        q.select();
         String nameColumn = ModelReflector.instance(getUserClass()).getColumnDescriptor("name").getName();
         q.add(" where " + nameColumn + " = ? ",new BindVariable(username));
         
@@ -124,10 +123,8 @@ public class Controller {
         XMLElement elem = null ;
         System.out.println("Parameter:" + value);
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-        Query q = new Query();
-        Table<?> table = Database.getInstance().getTable(modelClass);
-
-        q.select(table.getTableName());
+        Query q = new Query(modelClass);
+        q.select();
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
         
         q.where(baseWhereClause).and(columnName).add(" like ?", new BindVariable("%"+value+"%"));

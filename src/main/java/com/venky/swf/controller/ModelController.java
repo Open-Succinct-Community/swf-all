@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -18,6 +19,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Query;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Path;
 import com.venky.swf.routing.Path.ModelInfo;
 import com.venky.swf.views.RedirectorView;
@@ -78,8 +80,35 @@ public class ModelController<M extends Model> extends Controller {
 		if (where.length() == 0){
 			where.append(" 1 = 1");
 		}
+		
+		where.append(getDataSecurityWhere()); 
     	return where.toString();
 		    	
+    }
+    public String getDataSecurityWhere(){
+    	StringBuilder dsw = new StringBuilder();
+    	Map<String,List<Integer>> columnValuesMap = getSessionUser().getParticipationOptions(modelClass);
+    	for (String key:columnValuesMap.keySet()){
+    		List<Integer> values = columnValuesMap.get(key);
+        	dsw.append(" and ");
+        	dsw.append(key);
+        	if (values.isEmpty()){
+        		dsw.append(" is null ");
+        	}else if (values.size() == 1){
+        		dsw.append(" = ").append(values.get(0));
+        	}else {
+        		dsw.append(" in (");
+        		Iterator<Integer> valueIterator = values.iterator();
+        		while (valueIterator.hasNext()){
+        			dsw.append(valueIterator.next());
+        			if (valueIterator.hasNext()){
+        				dsw.append(",");
+        			}
+        		}
+        		dsw.append(")");
+        	}
+    	}
+    	return dsw.toString();
     }
     @Override
     public View index() {
@@ -91,12 +120,20 @@ public class ModelController<M extends Model> extends Controller {
 
     public View show(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
-        return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
+        if (record.isAccessibleBy(getSessionUser())){
+            return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
+        }else {
+        	throw new AccessDeniedException();
+        }
     }
 
     public View edit(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
-        return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
+        if (record.isAccessibleBy(getSessionUser())){
+            return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
+        }else {
+        	throw new AccessDeniedException();
+        }
     }
 
     public View blank() {
@@ -109,12 +146,16 @@ public class ModelController<M extends Model> extends Controller {
     			break;
     		}
     		for (Method parentGetter: reflector.getParentModelGetters()){
-    	    	Class<?> parentModelClass = parentGetter.getReturnType();
+    	    	Class<? extends Model> parentModelClass = (Class<? extends Model>)parentGetter.getReturnType();
+    	    	
         		if (parentModelClass == mi.getModelClass()){
         	    	String parentIdFieldName =  reflector.getReferredModelIdFieldName(parentGetter);
         	    	Method parentIdSetter =  reflector.getFieldSetter(parentIdFieldName);
         	    	try {
-						parentIdSetter.invoke(record, mi.getId());
+            	    	Model parent = Database.getInstance().getTable(parentModelClass).get(mi.getId());
+            	    	if (parent.isAccessibleBy(getSessionUser())){
+            	    		parentIdSetter.invoke(record, mi.getId());
+            	    	}
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
@@ -130,7 +171,11 @@ public class ModelController<M extends Model> extends Controller {
     public View destroy(int id){ 
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record != null){
-            record.destroy();
+            if (record.isAccessibleBy(getSessionUser())){
+                record.destroy();
+            }else {
+            	throw new AccessDeniedException();
+            }
         }
         return back();
     }
@@ -161,6 +206,9 @@ public class ModelController<M extends Model> extends Controller {
                 if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
                 }
+            }
+            if (!record.isAccessibleBy(getSessionUser())){
+            	throw new AccessDeniedException();
             }
         }
 
@@ -199,7 +247,11 @@ public class ModelController<M extends Model> extends Controller {
         	record.setCreatorUserId(getSessionUser().getId());
     	}
         record.setUpdaterUserId(getSessionUser().getId());
-        record.save();
+        if (record.isAccessibleBy(getSessionUser())){
+            record.save();
+        }else {
+        	throw new AccessDeniedException();
+        }
     }
     
     public View save() {

@@ -362,4 +362,18 @@ public class Path {
     private String camelize(String s) {
         return StringUtil.camelize(s);
     }
+    
+    public Path createRelativePath(String toUrl){
+    	String relPath = getTarget();
+    	if (!toUrl.startsWith("/")){
+    		relPath = relPath + "/" + toUrl;
+    	}else {
+    		relPath = relPath + toUrl;
+    	}
+    	Path path = new Path(relPath);
+    	path.setRequest(getRequest());
+    	path.setResponse(getResponse());
+    	path.setSession(getSession());
+    	return path;
+    }
 }

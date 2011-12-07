@@ -278,11 +278,10 @@ public class Table<M extends Model> {
         }
     }
     
-    
     public M get(int id) {
-        Query q = new Query();
+        Query q = new Query(getModelClass());
         String idColumn = getReflector().getColumnDescriptor("id").getName();
-        q.select(tableName).where(idColumn).add(" = ? ", new BindVariable(id));
+        q.select().where(idColumn).add(" = ? ", new BindVariable(id));
         List<M> result = q.execute(getModelClass());
         if (result.isEmpty()){
             return null;
@@ -290,6 +289,7 @@ public class Table<M extends Model> {
             return result.get(0);
         }
     }
+    
     public M newRecord(){
         return ModelImpl.getProxy(modelClass,new Record());
     }
