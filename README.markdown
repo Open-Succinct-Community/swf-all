@@ -20,6 +20,16 @@ git submodule update
 
 mvn install 
 
+Keeping SWF updated
+-------------------
+cd swf-all
+
+git pull
+
+git submodule update
+
+mvn install 
+
 Using SWF
 -----------
 
