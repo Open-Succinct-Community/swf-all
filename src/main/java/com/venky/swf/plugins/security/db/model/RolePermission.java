@@ -10,7 +10,11 @@ public interface RolePermission extends Model{
 	public int getRoleId();
 	public void setRoleId(int roleId);
 	public Role getRole();
-
+	
+	@IS_NULLABLE
+	public String getParticipation();
+	public void setParticipation(String participation);
+	
 	@IS_NULLABLE
 	public String getControllerPathElementName();
 	public void setControllerPathElementName(String controllerPathElementName);
