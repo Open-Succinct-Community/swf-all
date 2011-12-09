@@ -179,13 +179,17 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     
     public boolean isAccessibleBy(User user){
     	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(modelClass);
+    	if (columnNameValues.isEmpty()){
+    		return true;
+    	}
     	for (String fieldName:columnNameValues.keySet()){
     		List values = columnNameValues.get(fieldName);
-    		if (!values.isEmpty() && !values.contains(record.get(fieldName))) {
-    			return false;
+    		String columnName = reflector.getColumnDescriptor(fieldName).getName();
+    		if (values.contains(record.get(columnName))) {
+    			return true;
     		}
     	}
-    	return true;
+    	return false;
     }
 
 	private static Map<Class<?>,Class<?>> modelImplMap = new HashMap<Class<?>, Class<?>>();

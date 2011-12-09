@@ -3,6 +3,7 @@ package com.venky.swf.db.model;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 
 public class UserImpl<M extends User> extends ModelImpl<M>{
@@ -47,11 +49,54 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 				if (User.class.isAssignableFrom(ref.getReferredModelClass(referredModelGetter))){
 					mapParticipatingOptions.put(referredModelIdFieldName, Arrays.asList(user.getId()));
 				}else {
-					Registry.instance().callExtensions(User.GET_PARTICIPATION_OPTION, user, modelClass, referredModelIdFieldName, mapParticipatingOptions);
+					String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ modelClass.getSimpleName();
+					if (Registry.instance().hasExtensions(extnPoint)){
+						Registry.instance().callExtensions(extnPoint, user, referredModelIdFieldName, mapParticipatingOptions);
+					}else{
+						Registry.instance().callExtensions(User.GET_PARTICIPATION_OPTION, user, modelClass, referredModelIdFieldName, mapParticipatingOptions);
+					}
 				}
 			}
 		}
 		
 		return mapParticipatingOptions;
+	}
+
+	public <R extends Model> String getDataSecurityWhereClause(Class<R> modelClass){
+		ModelReflector<R> ref = ModelReflector.instance(modelClass);
+		Map<String,List<Integer>> columnValuesMap = getParticipationOptions(modelClass);
+		StringBuilder dsw = new StringBuilder();
+		Iterator<String> fieldNameIterator = columnValuesMap.keySet().iterator();
+		
+		while (fieldNameIterator.hasNext()){
+			String key = fieldNameIterator.next();
+			List<Integer> values = columnValuesMap.get(key);
+			
+	    	ColumnDescriptor cd = ref.getColumnDescriptor(key);
+	    	if (cd != null){
+	    		dsw.append(cd.getName());
+	    	}else{
+	    		dsw.append(key);
+	    	}
+	    	if (values.isEmpty()){
+	    		dsw.append(" is null ");
+	    	}else if (values.size() == 1){
+	    		dsw.append(" = ").append(values.get(0));
+	    	}else {
+	    		dsw.append(" in (");
+	    		Iterator<Integer> valueIterator = values.iterator();
+	    		while (valueIterator.hasNext()){
+	    			dsw.append(valueIterator.next());
+	    			if (valueIterator.hasNext()){
+	    				dsw.append(",");
+	    			}
+	    		}
+	    		dsw.append(")");
+	    	}
+	    	if (fieldNameIterator.hasNext()){
+	    		dsw.append(" or ");
+	    	}
+		}
+		return dsw.toString();
 	}
 }

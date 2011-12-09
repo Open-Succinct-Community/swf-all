@@ -28,6 +28,8 @@ public interface User extends Model{
    
     
     public <M extends Model> Map<String,List<Integer>> getParticipationOptions(Class<M> modelClass);
-    public static final String GET_PARTICIPATION_OPTION = "get.participation.option";
+    public static final String GET_PARTICIPATION_OPTION = "get.participation.option";//++ModelClass.SimpleName
+    
+    public <M extends Model> String getDataSecurityWhereClause(Class<M> modelClass);
     
 }

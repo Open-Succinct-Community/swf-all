@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -87,27 +86,11 @@ public class ModelController<M extends Model> extends Controller {
     }
     public String getDataSecurityWhere(){
     	StringBuilder dsw = new StringBuilder();
-    	Map<String,List<Integer>> columnValuesMap = getSessionUser().getParticipationOptions(modelClass);
-    	for (String key:columnValuesMap.keySet()){
-    		List<Integer> values = columnValuesMap.get(key);
-        	dsw.append(" and ");
-        	dsw.append(key);
-        	if (values.isEmpty()){
-        		dsw.append(" is null ");
-        	}else if (values.size() == 1){
-        		dsw.append(" = ").append(values.get(0));
-        	}else {
-        		dsw.append(" in (");
-        		Iterator<Integer> valueIterator = values.iterator();
-        		while (valueIterator.hasNext()){
-        			dsw.append(valueIterator.next());
-        			if (valueIterator.hasNext()){
-        				dsw.append(",");
-        			}
-        		}
-        		dsw.append(")");
-        	}
-    	}
+    	dsw.append(getSessionUser().getDataSecurityWhereClause(modelClass));
+		if (dsw.length() > 0){
+			dsw.insert(0, " and (");
+			dsw.append(")");
+		}
     	return dsw.toString();
     }
     @Override
@@ -245,8 +228,10 @@ public class ModelController<M extends Model> extends Controller {
         }
         if (isNew()){
         	record.setCreatorUserId(getSessionUser().getId());
+        	record.setCreatedAt(null);
     	}
         record.setUpdaterUserId(getSessionUser().getId());
+        record.setUpdatedAt(null);
         if (record.isAccessibleBy(getSessionUser())){
             record.save();
         }else {

@@ -40,7 +40,7 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
         		continue;
         	}
         	Class childClass = getReflector().getChildModelClass(childGetter);
-        	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase());
+        	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase() + "/index");
         	childPath.setRequest(getPath().getRequest());
         	childPath.setResponse(getPath().getResponse());
         	childPath.setSession(getPath().getSession());

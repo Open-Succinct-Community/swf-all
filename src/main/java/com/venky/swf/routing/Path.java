@@ -324,12 +324,15 @@ public class Path {
     	return canAccessControllerAction(action());
     }
     public boolean canAccessControllerAction(String actionPathElement){
-    	return canAccessControllerAction(controllerPathElement(), actionPathElement, getSessionUser());
+    	return canAccessControllerAction(actionPathElement,parameter());
+    }
+    public boolean canAccessControllerAction(String actionPathElement,String parameterPathElement){
+    	return canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement);
     }
 
-    private static boolean canAccessControllerAction(String controllerPathElement,String actionPathElement,User user){
+    private static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement){
     	try {
-    		ensureControllerActionAccess(controllerPathElement,actionPathElement,user);
+    		ensureControllerActionAccess(user,controllerPathElement,actionPathElement,parameterPathElement);
     	}catch (AccessDeniedException ex){
     		return false;
     	}
@@ -337,10 +340,10 @@ public class Path {
     }
     
     private void ensureControllerActionAccess() throws AccessDeniedException{
-    	ensureControllerActionAccess(controllerPathElement(),action(),getSessionUser()); 
+    	ensureControllerActionAccess(getSessionUser(),controllerPathElement(),action(),parameter()); 
     }
-    private static void ensureControllerActionAccess(String controllerPathElement,String actionPathElement,User user) throws AccessDeniedException{
-    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, controllerPathElement,actionPathElement,user);
+    private static void ensureControllerActionAccess(User user,String controllerPathElement,String actionPathElement , String parameterPathElement) throws AccessDeniedException{
+    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, user, controllerPathElement,actionPathElement,parameterPathElement);
     }
     
 
