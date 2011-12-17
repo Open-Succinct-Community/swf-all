@@ -51,7 +51,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 				for (String referencedModelIdFieldName :pOptions.keySet()){
 					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(model);
 					if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-2));
+						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));
 					}
 				}
 				if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
