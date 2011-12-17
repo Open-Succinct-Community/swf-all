@@ -41,11 +41,11 @@ public class Query {
         return select(modelClass);
     }
     
-    public Query select(Class modelClass){
+    private Query select(Class modelClass){
         return select(Database.getInstance().getTable(modelClass).getTableName());
     }
     
-    public Query select(String tableName){
+    private Query select(String tableName){
         query.append("select * from ").append(tableName).append( " ");
         return this;
     }
@@ -91,10 +91,17 @@ public class Query {
     }
     public <M extends Model> List<M> execute(Class<M> modelInterface) {
         PreparedStatement st = null;
+        String query = toString();
         try {
+        	QueryCache<M> cache = Database.getInstance().getCache(modelInterface);
+        	List<M> result = cache.getCachedResult(query);
+        	if (result != null){
+        		//Logger.getLogger(getClass().getName()).log(Level.INFO,"Returning from cache for {0}",query);
+        		return result;
+        	}
             st = prepare();
-            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", toString());
-            List<M> result = new ArrayList<M>();
+            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
+            result = new ArrayList<M>();
             if (st.execute()){
                 ResultSet rs = st.getResultSet();
                 while (rs.next()){
@@ -105,6 +112,7 @@ public class Query {
                 }
                 rs.close();
             }
+            cache.setCachedResult(query, result);
             return result;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
