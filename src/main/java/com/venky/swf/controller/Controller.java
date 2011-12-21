@@ -12,12 +12,15 @@ import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
-import com.venky.swf.db.table.Query;
 import com.venky.swf.routing.Path;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
@@ -66,10 +69,9 @@ public class Controller {
     	return User.class;
     }
     protected User getUser(String username){
-        Query q = new Query(getUserClass());
-        q.select();
+        Select q = new Select().from(Database.getInstance().getTable(getUserClass()).getTableName());
         String nameColumn = ModelReflector.instance(getUserClass()).getColumnDescriptor("name").getName();
-        q.add(" where " + nameColumn + " = ? ",new BindVariable(username));
+        q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(username)));
         
 		List<? extends User> users  = q.execute(getUserClass());
         if (users.size() == 1){
@@ -117,17 +119,18 @@ public class Controller {
         return new BytesView(getPath(), baos.toByteArray());
     }
     
-    public <M extends Model> View autocomplete(Class<M> modelClass, String baseWhereClause, String fieldName ,String value){
+    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         XMLElement elem = null ;
         System.out.println("Parameter:" + value);
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-        Query q = new Query(modelClass);
-        q.select();
+        Select q = new Select().from(Database.getInstance().getTable(modelClass).getTableName());
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
-        
-        q.where(baseWhereClause).and(columnName).add(" like ?", new BindVariable("%"+value+"%"));
+        Expression where = new Expression("AND");
+        where.add(baseWhereClause);
+        where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+
         List<M> records = q.execute(modelClass);
         for (M record:records){
             try {

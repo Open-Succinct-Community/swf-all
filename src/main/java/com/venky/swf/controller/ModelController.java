@@ -17,10 +17,13 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.Query;
+import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Path;
 import com.venky.swf.routing.Path.ModelInfo;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
@@ -41,8 +44,8 @@ public class ModelController<M extends Model> extends Controller {
     	reflector = ModelReflector.instance(modelClass);
         
     }
-    public String getWhereClause(){
-    	StringBuilder where = new StringBuilder();
+    public Expression getWhereClause(){
+    	Expression where = new Expression("OR");
 		List<Method> parentGetters = reflector.getParentModelGetters();
 		List<ModelInfo> modelElements =getPath().getModelElements();
 
@@ -54,49 +57,36 @@ public class ModelController<M extends Model> extends Controller {
     			break;
     		}
     		
-    		StringBuilder parentWhere = new StringBuilder();
+    		Expression parentWhere = new Expression("OR");
     		
     		for (Method parentGetter: parentGetters){
     	    	Class<?> parentModelClass = parentGetter.getReturnType();
         		if (parentModelClass == mi.getModelClass()){
         	    	String parentIdFieldName =  StringUtil.underscorize(parentGetter.getName().substring(3) +"Id");
         	    	String parentIdColumnName = reflector.getColumnDescriptor(parentIdFieldName).getName();
-        	    	
-        			if (parentWhere.length() > 0){
-        				parentWhere.append(" OR ");
-        			}
-        			parentWhere.append(parentIdColumnName).append(" = ").append(mi.getId());
+        	    	parentWhere.add(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
         		}
     		}
     		
-    		if (parentWhere.length() > 0){
-    			if (where.length() > 0){
-        			where.append(" AND ");
-    			}
-    			where.append("(").append(parentWhere).append(") ");
+    		if (parentWhere.toString().length() > 0){
+    			where.add(parentWhere);
     		}
     	}
-		if (where.length() == 0){
-			where.append(" 1 = 1");
-		}
 		
-		where.append(getDataSecurityWhere()); 
-    	return where.toString();
+		Expression dsw = getDataSecurityWhere();
+		if (dsw.toString().length()> 0){
+			where.add(dsw); 
+		}
+    	return where;
 		    	
     }
-    public String getDataSecurityWhere(){
-    	StringBuilder dsw = new StringBuilder();
-    	dsw.append(getSessionUser().getDataSecurityWhereClause(modelClass));
-		if (dsw.length() > 0){
-			dsw.insert(0, " and (");
-			dsw.append(")");
-		}
-    	return dsw.toString();
+    public Expression getDataSecurityWhere(){
+    	return getSessionUser().getDataSecurityWhereClause(modelClass);
     }
     @Override
     public View index() {
-        Query q = new Query(modelClass);
-        List<M> records = q.select().where(getWhereClause()).execute();
+        Select q = new Select().from(Database.getInstance().getTable(modelClass).getTableName());
+        List<M> records = q.where(getWhereClause()).execute();
         return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
     }
     

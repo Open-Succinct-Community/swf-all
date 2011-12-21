@@ -80,6 +80,7 @@ public class Database {
             PreparedStatement stmt = conn.prepareStatement("set schema ?");
             stmt.setString(1, schema);
             stmt.executeUpdate();
+            conn.commit();
         }
         
         

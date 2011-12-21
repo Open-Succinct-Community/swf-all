@@ -4,7 +4,6 @@
  */
 package com.venky.swf.db.table;
 
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,6 +20,15 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
+import com.venky.swf.sql.DDL;
+import com.venky.swf.sql.DDL.AlterTable;
+import com.venky.swf.sql.DDL.CreateTable;
+import com.venky.swf.sql.DDL.DropTable;
+import com.venky.swf.sql.DataManupulationStatement;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
+import com.venky.swf.sql.Update;
 
 
 
@@ -104,8 +112,7 @@ public class Table<M extends Model> {
     public void dropTable(){
         try {
             Transaction txn = Database.getInstance().getCurrentTransaction();
-            Query q = new Query();
-            q.add("drop table").add(getTableName());
+            DDL.DropTable q = new DDL.DropTable(getTableName());
             q.executeUpdate();
             txn.commit();
         } catch (SQLException ex) {
@@ -115,38 +122,30 @@ public class Table<M extends Model> {
     public void createTable() {
         try {
             Transaction txn = Database.getInstance().getCurrentTransaction();
-            Query q = createTableQuery();
+            CreateTable q = createTableQuery();
             q.executeUpdate();
             txn.commit();
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
     }
-    private Query createTableQuery(){
-        Query q = new Query(); 
-        q.add("create table ");
-        q.add(getTableName() + "(");
+    private CreateTable createTableQuery(){
+        CreateTable q = new CreateTable(getTableName());
         createFields(q);
         if (getReflector().getRealFields().contains("id")){
-            q.add(", primary key ("+ getReflector().getColumnDescriptor("id").getName() +")");
+            q.addPrimaryKeyColumn(getReflector().getColumnDescriptor("id").getName());
         }
-        q.add(")");
         return q;
     }
     
-    private void createFields(Query q){
+    private void createFields(CreateTable q){
         List<String> fields = reflector.getRealFields();
         Iterator<String> fieldIterator = fields.iterator();
         while( fieldIterator.hasNext() ){
             String fieldName = fieldIterator.next();
-            Method getter = reflector.getFieldGetter(fieldName);
-            ColumnDescriptor d = reflector.getColumnDescriptor(getter);
-            q.add(d.toString());
-            if (fieldIterator.hasNext()){
-                q.add(",");
-            }
+            ColumnDescriptor d = reflector.getColumnDescriptor(fieldName);
+            q.addColumn(d.toString());
         }
-        
     }
     
     public static final String FIELDS_ADDED = "ADD";
@@ -192,15 +191,14 @@ public class Table<M extends Model> {
             
             Transaction txn = Database.getInstance().getCurrentTransaction();
             for (String columnName:droppedColumns){
-                Query q = new Query();
-                q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add(columnName);
+                AlterTable q = new AlterTable(getTableName());
+                q.dropColumn(columnName);
                 q.executeUpdate();
             }
 
             for (String fieldName:addedFields){
-                Query q = new Query();
-                q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
-                q.add(reflector.getColumnDescriptor(fieldName).toString());
+                AlterTable q = new AlterTable(getTableName());
+                q.addColumn(reflector.getColumnDescriptor(fieldName).toString());
                 q.executeUpdate();
             }
             
@@ -212,64 +210,58 @@ public class Table<M extends Model> {
             	}
             	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
             	String columnName = cd.getName();
-            	Query q = new Query();
+            	AlterTable q = new AlterTable(getTableName());
+            	q.addColumn("NEW_"+cd.toString());
+                q.executeUpdate();
+                
+            	Update u = new Update(getTableName());
+            	u.setUnBounded("NEW_"+columnName, columnName);
+            	u.executeUpdate();
             	
-                q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
-                q.add("NEW_" + cd.toString());
+            	q = new AlterTable(getTableName());
+            	q.dropColumn(columnName);
                 q.executeUpdate();
                 
-            	q = new Query();
-            	q.add("update ").add(getTableName()).add(" SET NEW_"+columnName + " =  " + columnName);
-            	q.executeUpdate();
-            	
-            	q = new Query();
-            	q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add(columnName);
+                q = new AlterTable(getTableName());
+                q.addColumn(cd.toString());
                 q.executeUpdate();
                 
-                q = new Query();
-                q.add(" ALTER TABLE ").add(getTableName()).add( " ADD COLUMN ");
-                q.add(cd.toString());
-                q.executeUpdate();
+                u = new Update(getTableName());
+            	u.setUnBounded(columnName,"NEW_" + columnName);
+            	u.executeUpdate();
                 
-                q = new Query();
-            	q.add("update ").add(getTableName()).add(" SET "+columnName + " =  NEW_" + columnName);
-            	q.executeUpdate();
-                
-                q = new Query();
-            	q.add( "ALTER TABLE ").add(getTableName()).add( " DROP COLUMN ").add("NEW_" + columnName);
+                q = new AlterTable(getTableName());
+            	q.dropColumn("NEW_" + columnName);
                 q.executeUpdate();
             }
 
             if (idTypeChanged){
             	// Rare event. Drop and recreate table.
-            	Query q = new Query(); 
-            	q.add("create table temp_" + getTableName()).add(" as (select * from "+ getTableName() + ")") ;
-            	q.executeUpdate();
+            	CreateTable create = new CreateTable("temp_"+getTableName()).as("select * from "+ getTableName());
+            	create.executeUpdate();
             	
-                q = new Query();
-                q.add("drop table ").add(getTableName());
-                q.executeUpdate();
+                DropTable drop = new DropTable(getTableName());
+                drop.executeUpdate();
                 
-                q= createTableQuery();
-                q.executeUpdate();
+                create = createTableQuery();
+                create.executeUpdate();
                 
-                q = new Query();
-                q.add("insert into ").add(getTableName()).add("(");
+                DataManupulationStatement insert = new DataManupulationStatement();
+                insert.add("insert into ").add(getTableName()).add("(");
                 Iterator<String> columnIterator = reflector.getRealColumns().iterator();
                 while (columnIterator.hasNext()){
-                	q.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+                	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
                 }
-                q.add(") select ");
+                insert.add(") select ");
                 columnIterator = reflector.getRealColumns().iterator();
                 while (columnIterator.hasNext()){
-                	q.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+                	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
                 }
-                q.add(" from temp_" + getTableName());
-                q.executeUpdate();
+                insert.add(" from temp_" + getTableName());
+                insert.executeUpdate();
                 
-                q = new Query();
-                q.add("drop table temp_" + getTableName());
-                q.execute();
+                drop = new DropTable("temp_"+getTableName());
+                drop.executeUpdate();
             }
             txn.commit();
             return true;
@@ -279,9 +271,9 @@ public class Table<M extends Model> {
     }
     
     public M get(int id) {
-        Query q = new Query(getModelClass());
+        Select q = new Select().from(Database.getInstance().getTable(getModelClass()).getTableName());
         String idColumn = getReflector().getColumnDescriptor("id").getName();
-        q.select().where(idColumn).add(" = ? ", new BindVariable(id));
+        q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
         List<M> result = q.execute(getModelClass());
         if (result.isEmpty()){
             return null;

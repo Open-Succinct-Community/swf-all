@@ -32,6 +32,12 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.sql.Delete;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Insert;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
+import com.venky.swf.sql.Update;
 
 /**
  *
@@ -163,10 +169,17 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	return children;
     }
     public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName){
-    	Query q = new Query(childClass);
     	int parentId = proxy.getId();
     	String parentIdColumnName = ModelReflector.instance(childClass).getColumnDescriptor(parentIdFieldName).getName();
+
+    	Select  q = new Select();
+    	q.from( Database.getInstance().getTable(childClass).getTableName() );
+    	q.where(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
+    	return q.execute();
+    	/*
+    	Query q = new Query(childClass);
     	return q.select().where(parentIdColumnName + " =  ? " , new BindVariable(parentId)).execute();
+    	*/
     }
 
     public void setProxy(M proxy) {
@@ -299,11 +312,14 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     }
 
     public void destroy() {
-        Query q = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
-        q.add("delete from ").add(table.getTableName()).add(" where ").add(getReflector().getColumnDescriptor("id").getName()).add(" = ? ")
-        		.add(" and ").add(getReflector().getColumnDescriptor("lock_id").getName()).add(" = ? ");
-        q.add(new BindVariable(proxy.getId()), new BindVariable(proxy.getLockId()));
+        Delete q = new Delete(table.getTableName());
+        Expression condition = new Expression("AND");
+        condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
+        condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
+        
+        q.where(condition);
+        
         q.executeUpdate();
     }
 
@@ -311,25 +327,24 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
-        Query q = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
-        q.add("update ").add(table.getTableName()).add(" set  ");
+        Update q = new Update(table.getTableName());
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
-            q.add(columnName).add(" = ? ", new BindVariable(record.get(columnName),
-                    table.getColumnDescriptor(columnName).getJDBCType()));
-            q.add(",");
+            q.set(columnName,new BindVariable(record.get(columnName)));
         }
         
         String idColumn = getReflector().getColumnDescriptor("id").getName();
         String lockidColumn = getReflector().getColumnDescriptor("lock_id").getName();
+        q.set(lockidColumn,new BindVariable(newLockId));
         
-        q.add(lockidColumn).add(" = ? ", new BindVariable(newLockId));
-        q.add(" ");
-        q.where(idColumn).add(" = ? ", new BindVariable(proxy.getId()));
-        q.and(lockidColumn).add(" = ? ", new BindVariable(oldLockId));
+        Expression condition = new Expression("AND");
+        condition.add(new Expression(idColumn,Operator.EQ,new BindVariable(proxy.getId())));
+        condition.add(new Expression(lockidColumn,Operator.EQ,new BindVariable(oldLockId)));
 
+        q.where(condition);
+        
         q.executeUpdate();
 
         proxy.setLockId(newLockId);
@@ -338,26 +353,18 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 
     private void create() {
         proxy.setLockId(0);
-        Query insertSQL = new Query();
         Table<M> table = Database.getInstance().getTable(modelClass);
-        insertSQL.add("insert into ").add(table.getTableName()).add("(");
-
+        Insert insertSQL = new Insert(table.getTableName());
+        Map<String,BindVariable> values = new HashMap<String, BindVariable>();
+        
         Iterator<String> columnIterator = record.getDirtyFields().iterator();
-        StringBuilder values = new StringBuilder();
         while (columnIterator.hasNext()) {
             String columnName = columnIterator.next();
-
-            insertSQL.add(columnName);
-            values.append("?");
-            if (columnIterator.hasNext()) {
-                insertSQL.add(",");
-                values.append(",");
-            }
-            insertSQL.add(new BindVariable(record.get(columnName),
-                    table.getColumnDescriptor(columnName).getJDBCType()));
+            values.put(columnName, new BindVariable(record.get(columnName),table.getColumnDescriptor(columnName).getJDBCType()));
         }
-
-        insertSQL.add(" ) ").add("values (").add(values.toString()).add(")");
+        insertSQL.values(values);
+        
+        
         Record generatedValues = new Record();
         String[] generatedKeys = table.getAutoIncrementColumns();
         assert (generatedKeys.length <= 1); // atmost one auto increment column

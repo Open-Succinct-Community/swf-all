@@ -1,6 +1,7 @@
 package com.venky.swf.db.model;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,10 +12,13 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
 
 public class UserImpl<M extends User> extends ModelImpl<M>{
 	
@@ -62,10 +66,11 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 		return mapParticipatingOptions;
 	}
 
-	public <R extends Model> String getDataSecurityWhereClause(Class<R> modelClass){
+	public <R extends Model> Expression getDataSecurityWhereClause(Class<R> modelClass){
 		ModelReflector<R> ref = ModelReflector.instance(modelClass);
 		Map<String,List<Integer>> columnValuesMap = getParticipationOptions(modelClass);
-		StringBuilder dsw = new StringBuilder();
+		
+		Expression dsw = new Expression("OR");
 		Iterator<String> fieldNameIterator = columnValuesMap.keySet().iterator();
 		
 		while (fieldNameIterator.hasNext()){
@@ -73,30 +78,19 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 			List<Integer> values = columnValuesMap.get(key);
 			
 	    	ColumnDescriptor cd = ref.getColumnDescriptor(key);
-	    	if (cd != null){
-	    		dsw.append(cd.getName());
-	    	}else{
-	    		dsw.append(key);
-	    	}
+
 	    	if (values.isEmpty()){
-	    		dsw.append(" is null ");
+	    		dsw.add(new Expression(cd.getName(),Operator.EQ));
 	    	}else if (values.size() == 1){
-	    		dsw.append(" = ").append(values.get(0));
+	    		dsw.add(new Expression(cd.getName(),Operator.EQ, new BindVariable(values.get(0))));
 	    	}else {
-	    		dsw.append(" in (");
-	    		Iterator<Integer> valueIterator = values.iterator();
-	    		while (valueIterator.hasNext()){
-	    			dsw.append(valueIterator.next());
-	    			if (valueIterator.hasNext()){
-	    				dsw.append(",");
-	    			}
+	    		List<BindVariable> parameters = new ArrayList<BindVariable>();
+	    		for (Integer value: values){
+	    			parameters.add(new BindVariable(value));
 	    		}
-	    		dsw.append(")");
-	    	}
-	    	if (fieldNameIterator.hasNext()){
-	    		dsw.append(" or ");
+	    		dsw.add(new Expression(cd.getName(),Operator.IN, parameters.toArray(new BindVariable[]{})));
 	    	}
 		}
-		return dsw.toString();
+		return dsw;
 	}
 }

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
+import com.venky.swf.sql.Expression;
 
 /**
  *
@@ -30,6 +31,6 @@ public interface User extends Model{
     public <M extends Model> Map<String,List<Integer>> getParticipationOptions(Class<M> modelClass);
     public static final String GET_PARTICIPATION_OPTION = "get.participation.option";//++ModelClass.SimpleName
     
-    public <M extends Model> String getDataSecurityWhereClause(Class<M> modelClass);
+    public <M extends Model> Expression getDataSecurityWhereClause(Class<M> modelClass);
     
 }
