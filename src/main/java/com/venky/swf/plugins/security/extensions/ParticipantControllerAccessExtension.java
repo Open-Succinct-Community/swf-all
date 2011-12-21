@@ -17,12 +17,14 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
-import com.venky.swf.db.table.Query;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.plugins.security.db.model.RolePermission;
 import com.venky.swf.plugins.security.db.model.UserRole;
 import com.venky.swf.routing.Path;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class ParticipantControllerAccessExtension implements Extension{
 	static {
@@ -66,22 +68,31 @@ public class ParticipantControllerAccessExtension implements Extension{
 			}
 		}
 
-		
-		Query permissionQuery = new Query(RolePermission.class);
-		String userRole = Database.getInstance().getTable(UserRole.class).getTableName() ; 
-		
-		permissionQuery.select().where(" role_id in (select role_id from "+ userRole +
-														" where user_id = ? ) " ,new BindVariable(user.getId()));
-		permissionQuery.and(" ( participation is null" );
+		Expression participationWhere = new Expression("OR");
+		participationWhere.add(new Expression("participation",Operator.EQ));
 		for (String participatingRole:participantingRoles){
-			 permissionQuery.add(" or participation = ? ",new BindVariable(participatingRole));
+			participationWhere.add(new Expression("participation",Operator.EQ,new BindVariable(participatingRole)));
 		}
-		permissionQuery.add(" )");
-		permissionQuery.and(" (controller_path_element_name is null " +
-		 						" or (controller_path_element_name = ? and action_path_element_name is null) " +
-		 						" or (controller_path_element_name = ? and action_path_element_name = ?) )", 
-		 						new BindVariable(controllerPathElementName),
-		 						new BindVariable(controllerPathElementName),new BindVariable(actionPathElementName));
+		
+		Expression controllerActionWhere = new Expression("OR");
+		controllerActionWhere.add(new Expression("controller_path_element_name",Operator.EQ));
+		controllerActionWhere.add(new Expression("AND").add(new Expression("controller_path_element_name",Operator.EQ,new BindVariable(controllerPathElementName)))
+														.add(new Expression("action_path_element_name",Operator.EQ)));
+		controllerActionWhere.add(new Expression("AND").add(new Expression("controller_path_element_name",Operator.EQ,new BindVariable(controllerPathElementName)))
+														.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+		
+		Expression permissionQueryWhere = new Expression("AND");
+		String userRole = Database.getInstance().getTable(UserRole.class).getTableName() ; 
+		permissionQueryWhere.add(new Expression("role_id",Operator.IN, 
+												new Select().from(userRole).where(
+																					new Expression("user_id",Operator.EQ,new BindVariable(user.getId()))
+																				)));
+		permissionQueryWhere.add(participationWhere);
+		permissionQueryWhere.add(controllerActionWhere);
+
+		Select permissionQuery = new Select().from(Database.getInstance().getTable(RolePermission.class).getTableName());
+		permissionQuery.where(permissionQueryWhere);
+
 		List<RolePermission> permissions = permissionQuery.execute();
 		if (permissions.isEmpty()){
 			return ;
