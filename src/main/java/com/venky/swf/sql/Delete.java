@@ -15,7 +15,7 @@ public class Delete extends DataManupulationStatement {
 		Expression where = getWhereExpression();
 		if (where != null){
 			builder.append(" WHERE ");
-			builder.append(where.toString());
+			builder.append(where.getParameterizedSQL());
 			getValues().addAll(where.getValues());
 		}
 	}

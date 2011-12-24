@@ -77,6 +77,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         for (M record : records) {
+        	if (!record.isAccessibleBy(getPath().getSessionUser())){
+        		continue;
+        	}
             Row row = table.createRow();
             
             if (getPath().canAccessControllerAction("show")){

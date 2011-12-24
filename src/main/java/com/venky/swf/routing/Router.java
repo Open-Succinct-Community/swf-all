@@ -6,6 +6,7 @@ package com.venky.swf.routing;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.views.ExceptionView;
+import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -39,8 +40,11 @@ public class Router extends AbstractHandler {
         
         try {
             View view = p.invoke();
-            Database.getInstance().getCurrentTransaction().commit();
+            if (view instanceof RedirectorView){
+            	Database.getInstance().getCurrentTransaction().commit();
+            }
             view.write();
+            Database.getInstance().getCurrentTransaction().commit();
         }catch(Exception e){
         	try { 
         		Database.getInstance().getCurrentTransaction().rollback();

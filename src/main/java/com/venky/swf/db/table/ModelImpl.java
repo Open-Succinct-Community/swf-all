@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +33,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Insert;
@@ -204,6 +206,10 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	}
     	return false;
     }
+    
+    public Record getRawRecord(){
+    	return record;
+    }
 
 	private static Map<Class<?>,Class<?>> modelImplMap = new HashMap<Class<?>, Class<?>>();
     
@@ -314,13 +320,18 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     public void destroy() {
         Table<M> table = Database.getInstance().getTable(modelClass);
         Delete q = new Delete(table.getTableName());
-        Expression condition = new Expression("AND");
+        Expression condition = new Expression(Conjunction.AND);
         condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
         condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
         
         q.where(condition);
         
         q.executeUpdate();
+        try {
+			Database.getInstance().getCache(getModelClass()).remove(getProxy());
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     private void update() {
@@ -339,7 +350,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         String lockidColumn = getReflector().getColumnDescriptor("lock_id").getName();
         q.set(lockidColumn,new BindVariable(newLockId));
         
-        Expression condition = new Expression("AND");
+        Expression condition = new Expression(Conjunction.AND);
         condition.add(new Expression(idColumn,Operator.EQ,new BindVariable(proxy.getId())));
         condition.add(new Expression(lockidColumn,Operator.EQ,new BindVariable(oldLockId)));
 
@@ -367,17 +378,48 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         
         Record generatedValues = new Record();
         String[] generatedKeys = table.getAutoIncrementColumns();
-        assert (generatedKeys.length <= 1); // atmost one auto increment column
+        assert (generatedKeys.length <= 1); // atmost one auto increment id column
         
         insertSQL.executeUpdate(generatedValues, generatedKeys);
         if (generatedKeys.length == 1){
             assert (generatedValues.getDirtyFields().size() == 1);
             String fieldName = generatedKeys[0];
             String virtualFieldName = generatedValues.getDirtyFields().first();
-            record.put(fieldName, generatedValues.get(virtualFieldName));
+            int id = ((Number)generatedValues.get(virtualFieldName)).intValue();
+            record.put(fieldName, id);
         }
 
         record.setNewRecord(false);
         record.startTracking();
+        try {
+			Database.getInstance().getCache(getModelClass()).add(getProxy());
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
     }
+    @Override
+    public boolean equals(Object o){
+    	if (!(o instanceof ModelImpl) && !modelClass.isInstance(o)){
+    		return false;
+    	}
+    	if (o instanceof ModelImpl){
+    		return equalImpl((ModelImpl)o);
+    	}else {
+    		return equalsProxy((M)o);
+    	}
+    }
+    
+    private boolean equalImpl(ModelImpl anotherImpl){
+    	return (getProxy().getId() == anotherImpl.getProxy().getId()) && getModelClass().equals(anotherImpl.getModelClass()); 
+    }
+    
+    private boolean equalsProxy(M anotherProxy){
+    	boolean ret = false;
+    	if (anotherProxy != null){
+    		ret = getModelClass().isInstance(anotherProxy) && getProxy().getId() == anotherProxy.getId();
+    	}
+    	System.out.println("equalsProxyCalled. returning " + ret);
+    	return ret;
+    }
+    
 }

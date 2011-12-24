@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.swf.db.annotations.column.PASSWORD;
+import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.sql.Expression;
 
@@ -16,6 +17,7 @@ import com.venky.swf.sql.Expression;
  * @author venky
  */
 @HAS_DESCRIPTION_COLUMN
+@CONFIGURATION
 public interface User extends Model{
     public String getName();
     public void setName(String name);

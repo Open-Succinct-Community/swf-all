@@ -18,6 +18,7 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.routing.Path;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -127,7 +128,7 @@ public class Controller {
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         Select q = new Select().from(Database.getInstance().getTable(modelClass).getTableName());
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
-        Expression where = new Expression("AND");
+        Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);
         where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
 

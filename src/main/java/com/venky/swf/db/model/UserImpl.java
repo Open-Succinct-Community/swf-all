@@ -17,6 +17,7 @@ import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 
@@ -70,7 +71,7 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 		ModelReflector<R> ref = ModelReflector.instance(modelClass);
 		Map<String,List<Integer>> columnValuesMap = getParticipationOptions(modelClass);
 		
-		Expression dsw = new Expression("OR");
+		Expression dsw = new Expression(Conjunction.OR);
 		Iterator<String> fieldNameIterator = columnValuesMap.keySet().iterator();
 		
 		while (fieldNameIterator.hasNext()){

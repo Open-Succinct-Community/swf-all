@@ -14,6 +14,7 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.table.Record;
 
 /**
  *
@@ -62,4 +63,6 @@ public interface Model {
     public void destroy();
     public void init();
     public boolean isAccessibleBy(User user);
+    
+    public Record getRawRecord();
 }

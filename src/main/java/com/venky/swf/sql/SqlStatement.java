@@ -35,7 +35,7 @@ public class SqlStatement {
         return st;
     }
 
-	public String getNonParameterizedSQL(){
+	public String getRealSQL(){
 		StringBuilder builder = new StringBuilder(getParameterizedSQL());
 		List<BindVariable> parameters = getValues();
 		
@@ -78,5 +78,6 @@ public class SqlStatement {
 	protected void finalizeParameterizedSQL(){
 		
 	}
+	
 	
 }

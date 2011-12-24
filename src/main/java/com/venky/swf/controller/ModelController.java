@@ -21,6 +21,7 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Path;
 import com.venky.swf.routing.Path.ModelInfo;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -45,7 +46,7 @@ public class ModelController<M extends Model> extends Controller {
         
     }
     public Expression getWhereClause(){
-    	Expression where = new Expression("OR");
+    	Expression where = new Expression(Conjunction.OR);
 		List<Method> parentGetters = reflector.getParentModelGetters();
 		List<ModelInfo> modelElements =getPath().getModelElements();
 
@@ -57,7 +58,7 @@ public class ModelController<M extends Model> extends Controller {
     			break;
     		}
     		
-    		Expression parentWhere = new Expression("OR");
+    		Expression parentWhere = new Expression(Conjunction.OR);
     		
     		for (Method parentGetter: parentGetters){
     	    	Class<?> parentModelClass = parentGetter.getReturnType();

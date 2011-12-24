@@ -24,6 +24,7 @@ import java.util.Stack;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.configuration.Installer;
+import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
@@ -269,8 +270,23 @@ public class Database {
     }
 
     
+    private static Map<Class<? extends Model>,QueryCache<? extends Model>> configQueryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();    
     public <M extends Model> QueryCache<M> getCache(Class<M> modelClass) throws SQLException{
-    	return getCurrentTransaction().getCache(modelClass);
+    	if (modelClass.isAnnotationPresent(CONFIGURATION.class)){
+    		QueryCache<M> cacheEntry = (QueryCache<M>) configQueryCacheMap.get(modelClass);
+    		if (cacheEntry == null){
+    			synchronized (configQueryCacheMap) {
+    				cacheEntry = (QueryCache<M>) configQueryCacheMap.get(modelClass);
+    				if (cacheEntry == null){
+	    				cacheEntry = new QueryCache<M>(modelClass);
+	    				configQueryCacheMap.put(modelClass,cacheEntry);
+    				}
+				}
+    		}
+    		return cacheEntry;
+    	}else {
+    		return getCurrentTransaction().getCache(modelClass);
+    	}
     }
     
     public class Transaction{
@@ -312,13 +328,13 @@ public class Database {
             return getConnection().prepareStatement(sql, columnNames);
         }
         
-        Map<Class<? extends Model>,QueryCache<? extends Model>> queryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();
+        private Map<Class<? extends Model>,QueryCache<? extends Model>> txnQueryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();
         
         public <M extends Model> QueryCache<M> getCache(Class<M> modelClass){
-        	QueryCache<M> queryCache = (QueryCache<M>) queryCacheMap.get(modelClass);
+        	QueryCache<M> queryCache = (QueryCache<M>) txnQueryCacheMap.get(modelClass);
         	if (queryCache == null){
-	        	queryCache = new QueryCache<M>();
-	        	queryCacheMap.put(modelClass, queryCache);
+	        	queryCache = new QueryCache<M>(modelClass);
+	        	txnQueryCacheMap.put(modelClass, queryCache);
         	}
         	return queryCache;
         }

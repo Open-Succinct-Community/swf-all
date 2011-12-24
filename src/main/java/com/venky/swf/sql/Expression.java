@@ -5,14 +5,17 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.Record;
 
 
 public class Expression {
 	String columnName = null;
 	List<BindVariable> values = new ArrayList<BindVariable>() ;
 	Operator op = null;
-	Select selectStmt = null;
 	public Expression(String columnName,Operator op, BindVariable... values){
 		this.columnName = columnName;
 		this.op = op;
@@ -21,27 +24,35 @@ public class Expression {
 		}
 	}
 	
-	String conjunction = null;
-	public Expression(String conjunction){
+	Conjunction conjunction = null;
+	public Expression(Conjunction conjunction){
 		this.conjunction = conjunction;
 	}
 
-	public Expression(String columnName,Operator op, Select selectStmt){
-		this.columnName = columnName;
-		this.op = op;
-		this.selectStmt = selectStmt;
-		this.values.addAll(selectStmt.getValues());
-	}	
-	
 	private List<Expression> connected = new ArrayList<Expression>();
 	public Expression add(Expression expression){
 		connected.add(expression);
 		values.addAll(expression.getValues());
 		return this;
 	}
-
-	@Override
-	public String toString(){
+	public String getRealSQL(){
+		StringBuilder builder = new StringBuilder(getParameterizedSQL());
+		List<BindVariable> parameters = getValues();
+		
+		int index = builder.indexOf("?");
+		int p = 0;
+		while (index >= 0) {
+			String pStr = StringUtil.valueOf(parameters.get(p).getValue());
+			builder.replace(index, index+1, pStr);
+			p+=1;
+			index = builder.indexOf("?",index+pStr.length());
+		}
+		
+		return builder.toString();
+		
+	}
+	
+	public String getParameterizedSQL(){
 		StringBuilder builder = new StringBuilder();
 		if (conjunction == null){
 			builder.append(columnName);
@@ -54,41 +65,39 @@ public class Expression {
 				}
 			}else {
 				builder.append(op.toString());
-				if (selectStmt != null){
-					builder.append(" (");
-					builder.append(selectStmt.getParameterizedSQL());
-					builder.append(" )");
-				}else {
-					if (op.requiresParen()){
-						builder.append(" ( ");
+				if (op.requiresParen()){
+					builder.append(" ( ");
+				}
+				 
+				for (int i = 0 ; i < values.size() ; i++){
+					if (i != 0){
+						//To handle In clause.
+						builder.append(",");
 					}
-					 
-					for (int i = 0 ; i < values.size() ; i++){
-						if (i != 0){
-							//To handle In clause.
-							builder.append(",");
-						}
-						builder.append(" ?");
-					}
-					
-					if (op.requiresParen()){
-						builder.append(" ) ");
-					}
+					builder.append(" ?");
+				}
+				
+				if (op.requiresParen()){
+					builder.append(" ) ");
 				}
 			}
 		}else if (!connected.isEmpty()){
-			builder.append(" ( ");
 			Iterator<Expression> i = connected.iterator();
 			while(i.hasNext()){
 				Expression expression = i.next();
-				builder.append(" ( ");
-				builder.append(expression);
-				builder.append(" ) ");
-				if (i.hasNext()){
-					builder.append(conjunction);
+				if (!expression.isEmpty()){
+					if (builder.length() > 0){
+						builder.append(conjunction);
+					}
+					builder.append(" ( ");
+					builder.append(expression.getParameterizedSQL());
+					builder.append(" ) ");
 				}
 			}
-			builder.append(" ) ");
+			if (builder.length() > 0){
+				builder.insert(0," ( ");
+				builder.append(" ) ");
+			}
 		}
 		return builder.toString();
 	}
@@ -98,6 +107,78 @@ public class Expression {
 	}
 	
 	public boolean isEmpty(){
-		return toString().length() == 0;
+		return getParameterizedSQL().length() == 0;
 	}
+	
+	@Override
+	public int hashCode(){
+		return getRealSQL().hashCode();
+	}
+	
+	public boolean equals(Object other){
+		if (other == null){
+			return false;
+		}
+		if (!(other instanceof Expression)){
+			return false;
+		}
+		Expression e = (Expression) other;
+		return getRealSQL().equals(e.getRealSQL());
+	}
+	
+	public <M extends Model> boolean eval(M m){
+		Record record = m.getRawRecord();
+		if (conjunction == null){
+			Object value = record.get(columnName);
+			if (value == null){
+				return values.isEmpty();
+			}else if (values.isEmpty()){
+				return false;
+			}
+			if (values.size() == 1){
+				Object v = values.get(0).getValue();
+				if (op == Operator.EQ){
+					return ObjectUtil.equals(v,value);
+				}else if (value instanceof Comparable){
+					if (op == Operator.GE){
+						return ((Comparable)value).compareTo(v) >= 0;
+					}else if (op == Operator.GT){
+						return ((Comparable)value).compareTo(v) > 0;
+					}else if (op == Operator.LE){
+						return ((Comparable)value).compareTo(v) <= 0;
+					}else if (op == Operator.LT){
+						return ((Comparable)value).compareTo(v) < 0;
+					}else if (op == Operator.NE){
+						return ((Comparable)value).compareTo(v) != 0;
+					}
+				}
+				if (op == Operator.LK && value instanceof String && v instanceof String){
+					return ((String)value).matches(((String)v).replace("%", ".*"));
+				}
+			}
+			if (op == Operator.IN){
+				for (BindVariable v :values){
+					if (ObjectUtil.equals(value,v.getValue())){
+						return true;
+					}
+				}
+			}
+		}else if (conjunction == Conjunction.OR){
+			boolean ret = connected.isEmpty();
+			for (Iterator<Expression> i = connected.iterator(); !ret && i.hasNext() ;){
+				Expression e = i.next();
+				ret = ret || e.eval(m);
+			}
+			return ret;
+		}else if (conjunction == Conjunction.AND){
+			boolean ret = true;
+			for (Iterator<Expression> i = connected.iterator(); ret && i.hasNext() ;){
+				Expression e = i.next();
+				ret = ret && e.eval(m);
+			}
+			return ret;
+		}
+		return false;
+	}
+	
 }

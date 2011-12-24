@@ -41,7 +41,7 @@ public class Select extends SqlStatement{
 	
 	protected void finalizeParameterizedSQL(){
 		StringBuilder builder = getQuery();
-		builder.append("SELECT");
+		builder.append("SELECT ");
 		if (columnNames == null || columnNames.length == 0){
 			builder.append(" * ");
 		}else {
@@ -59,7 +59,7 @@ public class Select extends SqlStatement{
 		Expression where = getWhereExpression();
 		if (where != null && !where.isEmpty()){
 			builder.append(" WHERE ");
-			builder.append(where.toString());
+			builder.append(where.getParameterizedSQL());
 			getValues().addAll(where.getValues());
 		}
 		
@@ -97,10 +97,10 @@ public class Select extends SqlStatement{
 	
 	public <M extends Model> List<M> execute(Class<M> modelInterface) {
         PreparedStatement st = null;
-        String query = getNonParameterizedSQL();
+        String query = getRealSQL();
         try {
         	QueryCache<M> cache = Database.getInstance().getCache(modelInterface);
-        	List<M> result = cache.getCachedResult(query);
+        	List<M> result = cache.getCachedResult(getWhereExpression());
         	if (result != null){
         		return result;
         	}
@@ -118,7 +118,7 @@ public class Select extends SqlStatement{
                 }
                 rs.close();
             }
-            cache.setCachedResult(query, result);
+            cache.setCachedResult(getWhereExpression(), result);
             return result;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
