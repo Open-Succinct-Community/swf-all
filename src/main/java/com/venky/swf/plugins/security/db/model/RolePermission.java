@@ -3,9 +3,10 @@ package com.venky.swf.plugins.security.db.model;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 
-
+@CONFIGURATION
 public interface RolePermission extends Model{
 	public int getRoleId();
 	public void setRoleId(int roleId);
