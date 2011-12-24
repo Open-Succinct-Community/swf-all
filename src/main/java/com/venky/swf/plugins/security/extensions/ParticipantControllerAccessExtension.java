@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -89,12 +88,14 @@ public class ParticipantControllerAccessExtension implements Extension{
 		String userRole = Database.getInstance().getTable(UserRole.class).getTableName() ;
 		Select userRoleQuery = new Select("role_id").from(userRole).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute();
+		List<Integer> userRoleIds = new ArrayList<Integer>();
 		Expression roleWhere = new Expression(Conjunction.OR);
 		roleWhere.add(new Expression("role_id",Operator.EQ));
 		if (!userRoles.isEmpty()){
 			List<BindVariable> role_ids = new ArrayList<BindVariable>();
 			for (UserRole ur:userRoles){
 				role_ids.add(new BindVariable(ur.getRoleId()));
+				userRoleIds.add(ur.getRoleId());
 			}
 			roleWhere.add(new Expression("role_id",Operator.IN,role_ids.toArray(new BindVariable[]{})));
 		}
@@ -112,10 +113,19 @@ public class ParticipantControllerAccessExtension implements Extension{
 			public int compare(RolePermission o1, RolePermission o2) {
 				int ret =  0; 
 				if (ret == 0){
-					ret = StringUtil.valueOf(o2.getControllerPathElementName()).compareTo(o1.getControllerPathElementName());
+					if (o1.getRoleId() == null && o2.getRoleId() != null){
+						ret = 1;
+					}else if (o2.getRoleId() == null && o1.getRoleId() != null){
+						ret = -1;
+					}else {
+						ret = 0;
+					}
 				}
 				if (ret == 0){
-					ret = StringUtil.valueOf(o2.getActionPathElementName()).compareTo(o1.getActionPathElementName());	
+					ret = StringUtil.valueOf(o2.getControllerPathElementName()).compareTo(StringUtil.valueOf(o1.getControllerPathElementName()));
+				}
+				if (ret == 0){
+					ret = StringUtil.valueOf(o2.getActionPathElementName()).compareTo(StringUtil.valueOf(o1.getActionPathElementName()));	
 				}
 				return ret;
 			}
@@ -123,27 +133,24 @@ public class ParticipantControllerAccessExtension implements Extension{
 		});
 		
 		RolePermission firstPermission = permissions.get(0);
-		
 		Iterator<RolePermission> permissionIterator = permissions.iterator();
 		while (permissionIterator.hasNext()){
 			RolePermission effective = permissionIterator.next();
-			boolean isBestMatch = ObjectUtil.equals(effective.getControllerPathElementName(),firstPermission.getControllerPathElementName()) 
-					&& ObjectUtil.equals(effective.getActionPathElementName(),firstPermission.getActionPathElementName());
-			
-			if (isBestMatch){
-				if (effective.isAllowed()){
+			if (effective.isAllowed()){
+				if (effective.getRoleId() != null || firstPermission.getRoleId() == null){
 					return;
+				}else if (!userRoleIds.isEmpty()){
+					//First role not null but effective.role is null.
+					//If User has atleast one more role that is not configured as disallowed then allowed.
+					return;
+				}else {
+					break;
 				}
-			}else {
-				break;
+			}else if (effective.getRoleId() != null ){
+				userRoleIds.remove(effective.getRoleId());
 			}
 		}
-		
-	
-	
 		throw new AccessDeniedException();
-
-		
 	}
 
 }

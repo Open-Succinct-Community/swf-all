@@ -8,8 +8,8 @@ import com.venky.swf.db.model.Model;
 
 @CONFIGURATION
 public interface RolePermission extends Model{
-	public int getRoleId();
-	public void setRoleId(int roleId);
+	public Integer getRoleId();
+	public void setRoleId(Integer roleId);
 	public Role getRole();
 	
 	@IS_NULLABLE
@@ -24,7 +24,7 @@ public interface RolePermission extends Model{
 	public String getActionPathElementName();
 	public void setActionPathElementName(String actionPathElementName);
 	
-	@COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
+	@COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)
 	public boolean isAllowed();
 	public void setAllowed(boolean allowed);
 
