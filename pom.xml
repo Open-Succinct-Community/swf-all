@@ -25,7 +25,8 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>7.5.1-SNAPSHOT</version>
+            <version>8.0.4.v20111024</version>
+            <!--<version>7.5.1-SNAPSHOT</version>-->
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -37,6 +38,16 @@
         	<groupId>asm</groupId>
         	<artifactId>asm</artifactId>
         	<version>3.3.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>commons-fileupload</groupId>
+        	<artifactId>commons-fileupload</artifactId>
+        	<version>1.2.2</version>
+        </dependency>
+        <dependency>
+        	<groupId>commons-io</groupId>
+        	<artifactId>commons-io</artifactId>
+        	<version>2.0.1</version>
         </dependency>
     </dependencies>
 </project>

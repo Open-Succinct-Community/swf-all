@@ -20,6 +20,7 @@ import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.layout.Table.TBody;
 import com.venky.swf.views.controls.page.layout.Table.THead;
+import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 
 /**
@@ -105,6 +106,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             String fieldName = field.next();
             Label fieldLabel = new Label(getFieldLiteral(fieldName));
             Control fieldData = getInputControl(fieldName, record);
+            if (fieldData instanceof FileTextBox){
+            	form.setProperty("enctype","multipart/form-data");
+            	((FileTextBox)fieldData).setUrl(getPath().controllerPath()+"/view/"+record.getId());
+            }
             if (isFieldEditable(fieldName)){
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);

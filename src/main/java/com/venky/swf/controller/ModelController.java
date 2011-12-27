@@ -4,12 +4,22 @@
  */
 package com.venky.swf.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -69,13 +79,13 @@ public class ModelController<M extends Model> extends Controller {
         		}
     		}
     		
-    		if (parentWhere.toString().length() > 0){
+    		if (parentWhere.getParameterizedSQL().length() > 0){
     			where.add(parentWhere);
     		}
     	}
 		
 		Expression dsw = getDataSecurityWhere();
-		if (dsw.toString().length()> 0){
+		if (dsw.getParameterizedSQL().length()> 0){
 			where.add(dsw); 
 		}
     	return where;
@@ -168,9 +178,35 @@ public class ModelController<M extends Model> extends Controller {
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Cannot call save in any other method other than POST");
         }
-
-        String id = getPath().getRequest().getParameter("ID");
-        String lockId = getPath().getRequest().getParameter("LOCK_ID");
+        
+        Map<String,Object> formFields = new HashMap<String, Object>();
+        boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
+        if (isMultiPart){
+        	FileItemFactory factory = new DiskFileItemFactory(1024*1024*128, new File(System.getProperty("java.io.tmpdir")));
+        	ServletFileUpload fu = new ServletFileUpload(factory);
+        	try {
+				List<FileItem> fis = fu.parseRequest(request);
+				for (FileItem fi:fis){
+					if (fi.isFormField()){
+						formFields.put(fi.getFieldName(), fi.getString());
+					}else {
+						formFields.put(fi.getFieldName(), fi.getInputStream());
+					}
+				}
+			} catch (FileUploadException e1) {
+				throw new RuntimeException(e1);
+			} catch (IOException e1){
+				throw new RuntimeException(e1);
+			}
+        }else {
+        	Enumeration<String> parameterNames = request.getParameterNames();
+        	while (parameterNames.hasMoreElements()){
+        		String name =parameterNames.nextElement();
+            	formFields.put(name,request.getParameter(name));
+        	}
+        }
+        String id = (String)formFields.get("ID");
+        String lockId = (String)formFields.get("LOCK_ID");
         M record = null;
         if (ObjectUtil.isVoid(id)) {
             record = Database.getInstance().getTable(modelClass).newRecord();
@@ -193,13 +229,13 @@ public class ModelController<M extends Model> extends Controller {
         fields.remove("UPDATED_AT");
         fields.remove("UPDATER_USER_ID");
         
-        Enumeration<String> e = getPath().getRequest().getParameterNames();
-        while (e.hasMoreElements()) {
-            String name = e.nextElement();
+        Iterator<String> e = formFields.keySet().iterator();
+        while (e.hasNext()) {
+            String name = e.next();
             String fieldName = fields.contains(name) ? name : null;
 
             if (fieldName != null) {
-                Object value = request.getParameter(fieldName);
+                Object value = formFields.get(fieldName);
                 Method getter = reflector.getFieldGetter(fieldName);
                 Method setter = reflector.getFieldSetter(fieldName);
 
@@ -239,6 +275,10 @@ public class ModelController<M extends Model> extends Controller {
     	ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         return super.autocomplete(modelClass,getWhereClause(), reflector.getDescriptionColumn(), value);
     }
+	public ModelReflector<M> getReflector() {
+		return reflector;
+	}
+    
     
     
 }

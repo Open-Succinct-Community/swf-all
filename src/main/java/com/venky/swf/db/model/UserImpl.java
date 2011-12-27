@@ -34,7 +34,7 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 			if (Registry.instance().hasExtensions(User.USER_AUTHENTICATE)){
 				Registry.instance().callExtensions(User.USER_AUTHENTICATE, user,password);
 			}else {
-				ObjectUtil.equals(user.getPassword(),password);
+				return ObjectUtil.equals(user.getPassword(),password);
 			}
 			return true;
 		}catch (AccessDeniedException ex){

@@ -4,6 +4,8 @@
  */
 package com.venky.swf.views.model;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -19,6 +21,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
+import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -30,6 +33,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
+import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.Select;
 import com.venky.swf.views.controls.page.text.TextBox;
@@ -95,7 +99,14 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
-        } else {
+        }else if (InputStream.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType)){
+        	FileTextBox ftb = new FileTextBox();
+        	CONTENT_TYPE type = getter.getAnnotation(CONTENT_TYPE.class);
+        	if (type != null){
+        		ftb.setContentType(type.value());
+        	}
+        	control = ftb;
+        }else {
             Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);
             if (parentModelGetter != null){
                 control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().getBackTarget());

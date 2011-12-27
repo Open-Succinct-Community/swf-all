@@ -131,7 +131,7 @@ public class Controller {
         Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);
         where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
-
+        q.where(where);
         List<M> records = q.execute(modelClass);
         for (M record:records){
             try {
