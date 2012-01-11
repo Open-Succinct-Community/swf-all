@@ -49,10 +49,16 @@ public class DefaultMenuBuilder implements MenuBuilder{
 
     public void createMenuItem(Menu modelMenu,Table<?> table,Class<? extends Annotation> annotationClass){
     	Class<?> modelClass = table.getModelClass();
+    	if (!canAddToMenu(modelClass)){
+    		return;
+    	}
     	if (annotationClass == null || modelClass.getAnnotation(annotationClass) != null){
             String modelName = modelClass.getSimpleName();
             modelMenu.createMenuItem(modelName, "/" + table.getTableName().toLowerCase());
     	}
     }
     
+    protected boolean canAddToMenu(Class<?> modelClass){
+    	return true;
+    }
 }

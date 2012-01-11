@@ -25,7 +25,6 @@ import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
-import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Path;
@@ -169,15 +168,11 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             Model parentModel = (Model)parentModelGetter.invoke(record);
             if (parentModel != null){
                 @SuppressWarnings("unchecked")
-				Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType(); 
-                HAS_DESCRIPTION_COLUMN hdc = parentModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-                if (hdc != null){
-                    String descriptionColumn = hdc.value();
-                    assert (ModelReflector.instance(parentModelClass).getFields().contains(descriptionColumn));
-    
-                    Object descValue = ModelReflector.instance(parentModelClass).getFieldGetter(descriptionColumn).invoke(parentModel);
-                    return StringUtil.valueOf(descValue);
-                }
+				Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType();
+                ModelReflector<Model> parentModelReflector = ModelReflector.instance(parentModelClass);
+                String descriptionColumn = parentModelReflector.getDescriptionColumn();
+                Object descValue = parentModelReflector.getFieldGetter(descriptionColumn).invoke(parentModel);
+                return StringUtil.valueOf(descValue);
             }
         }
         return null;
@@ -188,13 +183,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
 
         Method parentModelgetter = getReflector().getReferredModelGetterFor(reflector.getFieldGetter(fieldName));
         if (parentModelgetter != null) {
-            Class<?> parentModel = parentModelgetter.getReturnType();
-            HAS_DESCRIPTION_COLUMN hdc = parentModel.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-            if (hdc != null){
-                fieldLiteral = parentModelgetter.getName().substring("get".length()) ;
-            }
+            fieldLiteral = parentModelgetter.getName().substring("get".length()) ;
         }
-        
         return fieldLiteral;
         
     }

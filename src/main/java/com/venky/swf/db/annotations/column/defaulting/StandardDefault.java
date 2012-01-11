@@ -4,7 +4,6 @@ public enum StandardDefault {
 	NULL,
 	STR_NONE,
 	STR_BLANK,
-	
 	ZERO,
 	ONE,
 	CURRENT_DATE,

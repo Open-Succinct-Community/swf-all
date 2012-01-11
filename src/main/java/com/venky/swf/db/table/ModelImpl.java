@@ -23,6 +23,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
@@ -115,7 +116,12 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             if (Model.class.isAssignableFrom(method.getReturnType())){
                 return getChild((Class<? extends Model>) method.getReturnType());
             }else {
-                return getChildren(getReflector().getChildModelClass(method));
+            	CONNECTED_VIA join = method.getAnnotation(CONNECTED_VIA.class);
+            	if (join != null){
+            		return getChildren(getReflector().getChildModelClass(method),join.value());
+            	}else {
+            		return getChildren(getReflector().getChildModelClass(method));
+            	}
             }
         }
 
@@ -246,6 +252,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         if (record.getDirtyFields().isEmpty()) {
             return;
         }
+        validate();
         beforeSave();
         if (record.isNewRecord()) {
             create();
@@ -295,12 +302,18 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 
     }
 
-    protected void beforeSave() {
-        StringBuilder errmsg = new StringBuilder();
+    protected void validate(){
+    	beforeValidate();
+    	StringBuilder errmsg = new StringBuilder();
         if (!isModelValid(errmsg)) {
             throw new RuntimeException(errmsg.toString());
         }
-        
+        afterValidate();
+    }
+    protected void beforeValidate(){
+    	defaultFields();
+    }
+    protected void defaultFields(){
         for (String field:reflector.getRealFields()){
         	String columnName = reflector.getColumnDescriptor(field).getName();
         	if (record.get(columnName) == null){
@@ -313,12 +326,15 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         	}
         }
     }
-
-    protected void afterSave() {
-    }
-
+    protected void afterValidate(){}
+    protected void beforeSave() {}
+    protected void afterSave() {}
+    protected void beforeDestory(){}
+    protected void afterDestroy(){}
+    
     public void destroy() {
-        Table<M> table = Database.getInstance().getTable(modelClass);
+    	beforeDestory();
+    	Table<M> table = Database.getInstance().getTable(modelClass);
         Delete q = new Delete(table.getTableName());
         Expression condition = new Expression(Conjunction.AND);
         condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
@@ -332,6 +348,8 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+        
+        afterDestroy();
     }
 
     private void update() {
@@ -343,7 +361,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
-            q.set(columnName,new BindVariable(record.get(columnName)));
+            q.set(columnName,new BindVariable(record.get(columnName),table.getColumnDescriptor(columnName).getJDBCType()));
         }
         
         String idColumn = getReflector().getColumnDescriptor("id").getName();

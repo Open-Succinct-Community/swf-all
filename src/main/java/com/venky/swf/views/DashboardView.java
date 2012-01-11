@@ -29,15 +29,20 @@ public class DashboardView extends HtmlView{
         return this;
     }
     @Override
-    protected void createBody(Body b) {
-        Menu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
-        if (menu != null){
-            Div nav = new Div();
-            nav.setProperty("class", "nav");
-            nav.addControl(menu);
-            b.addControl(nav);
-            
-        }
+    public void createBody(Body b) {
+    	createBody(b,true);
+    }
+    public void createBody(Body b, boolean includeMenu) {
+    	if (includeMenu){
+            Menu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
+            if (menu != null){
+                Div nav = new Div();
+                nav.setProperty("class", "nav");
+                nav.addControl(menu);
+                b.addControl(nav);
+                
+            }
+    	}
         for (HtmlView child:children){
             b.addControl(new LineBreak());
             child.createBody(b);

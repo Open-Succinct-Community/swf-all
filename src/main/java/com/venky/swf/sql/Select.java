@@ -23,6 +23,14 @@ public class Select extends SqlStatement{
 	public Select(String... columnNames){
 		this.columnNames = columnNames;
 	}
+	
+	public Select from(Class<? extends Model>... models){
+		String[] tables = new String[models.length];
+		for (int i = 0 ; i< models.length ; i++){
+			tables[i] = Database.getInstance().getTable(models[i]).getTableName();
+		}
+		return from(tables);
+	}
 	public Select from(String... tables){
 		this.tableNames = tables;
 		return this;

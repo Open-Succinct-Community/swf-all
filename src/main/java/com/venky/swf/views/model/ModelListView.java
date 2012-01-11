@@ -5,7 +5,6 @@
 package com.venky.swf.views.model;
 
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.Control;
@@ -23,6 +21,7 @@ import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
+import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 
 /**
@@ -125,27 +124,11 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         Control control = null;
                         
                         if (InputStream.class.isAssignableFrom(getter.getReturnType())){
-                        	CONTENT_TYPE contentType = getter.getAnnotation(CONTENT_TYPE.class);
-                        	if (contentType == null){
-                        		contentType = new CONTENT_TYPE() {
-									
-									public Class<? extends Annotation> annotationType() {
-										return CONTENT_TYPE.class;
-									}
-									
-									public String value() {
-										return "text/plain";
-									}
-								};
-                        	}
-                        	if (contentType.value().startsWith("image")){
-                        		control = new Image(getPath().controllerPath()+"/view/"+record.getId());
-                        	}else {
-                        		control = new Link(getPath().controllerPath()+"/view/"+record.getId());
-                        		control.setText("File");
-                        	}
+                        	FileTextBox ftb = (FileTextBox)getInputControl(fieldName, record);
+                        	ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId());
+                        	control = ftb.getStreamLink();
                         }else {
-                            String sValue = converter.toString(converter.valueOf(value));
+                            String sValue = converter.toString(value);
                             if (isFieldPassword(fieldName)){
                             	sValue = sValue.replaceAll(".", "\\*");
                             }
@@ -156,7 +139,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                             	String tableName = Database.getInstance().getTable(parentModelClass).getTableName().toLowerCase();
                             	sValue = parentDescription;
                             	
-                            	Path parentTarget = getPath().createRelativePath("/" + tableName + "/show/" +  String.valueOf(parentId));
+                            	Path parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
                             	if (parentTarget.canAccessControllerAction()){
                                 	control = new Link(parentTarget.getTarget());
                                 	control.setText(sValue);

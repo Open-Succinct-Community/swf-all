@@ -20,6 +20,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class UserImpl<M extends User> extends ModelImpl<M>{
 	
@@ -50,15 +51,25 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 		for (Method referredModelGetter : ref.getReferredModelGetters()){
 			String referredModelIdFieldName = ref.getReferredModelIdFieldName(referredModelGetter);
 			Method referredModelIdGetter = ref.getFieldGetter(referredModelIdFieldName);
+			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
+			
 			if (referredModelIdGetter.isAnnotationPresent(PARTICIPANT.class)){
-				if (User.class.isAssignableFrom(ref.getReferredModelClass(referredModelGetter))){
-					mapParticipatingOptions.put(referredModelIdFieldName, Arrays.asList(user.getId()));
+				String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ modelClass.getSimpleName();
+				if (Registry.instance().hasExtensions(extnPoint)){
+					Registry.instance().callExtensions(extnPoint, user, referredModelIdFieldName, mapParticipatingOptions);
+				}else if (Registry.instance().hasExtensions(User.GET_PARTICIPATION_OPTION)){
+					Registry.instance().callExtensions(User.GET_PARTICIPATION_OPTION, user, modelClass, referredModelIdFieldName, mapParticipatingOptions);
 				}else {
-					String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ modelClass.getSimpleName();
-					if (Registry.instance().hasExtensions(extnPoint)){
-						Registry.instance().callExtensions(extnPoint, user, referredModelIdFieldName, mapParticipatingOptions);
-					}else{
-						Registry.instance().callExtensions(User.GET_PARTICIPATION_OPTION, user, modelClass, referredModelIdFieldName, mapParticipatingOptions);
+					if (User.class.isAssignableFrom(ref.getReferredModelClass(referredModelGetter))){
+						mapParticipatingOptions.put(referredModelIdFieldName, Arrays.asList(user.getId()));
+					}else {
+						Select q = new Select("ID").from(referredModelClass).where(getDataSecurityWhereClause(referredModelClass));
+						List<? extends Model> referables = q.execute();
+						List<Integer> ids = new ArrayList<Integer>();
+						for (Model referable:referables){
+							ids.add(referable.getId());
+						}
+						mapParticipatingOptions.put(referredModelIdFieldName,ids);
 					}
 				}
 			}

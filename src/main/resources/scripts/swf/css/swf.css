@@ -48,6 +48,25 @@ div.nav li ul ul {
 .hfill tr th {
 	text-align: left;
 }
+.table .stream img {
+    width:560px;
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+}
+.table .submit {
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+    width:20%;
+}
+.tablesorter .stream img {
+	width: 56px;
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+}
+
 /* Styling based on Database types*/
 .number {
 	text-align: right; 

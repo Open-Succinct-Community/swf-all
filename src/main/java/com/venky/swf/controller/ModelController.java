@@ -4,9 +4,13 @@
  */
 package com.venky.swf.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,6 +29,9 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
+import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -35,6 +42,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.views.BytesView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
@@ -56,31 +64,57 @@ public class ModelController<M extends Model> extends Controller {
         
     }
     public Expression getWhereClause(){
-    	Expression where = new Expression(Conjunction.OR);
-		List<Method> parentGetters = reflector.getParentModelGetters();
-		List<ModelInfo> modelElements =getPath().getModelElements();
+    	Expression where = new Expression(Conjunction.AND);
+		Map<Class<? extends Model>, List<Method>> classModelGetterMap = new HashMap<Class<? extends Model>, List<Method>>();
 
-		//TODO Correct parent id identification based on action. 
+		for (Method referredModelGetter : reflector.getReferredModelGetters()){
+			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
+			List<Method> getters = classModelGetterMap.get(referredModelClass);
+			if (getters == null){
+				getters = new ArrayList<Method>();
+				classModelGetterMap.put(referredModelClass, getters);
+			}
+			getters.add(referredModelGetter);
+		}
+		
+		if (classModelGetterMap.isEmpty()){
+			return where;
+		}
+
+		List<ModelInfo> modelElements = getPath().getModelElements();
+
 		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){ // The last model is self.
     		ModelInfo mi = miIter.next();
     		if(!miIter.hasNext()){
     			//last model is self.
     			break;
     		}
-    		
-    		Expression parentWhere = new Expression(Conjunction.OR);
-    		
-    		for (Method parentGetter: parentGetters){
-    	    	Class<?> parentModelClass = parentGetter.getReturnType();
-        		if (parentModelClass == mi.getModelClass()){
-        	    	String parentIdFieldName =  StringUtil.underscorize(parentGetter.getName().substring(3) +"Id");
-        	    	String parentIdColumnName = reflector.getColumnDescriptor(parentIdFieldName).getName();
-        	    	parentWhere.add(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
-        		}
+    		if (!classModelGetterMap.containsKey(mi.getModelClass())){
+    			continue;
     		}
     		
-    		if (parentWhere.getParameterizedSQL().length() > 0){
-    			where.add(parentWhere);
+    		Expression referredModelWhere = new Expression(Conjunction.AND);
+	    	ModelReflector<?> referredModelReflector = ModelReflector.instance(mi.getModelClass());
+	    	for (Method childGetter : referredModelReflector.getChildGetters()){
+	    		if (referredModelReflector.getChildModelClass(childGetter) == modelClass){
+	            	CONNECTED_VIA join = childGetter.getAnnotation(CONNECTED_VIA.class);
+	            	if (join == null){
+	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
+	            		for (Method referredModelGetter: classModelGetterMap.get(mi.getModelClass())){ 
+    	        	    	String referredModelIdFieldName =  StringUtil.underscorize(referredModelGetter.getName().substring(3) +"Id");
+    	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
+
+    	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            		}
+	            		referredModelWhere.add(referredModelWhereChoices);
+	            	}else {
+	            		String referredModelIdColumnName = join.value();
+	            		referredModelWhere.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            	}
+	    		}
+	    	}
+    		if (referredModelWhere.getParameterizedSQL().length() > 0){
+    			where.add(referredModelWhere);
     		}
     	}
 		
@@ -110,6 +144,45 @@ public class ModelController<M extends Model> extends Controller {
         	throw new AccessDeniedException();
         }
     }
+    
+    public View view(int id){
+    	M record = Database.getInstance().getTable(modelClass).get(id);
+        if (record.isAccessibleBy(getSessionUser())){
+            try {
+            	for (Method getter : getReflector().getFieldGetters()){
+            		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
+            			CONTENT_TYPE ct = getter.getAnnotation(CONTENT_TYPE.class);
+            			MimeType mimeType = MimeType.TEXT_PLAIN; 
+            			if (ct  != null){
+            				mimeType = ct.value();
+            			}
+        				return new BytesView(getPath(), toBytes((InputStream)getter.invoke(record)), mimeType);
+            		}
+            	}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (InvocationTargetException e) {
+				throw new RuntimeException(e.getCause());
+			}
+        }else {
+        	throw new AccessDeniedException();
+        }
+        return back();
+    }
+    
+    protected byte[] toBytes(InputStream in) throws IOException{
+    	ByteArrayOutputStream os = new ByteArrayOutputStream();
+    	byte [] b = new byte[1000];
+    	int i = 0;
+    	while ((i = in.read(b)) > 0){
+    		os.write(b,0,i);
+    	}
+		return os.toByteArray();
+    }
 
     public View edit(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
@@ -122,29 +195,49 @@ public class ModelController<M extends Model> extends Controller {
 
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
-		List<ModelInfo> modelElements =getPath().getModelElements();
-		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
-    		ModelInfo mi = miIter.next();
-    		if(!miIter.hasNext()){
-    			//last model is self.
-    			break;
-    		}
-    		for (Method parentGetter: reflector.getParentModelGetters()){
-    	    	Class<? extends Model> parentModelClass = (Class<? extends Model>)parentGetter.getReturnType();
-    	    	
-        		if (parentModelClass == mi.getModelClass()){
-        	    	String parentIdFieldName =  reflector.getReferredModelIdFieldName(parentGetter);
-        	    	Method parentIdSetter =  reflector.getFieldSetter(parentIdFieldName);
-        	    	try {
-            	    	Model parent = Database.getInstance().getTable(parentModelClass).get(mi.getId());
-            	    	if (parent.isAccessibleBy(getSessionUser())){
-            	    		parentIdSetter.invoke(record, mi.getId());
+        List<ModelInfo> modelElements =getPath().getModelElements();
+        
+		for (Method referredModelGetter: reflector.getReferredModelGetters()){
+	    	Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
+	    	String referredModelIdFieldName =  reflector.getReferredModelIdFieldName(referredModelGetter);
+	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
+	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
+	    	try {
+				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
+				List<Integer> idoptions = getSessionUser().getParticipationOptions(modelClass).get(referredModelIdFieldName);
+				Integer id = null; 
+						
+				if (oldValue == null){
+					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
+						id = idoptions.get(0);
+            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(id);
+            	    	if (referredModel.isAccessibleBy(getSessionUser())){
+            	    		referredModelIdSetter.invoke(record,id);
             	    	}
-					} catch (Exception e) {
-						throw new RuntimeException(e);
 					}
-        		}
-    		}
+				}
+				for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
+		    		ModelInfo mi = miIter.next();
+		    		if(!miIter.hasNext()){
+		    			//last model is self.
+		    			break;
+		    		}
+	        		if (referredModelClass == mi.getModelClass()){
+	        	    	try {
+	            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(mi.getId());
+	            	    	if (referredModel.isAccessibleBy(getSessionUser())){
+	            	    		referredModelIdSetter.invoke(record, mi.getId());
+	            	    		break;
+	            	    	}
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+	        		}
+	        		
+				}
+			} catch (Exception e1) {
+				throw new RuntimeException(e1);
+			}
 		}
 
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
@@ -170,10 +263,12 @@ public class ModelController<M extends Model> extends Controller {
     	return v;
     }
     
-    private boolean isNew(){ 
-        return ObjectUtil.isVoid(getPath().getRequest().getParameter("ID"));
+    private RedirectorView redirectTo(String action){
+    	RedirectorView v = new RedirectorView(getPath(),action);
+    	return v;
     }
-    private void persistInDB(){
+    
+    private View  persistInDB(){
         HttpServletRequest request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Cannot call save in any other method other than POST");
@@ -223,7 +318,7 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-        List<String> fields = reflector.getFields();
+        List<String> fields = reflector.getRealFields();
         fields.remove("ID");
         fields.remove("LOCK_ID");
         fields.remove("UPDATED_AT");
@@ -253,7 +348,9 @@ public class ModelController<M extends Model> extends Controller {
             }
 
         }
-        if (isNew()){
+        boolean isNew = false;
+        if (record.getRawRecord().isNewRecord()){
+        	isNew = true;
         	record.setCreatorUserId(getSessionUser().getId());
         	record.setCreatedAt(null);
     	}
@@ -264,11 +361,16 @@ public class ModelController<M extends Model> extends Controller {
         }else {
         	throw new AccessDeniedException();
         }
-    }
+        
+        if (isNew){
+        	return redirectTo("edit/"+record.getId());
+        }else {
+        	return back();
+        }
+   }
     
     public View save() {
-    	persistInDB();
-        return back();
+    	return persistInDB();
     }
 
     public View autocomplete(String value) {

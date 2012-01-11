@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
@@ -33,19 +32,18 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     }
     public AutoCompleteText(Class<M> modelClass,String urlPrefix){
         this.modelClass = modelClass;
+        this.descriptionColumn = ModelReflector.instance(modelClass).getDescriptionColumn();
+        this.description = new TextBox();
         Table<M> table = Database.getInstance().getTable(modelClass);
-        
-        descriptionColumn = "NAME";
-
-        HAS_DESCRIPTION_COLUMN hdc = modelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-        if (hdc != null){
-	        descriptionColumn = hdc.value();
-        }
-        if (ModelReflector.instance(modelClass).getFields().contains(descriptionColumn)){
-	        this.description = new TextBox();
-            description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
-            setVisible(false);
-        }
+        this.description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
+        setVisible(true);
+    }
+    
+    public void setVisible(boolean visible){
+    	super.setVisible(false);
+    	if (description != null){
+    		description.setVisible(visible);
+    	}
     }
     public Class<M> getModelClass(){
         return modelClass;
@@ -53,24 +51,20 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     @Override
     protected void setParent(Control parent){
         super.setParent(parent);
-        if (description != null){
-            description.setEnabled(isEnabled());
-        	parent.addControl(description);
-        }
+        description.setEnabled(isEnabled());
+        parent.addControl(description);
     }    
     
     @Override
     public void setName(String name){
         super.setName(name);
-        if (description != null){
-            description.setName("_AUTO_COMPLETE_"+getName());
-        }
+        description.setName("_AUTO_COMPLETE_"+getName());
     }
     
     @Override
     public void setValue(Object value){
         super.setValue(value);
-        if (description != null && !ObjectUtil.isVoid(value)){
+        if (!ObjectUtil.isVoid(value)){
             M model = Database.getInstance().getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
                 ModelReflector<M> reflector = ModelReflector.instance(modelClass);

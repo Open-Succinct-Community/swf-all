@@ -4,12 +4,15 @@
  */
 package com.venky.swf.views.model;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.routing.Path;
+import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
@@ -91,10 +94,17 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     		return "back";
     	}
     }
+    private Row rpadLastRow(Table table){
+        Row r = getRow(table, false);
+        if (r.numColumns() < getNumColumnsPerRow()){
+            r.createColumn(getNumColumnsPerRow() - r.numColumns());
+        }
+        return r;
+    }
     @Override
-    protected void createBody(Body b) {
+    protected void createBody(Body body) {
     	Form form = new Form();
-    	b.addControl(form);
+    	body.addControl(form);
         form.setAction(getPath().controllerPath(), getFormAction());
         form.setMethod(SubmitMethod.POST);
         
@@ -104,13 +114,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         List<Control> hiddenFields = new ArrayList<Control>();
         while (field.hasNext()){
             String fieldName = field.next();
-            Label fieldLabel = new Label(getFieldLiteral(fieldName));
             Control fieldData = getInputControl(fieldName, record);
-            if (fieldData instanceof FileTextBox){
-            	form.setProperty("enctype","multipart/form-data");
-            	((FileTextBox)fieldData).setUrl(getPath().controllerPath()+"/view/"+record.getId());
-            }
-            if (isFieldEditable(fieldName)){
+            Label fieldLabel = new Label(getFieldLiteral(fieldName));
+        	if (isFieldEditable(fieldName)){
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
                 r.createColumn().addControl(fieldData);
@@ -123,20 +129,51 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                 fieldData.setVisible(false);
                 hiddenFields.add(fieldData);
             }
+            if (fieldData instanceof FileTextBox){
+            	rpadLastRow(table);
+            	form.setProperty("enctype","multipart/form-data");
+            	FileTextBox ftb = (FileTextBox)fieldData;
+            	ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId());
+                Row streamRow = table.createRow();
+                Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
+                streamColumn.addControl(ftb.getStreamLink());
+            }
         }
-        Row r = getRow(table, false);
-        if (r.numColumns() < getNumColumnsPerRow()){
-            r.createColumn(getNumColumnsPerRow() - r.numColumns());
-        }
+        Row r = rpadLastRow(table);
         Column c = r.getLastColumn();
         for (Control hiddenField: hiddenFields){
             c.addControl(hiddenField);
         }
-        
         Row buttonRow = table.createRow();
         c = buttonRow.createColumn(getNumColumnsPerRow());
         Submit sbm = new Submit();
         c.addControl(sbm);
+        
+        if (getRecord().getRawRecord().isNewRecord()) {
+        	return;
+        }
+    	List<Class<? extends Model>> childModels = new ArrayList<Class<? extends Model>>();
+    	for (Method childGetter: getReflector().getChildGetters()){
+        	if (!List.class.isAssignableFrom(childGetter.getReturnType())){
+        		continue;
+        	}
+        	Class<? extends Model> childModelClass = getReflector().getChildModelClass(childGetter);
+        	if (!childModels.contains(childModelClass)){
+            	childModels.add(childModelClass);
+        	}
+        }
+        for (Class<? extends Model> childClass: childModels){
+        	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase() + "/index");
+        	childPath.setRequest(getPath().getRequest());
+        	childPath.setResponse(getPath().getResponse());
+        	childPath.setSession(getPath().getSession());
+        	if (childPath.canAccessControllerAction()){
+            	DashboardView view = (DashboardView)childPath.invoke();
+            	view.createBody(body,false);
+        	}
+        }
+
+
     }
     
     

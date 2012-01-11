@@ -223,10 +223,13 @@ public class ModelReflector<M extends Model> {
     }
     
     public String getDescriptionColumn(){
-        String column = "name";
+        String column = "NAME";
         HAS_DESCRIPTION_COLUMN descColumn = reflectedModelClass.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
         if (descColumn != null){
             column = descColumn.value();
+        }
+        if (!getFields().contains(column)){
+        	column = "ID";
         }
         return column;
     }

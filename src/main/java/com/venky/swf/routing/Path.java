@@ -93,7 +93,7 @@ public class Path {
         for (int i = 0 ; i < pathElementSize ; i++){
         	String token = pathelements.get(i);
         	String camelizedToken = camelize(token);
-        	Class<?> modelClass = getModelClass(camelizedToken);
+        	Class<? extends Model> modelClass = getModelClass(camelizedToken);
         	if (modelClass != null){
         		ModelInfo info = new ModelInfo(modelClass);
         		modelElements.add(info);
@@ -115,16 +115,16 @@ public class Path {
     }
     
     public static class ModelInfo{
-    	private Class<?> modelClass;
+    	private Class<? extends Model> modelClass;
     	private Integer id;
     	private String action = "index";
-    	public ModelInfo(Class<?> modelClass){
+    	public ModelInfo(Class<? extends Model> modelClass){
     		this.modelClass= modelClass;
     	}
-		public Class<?> getModelClass() {
+		public Class<? extends Model> getModelClass() {
 			return modelClass;
 		}
-		public void setModelClass(Class<?> modelClass) {
+		public void setModelClass(Class<? extends Model> modelClass) {
 			this.modelClass = modelClass;
 		}
 		public Integer getId() {
@@ -367,7 +367,13 @@ public class Path {
     }
     
     public Path createRelativePath(String toUrl){
-    	String relPath = getTarget();
+    	String relPath = null; 
+    	if (!action().equals("index")){
+    		relPath = getTarget();
+    	}else {
+    		relPath = controllerPath() ;
+    	}
+    	
     	if (!toUrl.startsWith("/")){
     		relPath = relPath + "/" + toUrl;
     	}else {
