@@ -85,7 +85,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 														.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
 		permissionQueryWhere.add(controllerActionWhere);
 
-		String userRole = Database.getInstance().getTable(UserRole.class).getTableName() ;
+		String userRole = Database.getInstance().getTable(UserRole.class).getRealTableName() ;
 		Select userRoleQuery = new Select("role_id").from(userRole).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute();
 		List<Integer> userRoleIds = new ArrayList<Integer>();
@@ -101,7 +101,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		permissionQueryWhere.add(roleWhere);
 		
-		Select permissionQuery = new Select().from(Database.getInstance().getTable(RolePermission.class).getTableName());
+		Select permissionQuery = new Select().from(RolePermission.class);
 		permissionQuery.where(permissionQueryWhere);
 
 		List<RolePermission> permissions = permissionQuery.execute();
