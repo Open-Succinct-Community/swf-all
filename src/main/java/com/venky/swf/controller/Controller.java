@@ -70,7 +70,7 @@ public class Controller {
     	return User.class;
     }
     protected User getUser(String username){
-        Select q = new Select().from(Database.getInstance().getTable(getUserClass()).getTableName());
+        Select q = new Select().from(getUserClass());
         String nameColumn = ModelReflector.instance(getUserClass()).getColumnDescriptor("name").getName();
         q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(username)));
         
@@ -126,7 +126,7 @@ public class Controller {
         XMLElement elem = null ;
         System.out.println("Parameter:" + value);
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-        Select q = new Select().from(Database.getInstance().getTable(modelClass).getTableName());
+        Select q = new Select().from(modelClass);
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
         Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);

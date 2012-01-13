@@ -18,7 +18,7 @@ public class Installer {
 	protected void installUsers(){
 		Table<User> USER = Database.getInstance().getTable(User.class);
 		
-		Select q = new Select().from(Database.getInstance().getTable(User.class).getTableName());
+		Select q = new Select().from(User.class);
 		ModelReflector<User> ref = ModelReflector.instance(User.class);
 		String nameColumn = ref.getColumnDescriptor("name").getName();
 		

@@ -44,6 +44,13 @@ public class Table<M extends Model> {
     public ModelReflector<M> getReflector() {
 		return reflector;
 	}
+    public boolean isReal(){
+    	return StringUtil.equals(getTableName(),getRealTableName());
+    }
+    
+    public boolean isVirtual(){
+    	return !isReal();
+    }
 
 	private boolean existingInDatabase = false;
 
@@ -68,13 +75,19 @@ public class Table<M extends Model> {
         this.modelClass = modelClass;
         if (modelClass != null){
         	this.reflector = ModelReflector.instance(modelClass);
+        	this.realTableName = tableName(reflector.getRealModelClass());
         }else {
         	this.reflector = null;
-        }
+        	this.realTableName = this.tableName;
+        } 
     }
     
     public static <M extends Model> String tableName(Class<M> modelClass){
-        return tableName(modelClass.getSimpleName());
+    	if (modelClass == null){
+    		return null;
+    	}else {
+    		return tableName(modelClass.getSimpleName());
+    	}
     }
     
     public static String tableName(String modelClassSimpleName){
@@ -101,6 +114,10 @@ public class Table<M extends Model> {
         return null;
     }
 
+    private final String realTableName;
+    public String getRealTableName(){ 
+    	return realTableName;
+    }
     public String getTableName() {
         return tableName;
     }
@@ -112,7 +129,7 @@ public class Table<M extends Model> {
     public void dropTable(){
         try {
             Transaction txn = Database.getInstance().getCurrentTransaction();
-            DDL.DropTable q = new DDL.DropTable(getTableName());
+            DDL.DropTable q = new DDL.DropTable(getRealTableName());
             q.executeUpdate();
             txn.commit();
         } catch (SQLException ex) {
@@ -130,7 +147,7 @@ public class Table<M extends Model> {
         }
     }
     private CreateTable createTableQuery(){
-        CreateTable q = new CreateTable(getTableName());
+        CreateTable q = new CreateTable(getRealTableName());
         createFields(q);
         if (getReflector().getRealFields().contains("id")){
             q.addPrimaryKeyColumn(getReflector().getColumnDescriptor("id").getName());
@@ -191,13 +208,13 @@ public class Table<M extends Model> {
             
             Transaction txn = Database.getInstance().getCurrentTransaction();
             for (String columnName:droppedColumns){
-                AlterTable q = new AlterTable(getTableName());
+                AlterTable q = new AlterTable(getRealTableName());
                 q.dropColumn(columnName);
                 q.executeUpdate();
             }
 
             for (String fieldName:addedFields){
-                AlterTable q = new AlterTable(getTableName());
+                AlterTable q = new AlterTable(getRealTableName());
                 q.addColumn(reflector.getColumnDescriptor(fieldName).toString());
                 q.executeUpdate();
             }
@@ -210,44 +227,44 @@ public class Table<M extends Model> {
             	}
             	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
             	String columnName = cd.getName();
-            	AlterTable q = new AlterTable(getTableName());
+            	AlterTable q = new AlterTable(getRealTableName());
             	q.addColumn("NEW_"+cd.toString());
                 q.executeUpdate();
                 
-            	Update u = new Update(getTableName());
+            	Update u = new Update(getModelClass());
             	u.setUnBounded("NEW_"+columnName, columnName);
             	u.executeUpdate();
             	
-            	q = new AlterTable(getTableName());
+            	q = new AlterTable(getRealTableName());
             	q.dropColumn(columnName);
                 q.executeUpdate();
                 
-                q = new AlterTable(getTableName());
+                q = new AlterTable(getRealTableName());
                 q.addColumn(cd.toString());
                 q.executeUpdate();
                 
-                u = new Update(getTableName());
+                u = new Update(getModelClass());
             	u.setUnBounded(columnName,"NEW_" + columnName);
             	u.executeUpdate();
                 
-                q = new AlterTable(getTableName());
+                q = new AlterTable(getRealTableName());
             	q.dropColumn("NEW_" + columnName);
                 q.executeUpdate();
             }
 
             if (idTypeChanged){
             	// Rare event. Drop and recreate table.
-            	CreateTable create = new CreateTable("temp_"+getTableName()).as("select * from "+ getTableName());
+            	CreateTable create = new CreateTable("temp_"+getRealTableName()).as("select * from "+ getRealTableName());
             	create.executeUpdate();
             	
-                DropTable drop = new DropTable(getTableName());
+                DropTable drop = new DropTable(getRealTableName());
                 drop.executeUpdate();
                 
                 create = createTableQuery();
                 create.executeUpdate();
                 
                 DataManupulationStatement insert = new DataManupulationStatement();
-                insert.add("insert into ").add(getTableName()).add("(");
+                insert.add("insert into ").add(getRealTableName()).add("(");
                 Iterator<String> columnIterator = reflector.getRealColumns().iterator();
                 while (columnIterator.hasNext()){
                 	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
@@ -257,10 +274,10 @@ public class Table<M extends Model> {
                 while (columnIterator.hasNext()){
                 	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
                 }
-                insert.add(" from temp_" + getTableName());
+                insert.add(" from temp_" + getRealTableName());
                 insert.executeUpdate();
                 
-                drop = new DropTable("temp_"+getTableName());
+                drop = new DropTable("temp_"+getRealTableName());
                 drop.executeUpdate();
             }
             txn.commit();
@@ -271,7 +288,7 @@ public class Table<M extends Model> {
     }
     
     public M get(int id) {
-        Select q = new Select().from(Database.getInstance().getTable(getModelClass()).getTableName());
+        Select q = new Select().from(getModelClass());
         String idColumn = getReflector().getColumnDescriptor("id").getName();
         q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
         List<M> result = q.execute(getModelClass());

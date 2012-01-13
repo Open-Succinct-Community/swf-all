@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -129,13 +130,78 @@ public class ModelReflector<M extends Model> {
     	return annotation;
     }
     
-    private void loadAllInterfaces(Class<?> interfaceClass,List<Class<?>> interfaces){
+    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){
+    	if (reflectedModelClass.isAnnotationPresent(annotationClass)){
+    		return true;
+    	}
+    	boolean present = false;
+    	for (Class<?> modelClass:getModelInterfaceHierarchy()){
+    		present = modelClass.isAnnotationPresent(annotationClass);
+    		if (present){
+    			break;
+    		}
+    	}
+    	return present;
+    }
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass){
+    	if (reflectedModelClass.isAnnotationPresent(annotationClass)){
+    		return reflectedModelClass.getAnnotation(annotationClass);
+		}
+    	T annotation = null;
+    	for (Class<?> modelClass:getModelInterfaceHierarchy()){
+    		annotation = modelClass.getAnnotation(annotationClass);
+    		if (annotation != null){
+    			break;
+    		}
+    	}
+    	
+    	return annotation;
+    }
+    
+    public Class<?> getReflectedModelClass(){
+    	return reflectedModelClass;
+    }
+    public <U extends Model> Class<U> getRealModelClass(){
+    	List<Class<?>> modelClasses = getModelInterfaceHierarchy();
+    	Class<?> lastRealClass = null;
+    	for (Class<?> claz:modelClasses){
+    		IS_VIRTUAL isVirtual = claz.getAnnotation(IS_VIRTUAL.class);
+    		if (isVirtual != null){
+    			if (isVirtual.value()){
+    				lastRealClass = null;
+    			}else if (lastRealClass == null){
+    				lastRealClass = claz;
+    			}
+    		}else if (lastRealClass == null){
+    			lastRealClass = claz;
+    		}
+    	}
+    	if (lastRealClass == Model.class){
+    		return null;
+    	}
+		return (Class<U>) lastRealClass;
+    }
+    public List<Class<?>> getModelInterfaceHierarchy(){
+    	List<Class<?>> modelInterfaces = new ArrayList<Class<?>>();
+    	loadAllInterfaces(reflectedModelClass, modelInterfaces);
+    	Iterator<Class<?>> modelInterfaceIterator = modelInterfaces.iterator();
+    	while (modelInterfaceIterator.hasNext()){
+    		Class<?> aModelInterface = modelInterfaceIterator.next();
+    		if (!Model.class.isAssignableFrom(aModelInterface)){
+    			modelInterfaceIterator.remove();
+    		}
+    	}
+    	return modelInterfaces;
+    }
+
+    private static void loadAllInterfaces(Class<?> interfaceClass,List<Class<?>> interfaces){
     	interfaces.add(interfaceClass);
     	for (Class<?> infcClass: interfaceClass.getInterfaces()){
     		loadAllInterfaces(infcClass, interfaces);
     	}
     }
-    private Class<?> getParentModelInterface(Class<?> aClass,List<Class<?>> otherInterfaces){
+    
+    private static Class<?> getParentModelInterface(Class<?> aClass,List<Class<?>> otherInterfaces){
         if (!Model.class.isAssignableFrom(aClass)){
             throw new RuntimeException(aClass + " is not extending Model! ");
         }
@@ -144,7 +210,7 @@ public class ModelReflector<M extends Model> {
     	for (Class<?> infc: aClass.getInterfaces()){
     		if (Model.class.isAssignableFrom(infc)){
     			modelInterfaces.add(infc);
-    		}else{ 
+    		}else if (otherInterfaces != null){ 
     			loadAllInterfaces(infc,otherInterfaces);
 			}
     	}

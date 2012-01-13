@@ -26,6 +26,7 @@ import com.venky.core.util.PackageUtil;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -178,8 +179,10 @@ public class Database {
         loadTables(dbModified);
         for (Table<?> table: tables.values()){
             if (!table.isExistingInDatabase()){
-                table.createTable();
-                dbModified = true;
+            	if (table.isReal()){
+                    table.createTable();
+                    dbModified = true;
+            	}
             }else if (table.getModelClass() == null){
                 table.dropTable();
                 dbModified = true;
@@ -272,7 +275,7 @@ public class Database {
     
     private static Map<Class<? extends Model>,QueryCache<? extends Model>> configQueryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();    
     public <M extends Model> QueryCache<M> getCache(Class<M> modelClass) throws SQLException{
-    	if (modelClass.isAnnotationPresent(CONFIGURATION.class)){
+    	if (ModelReflector.instance(modelClass).isAnnotationPresent(CONFIGURATION.class)){
     		QueryCache<M> cacheEntry = (QueryCache<M>) configQueryCacheMap.get(modelClass);
     		if (cacheEntry == null){
     			synchronized (configQueryCacheMap) {

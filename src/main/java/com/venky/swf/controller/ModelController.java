@@ -97,7 +97,7 @@ public class ModelController<M extends Model> extends Controller {
 	    	ModelReflector<?> referredModelReflector = ModelReflector.instance(mi.getModelClass());
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		if (referredModelReflector.getChildModelClass(childGetter) == modelClass){
-	            	CONNECTED_VIA join = childGetter.getAnnotation(CONNECTED_VIA.class);
+	            	CONNECTED_VIA join = reflector.getAnnotation(childGetter,CONNECTED_VIA.class);
 	            	if (join == null){
 	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
 	            		for (Method referredModelGetter: classModelGetterMap.get(mi.getModelClass())){ 
@@ -130,7 +130,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     @Override
     public View index() {
-        Select q = new Select().from(Database.getInstance().getTable(modelClass).getTableName());
+        Select q = new Select().from(modelClass);
         List<M> records = q.where(getWhereClause()).execute();
         return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
     }
@@ -151,7 +151,7 @@ public class ModelController<M extends Model> extends Controller {
             try {
             	for (Method getter : getReflector().getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
-            			CONTENT_TYPE ct = getter.getAnnotation(CONTENT_TYPE.class);
+            			CONTENT_TYPE ct = reflector.getAnnotation(getter,CONTENT_TYPE.class);
             			MimeType mimeType = MimeType.TEXT_PLAIN; 
             			if (ct  != null){
             				mimeType = ct.value();

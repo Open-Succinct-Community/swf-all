@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Select;
 
@@ -25,10 +25,10 @@ public class QueryCache<M extends Model> {
 		if (result == null && where != null){
 			synchronized (queryCache) {
 				result = queryCache.get(where);
-				if (result == null && modelClass.isAnnotationPresent(CONFIGURATION.class)){
+				if (result == null && ModelReflector.instance(modelClass).isAnnotationPresent(CONFIGURATION.class)){
 					List<M> completeList = queryCache.get(null);
 					if (completeList == null){
-						completeList = new Select().from(Database.getInstance().getTable(modelClass).getTableName()).execute();
+						completeList = new Select().from(modelClass).execute();
 					}
 					if (completeList != null){
 						result = filter(where,completeList);

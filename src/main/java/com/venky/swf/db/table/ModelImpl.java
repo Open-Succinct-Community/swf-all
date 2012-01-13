@@ -116,7 +116,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             if (Model.class.isAssignableFrom(method.getReturnType())){
                 return getChild((Class<? extends Model>) method.getReturnType());
             }else {
-            	CONNECTED_VIA join = method.getAnnotation(CONNECTED_VIA.class);
+            	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
             	if (join != null){
             		return getChildren(getReflector().getChildModelClass(method),join.value());
             	}else {
@@ -181,7 +181,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	String parentIdColumnName = ModelReflector.instance(childClass).getColumnDescriptor(parentIdFieldName).getName();
 
     	Select  q = new Select();
-    	q.from( Database.getInstance().getTable(childClass).getTableName() );
+    	q.from(childClass);
     	q.where(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
     	return q.execute();
     	/*
@@ -226,12 +226,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 			synchronized (modelImplMap) {
 				modelImplClass = modelImplMap.get(modelClass);
 				if (modelImplClass == null){
-					String modelImplClassName = modelClass.getName()+"Impl";
-					try { 
-						modelImplClass = (Class<?>) Class.forName(modelImplClassName);
-					}catch(ClassNotFoundException ex){
-						modelImplClass = ModelImpl.class;
-					}
+					modelImplClass = getModelImplClass(modelClass);
 					modelImplMap.put(modelClass, modelImplClass);
 				}
 			}
@@ -246,7 +241,24 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 			throw new RuntimeException(e);
 		}
 	}
-    	
+    
+	private static Class<?> getModelImplClass(Class<? extends Model> modelClass){
+
+		List<Class<?>> modelClasses = ModelReflector.instance(modelClass).getModelInterfaceHierarchy();
+		Class modelImplClass = null;
+		for (Class<?> c : modelClasses){
+			String modelImplClassName = c.getName()+"Impl";
+			try { 
+				modelImplClass = (Class<?>) Class.forName(modelImplClassName);
+				return modelImplClass;
+			}catch(ClassNotFoundException ex){
+				modelImplClass = null;
+			}
+		}
+		
+		return ModelImpl.class;
+		
+	}
 
     public void save() {
         if (record.getDirtyFields().isEmpty()) {
@@ -334,8 +346,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     
     public void destroy() {
     	beforeDestory();
-    	Table<M> table = Database.getInstance().getTable(modelClass);
-        Delete q = new Delete(table.getTableName());
+        Delete q = new Delete(modelClass);
         Expression condition = new Expression(Conjunction.AND);
         condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
         condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
@@ -357,7 +368,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         int newLockId = oldLockId + 1;
 
         Table<M> table = Database.getInstance().getTable(modelClass);
-        Update q = new Update(table.getTableName());
+        Update q = new Update(modelClass);
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
@@ -383,7 +394,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     private void create() {
         proxy.setLockId(0);
         Table<M> table = Database.getInstance().getTable(modelClass);
-        Insert insertSQL = new Insert(table.getTableName());
+        Insert insertSQL = new Insert(modelClass);
         Map<String,BindVariable> values = new HashMap<String, BindVariable>();
         
         Iterator<String> columnIterator = record.getDirtyFields().iterator();

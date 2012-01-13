@@ -8,7 +8,9 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.page.Menu;
@@ -48,17 +50,17 @@ public class DefaultMenuBuilder implements MenuBuilder{
     }
 
     public void createMenuItem(Menu modelMenu,Table<?> table,Class<? extends Annotation> annotationClass){
-    	Class<?> modelClass = table.getModelClass();
+    	Class<? extends Model> modelClass = table.getModelClass();
     	if (!canAddToMenu(modelClass)){
     		return;
     	}
-    	if (annotationClass == null || modelClass.getAnnotation(annotationClass) != null){
+    	if (annotationClass == null || ModelReflector.instance(modelClass).getAnnotation(annotationClass) != null){
             String modelName = modelClass.getSimpleName();
             modelMenu.createMenuItem(modelName, "/" + table.getTableName().toLowerCase());
     	}
     }
     
-    protected boolean canAddToMenu(Class<?> modelClass){
+    protected boolean canAddToMenu(Class<? extends Model> modelClass){
     	return true;
     }
 }

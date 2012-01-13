@@ -100,7 +100,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             control = cb;
         }else if (InputStream.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType)){
         	FileTextBox ftb = new FileTextBox();
-        	CONTENT_TYPE type = getter.getAnnotation(CONTENT_TYPE.class);
+        	CONTENT_TYPE type = reflector.getAnnotation(getter,CONTENT_TYPE.class);
         	if (type != null){
         		ftb.setContentType(type.value());
         	}
