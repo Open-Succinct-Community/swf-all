@@ -367,7 +367,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
-        Table<M> table = Database.getInstance().getTable(modelClass);
+        Table table = Database.getInstance().getTable(reflector.getRealModelClass());
         Update q = new Update(modelClass);
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {

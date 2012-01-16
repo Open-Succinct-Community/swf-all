@@ -70,6 +70,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         action.setText("M");
         action.setProperty("width", "1%");
         action = header.createColumn(); 
+        action.setText("C");
+        action.setProperty("width", "1%");
+        action = header.createColumn(); 
         action.setText("D");
         action.setProperty("width", "1%");
         for (String fieldName : getIncludedFields()) {
@@ -84,7 +87,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         	}
             Row row = table.createRow();
             
-            if (getPath().canAccessControllerAction("show")){
+            if (getPath().canAccessControllerAction("show",String.valueOf(record.getId()))){
 	            Link show = new Link();
 	            show.setUrl(getPath().controllerPath()+"/show/"+record.getId());
 	            show.addControl(new Image("/resources/images/show.png"));
@@ -93,7 +96,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             	row.createColumn();
             }
             
-            if (getPath().canAccessControllerAction("edit") && getPath().canAccessControllerAction("save")){
+            if (getPath().canAccessControllerAction("edit",String.valueOf(record.getId())) && getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
                 Link edit = new Link();
                 edit.setUrl(getPath().controllerPath()+"/edit/"+record.getId());
                 edit.addControl(new Image("/resources/images/edit.png"));
@@ -102,8 +105,16 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             	row.createColumn();
             }
             
+            if (getPath().canAccessControllerAction("clone",String.valueOf(record.getId())) && getPath().canAccessControllerAction("save")){
+	            Link clone = new Link();
+	            clone.setUrl(getPath().controllerPath()+"/clone/"+record.getId());
+	            clone.addControl(new Image("/resources/images/clone.png"));
+	            row.createColumn().addControl(clone);
+            }else {
+            	row.createColumn();
+            }
             
-            if (getPath().canAccessControllerAction("destroy")){
+            if (getPath().canAccessControllerAction("destroy",String.valueOf(record.getId()))){
 	            Link destroy = new Link();
 	            destroy.setUrl(getPath().controllerPath()+"/destroy/"+record.getId());
 	            destroy.addControl(new Image("/resources/images/destroy.png"));

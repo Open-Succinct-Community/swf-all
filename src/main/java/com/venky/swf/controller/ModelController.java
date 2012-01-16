@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class ModelController<M extends Model> extends Controller {
     @Override
     public View index() {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getWhereClause()).execute();
+        List<M> records = q.where(getWhereClause()).execute(modelClass);
         return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
     }
     
@@ -193,6 +194,16 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
 
+    public View clone(int id){
+    	M record = Database.getInstance().getTable(modelClass).get(id);
+    	record.getRawRecord().setNewRecord(true);
+    	record.getRawRecord().remove("ID");
+    	record.getRawRecord().remove("LOCK_ID");
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
+        mev.getIncludedFields().remove("ID");
+        return dashboard(mev);
+    	
+    }
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
         List<ModelInfo> modelElements =getPath().getModelElements();
@@ -358,11 +369,19 @@ public class ModelController<M extends Model> extends Controller {
         record.setUpdatedAt(null);
         if (record.isAccessibleBy(getSessionUser())){
             record.save();
+        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
+        		try {
+					Database.getInstance().getCache(modelClass).clear();
+				} catch (SQLException e1) {
+					throw new AccessDeniedException(e1);
+				}
+        		throw new AccessDeniedException();	
+        	}
         }else {
         	throw new AccessDeniedException();
         }
         
-        if (isNew){
+        if (isNew && !getPath().canAccessControllerAction("edit", String.valueOf(record.getId()))){
         	return redirectTo("edit/"+record.getId());
         }else {
         	return back();

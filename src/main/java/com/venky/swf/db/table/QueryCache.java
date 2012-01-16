@@ -80,4 +80,8 @@ public class QueryCache<M extends Model> {
 		//TODO Propagate Cache to all JVM Threads and other JVMS.
 	}
 	
+	public void clear(){
+		queryCache.clear();
+	}
+	
 }

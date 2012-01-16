@@ -88,7 +88,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     }
 
     protected String getFormAction(){ 
-    	if (getPath().canAccessControllerAction("save")){
+    	if (getPath().canAccessControllerAction("save") || (getRecord().getRawRecord().isNewRecord() && getPath().canAccessControllerAction("save", null))){
     		return "save";
     	}else {
     		return "back";
