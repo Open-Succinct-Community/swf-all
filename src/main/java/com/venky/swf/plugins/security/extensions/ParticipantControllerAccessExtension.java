@@ -36,7 +36,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
-		String possibleTableName = StringUtil.camelize(controllerPathElementName);
+		String possibleTableName = StringUtil.underscorize(StringUtil.camelize(controllerPathElementName));
 		Class<? extends Model> modelClass  = null;
 		List<String> participantingRoles = new ArrayList<String>();
 
