@@ -23,9 +23,5 @@ public class AccessDeniedException extends RuntimeException {
 		super(message, cause);
 	}
 
-	public AccessDeniedException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 
 }

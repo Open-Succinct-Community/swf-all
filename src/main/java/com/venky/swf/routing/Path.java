@@ -169,7 +169,7 @@ public class Path {
                     controllerPathIndex = i ;
                     controllerFound = true;
                 }else {
-                    Class<?> modelClass = getModelClass(camelizedPe);
+                    Class<? extends Model> modelClass = getModelClass(camelizedPe);
                     if (modelClass != null){
                         controllerClassName = ModelController.class.getName();
                         controllerPathIndex = i ;
