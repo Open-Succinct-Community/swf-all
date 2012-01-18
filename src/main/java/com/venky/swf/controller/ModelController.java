@@ -36,6 +36,8 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.Record;
+import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Path;
 import com.venky.swf.routing.Path.ModelInfo;
@@ -195,11 +197,24 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View clone(int id){
-    	M record = Database.getInstance().getTable(modelClass).get(id);
-    	record.getRawRecord().setNewRecord(true);
-    	record.getRawRecord().remove("ID");
-    	record.getRawRecord().remove("LOCK_ID");
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
+    	Table<M> table = Database.getInstance().getTable(modelClass);
+    	M record = table.get(id);
+    	M newrecord = table.newRecord();
+    	
+    	Record oldRaw = record.getRawRecord();
+    	Record newRaw = newrecord.getRawRecord();
+    	
+    	for (String f:oldRaw.getFieldNames()){
+    		newRaw.put(f, oldRaw.get(f));
+    	}
+    	newRaw.setNewRecord(true);
+    	newRaw.remove("ID");
+    	newRaw.remove("LOCK_ID");
+    	newRaw.remove("UPDATED_AT");
+    	newRaw.remove("CREATED_AT");
+    	newRaw.remove("CREATOR_ID");
+    	newRaw.remove("UPDATER_ID");
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, newrecord);
         mev.getIncludedFields().remove("ID");
         return dashboard(mev);
     	
