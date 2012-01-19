@@ -303,22 +303,31 @@ public class Table<M extends Model> {
         return ModelImpl.getProxy(modelClass,new Record());
     }
 
-    Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();
+    private Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();
+    
+    public  Map<String,ColumnDescriptor> columnDescriptors(){
+    	if (isReal()){
+    		return columnDescriptors; 
+    	}else {
+    		return Database.getInstance().getTable(getReflector().getRealModelClass()).columnDescriptors();
+    	}
+    }
     
     public Set<String> getColumnNames(){ 
-        return columnDescriptors.keySet();
+        return columnDescriptors().keySet();
     }
     public Collection<ColumnDescriptor> getColumnDescriptors(){ 
-        return columnDescriptors.values();
+        return columnDescriptors().values();
     }
     public ColumnDescriptor getColumnDescriptor(String columnName){
         return getColumnDescriptor(columnName, false);
     }
     public ColumnDescriptor getColumnDescriptor(String columnName,boolean createIfRequired){
-        ColumnDescriptor c = columnDescriptors.get(columnName);
+		Map<String,ColumnDescriptor> cds = columnDescriptors();
+        ColumnDescriptor c = cds.get(columnName);
         if (c == null && createIfRequired){
             c = new ColumnDescriptor();
-            columnDescriptors.put(columnName, c);
+            cds.put(columnName, c);
         }
         return c;
     }

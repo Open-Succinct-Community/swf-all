@@ -248,7 +248,7 @@ public class ModelController<M extends Model> extends Controller {
 		    			//last model is self.
 		    			break;
 		    		}
-	        		if (referredModelClass == mi.getModelClass()){
+	        		if (referredModelClass.isAssignableFrom(mi.getModelClass())){
 	        	    	try {
 	            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(mi.getId());
 	            	    	if (referredModel.isAccessibleBy(getSessionUser())){
