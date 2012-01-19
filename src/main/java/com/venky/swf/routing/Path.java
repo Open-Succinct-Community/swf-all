@@ -22,6 +22,7 @@ import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.views.RedirectorView;
@@ -140,6 +141,9 @@ public class Path {
 			this.action = action;
 		}
     	
+		public Class<? extends Model> getRealModelClass(){ 
+			return ModelReflector.instance(modelClass).getRealModelClass();
+		}
     }
     
     List<ModelInfo> modelElements = new ArrayList<Path.ModelInfo>();

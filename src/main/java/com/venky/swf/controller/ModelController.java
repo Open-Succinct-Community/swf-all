@@ -66,21 +66,32 @@ public class ModelController<M extends Model> extends Controller {
     	reflector = ModelReflector.instance(modelClass);
         
     }
+    
+    private List<Method> getReferredModelGetters(Map<Class<? extends  Model>,List<Method>> referredModelGettersMap, Class<? extends Model> referredModelClass){
+    	List<Method> referredModelGetters = new  ArrayList<Method>();
+    	for (Class<? extends Model> rmc: referredModelGettersMap.keySet()){
+    		if (rmc.isAssignableFrom(referredModelClass)){
+    			referredModelGetters.addAll(referredModelGettersMap.get(rmc));
+    		}
+    	}
+		
+    	return referredModelGetters;
+    }
     public Expression getWhereClause(){
     	Expression where = new Expression(Conjunction.AND);
-		Map<Class<? extends Model>, List<Method>> classModelGetterMap = new HashMap<Class<? extends Model>, List<Method>>();
+		Map<Class<? extends Model>, List<Method>> referredModelGetterMap = new HashMap<Class<? extends Model>, List<Method>>();
 
 		for (Method referredModelGetter : reflector.getReferredModelGetters()){
 			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-			List<Method> getters = classModelGetterMap.get(referredModelClass);
+			List<Method> getters = referredModelGetterMap.get(referredModelClass);
 			if (getters == null){
 				getters = new ArrayList<Method>();
-				classModelGetterMap.put(referredModelClass, getters);
+				referredModelGetterMap.put(referredModelClass, getters);
 			}
 			getters.add(referredModelGetter);
 		}
 		
-		if (classModelGetterMap.isEmpty()){
+		if (referredModelGetterMap.isEmpty()){
 			return where;
 		}
 
@@ -92,18 +103,20 @@ public class ModelController<M extends Model> extends Controller {
     			//last model is self.
     			break;
     		}
-    		if (!classModelGetterMap.containsKey(mi.getModelClass())){
+    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getModelClass());
+    		
+    		if (referredModelGetters.isEmpty()){
     			continue;
     		}
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
 	    	ModelReflector<?> referredModelReflector = ModelReflector.instance(mi.getModelClass());
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
-	    		if (referredModelReflector.getChildModelClass(childGetter) == modelClass){
+	    		if (referredModelReflector.getChildModelClass(childGetter).isAssignableFrom(modelClass)){
 	            	CONNECTED_VIA join = reflector.getAnnotation(childGetter,CONNECTED_VIA.class);
 	            	if (join == null){
 	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
-	            		for (Method referredModelGetter: classModelGetterMap.get(mi.getModelClass())){ 
+	            		for (Method referredModelGetter: referredModelGetters){ 
     	        	    	String referredModelIdFieldName =  StringUtil.underscorize(referredModelGetter.getName().substring(3) +"Id");
     	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
 
