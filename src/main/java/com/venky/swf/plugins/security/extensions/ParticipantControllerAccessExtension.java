@@ -36,11 +36,10 @@ public class ParticipantControllerAccessExtension implements Extension{
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
-		String possibleTableName = StringUtil.underscorize(StringUtil.camelize(controllerPathElementName));
 		Class<? extends Model> modelClass  = null;
 		List<String> participantingRoles = new ArrayList<String>();
 
-		Table possibleTable = Database.getInstance().getTable(possibleTableName);
+		Table possibleTable = Path.getTable(controllerPathElementName);
 		if ( possibleTable != null ){
 			modelClass = possibleTable.getModelClass();
 		}
@@ -53,7 +52,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 				for (String referencedModelIdFieldName :pOptions.keySet()){
 					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(model);
 					if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));
+						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));//Remove "_ID" from the end.
 					}
 				}
 				if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
