@@ -93,8 +93,7 @@ public class Path {
         int pathElementSize = pathelements.size();
         for (int i = 0 ; i < pathElementSize ; i++){
         	String token = pathelements.get(i);
-        	String camelizedToken = camelize(token);
-        	Class<? extends Model> modelClass = getModelClass(camelizedToken);
+        	Class<? extends Model> modelClass = getModelClass(token);
         	if (modelClass != null){
         		ModelInfo info = new ModelInfo(modelClass);
         		modelElements.add(info);
@@ -165,15 +164,15 @@ public class Path {
         boolean controllerFound = false;
         for (int i = pathelements.size() - 1; i >= 0 && !controllerFound; i--) {
             String pe = pathelements.get(i);
-            String camelizedPe = camelize(pe);
+            
             for (String controllerPackageRoot: Config.instance().getControllerPackageRoots()){
-                String clazzName = controllerPackageRoot + "." + camelizedPe + "Controller";
+                String clazzName = controllerPackageRoot + "." + camelize(pe) + "Controller";
                 if (getClass(clazzName) != null) {
                     controllerClassName = clazzName;
                     controllerPathIndex = i ;
                     controllerFound = true;
                 }else {
-                    Class<? extends Model> modelClass = getModelClass(camelizedPe);
+                    Class<? extends Model> modelClass = getModelClass(pe);
                     if (modelClass != null){
                         controllerClassName = ModelController.class.getName();
                         controllerPathIndex = i ;
@@ -228,17 +227,21 @@ public class Path {
     }
 
     public <M extends Model> Class<M> getModelClass(){
-        return getModelClass(camelize(controllerPathElement()));
+        return getModelClass(controllerPathElement());
     }
     
-    private <M extends Model> Class<M> getModelClass(String camelizedPathElement){
-        String tableName = Table.tableName(camelizedPathElement);
-        Table<M> table = Database.getInstance().getTable(tableName);
+    public static <M extends Model> Class<M> getModelClass(String pathElement){
+        Table<M> table = getTable(pathElement);
         if (table == null){
             return null;
         }else {
             return table.getModelClass();
         }
+    }
+    public static <M extends Model> Table<M> getTable(String pathElement){
+        String tableName = Table.tableName(StringUtil.singularize(camelize(pathElement)));
+        Table<M> table = Database.getInstance().getTable(tableName);
+        return table;
     }
     
     public String action() {
@@ -366,7 +369,7 @@ public class Path {
         return controllerClassName;
     }
 
-    private String camelize(String s) {
+    private static String camelize(String s) {
         return StringUtil.camelize(s);
     }
     

@@ -18,6 +18,7 @@ import java.util.Map;
 
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.string.StringUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -30,10 +31,12 @@ import com.venky.swf.db.annotations.column.validations.processors.FieldValidator
 import com.venky.swf.db.annotations.column.validations.processors.MandatoryValidator;
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
+import com.venky.swf.db.annotations.operation.Operation;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.exceptions.InvalidOperation;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
@@ -127,7 +130,11 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);
         if (retType.isAssignableFrom(inCurrentClass.getReturnType())) {
-            return inCurrentClass.invoke(this, args);
+        	if (isOperationValid(inCurrentClass)){
+                return inCurrentClass.invoke(this, args);
+        	}else {
+        		throw new NoSuchMethodException("Invalid Operation");
+        	}
         } else {
             throw new NoSuchMethodException("Donot know how to execute this method");
         }
@@ -135,6 +142,18 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
 
     }
 
+    public boolean isOperationValid(Method inCurrentClass){
+    	if (!inCurrentClass.isAnnotationPresent(Operation.class)){
+    		return true;
+    	}
+  
+    	try {
+    		Registry.instance().callExtensions("validate.operation", inCurrentClass.getName(), getProxy());
+    		return true;
+    	}catch (InvalidOperation ex){
+        	return false;
+    	}
+    }
     @SuppressWarnings("unchecked")
 	public <P extends Model> P getParent(Method parentGetter) {
     	Class<P> parentClass = (Class<P>) parentGetter.getReturnType();
@@ -184,10 +203,6 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	q.from(childClass);
     	q.where(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
     	return q.execute();
-    	/*
-    	Query q = new Query(childClass);
-    	return q.select().where(parentIdColumnName + " =  ? " , new BindVariable(parentId)).execute();
-    	*/
     }
 
     public void setProxy(M proxy) {
