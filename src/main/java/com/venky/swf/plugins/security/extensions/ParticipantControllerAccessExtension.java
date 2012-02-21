@@ -112,7 +112,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if (selectedModel != null){ 
 			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
 				RolePermission permission = permissionIterator.next();
-				InputStream condition = null; //permission.getCondtion();
+				InputStream condition = permission.getConditionBlob();
 				if (condition != null ){
 					String sCondition = StringUtil.read(condition);
 					Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);
