@@ -42,6 +42,14 @@ public enum MimeType {
 			return true;
 		}
 	},
+	TEXT_XML(){
+		public String toString(){
+			return "text/xml";
+		}
+		public boolean isImage(){
+			return false;
+		}
+	}
 	;
 
 	public abstract boolean isImage();

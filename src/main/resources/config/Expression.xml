@@ -1,0 +1,21 @@
+<AND xmlns="http://www.example.org/Expression"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.example.org/Expression Expression.xsd"  >
+    <AND>
+    <LT>
+        <ColumnName>X</ColumnName>
+        <Value>x</Value>
+        
+    </LT>
+    
+    <NE>
+        <ColumnName>X</ColumnName>
+        <Value>x</Value>
+    </NE>
+    </AND>
+    <EQ>
+
+        <ColumnName>X</ColumnName>
+        <Value>x</Value>
+    </EQ>
+</AND>

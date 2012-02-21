@@ -30,10 +30,33 @@ public class Expression {
 	}
 
 	private List<Expression> connected = new ArrayList<Expression>();
+	private Expression parent = null;
+	
+	public int getNumChildExpressions(){
+		return connected.size();
+	}
+	
+	
+	public Expression getParent() {
+		return parent;
+	}
+
+	public void setParent(Expression parent) {
+		this.parent = parent;
+	}
+
 	public Expression add(Expression expression){
+		expression.setParent(this);
 		connected.add(expression);
-		values.addAll(expression.getValues());
+		addValues(expression.getValues());
 		return this;
+	}
+	
+	private void addValues(List<BindVariable> values){
+		this.values.addAll(values);
+		if (parent != null){
+			parent.addValues(values);
+		}
 	}
 	public String getRealSQL(){
 		StringBuilder builder = new StringBuilder(getParameterizedSQL());
@@ -65,7 +88,7 @@ public class Expression {
 				}
 			}else {
 				builder.append(op.toString());
-				if (op.requiresParen()){
+				if (op.isMultiValued()){
 					builder.append(" ( ");
 				}
 				 
@@ -77,26 +100,28 @@ public class Expression {
 					builder.append(" ?");
 				}
 				
-				if (op.requiresParen()){
+				if (op.isMultiValued()){
 					builder.append(" ) ");
 				}
 			}
 		}else if (!connected.isEmpty()){
+			boolean multipleExpressionsConnected = connected.size() > 1; 
+			
 			Iterator<Expression> i = connected.iterator();
 			while(i.hasNext()){
 				Expression expression = i.next();
 				if (!expression.isEmpty()){
 					if (builder.length() > 0){
+						builder.append(" ");
 						builder.append(conjunction);
+						builder.append(" ");
 					}
-					builder.append(" ( ");
 					builder.append(expression.getParameterizedSQL());
-					builder.append(" ) ");
 				}
 			}
-			if (builder.length() > 0){
-				builder.insert(0," ( ");
-				builder.append(" ) ");
+			if (builder.length() > 0 && multipleExpressionsConnected){ //avoid frivolous brackets
+				builder.insert(0,"( ");
+				builder.append(" )");
 			}
 		}
 		return builder.toString();
@@ -107,7 +132,8 @@ public class Expression {
 	}
 	
 	public boolean isEmpty(){
-		return getParameterizedSQL().length() == 0;
+		return conjunction != null && connected.isEmpty() ;
+		//return getParameterizedSQL().length() == 0;
 	}
 	
 	@Override

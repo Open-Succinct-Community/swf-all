@@ -41,12 +41,12 @@ public enum Operator {
 		public String toString(){
 			return "in";
 		}
-		public boolean requiresParen(){
+		public boolean isMultiValued(){
 			return true;
 		}
 	};
 
-	public boolean requiresParen(){
+	public boolean isMultiValued(){
 		return false;
 	}
 }
