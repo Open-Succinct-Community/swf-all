@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.security.extensions;
 
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +26,8 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.sql.parser.SQLExpressionParser;
+import com.venky.swf.sql.parser.XMLExpressionParser;
 
 public class ParticipantControllerAccessExtension implements Extension{
 	static {
@@ -38,6 +41,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		String parameterValue = (String)context[3];
 		Class<? extends Model> modelClass  = null;
 		List<String> participantingRoles = new ArrayList<String>();
+		Model selectedModel = null;
 
 		Table possibleTable = Path.getTable(controllerPathElementName);
 		if ( possibleTable != null ){
@@ -46,11 +50,11 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if (modelClass != null && parameterValue != null){
 			try {
 				int id = Integer.valueOf(parameterValue);
-				Model model = possibleTable.get(id);
+				selectedModel = possibleTable.get(id);
 				Map<String,List<Integer>> pOptions = user.getParticipationOptions(modelClass);
 				ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
 				for (String referencedModelIdFieldName :pOptions.keySet()){
-					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(model);
+					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
 					if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
 						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));//Remove "_ID" from the end.
 					}
@@ -104,9 +108,29 @@ public class ParticipantControllerAccessExtension implements Extension{
 		permissionQuery.where(permissionQueryWhere);
 
 		List<RolePermission> permissions = permissionQuery.execute();
+		
+		if (selectedModel != null){ 
+			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
+				RolePermission permission = permissionIterator.next();
+				InputStream condition = null; //permission.getCondtion();
+				if (condition != null ){
+					String sCondition = StringUtil.read(condition);
+					Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);
+					if (expression == null){
+						expression = new XMLExpressionParser(modelClass).parse(sCondition);
+					}
+					if (!expression.eval(selectedModel)) {
+						permissionIterator.remove();
+					}
+				}
+			}
+			
+		}
+
 		if (permissions.isEmpty()){
 			return ;
 		}
+		
 		Collections.sort(permissions, new Comparator<RolePermission>() {
 
 			public int compare(RolePermission o1, RolePermission o2) {
