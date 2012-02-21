@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Record;
@@ -65,7 +66,11 @@ public class Expression {
 		int index = builder.indexOf("?");
 		int p = 0;
 		while (index >= 0) {
-			String pStr = StringUtil.valueOf(parameters.get(p).getValue());
+			BindVariable parameter = parameters.get(p);
+			String pStr = StringUtil.valueOf(parameter.getValue()) ;
+			if (Database.getInstance().getJdbcTypeHelper().getTypeRef(parameter.getJdbcType()).isQuotedWhenUnbounded()){
+				pStr = "'" + pStr + "'";
+			}
 			builder.replace(index, index+1, pStr);
 			p+=1;
 			index = builder.indexOf("?",index+pStr.length());

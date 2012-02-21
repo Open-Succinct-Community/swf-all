@@ -74,26 +74,26 @@ public class MySqlHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,
-                            "DATE", 0, 0, new DateConverter()));
+                            "DATE", 0, 0, true, new DateConverter()));
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.TIME, "TIME", 0, 0, new TimeConverter()));
+                            java.sql.Types.TIME, "TIME", 0, 0, true, new TimeConverter()));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
-                            java.sql.Types.TIMESTAMP, "TIMESTAMP", 0, 0,
+                            java.sql.Types.TIMESTAMP, "TIMESTAMP", 0, 0, true,
                             new TimestampConverter()));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(
-                            java.sql.Types.VARCHAR, "VARCHAR", 128, 0,
+                            java.sql.Types.VARCHAR, "VARCHAR", 128, 0, true,
                             new StringConverter())); // ALSO CHAR, LONG VARCHAR
 
             registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.CLOB,
-                            "CLOB", 0, 0, new ReaderConverter()));
+                            "CLOB", 0, 0, true, new ReaderConverter()));
 
             registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.LONGVARCHAR,
-                    "LONGVARCHAR", 0, 0, new ReaderConverter()));
+                    "LONGVARCHAR", 0, 0, true, new ReaderConverter()));
 
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
-                            "BLOB", 0, 0, new InputStreamConverter()));
+                            "BLOB", 0, 0, true, new InputStreamConverter()));
             
     
     }

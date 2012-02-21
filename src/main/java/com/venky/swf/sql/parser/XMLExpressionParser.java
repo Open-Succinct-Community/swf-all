@@ -47,19 +47,42 @@ public class XMLExpressionParser {
 			int columnType = table.getColumnDescriptor(columnName.getNodeValue()).getJDBCType();
 			
 			List<BindVariable> bvalues =  new ArrayList<BindVariable>();
-			if (elem.getNodeName().equals("IN")){
+			Operator op = getOperator(elem.getNodeName());
+			
+			if (op.isMultiValued()){
 				XMLElement values = elem.getChildElement("Values");
 				for (Iterator<XMLElement> valueIter  = values.getChildElements() ; valueIter.hasNext() ; ){
 					addBindVariable(bvalues, columnType, valueIter.next());
 				}
-				e = new Expression(columnName.getNodeValue(),Operator.IN,bvalues.toArray(new BindVariable[]{}));
 			}else{
 				XMLElement eValue = elem.getChildElement("Value");
 				addBindVariable(bvalues, columnType, eValue);
 			}
+			e = new Expression(columnName.getNodeValue(),op,bvalues.toArray(new BindVariable[]{}));
 		}
 			
 		return e;
+	}
+	public Operator getOperator(String s){
+		if (s.equals("EQ")){
+			return Operator.EQ;
+		}else if (s.equals("GE")){
+			return Operator.GE;
+		}else if (s.equals("GT")){
+			return Operator.GT;
+		}else if (s.equals("IN")){
+			return Operator.IN;
+		}else if (s.equals("LE")){
+			return Operator.LE;
+		}else if (s.equals("LK")){
+			return Operator.LK;
+		}else if (s.equals("LT")){
+			return Operator.LT;
+		}else if (s.equals("NE")){
+			return Operator.NE;
+		}else {
+			throw new UnsupportedOperationException(s);
+		}
 	}
 	
 	private void addBindVariable(List<BindVariable> bValues,int columnType , XMLElement eValue) {

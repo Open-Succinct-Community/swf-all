@@ -103,6 +103,11 @@ public class SQLExpressionParser {
 		List<BindVariable> values = new ArrayList<BindVariable>();
 		for (Element columnValue:columnValues){
 			String sValue = columnValue.getText().trim();
+			if (sValue.startsWith("'")){
+				List<Element> quotedValues =  hunt(QuotedValue.class,columnValue);
+				assert quotedValues.size() == 1 ;
+				sValue = quotedValues.get(0).getText();
+			}
 			Object value = sValue;
 			if (cd != null){
 				int jdbcType = cd.getJDBCType();
@@ -211,8 +216,14 @@ public class SQLExpressionParser {
 
 	public static class ColumnValue extends Any {
 		public ColumnValue(){
-			super(new Sequence(new Include('\''),new OneOrMore(new Exclude('\'')), new Include('\''),spaces()),
+			super(new Sequence(new Include('\''),new QuotedValue(), new Include('\''),spaces()),
 					new Sequence(new OneOrMore(new Exclude(' ','\t','\r','\n','\f','(', ')', '\'' , '>' , '<' , '=' , '!')),spaces()));
+		}
+	}
+	
+	public static class QuotedValue extends OneOrMore {
+		public QuotedValue(){
+			super(new Exclude('\''));
 		}
 	}
 
