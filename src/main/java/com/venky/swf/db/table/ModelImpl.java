@@ -240,7 +240,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     
 	private static Class<?> getModelImplClass(Class<? extends Model> modelClass){
 
-		List<Class<?>> modelClasses = ModelReflector.instance(modelClass).getModelInterfaceHierarchy();
+		List<Class<?>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchy();
 		Class modelImplClass = null;
 		for (Class<?> c : modelClasses){
 			String modelImplClassName = c.getName()+"Impl";

@@ -8,8 +8,11 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.controller.annotations.Depends;
+import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
@@ -63,18 +66,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         
         table.setProperty("class", "tablesorter");
         header = table.createHeader();
-        Column action = header.createColumn(); 
-        action.setText("V");
-        action.setProperty("width", "1%");
-        action = header.createColumn(); 
-        action.setText("M");
-        action.setProperty("width", "1%");
-        action = header.createColumn(); 
-        action.setText("C");
-        action.setProperty("width", "1%");
-        action = header.createColumn(); 
-        action.setText("D");
-        action.setProperty("width", "1%");
+        Column action = null ;
+        
+        for (Method m : getSingleRecordActions()){
+            action = header.createColumn();
+            action.setText(m.getName().substring(0,1));
+            action.setProperty("width", "1%");
+        }
+        
         for (String fieldName : getIncludedFields()) {
             if (isFieldVisible(fieldName)) {
                 header.createColumn().setText(getFieldLiteral(fieldName));
@@ -86,44 +85,34 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         		continue;
         	}
             Row row = table.createRow();
-            
-            if (getPath().canAccessControllerAction("show",String.valueOf(record.getId()))){
-	            Link show = new Link();
-	            show.setUrl(getPath().controllerPath()+"/show/"+record.getId());
-	            show.addControl(new Image("/resources/images/show.png"));
-	            row.createColumn().addControl(show);
-            }else {
-            	row.createColumn();
+            for (Method m : getSingleRecordActions()){
+            	String actionName = m.getName();
+            	boolean canAccessAction = getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
+            	Depends depends = m.getAnnotation(Depends.class);
+            	if (canAccessAction && depends != null ){
+            		StringTokenizer tok = new StringTokenizer(depends.value(),",") ;
+            		while (tok.hasMoreTokens() && canAccessAction){
+            			canAccessAction = canAccessAction && getPath().canAccessControllerAction(tok.nextToken(),String.valueOf(record.getId()));
+            		}
+            	}
+            	if (canAccessAction){
+                	SingleRecordAction sra = m.getAnnotation(SingleRecordAction.class);
+                	String icon = null ; 
+                	if (sra != null) {
+                		icon = sra.icon();
+                	}
+                	if (icon == null){
+                		icon = "/resources/images/show.png"; // Default icon.
+                	}
+    	            Link actionLink = new Link();
+    	            actionLink.setUrl(getPath().controllerPath()+"/" + actionName +  "/"+record.getId());
+    	            actionLink.addControl(new Image(icon));
+    	            row.createColumn().addControl(actionLink);
+            	}else{
+                	row.createColumn();
+                }
             }
-            
-            if (getPath().canAccessControllerAction("edit",String.valueOf(record.getId())) && getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
-                Link edit = new Link();
-                edit.setUrl(getPath().controllerPath()+"/edit/"+record.getId());
-                edit.addControl(new Image("/resources/images/edit.png"));
-                row.createColumn().addControl(edit);
-            }else {
-            	row.createColumn();
-            }
-            
-            if (getPath().canAccessControllerAction("clone",String.valueOf(record.getId())) && getPath().canAccessControllerAction("save")){
-	            Link clone = new Link();
-	            clone.setUrl(getPath().controllerPath()+"/clone/"+record.getId());
-	            clone.addControl(new Image("/resources/images/clone.png"));
-	            row.createColumn().addControl(clone);
-            }else {
-            	row.createColumn();
-            }
-            
-            if (getPath().canAccessControllerAction("destroy",String.valueOf(record.getId()))){
-	            Link destroy = new Link();
-	            destroy.setUrl(getPath().controllerPath()+"/destroy/"+record.getId());
-	            destroy.addControl(new Image("/resources/images/destroy.png"));
-	            row.createColumn().addControl(destroy);
-            }else {
-            	row.createColumn();
-            }
-            
-            
+                        
             for (String fieldName : getIncludedFields()) {
                 try {
                     if (isFieldVisible(fieldName)) {

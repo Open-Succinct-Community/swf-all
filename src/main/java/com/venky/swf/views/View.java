@@ -22,4 +22,5 @@ public abstract class View {
     }
 
     public abstract void write() throws IOException;
+    
 }

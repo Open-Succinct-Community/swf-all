@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,10 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.reflection.Reflector.MethodMatcher;
+import com.venky.swf.controller.Controller;
+import com.venky.swf.controller.annotations.SingleRecordAction;
+import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
@@ -57,6 +62,19 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         if (includedFields != null && includedFields.length > 0) {
             this.includedFields.retainAll(Arrays.asList(includedFields));
         }
+        
+        ControllerReflector<? extends Controller> ref = new ControllerReflector(path.controller().getClass(),Controller.class);
+        singleRecordActions = ref.getMethods(new SingleRecordActionMatcher(ref));
+    }
+    
+    private class SingleRecordActionMatcher implements MethodMatcher {
+    	final ControllerReflector<? extends Controller> ref ;
+    	public SingleRecordActionMatcher(ControllerReflector<? extends Controller> ref) {
+    		this.ref = ref;
+		}
+		public boolean matches(Method method) {
+			return ref.isAnnotationPresent(method,SingleRecordAction.class);
+		} 
     }
     
     public ModelReflector<M> getReflector() {
@@ -189,4 +207,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         
     }
 
+    List<Method> singleRecordActions = new ArrayList<Method>();
+    public List<Method> getSingleRecordActions(){
+    	return singleRecordActions;
+    }
 }

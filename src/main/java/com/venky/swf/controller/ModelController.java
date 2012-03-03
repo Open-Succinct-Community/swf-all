@@ -28,6 +28,8 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.controller.annotations.Depends;
+import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
@@ -151,7 +153,7 @@ public class ModelController<M extends Model> extends Controller {
         return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
     }
     
-
+    @SingleRecordAction(icon="/resources/images/show.png")
     public View show(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser())){
@@ -200,6 +202,8 @@ public class ModelController<M extends Model> extends Controller {
 		return os.toByteArray();
     }
 
+    @SingleRecordAction(icon="/resources/images/edit.png")
+    @Depends("save")
     public View edit(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser())){
@@ -209,6 +213,8 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
 
+    @SingleRecordAction(icon="/resources/images/clone.png")
+    @Depends("save")
     public View clone(int id){
     	Table<M> table = Database.getInstance().getTable(modelClass);
     	M record = table.get(id);
@@ -232,6 +238,8 @@ public class ModelController<M extends Model> extends Controller {
         return dashboard(mev);
     	
     }
+    
+    @Depends("save")
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
         List<ModelInfo> modelElements =getPath().getModelElements();
@@ -284,6 +292,7 @@ public class ModelController<M extends Model> extends Controller {
         return dashboard(mev);
     }
 
+    @SingleRecordAction(icon="/resources/images/destroy.png")
     public View destroy(int id){ 
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record != null){
