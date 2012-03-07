@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.github.venkatramanm.swf-all</groupId>
+    <artifactId>swf-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>swf-maven-plugin</artifactId>
+  <packaging>maven-plugin</packaging>
+  <name>swf-maven-plugin Maven Mojo</name>
+  <description>Plugin to reverse engineer SWF models from an existing DB</description>
+
+  <url>http://maven.apache.org</url>
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>LICENSE.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git@github.com:venkatramanm/swf-maven-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:venkatramanm/swf-maven-plugin.git</developerConnection>
+    <url>git@github.com:venkatramanm/swf-maven-plugin.git</url>
+  </scm>
+  <developers>
+    <developer> 
+      <id>venky</id>
+      <name>Venkatraman Mahadevan</name>
+      <email>venkatramanm@yahoo.com</email>
+    </developer>
+  </developers>
+  <properties>
+  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+    	<artifactId>swf</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+</project>
