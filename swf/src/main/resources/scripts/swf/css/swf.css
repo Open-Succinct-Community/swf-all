@@ -1,0 +1,75 @@
+/* Styling menus */
+div.nav {
+	height: 1.5em;
+	background-image: url(/resources/images/menubg.png); 
+	
+}
+div.nav ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  line-height: 1.5em;
+}   
+div.nav li {
+  float: left;
+  position: relative;
+  white-space: nowrap;
+  width: 15em;
+  text-indent: 0.5em;
+  background-color: #bbf;
+}
+
+div.nav li:hover li:hover {
+	background-color: #aae;
+	margin : 0px 0px 0px 0px;
+}
+
+
+div.nav li  ul {
+    position: absolute;
+    left: -999em;
+}
+
+div.nav li:hover > ul { 
+    left: auto;
+}
+
+div.nav li ul ul {
+    margin-top: -1.5em;
+    margin-left: 15em;
+}
+
+.hidden {
+	visibility:hidden;
+}
+.hfill {
+	width: 100%;
+}
+.hfill tr th {
+	text-align: left;
+}
+.table .stream img {
+    width:560px;
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+}
+.table .submit {
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+    width:20%;
+}
+.tablesorter .stream img {
+	width: 56px;
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+}
+
+/* Styling based on Database types*/
+.number {
+	text-align: right; 
+}
+
+

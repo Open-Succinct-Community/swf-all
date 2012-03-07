@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.example.org/Expression" xmlns:swf="http://www.example.org/Expression" elementFormDefault="qualified">
+<complexType name="OperatorTypeSingleValue">
+   <sequence>
+       <element name="ColumnName" minOccurs="1" maxOccurs="1" type="string"/>
+       <element name="ColumnType" minOccurs="0" maxOccurs="1" type="string"/>
+       <element name="Value" minOccurs="1" maxOccurs="1" type="string"/>
+   </sequence>
+</complexType>
+<complexType name="OperatorTypeMultiValue">
+   <sequence>
+       <element name="ColumnName" minOccurs="1" maxOccurs="1" type="string"/>
+       <element name="Values" minOccurs="1" maxOccurs="1" >
+           <complexType>
+               <sequence>
+                   <element minOccurs="1" maxOccurs="50" name="Value" type="string">
+                   </element>
+               </sequence>
+           </complexType>
+       </element>
+   </sequence>
+</complexType>
+
+<complexType name="ConjunctionType" >
+    <sequence>
+        <element name="AND" minOccurs="0" maxOccurs="unbounded" type="swf:ConjunctionType"/>
+        <element name="OR" minOccurs="0" maxOccurs="unbounded" type="swf:ConjunctionType"/>
+
+		<element name="EQ" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+		
+		<element name="GE" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+        <element name="GT" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+        
+        <element name="IN" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeMultiValue"/>
+		
+        <element name="LE" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+        <element name="LK" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+		<element name="LT" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+		
+		<element name="NE" minOccurs="0" maxOccurs="unbounded" type="swf:OperatorTypeSingleValue"/>
+		
+   </sequence>
+</complexType>
+
+<element name="AND" type="swf:ConjunctionType"/>
+</schema>
