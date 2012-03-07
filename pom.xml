@@ -9,6 +9,11 @@
   <description>Plugin to reverse engineer SWF models from an existing DB</description>
 
   <url>http://maven.apache.org</url>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
 
   <licenses>
     <license>
