@@ -10,6 +10,11 @@
   <name>swf-archetype</name>
   <description>Archetype to create apps using SWF</description>
   <url>http://maven.apache.org</url>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
+  </parent>
   <licenses>
     <license>
       <name>MIT</name>
