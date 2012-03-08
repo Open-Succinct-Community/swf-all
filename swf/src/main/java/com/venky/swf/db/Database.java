@@ -250,7 +250,9 @@ public class Database {
                 if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
                     Table table = new Table(modelClass);
                     table.setExistingInDatabase(false);
-                    tables.put(table.getTableName(), table);
+                    if (!tables.containsKey(table.getTableName())) {
+                        tables.put(table.getTableName(), table);
+                    }
                 }
             } catch (ClassNotFoundException ex) {
                 throw new RuntimeException(ex);

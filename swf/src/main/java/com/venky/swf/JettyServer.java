@@ -1,5 +1,6 @@
 package com.venky.swf;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.routing.Router;
 import org.eclipse.jetty.server.Server;
@@ -21,7 +22,12 @@ public class JettyServer {
 	}
 
 	public static void main(String[] args) throws Exception {
-		JettyServer s = new JettyServer();
+		String port = System.getenv("PORT");
+		if (ObjectUtil.isVoid(port)){
+			port = "8080";
+		}
+		
+		JettyServer s = new JettyServer(Integer.valueOf(port));
 		s.start();
 	}
 
