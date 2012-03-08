@@ -2,6 +2,7 @@
 <archetype-descriptor xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd" name="swf-archetype"
     xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
   <fileSets>
     <fileSet filtered="true" packaged="true" encoding="UTF-8">
       <directory>src/main/java</directory>
@@ -29,4 +30,7 @@
       </includes>
     </fileSet>
   </fileSets>
+  <requiredProperties>
+    <requiredProperty key="archetypeVersion"/>
+  </requiredProperties>
 </archetype-descriptor>
