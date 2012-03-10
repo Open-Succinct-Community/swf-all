@@ -12,6 +12,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
+import com.venky.core.date.DateUtils;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -116,6 +117,7 @@ public class Controller {
         }catch (IOException ex){
             //
         }
+        getPath().getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
         return new BytesView(getPath(), baos.toByteArray());
     }
     

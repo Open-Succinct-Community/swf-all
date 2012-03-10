@@ -14,6 +14,8 @@ import java.util.SortedSet;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 
 /**
  *
@@ -49,7 +51,12 @@ public class Record {
     public void load(ResultSet rs) throws SQLException{
         ResultSetMetaData meta = rs.getMetaData(); 
         for (int i = 1 ; i <= meta.getColumnCount() ; i ++ ){
-            put(meta.getColumnName(i),rs.getObject(i));
+        	Object columnValue = rs.getObject(i);
+        	int type = meta.getColumnType(i);
+        	if (JdbcTypeHelper.isLOB(type)){
+        		columnValue = Database.getInstance().getJdbcTypeHelper().getTypeRef(type).getTypeConverter().valueOf(columnValue);
+        	}
+            put(meta.getColumnName(i),columnValue);
         }
     }
     

@@ -4,7 +4,6 @@
  */
 package com.venky.swf.controller;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -174,11 +173,9 @@ public class ModelController<M extends Model> extends Controller {
             			if (ct  != null){
             				mimeType = ct.value();
             			}
-        				return new BytesView(getPath(), toBytes((InputStream)getter.invoke(record)), mimeType);
+        				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType);
             		}
             	}
-			} catch (IOException e) {
-				throw new RuntimeException(e);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			} catch (IllegalArgumentException e) {
@@ -192,15 +189,6 @@ public class ModelController<M extends Model> extends Controller {
         return back();
     }
     
-    protected byte[] toBytes(InputStream in) throws IOException{
-    	ByteArrayOutputStream os = new ByteArrayOutputStream();
-    	byte [] b = new byte[1000];
-    	int i = 0;
-    	while ((i = in.read(b)) > 0){
-    		os.write(b,0,i);
-    	}
-		return os.toByteArray();
-    }
 
     @SingleRecordAction(icon="/resources/images/edit.png")
     @Depends("save")
@@ -331,7 +319,9 @@ public class ModelController<M extends Model> extends Controller {
 				List<FileItem> fis = fu.parseRequest(request);
 				for (FileItem fi:fis){
 					if (fi.isFormField()){
-						formFields.put(fi.getFieldName(), fi.getString());
+						if (!formFields.containsKey(fi.getFieldName())){
+							formFields.put(fi.getFieldName(), fi.getString());
+						}
 					}else {
 						formFields.put(fi.getFieldName(), fi.getInputStream());
 					}

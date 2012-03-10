@@ -119,7 +119,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         Column column = row.createColumn(); 
 
                     	Method getter = getFieldGetter(fieldName);
-                        Object value = getter.invoke(record);
                         TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
                         Control control = null;
                         
@@ -128,6 +127,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         	ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId());
                         	control = ftb.getStreamLink();
                         }else {
+                            Object value = getter.invoke(record);
                             String sValue = converter.toString(value);
                             if (isFieldPassword(fieldName)){
                             	sValue = sValue.replaceAll(".", "\\*");

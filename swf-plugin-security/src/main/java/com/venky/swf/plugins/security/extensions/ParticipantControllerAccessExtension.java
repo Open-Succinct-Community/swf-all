@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -66,7 +67,9 @@ public class ParticipantControllerAccessExtension implements Extension{
 				//
 			}catch (InvocationTargetException ex) {
 				throw new RuntimeException(ex.getCause());
-			}catch (Exception ex){
+			}catch (IllegalAccessException ex) {
+				throw new RuntimeException(ex);
+			} catch (IllegalArgumentException ex) {
 				throw new RuntimeException(ex);
 			}
 		}
@@ -113,10 +116,10 @@ public class ParticipantControllerAccessExtension implements Extension{
 			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
 				RolePermission permission = permissionIterator.next();
 				InputStream condition = permission.getConditionBlob();
-				if (condition != null ){
-					String sCondition = StringUtil.read(condition);
+				String sCondition = (condition == null ? null : StringUtil.read(condition));
+				if (!ObjectUtil.isVoid(sCondition)){
 					Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);
-					if (expression == null){
+					if (expression == null ){
 						expression = new XMLExpressionParser(modelClass).parse(sCondition);
 					}
 					if (!expression.eval(selectedModel)) {

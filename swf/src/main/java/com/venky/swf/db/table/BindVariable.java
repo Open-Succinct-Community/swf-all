@@ -4,35 +4,34 @@
  */
 package com.venky.swf.db.table;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.StringReader;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.SQLException;
 import java.sql.Types;
 
-import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 
 /**
  *
  * @author venky
  */
 public class BindVariable {
-    private final Object value ; 
-    private final int jdbcType ; 
+    private final TypeRef<?> ref;
+    private final Object value;
     public BindVariable(Object value){
-        this(value,Database.getInstance().getJdbcTypeHelper().getTypeRef(value.getClass()).getJdbcType());
+        this(value,Database.getInstance().getJdbcTypeHelper().getTypeRef(value.getClass()));
     }
     public BindVariable(Object value,int jdbcType){
-        this.value = value; 
-        this.jdbcType = jdbcType;
+    	this(value,Database.getInstance().getJdbcTypeHelper().getTypeRef(jdbcType));
     }
+    public BindVariable(Object value, TypeRef<?> ref){
+    	this.ref = ref;
+    	this.value = value;
+    }
+    
 
     public int getJdbcType() {
-        return jdbcType;
+        return ref.getJdbcType();
     }
 
     public Object getValue() {
@@ -40,48 +39,19 @@ public class BindVariable {
     }
     
     public Reader getCharacterInputStream(){ 
+    	int jdbcType = getJdbcType();
     	if ( jdbcType != Types.LONGVARCHAR && jdbcType != Types.CLOB ){
     		return null;
     	}
-    	
-    	if (value != null){
-	    	if (value instanceof Clob){ 
-	    		try {
-					return ((Clob)value).getCharacterStream();
-				} catch (SQLException e) {
-					throw new RuntimeException(e);
-				}
-	    	}
-	    	
-	    	if (value instanceof Reader){
-	    		return (Reader)value;
-	    	}
-    	}
-    	
-		return new StringReader(StringUtil.valueOf(value));
-    	
+    	return (Reader)ref.getTypeConverter().valueOf(value);
     }
 
     public InputStream getBinaryInputStream(){ 
+    	int jdbcType = getJdbcType();
     	if ( jdbcType != Types.LONGVARBINARY && jdbcType != Types.BLOB ){
     		return null;
     	}
-    	
-    	if (value != null){
-	    	if (value instanceof Blob){ 
-	    		try {
-					return ((Blob)value).getBinaryStream();
-				} catch (SQLException e) {
-					throw new RuntimeException(e);
-				}
-	    	}
-	    	
-	    	if (value instanceof InputStream){
-	    		return (InputStream)value;
-	    	}
-    	}
-    	
-    	return new ByteArrayInputStream(StringUtil.valueOf(value).getBytes());
+    	return (InputStream)ref.getTypeConverter().valueOf(value);
     }
 
 }

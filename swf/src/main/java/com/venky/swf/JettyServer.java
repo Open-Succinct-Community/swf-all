@@ -33,7 +33,7 @@ public class JettyServer {
 
 	public void start() throws Exception {
 		Runtime.getRuntime().addShutdownHook(
-				new Thread(new Hook(Database.getInstance())));
+				new Thread(new Hook(Database.getInstance(true))));
 		Server server = new Server(this.port);
 		server.setGracefulShutdown(100);
 		Router router = new Router();

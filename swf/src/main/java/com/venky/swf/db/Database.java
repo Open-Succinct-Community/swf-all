@@ -44,7 +44,7 @@ public class Database {
     
     private static ThreadLocal<Database>  _instance = new ThreadLocal<Database>();
     public static Database getInstance(){
-    	return getInstance(true);
+    	return getInstance(false);
     }
     public static Database getInstance(boolean migrate){
         if (_instance.get() == null){
@@ -52,6 +52,8 @@ public class Database {
             _instance.set(db);
             if (migrate){
             	db.migrateTables();
+            }else {
+            	db.loadTables(false);
             }
         }
         return _instance.get();

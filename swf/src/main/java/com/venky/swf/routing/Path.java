@@ -298,7 +298,7 @@ public class Path {
     public boolean isUnsecuredPage(){
     	return isLoginPage() || getTarget().startsWith("/resources");
     }
-    public View invoke() {
+    public View invoke() throws AccessDeniedException{
         if (!isUserLoggedOn() && isSecuredPage()){ 
             return new RedirectorView(this, "","login");
         }

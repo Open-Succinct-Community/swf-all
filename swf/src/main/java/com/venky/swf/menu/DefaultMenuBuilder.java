@@ -34,7 +34,7 @@ public class DefaultMenuBuilder implements MenuBuilder{
     
     protected Menu userMenu(User user){
         Menu logout = new Menu();
-        logout.createMenuItem("Settings", "/user/edit/" +user.getId());
+        logout.createMenuItem("Settings", "/users/edit/" +user.getId());
         logout.createMenuItem("Signout", "/logout");
         return logout;
     }

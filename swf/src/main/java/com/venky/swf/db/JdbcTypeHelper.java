@@ -4,10 +4,8 @@
  */
 package com.venky.swf.db;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -15,13 +13,17 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.io.StringReader;
 import com.venky.core.math.DoubleUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -51,8 +53,8 @@ public class JdbcTypeHelper {
             this.sqlType = sqlType;
             this.size = size;
             this.scale = scale;
-            this.typeConverter = typeConverter;
             this.quotedWhenUnbounded = quotedWhenUnbounded;
+            this.typeConverter = typeConverter;
         }
 
         public boolean isQuotedWhenUnbounded() {
@@ -73,6 +75,10 @@ public class JdbcTypeHelper {
         public int getScale() {
             return scale;
         }
+        
+        public boolean isLOB(){
+        	return JdbcTypeHelper.isLOB(jdbcType);
+        }
 
         public Class<?> getJavaClass(){
         	return javaClass;
@@ -84,6 +90,14 @@ public class JdbcTypeHelper {
         public TypeConverter<M> getTypeConverter() {
             return typeConverter;
         }
+    }
+    
+    private static int[] LOBTYPES = new int[] {Types.CLOB,Types.BLOB , Types.LONGVARBINARY , Types.LONGVARCHAR} ;
+    static {
+    	Arrays.sort(LOBTYPES);
+    }
+    public static boolean isLOB(int jdbcType){
+    	return Arrays.binarySearch(LOBTYPES, jdbcType) > 0 ;
     }
 
     public static abstract class TypeConverter<M> {
@@ -309,23 +323,26 @@ public class JdbcTypeHelper {
 		}
 
     }
-
     public static class InputStreamConverter extends TypeConverter<InputStream> {
 
         public InputStream valueOf(Object o) {
             if (o == null) {
-                return new ByteArrayInputStream(new byte[]{});
+                return null;
             }
             if (o instanceof Blob) {
                 Blob b = (Blob) o;
                 try {
-                    return b.getBinaryStream();
+                    return new ByteArrayInputStream(StringUtil.readBytes(b.getBinaryStream())); 
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
             if (o instanceof InputStream) {
-                return (InputStream) o;
+            	if (o instanceof ByteArrayInputStream){
+            		return (InputStream) o;
+            	}else {
+            		return new ByteArrayInputStream(StringUtil.readBytes((InputStream)o));
+            	}
             }
             return new ByteArrayInputStream(StringUtil.valueOf(o).getBytes());
         }
@@ -345,18 +362,22 @@ public class JdbcTypeHelper {
 
         public Reader valueOf(Object o) {
             if (o == null) {
-                return new StringReader("");
+                return null;
             }
             if (o instanceof Clob) {
                 Clob b = (Clob) o;
                 try {
-                    return b.getCharacterStream();
+                    return new StringReader(StringUtil.read(b.getCharacterStream()));
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
             if (o instanceof Reader) {
-                return (Reader) o;
+            	if (o instanceof StringReader){
+            		return (Reader) o;
+            	}else {
+            		return new StringReader(StringUtil.read((Reader)o));
+            	}
             }
             return new StringReader(StringUtil.valueOf(o));
         }
@@ -386,34 +407,35 @@ public class JdbcTypeHelper {
         return _instance;
     }
 
-    private final Map<Class<?>, TypeRef<?>> jdbcSQLType = new HashMap<Class<?>, TypeRef<?>>();
+    private final Map<Class<?>, TypeRef<?>> javaTypeRefMap = new HashMap<Class<?>, TypeRef<?>>();
+    private final Map<Integer, List<TypeRef<?>>> jdbcTypeRefMap = new HashMap<Integer, List<TypeRef<?>>>(); 
     protected void registerjdbcSQLType(Class clazz, TypeRef ref) {
     	ref.setJavaClass(clazz);
-        jdbcSQLType.put(clazz, ref);
+        javaTypeRefMap.put(clazz, ref);
+        List<TypeRef<?>> colTypeRefs = jdbcTypeRefMap.get(ref.jdbcType);
+        if (colTypeRefs == null){
+        	colTypeRefs = new ArrayList<TypeRef<?>>();
+        	jdbcTypeRefMap.put(ref.jdbcType, colTypeRefs);
+        }
+        colTypeRefs.add(ref);
     }
 
     public TypeRef<?> getTypeRef(Class<?> javaClass) {
-        TypeRef<?> ref = jdbcSQLType.get(javaClass);
+        TypeRef<?> ref = javaTypeRefMap.get(javaClass);
         if (ref != null) {
             return ref;
         }
 
-        for (Class<?> key : jdbcSQLType.keySet()) {
+        for (Class<?> key : javaTypeRefMap.keySet()) {
             if (key.isAssignableFrom(javaClass)) {
-                return jdbcSQLType.get(key);
+                return javaTypeRefMap.get(key);
             }
         }
         return null;
     }
 
     public List<TypeRef<?>> getTypeRefs(int jdbcType) {
-    	List<TypeRef<?>> list = new ArrayList<TypeRef<?>>();
-        for (TypeRef<?> ref : jdbcSQLType.values()) {
-            if (ref.jdbcType == jdbcType) {
-            	list.add(ref);
-            }
-        }
-        return list;
+    	return jdbcTypeRefMap.get(jdbcType);
     }
     public TypeRef<?> getTypeRef(int jdbcType) {
     	List<TypeRef<?>> refs = getTypeRefs(jdbcType);
