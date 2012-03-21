@@ -80,7 +80,9 @@ public class Config {
     public String getProperty(String name){
         return properties.getProperty(name);
     }
-    
+    public String getProperty(String name,String defaultValue){
+    	return properties.getProperty(name, defaultValue);
+    }
     private static final String CONTROLLER_PACKAGE_ROOT = "swf.controller.package.root";
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";
     private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";

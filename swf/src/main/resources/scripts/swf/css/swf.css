@@ -13,7 +13,7 @@ div.nav ul {
 div.nav li {
   float: left;
   position: relative;
-  white-space: nowrap;
+  white-space: wrap;
   width: 15em;
   text-indent: 0.5em;
   background-color: #bbf;

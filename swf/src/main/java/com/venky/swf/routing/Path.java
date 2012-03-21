@@ -45,11 +45,14 @@ public class Path {
     private HttpServletResponse response = null ;
     private static final   Set<String> TARGET_LOGIN = new HashSet<String>();
     private static final   Set<String> TARGET_LOGOUT = new HashSet<String>();
+    private static final   Set<String> TARGET_DASHBOARD = new HashSet<String>();
     static { 
         TARGET_LOGIN.add("/login");
         TARGET_LOGIN.add("/app/login");
         TARGET_LOGOUT.add("/logout");
         TARGET_LOGOUT.add("/app/logout");
+        TARGET_DASHBOARD.add("/dashboard");
+        TARGET_DASHBOARD.add("/app/dashboard");
         
     }
     public User getSessionUser(){
@@ -292,11 +295,19 @@ public class Path {
     public boolean isLoginPage(){
     	return TARGET_LOGIN.contains(getTarget());
     }
+    
+    public boolean isLogoutPage(){
+    	return TARGET_LOGOUT.contains(getTarget());
+    }
+    
+    public boolean isDashboardPage(){
+    	return TARGET_DASHBOARD.contains(getTarget());
+    }
     public boolean isSecuredPage(){
     	return !isUnsecuredPage();
     }
     public boolean isUnsecuredPage(){
-    	return isLoginPage() || getTarget().startsWith("/resources");
+    	return isLoginPage() || isDashboardPage() || isLogoutPage() || getTarget().startsWith("/resources");
     }
     public View invoke() throws AccessDeniedException{
         if (!isUserLoggedOn() && isSecuredPage()){ 
@@ -337,7 +348,7 @@ public class Path {
     	return canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement);
     }
 
-    private static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement){
+    public static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement){
     	try {
     		ensureControllerActionAccess(user,controllerPathElement,actionPathElement,parameterPathElement);
     	}catch (AccessDeniedException ex){

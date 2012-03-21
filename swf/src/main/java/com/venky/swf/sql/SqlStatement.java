@@ -6,6 +6,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.io.StringReader;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.table.BindVariable;
@@ -23,10 +25,12 @@ public class SqlStatement {
         List<BindVariable> parameters = getValues();
         for (int i = 0; i < parameters.size() ; i ++ ) {
             BindVariable value = parameters.get(i);
-            if (value.getJdbcType() == Types.BLOB || value.getJdbcType() == Types.LONGVARBINARY){
-            	st.setBinaryStream(i+1, value.getBinaryInputStream());
+            if (value.getJdbcType() == Types.BLOB || value.getJdbcType() == Types.LONGVARBINARY || value.getJdbcType() == Types.BINARY){
+            	ByteArrayInputStream in = value.getBinaryInputStream();
+            	st.setBinaryStream(i+1,  in , in.available());
             }else if (value.getJdbcType() == Types.CLOB || value.getJdbcType() == Types.LONGVARCHAR){
-            	st.setCharacterStream(i+1, value.getCharacterInputStream());
+            	StringReader reader = value.getCharacterInputStream();
+            	st.setCharacterStream(i+1, reader);
             }else {
             	st.setObject(i+1,value.getValue(), value.getJdbcType());
             }

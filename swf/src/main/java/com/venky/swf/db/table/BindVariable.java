@@ -4,10 +4,10 @@
  */
 package com.venky.swf.db.table;
 
-import java.io.InputStream;
-import java.io.Reader;
 import java.sql.Types;
 
+import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.io.StringReader;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 
@@ -38,20 +38,20 @@ public class BindVariable {
         return value;
     }
     
-    public Reader getCharacterInputStream(){ 
+    public StringReader getCharacterInputStream(){ 
     	int jdbcType = getJdbcType();
     	if ( jdbcType != Types.LONGVARCHAR && jdbcType != Types.CLOB ){
     		return null;
     	}
-    	return (Reader)ref.getTypeConverter().valueOf(value);
+    	return (StringReader)ref.getTypeConverter().valueOf(value);
     }
 
-    public InputStream getBinaryInputStream(){ 
+    public ByteArrayInputStream getBinaryInputStream(){ 
     	int jdbcType = getJdbcType();
-    	if ( jdbcType != Types.LONGVARBINARY && jdbcType != Types.BLOB ){
+    	if ( jdbcType != Types.LONGVARBINARY && jdbcType != Types.BLOB && jdbcType != Types.BINARY ){
     		return null;
     	}
-    	return (InputStream)ref.getTypeConverter().valueOf(value);
+    	return (ByteArrayInputStream)ref.getTypeConverter().valueOf(value);
     }
 
 }

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.string.StringUtil;
@@ -402,13 +403,23 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         
         
         Record generatedValues = new Record();
-        String[] generatedKeys = table.getAutoIncrementColumns();
-        assert (generatedKeys.length <= 1); // atmost one auto increment id column
+        Set<String> autoIncrementColumns = table.getAutoIncrementColumns();
+        assert (autoIncrementColumns.size() <= 1); // atmost one auto increment id column
+        List<String> generatedKeys = new ArrayList<String>();
         
-        insertSQL.executeUpdate(generatedValues, generatedKeys);
-        if (generatedKeys.length == 1){
+        for (String anAutoIncrementColumn:autoIncrementColumns){
+        	if ( Database.getInstance().getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB() ){
+        		generatedKeys.add(anAutoIncrementColumn.toLowerCase());
+        	}else {
+        		generatedKeys.add(anAutoIncrementColumn);
+        	}
+        }
+        
+        insertSQL.executeUpdate(generatedValues, generatedKeys.toArray(new String[]{}));
+        
+        if (generatedKeys.size() == 1){
             assert (generatedValues.getDirtyFields().size() == 1);
-            String fieldName = generatedKeys[0];
+            String fieldName = generatedKeys.get(0);
             String virtualFieldName = generatedValues.getDirtyFields().first();
             int id = ((Number)generatedValues.get(virtualFieldName)).intValue();
             record.put(fieldName, id);

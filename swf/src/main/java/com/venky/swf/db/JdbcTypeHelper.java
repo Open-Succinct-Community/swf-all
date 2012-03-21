@@ -33,7 +33,9 @@ import com.venky.core.util.ObjectUtil;
  * @author venky
  */
 public class JdbcTypeHelper {
-
+	public boolean isColumnNameAutoLowerCasedInDB(){
+		return false;
+	}
     public static class TypeRef<M> {
 
         int jdbcType;
@@ -92,10 +94,11 @@ public class JdbcTypeHelper {
         }
     }
     
-    private static int[] LOBTYPES = new int[] {Types.CLOB,Types.BLOB , Types.LONGVARBINARY , Types.LONGVARCHAR} ;
+    private static int[] LOBTYPES = new int[] {Types.CLOB,Types.BLOB , Types.LONGVARBINARY , Types.LONGVARCHAR, Types.BINARY} ;
     static {
     	Arrays.sort(LOBTYPES);
     }
+    
     public static boolean isLOB(int jdbcType){
     	return Arrays.binarySearch(LOBTYPES, jdbcType) > 0 ;
     }
@@ -344,6 +347,10 @@ public class JdbcTypeHelper {
             		return new ByteArrayInputStream(StringUtil.readBytes((InputStream)o));
             	}
             }
+            if (o instanceof byte[]){
+            	return new ByteArrayInputStream((byte[])o);
+            			
+            }
             return new ByteArrayInputStream(StringUtil.valueOf(o).getBytes());
         }
 
@@ -402,6 +409,8 @@ public class JdbcTypeHelper {
                 _instance = new DerbyHelper();
             }else if (driverClass.getName().startsWith("com.mysql")) {
                 _instance = new MySqlHelper();
+            }else if (driverClass.getName().startsWith("org.postgresql")) {
+                _instance = new PostgresqlHelper();
             }
         }
         return _instance;
@@ -439,7 +448,7 @@ public class JdbcTypeHelper {
     }
     public TypeRef<?> getTypeRef(int jdbcType) {
     	List<TypeRef<?>> refs = getTypeRefs(jdbcType);
-    	if (refs.isEmpty()){
+    	if (refs == null || refs.isEmpty()){
     		return null;
     	}else{
     		return refs.get(0);
@@ -449,6 +458,6 @@ public class JdbcTypeHelper {
     
     
     public String getAutoIncrementInstruction() {
-        return "";
+        return " INTEGER NOT NULL ";
     }
 }

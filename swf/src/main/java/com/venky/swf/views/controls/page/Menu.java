@@ -18,11 +18,17 @@ public class Menu extends Control{
 	public Menu(){
         super("ul");
     }
-    public MenuItem createMenuItem(String text,String url){
+    
+	public boolean isEmpty(){
+		return getContainedControls().isEmpty();
+	}
+	
+	public MenuItem createMenuItem(String text,String url){
         MenuItem mi = new MenuItem(text, url) ;
         addControl(mi);
         return mi;
     }
+    
     public MenuItem createMenuItem(String text,Menu subMenu){
         MenuItem mi = new MenuItem(text, subMenu) ;
         addControl(mi);

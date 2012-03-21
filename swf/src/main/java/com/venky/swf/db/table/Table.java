@@ -17,6 +17,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
@@ -45,7 +46,11 @@ public class Table<M extends Model> {
 		return reflector;
 	}
     public boolean isReal(){
-    	return StringUtil.equals(getTableName(),getRealTableName());
+    	IS_VIRTUAL isVirtual = reflector.getAnnotation(IS_VIRTUAL.class);
+    	if (isVirtual != null && isVirtual.value()) {
+    		return false;
+    	}
+    	return true;
     }
     
     public boolean isVirtual(){
@@ -332,14 +337,14 @@ public class Table<M extends Model> {
         return c;
     }
 
-    public String[] getAutoIncrementColumns(){ 
+    public Set<String> getAutoIncrementColumns(){ 
         Set<String> columns = new IgnoreCaseSet();
         for (String name :getColumnNames()){ 
             if (getColumnDescriptor(name).isAutoIncrement()){ 
                 columns.add(name);
             }
         }
-        return columns.toArray(new String[]{});
+        return columns;
     }
     public static class ColumnDescriptor extends Record{
         public ColumnDescriptor(){
@@ -433,21 +438,22 @@ public class Table<M extends Model> {
             StringBuilder buff = new StringBuilder();
             TypeRef<?> ref = Database.getInstance().getJdbcTypeHelper().getTypeRef(getJDBCType());
             
-            buff.append(getName()).append(" ").append(ref.getSqlType());
-            if (ref.getSize() > 0 && getSize() > 0){ 
-                buff.append("(").append(getSize()); 
-                if (ref.getScale() > 0 && getScale() > 0){
-                    buff.append(",").append(getScale());
-                }    
-                buff.append(")");
-            }
-            if (!isNullable()){
-                buff.append(" NOT NULL ");
-            }
+            buff.append(getName()).append(" ");
             if (isAutoIncrement()){
                 buff.append(Database.getInstance().getJdbcTypeHelper().getAutoIncrementInstruction());
+            }else {
+                buff.append(ref.getSqlType());
+                if (ref.getSize() > 0 && getSize() > 0){ 
+                    buff.append("(").append(getSize()); 
+                    if (ref.getScale() > 0 && getScale() > 0){
+                        buff.append(",").append(getScale());
+                    }    
+                    buff.append(")");
+                }
+                if (!isNullable()){
+                    buff.append(" NOT NULL ");
+                }
             }
-            
             
             return buff.toString();
         }
