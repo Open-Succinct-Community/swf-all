@@ -18,6 +18,7 @@ import javax.servlet.http.HttpSession;
 
 import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
+import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
@@ -48,11 +49,8 @@ public class Path {
     private static final   Set<String> TARGET_DASHBOARD = new HashSet<String>();
     static { 
         TARGET_LOGIN.add("/login");
-        TARGET_LOGIN.add("/app/login");
         TARGET_LOGOUT.add("/logout");
-        TARGET_LOGOUT.add("/app/logout");
         TARGET_DASHBOARD.add("/dashboard");
-        TARGET_DASHBOARD.add("/app/dashboard");
         
     }
     public User getSessionUser(){
@@ -188,9 +186,8 @@ public class Path {
             }
         }
         if (controllerClassName == null) {
-            controllerClassName = Config.instance().getControllerPackageRoots().get(0) + ".AppController";
-            pathelements.add(0, "app");
-            controllerPathIndex = 0;
+            controllerClassName = Controller.class.getName();
+            controllerPathIndex = -1;
         }
         actionPathIndex = controllerPathIndex + 1 ;
         parameterPathIndex = controllerPathIndex + 2;
@@ -216,7 +213,7 @@ public class Path {
         		backTarget.append(pathelements.get(i));
         	}
     	}
-    	if (backTarget.length() == 0 || backTarget.toString().equals("/app")){
+    	if (backTarget.length() == 0){
     		backTarget.setLength(0);
     		backTarget.append(controllerPath()).append("/index");
     	}
@@ -224,7 +221,11 @@ public class Path {
     }
     public String controllerPathElement(){
         if (controllerPathIndex <= pathelements.size() - 1){
-            return pathelements.get(controllerPathIndex);
+        	if (controllerPathIndex >= 0){
+                return pathelements.get(controllerPathIndex);
+        	}else {
+        		return "";
+        	}
         }
         throw new RuntimeException("Controller pathelement could not be determined!");
     }
@@ -307,7 +308,7 @@ public class Path {
     	return !isUnsecuredPage();
     }
     public boolean isUnsecuredPage(){
-    	return isLoginPage() || isDashboardPage() || isLogoutPage() || getTarget().startsWith("/resources");
+    	return isLoginPage() ||  isLogoutPage() || getTarget().startsWith("/resources") ;
     }
     public View invoke() throws AccessDeniedException{
         if (!isUserLoggedOn() && isSecuredPage()){ 

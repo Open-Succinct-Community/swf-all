@@ -87,9 +87,11 @@ public class Config {
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";
     private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";
     private static final String EXTENSION_PACKAGE_ROOT = "swf.extn.package.root";
+    private static final String CONFIGURATION_INSTALLERS = "swf.default.configuration.installer";
     
     private List<String> modelPackages = null;
     private List<String> controllerPackages = null;
+    private List<String> installers = null;
     private List<URL> resourceBaseurls = null;
     public List<URL> getResouceBaseUrls(){
     	return resourceBaseurls;
@@ -107,6 +109,13 @@ public class Config {
     		controllerPackages = getPropertyValueList(CONTROLLER_PACKAGE_ROOT);
     	}
     	return controllerPackages;
+    }
+    
+    public List<String> getInstallers(){
+    	if (installers == null){
+    		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
+    	}
+    	return installers;
     }
     
     private List<String> getPropertyValueList(String name){

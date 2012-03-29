@@ -227,10 +227,13 @@ public class Database {
 	}
 
 	private void ensureFactorySettings() {
-    	String installerName = Config.instance().getProperty("swf.default.configuration.installer");
+		
+    	List<String> installerNames = Config.instance().getInstallers();
 		try {
-			Installer installer = (Installer)Class.forName(installerName).newInstance();
-			installer.install();
+			for (String installerName : installerNames){
+				Installer installer = (Installer)Class.forName(installerName).newInstance();
+				installer.install();
+			}
 			Database.getInstance().getCurrentTransaction().commit();
 		} catch (Exception e) {
 			throw new RuntimeException(e);

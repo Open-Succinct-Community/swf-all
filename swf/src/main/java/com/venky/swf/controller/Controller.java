@@ -13,6 +13,7 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -67,7 +68,7 @@ public class Controller {
     	return (User)getPath().getSessionUser();
     }
     public Class<? extends User> getUserClass(){
-    	return User.class;
+    	return Database.getInstance().getTable(User.class).getModelClass(); //Ensures correct model class is seen.
     }
     protected User getUser(String username){
         Select q = new Select().from(getUserClass());
@@ -104,20 +105,31 @@ public class Controller {
     }
 
     public View resources(String name) throws IOException{
+    	Path p = getPath();
+    	if (name.equals("config")){
+    		return new BytesView(p, "Access Denied!".getBytes());
+    	}
+    	
         String url = "/" + path.getTarget().substring(path.getTarget().indexOf(name));
-        
         InputStream is = getClass().getResourceAsStream(url);
+        
+        
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte [] buffer = new byte[1024];
         int read = 0 ;
         try {
-            while ((read = is.read(buffer)) >= 0){ 
-                baos.write(buffer,0,read);
-            }
+        	if (is != null){
+	            while ((read = is.read(buffer)) >= 0){ 
+	                baos.write(buffer,0,read);
+	            }
+        	}else {
+        		return new BytesView(p, "No such resource!".getBytes());
+        	}
         }catch (IOException ex){
             //
         }
-        getPath().getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
+
+        p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
         return new BytesView(getPath(), baos.toByteArray());
     }
     
