@@ -1,7 +1,6 @@
 package com.venky.swf.sql;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,11 +16,16 @@ public class Expression {
 	String columnName = null;
 	List<BindVariable> values = new ArrayList<BindVariable>() ;
 	Operator op = null;
-	public Expression(String columnName,Operator op, BindVariable... values){
-		this.columnName = columnName;
-		this.op = op;
-		if (values != null && values.length > 0){
-			this.values.addAll(Arrays.asList(values));
+	public Expression(String columnName,Operator op, Object... values){
+		this.columnName = columnName; 
+		this.op = op ;
+		for (int i = 0 ; i < values.length ; i ++ ){
+			if (values[i] instanceof BindVariable) {
+				this.values.add((BindVariable)values[i]);	
+			}else {
+				this.values.add(new BindVariable(values[i]));
+			}
+			
 		}
 	}
 	

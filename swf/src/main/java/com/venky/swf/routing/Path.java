@@ -7,9 +7,7 @@ package com.venky.swf.routing;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +18,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
+import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
@@ -44,15 +43,6 @@ public class Path {
     private HttpSession session = null ;
     private HttpServletRequest request = null ;
     private HttpServletResponse response = null ;
-    private static final   Set<String> TARGET_LOGIN = new HashSet<String>();
-    private static final   Set<String> TARGET_LOGOUT = new HashSet<String>();
-    private static final   Set<String> TARGET_DASHBOARD = new HashSet<String>();
-    static { 
-        TARGET_LOGIN.add("/login");
-        TARGET_LOGOUT.add("/logout");
-        TARGET_DASHBOARD.add("/dashboard");
-        
-    }
     public User getSessionUser(){
     	if (getSession() == null){
     		return null;
@@ -293,33 +283,24 @@ public class Path {
     public boolean isUserLoggedOn(){
     	return getSessionUser() != null; 
     }
-    public boolean isLoginPage(){
-    	return TARGET_LOGIN.contains(getTarget());
+    
+    public boolean isSecuredAction(Method m){
+    	return !m.isAnnotationPresent(Unrestricted.class);
     }
     
-    public boolean isLogoutPage(){
-    	return TARGET_LOGOUT.contains(getTarget());
-    }
     
-    public boolean isDashboardPage(){
-    	return TARGET_DASHBOARD.contains(getTarget());
-    }
-    public boolean isSecuredPage(){
-    	return !isUnsecuredPage();
-    }
-    public boolean isUnsecuredPage(){
-    	return isLoginPage() ||  isLogoutPage() || getTarget().startsWith("/resources") ;
-    }
     public View invoke() throws AccessDeniedException{
-        if (!isUserLoggedOn() && isSecuredPage()){ 
-            return new RedirectorView(this, "","login");
-        }
 
-        for (Method m :getControllerClass().getMethods()){
+    	for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
-            	if (isSecuredPage()){
-            		ensureControllerActionAccess();
+            	boolean securedAction = isSecuredAction(m) ;
+            	if (securedAction){
+            		if (!isUserLoggedOn()){
+                		return new RedirectorView(this,"","login");
+            		}else {
+            			ensureControllerActionAccess();	
+            		}
             	}
             	try {
                     if (m.getParameterTypes().length == 0 && parameter() == null){

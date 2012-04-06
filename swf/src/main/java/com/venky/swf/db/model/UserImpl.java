@@ -100,7 +100,7 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 	    		for (Integer value: values){
 	    			parameters.add(new BindVariable(value));
 	    		}
-	    		dsw.add(new Expression(cd.getName(),Operator.IN, parameters.toArray(new BindVariable[]{})));
+	    		dsw.add(new Expression(cd.getName(),Operator.IN, parameters.toArray()));
 	    	}
 		}
 		return dsw;

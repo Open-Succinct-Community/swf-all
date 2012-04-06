@@ -46,11 +46,15 @@ public class Table<M extends Model> {
 		return reflector;
 	}
     public boolean isReal(){
-    	IS_VIRTUAL isVirtual = reflector.getAnnotation(IS_VIRTUAL.class);
-    	if (isVirtual != null && isVirtual.value()) {
-    		return false;
+    	if (reflector != null ){
+        	IS_VIRTUAL isVirtual = reflector.getAnnotation(IS_VIRTUAL.class);
+        	if (isVirtual != null && isVirtual.value()) {
+        		return false;
+        	}
+        	return true;
+    	}else {
+    		return StringUtil.equals(getRealTableName(),getTableName());
     	}
-    	return true;
     }
     
     public boolean isVirtual(){

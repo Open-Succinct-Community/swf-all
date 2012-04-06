@@ -13,4 +13,5 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 @Target(ElementType.METHOD)
 public @interface COLUMN_DEF {
 	StandardDefault value()  default StandardDefault.NULL;
+	String someValue() default "";
 }

@@ -65,9 +65,12 @@ public class Control extends Properties {
         this.parent = parent;
     }
 
-    public void addControl(Control control) {
-        containedControls.add(control);
+    public void addControl(int index,Control control){
+    	containedControls.add(index,control);
         control.setParent(this);
+    }
+    public void addControl(Control control) {
+        addControl(containedControls.size(), control);
     }
 
     public List<Control> getContainedControls() {

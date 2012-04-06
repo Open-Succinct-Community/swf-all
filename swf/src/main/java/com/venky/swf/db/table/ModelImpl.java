@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.string.StringUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -95,7 +96,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
                 	Object defaultValue = null;
                 	COLUMN_DEF colDef = getReflector().getAnnotation(method,COLUMN_DEF.class);
                 	if (colDef != null){
-                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value());
+                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value(),colDef.someValue());
                 	}
 
                 	return cd.isNullable() ? defaultValue : converter.valueOf(defaultValue);
@@ -329,7 +330,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         		Method fieldGetter = reflector.getFieldGetter(field);
         		COLUMN_DEF cdef = reflector.getAnnotation(fieldGetter,COLUMN_DEF.class);
         		if (cdef != null){
-        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value());
+        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value(),cdef.someValue());
         			record.put(columnName,defaultValue);
         		}
         	}
@@ -338,8 +339,12 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     protected void afterValidate(){}
     protected void beforeSave() {}
     protected void afterSave() {}
-    protected void beforeDestory(){}
-    protected void afterDestroy(){}
+    protected void beforeDestory(){
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.destroy", getProxy());
+    }
+    protected void afterDestroy(){
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.destroy", getProxy());
+    }
     
     public void destroy() {
     	beforeDestory();

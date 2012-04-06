@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.venky.extension.Registry;
 import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
@@ -41,13 +42,16 @@ public abstract class HtmlView extends View{
 
 
     protected void createHtml(Html html){
-        Head head = new Head();
+        
+    	Head head = new Head();
         createHead(head);
         html.addControl(head);
         
         Body body = new Body();
         createBody(body);
         html.addControl(body);
+
+        Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
     }
     protected void createHead(Head head){
         head.addControl(new Css("/resources/scripts/jquery-ui/css/ui-lightness/jquery-ui-1.8.16.custom.css"));

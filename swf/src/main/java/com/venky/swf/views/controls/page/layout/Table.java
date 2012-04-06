@@ -33,6 +33,23 @@ public class Table extends Control{
         tbody.addControl(row);
         return row;
     }
+    
+    public Row lastRow(){
+    	if (tbody.getContainedControls().isEmpty()){
+    		createRow();
+    	}
+    	List<Control> rows = tbody.getContainedControls();
+    	
+    	return (Row)rows.get(rows.size()-1);
+    }
+    public Row firstRow(){ 
+    	if (tbody.getContainedControls().isEmpty()){
+    		createRow();
+    	}
+    	List<Control> rows = tbody.getContainedControls();
+    	return (Row)rows.get(0);
+    }
+    
     public Row createHeader(){
         Row header = new Row(true);
         thead.addControl(header);

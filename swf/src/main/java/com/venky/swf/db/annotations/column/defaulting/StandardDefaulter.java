@@ -4,17 +4,11 @@ import java.sql.Date;
 import java.sql.Timestamp;
 
 public class StandardDefaulter {
-	public static Object getDefaultValue(StandardDefault defaultKey){
+	public static Object getDefaultValue(StandardDefault defaultKey,String someValue){
 		Object ret = null;
 		switch (defaultKey){
 			case NULL:
 				ret = null;
-				break;
-			case STR_NONE:
-				ret = "";
-				break;
-			case STR_BLANK:
-				ret = " ";
 				break;
 			case ONE:
 				ret = 1;
@@ -34,6 +28,8 @@ public class StandardDefaulter {
 			case BOOLEAN_TRUE:
 				ret = true; 
 				break;
+			case SOME_VALUE:
+				ret = someValue;
 		}
 		return ret;
 	}

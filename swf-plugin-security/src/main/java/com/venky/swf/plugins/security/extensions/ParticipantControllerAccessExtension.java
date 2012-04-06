@@ -103,7 +103,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 				role_ids.add(new BindVariable(ur.getRoleId()));
 				userRoleIds.add(ur.getRoleId());
 			}
-			roleWhere.add(new Expression("role_id",Operator.IN,role_ids.toArray(new BindVariable[]{})));
+			roleWhere.add(new Expression("role_id",Operator.IN,role_ids.toArray()));
 		}
 		permissionQueryWhere.add(roleWhere);
 		

@@ -91,7 +91,7 @@ public class SQLExpressionParser {
 		}
 		List<BindVariable> columnValues = columnValues(e,cd);
 
-		return new Expression(columnName,op,columnValues.toArray(new BindVariable[]{}));
+		return new Expression(columnName,op,columnValues.toArray());
 	}
 	private String columnName(Element e){
 		List<Element> columnName = hunt(ColumnName.class,e);

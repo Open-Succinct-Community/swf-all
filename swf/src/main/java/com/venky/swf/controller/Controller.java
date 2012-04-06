@@ -13,6 +13,7 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
+import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
@@ -46,26 +47,36 @@ public class Controller {
     public Controller(Path path){
         this.path = path ;
     }
+    @Unrestricted
     public View login(){
         if (getPath().getRequest().getMethod().equals("GET")&& getPath().getSession() == null){
-            return new LoginView(getPath());
+            return createLoginView();
         }else if (getPath().getSession() != null){
     		return new RedirectorView(getPath(), "dashboard");
 		}else{ 
-            String username = getPath().getRequest().getParameter("name");
-            String password = getPath().getRequest().getParameter("password");
-            User user = getUser(username);
-            if (user != null && user.authenticate(password)){
-                HttpSession newSession = getPath().getRequest().getSession(true);
-                newSession.setAttribute("user", user);
-                return new RedirectorView(getPath(), "dashboard");
-            }else {
-                throw new RuntimeException("Login incorrect!");
-            }
+			return authenticate();
         }
     }
-    public User getSessionUser(){
-    	return (User)getPath().getSessionUser();
+
+    protected View authenticate(){
+        String username = getPath().getRequest().getParameter("name");
+        String password = getPath().getRequest().getParameter("password");
+        User user = getUser(username);
+        if (user != null && user.authenticate(password)){
+            HttpSession newSession = getPath().getRequest().getSession(true);
+            newSession.setAttribute("user", user);
+            return new RedirectorView(getPath(), "dashboard");
+        }else {
+            throw new RuntimeException("Login incorrect!");
+        }
+    }
+    
+    protected View createLoginView(){
+    	return new LoginView(getPath());
+    }
+    
+    public <U extends User> U getSessionUser(){
+    	return (U)getPath().getSessionUser();
     }
     public Class<? extends User> getUserClass(){
     	return Database.getInstance().getTable(User.class).getModelClass(); //Ensures correct model class is seen.
@@ -82,6 +93,7 @@ public class Controller {
         return null;
     }
     
+    @Unrestricted
     public View logout(){
         if (getPath().getSession()!=null){
             getPath().getSession().invalidate();
@@ -104,6 +116,7 @@ public class Controller {
         return dashboard;
     }
 
+    @Unrestricted
     public View resources(String name) throws IOException{
     	Path p = getPath();
     	if (name.equals("config")){

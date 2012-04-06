@@ -58,7 +58,7 @@ public class XMLExpressionParser {
 				XMLElement eValue = elem.getChildElement("Value");
 				addBindVariable(bvalues, columnType, eValue);
 			}
-			e = new Expression(columnName.getNodeValue(),op,bvalues.toArray(new BindVariable[]{}));
+			e = new Expression(columnName.getNodeValue(),op,bvalues.toArray());
 		}
 			
 		return e;
