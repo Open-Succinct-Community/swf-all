@@ -3,7 +3,12 @@ package com.venky.swf.db.annotations.column.defaulting;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+
 public class StandardDefaulter {
+	public static Object getDefaultValue(COLUMN_DEF columnDef){
+		return getDefaultValue(columnDef.value(), columnDef.someValue());
+	}
 	public static Object getDefaultValue(StandardDefault defaultKey,String someValue){
 		Object ret = null;
 		switch (defaultKey){

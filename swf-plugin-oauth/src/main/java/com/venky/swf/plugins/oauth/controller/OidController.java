@@ -156,7 +156,14 @@ public class OidController extends Controller{
 			newSession.setAttribute("manager", manager);
 			
 			HttpServletRequest req = getPath().getRequest();
-			String returnUrl = req.getScheme() + "://"  + req.getServerName() + ":" + req.getServerPort() + getPath().controllerPath() + "/verify"; 
+			
+			int port = req.getServerPort(); 
+			String sPort = ":" + String.valueOf(port);
+			if (port == -1 || port == 80 || port == 443){
+				sPort = "" ; // Default ports must be squashed.
+			}
+			
+			String returnUrl = req.getScheme() + "://"  + req.getServerName() + sPort + getPath().controllerPath() + "/verify"; 
 					
 			AuthRequest authReq = manager.authenticate(discovered, returnUrl);
 			authReq.addExtension(initializeFetchRequest());
