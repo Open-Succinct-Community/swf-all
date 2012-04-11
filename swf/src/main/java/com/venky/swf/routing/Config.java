@@ -78,10 +78,10 @@ public class Config {
     }
     
     public String getProperty(String name){
-        return properties.getProperty(name);
+    	return System.getProperty(name,properties.getProperty(name));
     }
     public String getProperty(String name,String defaultValue){
-    	return properties.getProperty(name, defaultValue);
+    	return System.getProperty(name,properties.getProperty(name, defaultValue));
     }
     private static final String CONTROLLER_PACKAGE_ROOT = "swf.controller.package.root";
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";

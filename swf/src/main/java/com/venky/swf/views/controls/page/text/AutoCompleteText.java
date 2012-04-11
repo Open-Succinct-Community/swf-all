@@ -67,7 +67,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         if (!ObjectUtil.isVoid(value)){
             M model = Database.getInstance().getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
-                ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+                ModelReflector reflector = ModelReflector.instance(modelClass);
                 Method descriptionGetter = reflector.getFieldGetter(descriptionColumn);
                 Object dvalue = null;
                 try {

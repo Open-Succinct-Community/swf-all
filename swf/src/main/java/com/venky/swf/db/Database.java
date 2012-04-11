@@ -86,7 +86,15 @@ public class Database {
 			}
     		userid = uri.getUserInfo().split(":")[0];
     		password = uri.getUserInfo().split(":")[1];
-    		jdbcurl = "jdbc:postgresql://" + uri.getHost() + uri.getPath() ;
+    		if (uri.getScheme().equals("postgres")){
+    			jdbcurl = "jdbc:postgresql://";	
+    		}else if (uri.getScheme().equals("mysql")){
+    			jdbcurl = "jdbc:mysql://";
+    		}else if (uri.getScheme().equals("derby")){
+    			jdbcurl = "jdbc:derby://";
+    		}
+    		
+    		jdbcurl = jdbcurl + uri.getHost() + uri.getPath() ;
     	}else { 
     		jdbcurl = Config.instance().getProperty("swf.jdbc.url");
     		userid = Config.instance().getProperty("swf.jdbc.userid");

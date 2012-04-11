@@ -53,18 +53,15 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     private Record record = null;
     private Class<M> modelClass = null;
     private M proxy = null;
-    private ModelReflector<M> reflector = null;
+    private ModelReflector reflector = null;
     private List<String> virtualFields = new IgnoreCaseList();
 
-    public Record getRecord() {
-		return record;
-	}
 
 	public Class<M> getModelClass() {
 		return modelClass;
 	}
 
-	public ModelReflector<M> getReflector() {
+	public ModelReflector getReflector() {
 		return reflector;
 	}
 
@@ -126,7 +123,16 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
             	}
             }
         }
-
+        for (Object impl: modelImplObjects){
+        	try {
+	        	Method inModelImplClass = impl.getClass().getMethod(mName, parameters); 
+	        	if (retType.isAssignableFrom(inModelImplClass.getReturnType())){
+	        		return inModelImplClass.invoke(impl, args);
+	        	}
+        	}catch(Exception ex){
+        		//
+        	}
+        }
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);
         if (retType.isAssignableFrom(inCurrentClass.getReturnType())) {
             return inCurrentClass.invoke(this, args);
@@ -169,7 +175,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	List<C> children = new ArrayList<C>();
     	
-    	ModelReflector<? extends Model> childReflector = ModelReflector.instance(childClass);
+    	ModelReflector childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
             if (fieldName.endsWith(StringUtil.underscorize(getModelClass().getSimpleName() +"Id"))){
                 children.addAll(getChildren(childClass, fieldName));
@@ -215,47 +221,73 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     	return record;
     }
 
-	private static Map<Class<?>,Class<?>> modelImplMap = new HashMap<Class<?>, Class<?>>();
+	private static Map<Class<? extends Model>,List<Class<?>>> modelImplsMap = new HashMap<Class<? extends Model>, List<Class<?>>>();
     
 	@SuppressWarnings("unchecked")
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
-		Class<?> modelImplClass = modelImplMap.get(modelClass)	;		
-		if (modelImplClass == null){
-			synchronized (modelImplMap) {
-				modelImplClass = modelImplMap.get(modelClass);
-				if (modelImplClass == null){
-					modelImplClass = getModelImplClass(modelClass);
-					modelImplMap.put(modelClass, modelImplClass);
+		ModelReflector ref = ModelReflector.instance(modelClass);
+		
+		List<Class<?>> modelImplClasses = modelImplsMap.get(modelClass)	;		
+		if (modelImplClasses == null){
+			synchronized (modelImplsMap) {
+				modelImplClasses = modelImplsMap.get(modelClass);
+				if (modelImplClasses == null){
+					modelImplClasses = getModelImplClasses(modelClass);
+					modelImplsMap.put(modelClass, modelImplClasses);
 				}
 			}
 		}
+		
 		try {
-			Constructor<?> c = modelImplClass.getConstructor(Class.class, Record.class);
-	    	ModelImpl<M> mImpl = (ModelImpl<M>) c.newInstance(modelClass, record);
-	    	M m = modelClass.cast(Proxy.newProxyInstance(modelClass.getClassLoader(), new Class[]{modelClass}, mImpl));
+	    	ModelImpl<M> mImpl = new ModelImpl<M>(modelClass, record);
+	    	M m = modelClass.cast(Proxy.newProxyInstance(modelClass.getClassLoader(), ref.getClassHierarchies().toArray(new Class<?>[]{}), mImpl));
 	    	mImpl.setProxy(m);
+	    	for (Class<?> implClass: modelImplClasses){
+	    		mImpl.addModelImplObject(constructImpl(implClass, m, ref));
+	    	}
 	    	return m;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-    
-	private static Class<?> getModelImplClass(Class<? extends Model> modelClass){
-
-		List<Class<?>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchy();
-		Class modelImplClass = null;
+	private static Object constructImpl(Class<?> implClass, Model m, ModelReflector ref){
+		Constructor c = null;
+		for (Class<?> clazz:ref.getClassHierarchies()){
+			try {
+				if (ModelImpl.class.isAssignableFrom(implClass)){
+					c = implClass.getConstructor(Class.class,Record.class);
+					ModelImpl impl = (ModelImpl)c.newInstance(clazz,m.getRawRecord());
+					impl.setProxy(m);
+					return impl;
+				}else {
+					c = implClass.getConstructor(clazz);
+					return c.newInstance(m);
+				}
+			} catch (Exception e) {
+				//
+			}
+		}
+		return c;
+	}
+	private List<Object> modelImplObjects = new ArrayList<Object>();
+	private void addModelImplObject(Object o){
+		modelImplObjects.add(o);
+	}
+	
+	
+	private static <M extends Model> List<Class<?>> getModelImplClasses(Class<M> modelClass){
+		List<Class<?>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
+		List<Class<?>> modelImplClasses = new ArrayList<Class<?>>();
+		
 		for (Class<?> c : modelClasses){
 			String modelImplClassName = c.getName()+"Impl";
 			try { 
-				modelImplClass = (Class<?>) Class.forName(modelImplClassName);
-				return modelImplClass;
+				modelImplClasses.add(Class.forName(modelImplClassName));
 			}catch(ClassNotFoundException ex){
-				modelImplClass = null;
+				// Nothing
 			}
 		}
-		
-		return ModelImpl.class;
-		
+		return modelImplClasses;
 	}
 
     public void save() {
@@ -265,9 +297,13 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         validate();
         beforeSave();
         if (record.isNewRecord()) {
+        	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.create", getProxy());
             create();
+            Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.create", getProxy());
         } else {
+        	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.update", getProxy());
             update();
+            Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.update", getProxy());
         }
         afterSave();
 
@@ -322,6 +358,7 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
     }
     protected void beforeValidate(){
     	defaultFields();
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.validate", getProxy());
     }
     protected void defaultFields(){
         for (String field:reflector.getRealFields()){
@@ -336,9 +373,15 @@ public class ModelImpl<M extends Model> implements InvocationHandler {
         	}
         }
     }
-    protected void afterValidate(){}
-    protected void beforeSave() {}
-    protected void afterSave() {}
+    protected void afterValidate(){
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.validate", getProxy());
+    }
+    protected void beforeSave() {
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.save", getProxy());
+    }
+    protected void afterSave() {
+    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.save", getProxy());
+    }
     protected void beforeDestory(){
     	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.destroy", getProxy());
     }

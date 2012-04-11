@@ -49,7 +49,7 @@ import com.venky.swf.views.controls.page.text.TextBox;
 public abstract class AbstractModelView<M extends Model> extends HtmlView {
 
     Class<M> modelClass;
-    ModelReflector<M> reflector;
+    ModelReflector reflector;
     
     List<String> includedFields = new IgnoreCaseList();
 
@@ -77,7 +77,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
 		} 
     }
     
-    public ModelReflector<M> getReflector() {
+    public ModelReflector getReflector() {
         return reflector;
     }
     
@@ -187,7 +187,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             if (parentModel != null){
                 @SuppressWarnings("unchecked")
 				Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType();
-                ModelReflector<Model> parentModelReflector = ModelReflector.instance(parentModelClass);
+                ModelReflector parentModelReflector = ModelReflector.instance(parentModelClass);
                 String descriptionColumn = parentModelReflector.getDescriptionColumn();
                 Object descValue = parentModelReflector.getFieldGetter(descriptionColumn).invoke(parentModel);
                 return StringUtil.valueOf(descValue);

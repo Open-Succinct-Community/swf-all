@@ -151,7 +151,7 @@ public class Controller {
         XMLElement root = doc.getDocumentRoot();
         XMLElement elem = null ;
         System.out.println("Parameter:" + value);
-        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+        ModelReflector reflector = ModelReflector.instance(modelClass);
         Select q = new Select().from(modelClass);
         String columnName = reflector.getColumnDescriptor(fieldName).getName();
         Expression where = new Expression(Conjunction.AND);

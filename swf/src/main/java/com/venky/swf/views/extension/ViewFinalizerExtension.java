@@ -6,7 +6,6 @@ import com.venky.swf.views.controls.page.Html;
 
 public abstract class ViewFinalizerExtension implements Extension{
 
-	@Override
 	public void invoke(Object... context) {
 		HtmlView v = (HtmlView)context[0];
 		Html html = (Html)context[1];

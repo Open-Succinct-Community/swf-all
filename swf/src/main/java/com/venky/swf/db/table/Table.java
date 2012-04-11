@@ -41,8 +41,8 @@ import com.venky.swf.sql.Update;
 public class Table<M extends Model> {
     private final String tableName ;
     private final Class<M> modelClass;
-    private final ModelReflector<M> reflector;
-    public ModelReflector<M> getReflector() {
+    private final ModelReflector reflector;
+    public ModelReflector getReflector() {
 		return reflector;
 	}
     public boolean isReal(){

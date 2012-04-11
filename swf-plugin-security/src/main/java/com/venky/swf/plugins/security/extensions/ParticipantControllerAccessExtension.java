@@ -53,7 +53,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 				int id = Integer.valueOf(parameterValue);
 				selectedModel = possibleTable.get(id);
 				Map<String,List<Integer>> pOptions = user.getParticipationOptions(modelClass);
-				ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
+				ModelReflector reflector = ModelReflector.instance(modelClass);
 				for (String referencedModelIdFieldName :pOptions.keySet()){
 					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
 					if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){

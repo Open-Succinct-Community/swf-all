@@ -13,8 +13,6 @@ import com.venky.extension.Registry;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
-import com.venky.swf.db.table.ModelImpl;
-import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.sql.Conjunction;
@@ -22,16 +20,16 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
-public class UserImpl<M extends User> extends ModelImpl<M>{
+public class UserImpl{
 	
-	public UserImpl(Class<M> modelClass, Record record) {
-		super(modelClass, record);
+	private User user = null;
+	public UserImpl(User user) {
+		this.user = user;
 	}
 
 	
 	public boolean authenticate(String password){
 		try {
-			User user = getProxy();
 			if (Registry.instance().hasExtensions(User.USER_AUTHENTICATE)){
 				Registry.instance().callExtensions(User.USER_AUTHENTICATE, user,password);
 			}else {
@@ -44,10 +42,8 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 	}
 	
 	public <R extends Model> Map<String,List<Integer>> getParticipationOptions(Class<R> modelClass){
-		User user = getProxy();
-		
 		Map<String, List<Integer>> mapParticipatingOptions = new HashMap<String, List<Integer>>();
-		ModelReflector<R> ref = ModelReflector.instance(modelClass);
+		ModelReflector ref = ModelReflector.instance(modelClass);
 		for (Method referredModelGetter : ref.getReferredModelGetters()){
 			String referredModelIdFieldName = ref.getReferredModelIdFieldName(referredModelGetter);
 			Method referredModelIdGetter = ref.getFieldGetter(referredModelIdFieldName);
@@ -79,7 +75,7 @@ public class UserImpl<M extends User> extends ModelImpl<M>{
 	}
 
 	public <R extends Model> Expression getDataSecurityWhereClause(Class<R> modelClass){
-		ModelReflector<R> ref = ModelReflector.instance(modelClass);
+		ModelReflector ref = ModelReflector.instance(modelClass);
 		Map<String,List<Integer>> columnValuesMap = getParticipationOptions(modelClass);
 		
 		Expression dsw = new Expression(Conjunction.OR);

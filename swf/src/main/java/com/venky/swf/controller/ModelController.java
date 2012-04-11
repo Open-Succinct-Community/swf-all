@@ -60,7 +60,7 @@ import com.venky.swf.views.model.ModelShowView;
 public class ModelController<M extends Model> extends Controller {
 
     private Class<M> modelClass;
-    private ModelReflector<M> reflector ;
+    private ModelReflector reflector ;
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
@@ -111,7 +111,7 @@ public class ModelController<M extends Model> extends Controller {
     		}
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
-	    	ModelReflector<?> referredModelReflector = ModelReflector.instance(mi.getModelClass());
+	    	ModelReflector referredModelReflector = ModelReflector.instance(mi.getModelClass());
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		if (referredModelReflector.getChildModelClass(childGetter).isAssignableFrom(modelClass)){
 	            	CONNECTED_VIA join = reflector.getAnnotation(childGetter,CONNECTED_VIA.class);
@@ -166,7 +166,7 @@ public class ModelController<M extends Model> extends Controller {
     	M record = Database.getInstance().getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser())){
             try {
-            	for (Method getter : getReflector().getFieldGetters()){
+            	for (Method getter : reflector.getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
             			CONTENT_TYPE ct = reflector.getAnnotation(getter,CONTENT_TYPE.class);
             			MimeType mimeType = MimeType.TEXT_PLAIN; 
@@ -355,7 +355,7 @@ public class ModelController<M extends Model> extends Controller {
             }
         }
 
-        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+        ModelReflector reflector = ModelReflector.instance(modelClass);
         List<String> fields = reflector.getRealFields();
         fields.remove("ID");
         fields.remove("LOCK_ID");
@@ -420,12 +420,10 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View autocomplete(String value) {
-    	ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+    	ModelReflector reflector = ModelReflector.instance(modelClass);
         return super.autocomplete(modelClass,getWhereClause(), reflector.getDescriptionColumn(), value);
     }
-	public ModelReflector<M> getReflector() {
-		return reflector;
-	}
+    
     
     
     
