@@ -145,13 +145,27 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             c.addControl(hiddenField);
         }
         Row buttonRow = table.createRow();
-        c = buttonRow.createColumn(getNumColumnsPerRow());
-        Submit sbm = new Submit();
-        c.addControl(sbm);
         
         if (getRecord().getRawRecord().isNewRecord()) {
-        	return;
+            c = buttonRow.createColumn(getNumFieldsPerRow());
+            Submit sbm = new Submit();
+            sbm.setName("_SUBMIT_MORE");
+            sbm.setValue("Next");
+            c.addControl(sbm);
+
+            c = buttonRow.createColumn(getNumFieldsPerRow());
+        	sbm = new Submit();
+	        sbm.setName("_SUBMIT_NO_MORE");
+	        sbm.setValue("Done");
+	        c.addControl(sbm);
+	        return;
+        }else {
+            c = buttonRow.createColumn(getNumColumnsPerRow());
+            Submit sbm = new Submit();
+            sbm.setName("_SUBMIT_NO_MORE");
+            c.addControl(sbm);
         }
+        
     	List<Class<? extends Model>> childModels = new ArrayList<Class<? extends Model>>();
     	for (Method childGetter: getReflector().getChildGetters()){
         	if (!List.class.isAssignableFrom(childGetter.getReturnType())){

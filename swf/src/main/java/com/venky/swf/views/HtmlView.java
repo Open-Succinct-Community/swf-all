@@ -64,6 +64,7 @@ public abstract class HtmlView extends View{
         
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
         head.addControl(new Script("/resources/scripts/swf/js/autocomplete.js"));
+        head.addControl(new Script("/resources/scripts/swf/js/datepicker.js"));
         head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
     }
     

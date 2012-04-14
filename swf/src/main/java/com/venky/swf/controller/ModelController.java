@@ -363,6 +363,7 @@ public class ModelController<M extends Model> extends Controller {
         fields.remove("UPDATER_USER_ID");
         
         Iterator<String> e = formFields.keySet().iterator();
+        String buttonName = null;
         while (e.hasNext()) {
             String name = e.next();
             String fieldName = fields.contains(name) ? name : null;
@@ -383,36 +384,40 @@ public class ModelController<M extends Model> extends Controller {
                 } catch (Exception e1) {
                     throw new RuntimeException(e1);
                 }
+            }else if ( name.startsWith("_SUBMIT")){
+            	buttonName = name;
             }
 
         }
         boolean isNew = false;
-        if (record.getRawRecord().isNewRecord()){
-        	isNew = true;
-        	record.setCreatorUserId(getSessionUser().getId());
-        	record.setCreatedAt(null);
+        if (!record.getRawRecord().getDirtyFields().isEmpty()){
+	        if (record.getRawRecord().isNewRecord()){
+	        	isNew = true;
+	        	record.setCreatorUserId(getSessionUser().getId());
+	        	record.setCreatedAt(null);
+	    	}
+	        record.setUpdaterUserId(getSessionUser().getId());
+	        record.setUpdatedAt(null);
+	        if (record.isAccessibleBy(getSessionUser())){
+	            record.save();
+	        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
+	        		try {
+						Database.getInstance().getCache(modelClass).clear();
+					} catch (SQLException e1) {
+						throw new AccessDeniedException(e1);
+					}
+	        		throw new AccessDeniedException();	
+	        	}
+	        }else {
+	        	throw new AccessDeniedException();
+	        }
     	}
-        record.setUpdaterUserId(getSessionUser().getId());
-        record.setUpdatedAt(null);
-        if (record.isAccessibleBy(getSessionUser())){
-            record.save();
-        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
-        		try {
-					Database.getInstance().getCache(modelClass).clear();
-				} catch (SQLException e1) {
-					throw new AccessDeniedException(e1);
-				}
-        		throw new AccessDeniedException();	
-        	}
-        }else {
-        	throw new AccessDeniedException();
+        
+        if (isNew &&  buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
+        	return redirectTo("blank");
         }
         
-        if (isNew && !getPath().canAccessControllerAction("edit", String.valueOf(record.getId()))){
-        	return redirectTo("edit/"+record.getId());
-        }else {
-        	return back();
-        }
+        return back();
    }
     
     public View save() {
@@ -423,7 +428,6 @@ public class ModelController<M extends Model> extends Controller {
     	ModelReflector reflector = ModelReflector.instance(modelClass);
         return super.autocomplete(modelClass,getWhereClause(), reflector.getDescriptionColumn(), value);
     }
-    
     
     
     

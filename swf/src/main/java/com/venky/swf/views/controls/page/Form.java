@@ -19,8 +19,12 @@ public class Form extends Control{
         super("form");
     }
     public void setAction(String controllerPath, String action){
-        setProperty("action", controllerPath + "/" + action);
+    	setAction(controllerPath + "/" + action);
     }
+    public void setAction(String actionUrl){
+        setProperty("action", actionUrl);
+    }
+    
     public void setMethod(SubmitMethod method){
         setProperty("method", method == SubmitMethod.GET ? "GET" : "POST");
     }

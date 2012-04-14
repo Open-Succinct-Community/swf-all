@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +38,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
+import com.venky.swf.views.controls.page.text.DateBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.Select;
@@ -127,6 +129,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);
             if (parentModelGetter != null){
                 control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().getBackTarget());
+            }else if (Date.class.isAssignableFrom(returnType)){
+            	control = new DateBox(); 
             }else if (isFieldPassword(fieldName)){
                 control = new PasswordText();
             }else if (isFieldEnumeration(fieldName)){
