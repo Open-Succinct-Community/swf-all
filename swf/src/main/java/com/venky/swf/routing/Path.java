@@ -317,6 +317,9 @@ public class Path {
             	}
             }
         }
+		if (!isUserLoggedOn()){
+    		return new RedirectorView(this,"","login");
+		}
     	throw new RuntimeException("Donot know how to invoke controller action" + getTarget()) ;
     }
     

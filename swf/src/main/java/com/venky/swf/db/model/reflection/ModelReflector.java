@@ -140,9 +140,18 @@ public class ModelReflector {
     	}
     	synchronized (into) {
     		if (into.isEmpty()){
+    			HashSet<String> signatures = new HashSet<String>();
+    			
     			for (Class<? extends Model> modelClass:modelClasses){
-    				into.addAll(modelReflectors.get(modelClass).getMethods(matcher));
-    			}
+    				List<Method> matchingMethods = modelReflectors.get(modelClass).getMethods(matcher);
+    				for (Method m: matchingMethods){
+    					String signature = Reflector.computeMethodSignature(m);
+    					if (!signatures.contains(signature)){
+    						into.add(m);
+    						signatures.add(signature);
+    					}
+    				}
+				}
     		}		
 		}
     }

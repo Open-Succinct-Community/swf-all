@@ -31,8 +31,12 @@ import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -390,7 +394,7 @@ public class ModelController<M extends Model> extends Controller {
 
         }
         boolean isNew = false;
-        if (!record.getRawRecord().getDirtyFields().isEmpty()){
+        if (hasUserModifiedData(record)){
 	        if (record.getRawRecord().isNewRecord()){
 	        	isNew = true;
 	        	record.setCreatorUserId(getSessionUser().getId());
@@ -418,7 +422,33 @@ public class ModelController<M extends Model> extends Controller {
         }
         
         return back();
-   }
+    }
+    
+    protected boolean hasUserModifiedData(M model){
+    	Record record = model.getRawRecord();
+        for (String field: record.getDirtyFields()){
+        	Method fieldGetter = reflector.getFieldGetter(field);
+        	if (reflector.isAnnotationPresent(fieldGetter,PROTECTED.class)){
+        		continue;
+        	}
+        	if (reflector.isAnnotationPresent(fieldGetter,HIDDEN.class)){
+        		continue;
+        	}
+    		Object currentValue = record.get(field);
+    		Object defaultValue = null ;
+        	COLUMN_DEF colDef = reflector.getAnnotation(fieldGetter, COLUMN_DEF.class) ;
+        	if (colDef != null){
+        		defaultValue = StandardDefaulter.getDefaultValue(colDef);
+        	}else if (!reflector.getColumnDescriptor(fieldGetter).isNullable()){
+        		defaultValue = Database.getInstance().getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter().valueOf(null);
+        	}
+    		if (!ObjectUtil.equals(defaultValue, currentValue)){
+    			return true;
+    		}
+
+        }
+        return false;
+    }
     
     public View save() {
     	return persistInDB();
