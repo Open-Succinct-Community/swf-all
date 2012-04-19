@@ -15,6 +15,8 @@ import com.venky.swf.views.controls.page.Css;
 import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.Html;
 import com.venky.swf.views.controls.page.Script;
+import com.venky.swf.views.controls.page.layout.LineBreak;
+import com.venky.swf.views.controls.page.text.Label;
 
 /**
  *
@@ -49,10 +51,32 @@ public abstract class HtmlView extends View{
         
         Body body = new Body();
         createBody(body);
+        body.addControl(new LineBreak());
+        body.addControl(status);
         html.addControl(body);
 
         Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
     }
+    
+    private Label status = new Label(); 
+    public static enum StatusType {
+    	ERROR(){
+    		public String toString(){
+    			return "status-error";
+    		}
+    	},
+    	INFO() {
+    		public String toString(){
+    			return "status-info";
+    		}
+    	}
+    }
+    
+    public void setStatus(StatusType type, String text){
+    	this.status.addClass(type.toString());
+    	this.status.setText(text);
+	}
+    
     protected void createHead(Head head){
         head.addControl(new Css("/resources/scripts/jquery-ui/css/ui-lightness/jquery-ui-1.8.16.custom.css"));
         head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-1.6.2.min.js"));

@@ -513,7 +513,6 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     	if (anotherProxy != null){
     		ret = getModelClass().isInstance(anotherProxy) && getProxy().getId() == anotherProxy.getId();
     	}
-    	System.out.println("equalsProxyCalled. returning " + ret);
     	return ret;
     }
     

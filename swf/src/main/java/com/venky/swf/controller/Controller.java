@@ -27,6 +27,7 @@ import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.login.LoginView;
@@ -49,10 +50,14 @@ public class Controller {
     }
     @Unrestricted
     public View login(){
-        if (getPath().getRequest().getMethod().equals("GET")&& getPath().getSession() == null){
+        if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null ) {
             return createLoginView();
         }else if (getPath().getSession() != null){
-    		return new RedirectorView(getPath(), "dashboard");
+        	if ( getSessionUser() == null ) {
+        		return  createLoginView();
+        	}else {
+        		return new RedirectorView(getPath(), "dashboard");
+        	}
 		}else{ 
 			return authenticate();
         }
@@ -67,11 +72,30 @@ public class Controller {
             newSession.setAttribute("user", user);
             return new RedirectorView(getPath(), "dashboard");
         }else {
-            throw new RuntimeException("Login incorrect!");
+        	HtmlView lView = createLoginView();
+        	lView.setStatus(StatusType.ERROR, "Login incorrect");
+            return lView;
         }
     }
-    
-    protected View createLoginView(){
+	protected final HtmlView createLoginView(StatusType statusType, String text){
+		invalidateSession();
+		HtmlView lv = createLoginView(); 
+		lv.setStatus(statusType, text);
+		return lv;
+	}
+
+	protected void invalidateSession(){
+		try {
+			if (path.getSession() != null) {
+				path.getSession().invalidate();
+				path.setSession(null);
+			}
+		}catch (Exception ex){
+			//ensure session is invalid.
+		}
+	}
+    protected HtmlView createLoginView(){
+    	invalidateSession();
     	return new LoginView(getPath());
     }
     
@@ -95,9 +119,7 @@ public class Controller {
     
     @Unrestricted
     public View logout(){
-        if (getPath().getSession()!=null){
-            getPath().getSession().invalidate();
-        }
+        invalidateSession();
         return new RedirectorView(getPath(), "login");
     }
 
@@ -150,7 +172,6 @@ public class Controller {
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         XMLElement elem = null ;
-        System.out.println("Parameter:" + value);
         ModelReflector reflector = ModelReflector.instance(modelClass);
         Select q = new Select().from(modelClass);
         String columnName = reflector.getColumnDescriptor(fieldName).getName();

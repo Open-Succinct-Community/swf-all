@@ -193,8 +193,6 @@ public class Table<M extends Model> {
             if (tableColumn == null){
                 fieldsAltered.get(FIELDS_ADDED).add(fieldName);
             }else if (!modelColumn.equals(tableColumn)){
-            	System.out.println(modelColumn);
-            	System.out.println(tableColumn);
             	fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
             }
         }
