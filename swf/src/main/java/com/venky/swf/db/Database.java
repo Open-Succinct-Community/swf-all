@@ -325,16 +325,19 @@ public class Database {
 	}
 
 	
-	private static Map<Class<? extends Model>, QueryCache<? extends Model>> configQueryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();
-    public <M extends Model> QueryCache<M> getCache(Class<M> modelClass) throws SQLException{
-    	if (ModelReflector.instance(modelClass).isAnnotationPresent(CONFIGURATION.class)){
-    		QueryCache<M> cacheEntry = (QueryCache<M>) configQueryCacheMap.get(modelClass);
+	
+	private static Map<String, QueryCache> configQueryCacheMap = new HashMap<String, QueryCache>();
+    public QueryCache getCache(Class<? extends Model> modelClass) throws SQLException{
+    	ModelReflector ref = ModelReflector.instance(modelClass);
+    	String tableName = ref.getTableName();
+    	if (ref.isAnnotationPresent(CONFIGURATION.class)){
+    		QueryCache cacheEntry = configQueryCacheMap.get(tableName);
 			if (cacheEntry == null) {
 				synchronized (configQueryCacheMap) {
-    				cacheEntry = (QueryCache<M>) configQueryCacheMap.get(modelClass);
+    				cacheEntry = configQueryCacheMap.get(modelClass);
 					if (cacheEntry == null) {
-						cacheEntry = new QueryCache<M>(modelClass);
-						configQueryCacheMap.put(modelClass, cacheEntry);
+						cacheEntry = new QueryCache(tableName);
+						configQueryCacheMap.put(tableName, cacheEntry);
 					}
 				}
 			}
@@ -383,13 +386,16 @@ public class Database {
 			return getConnection().prepareStatement(sql, columnNames );
 		}
 
-		private Map<Class<? extends Model>, QueryCache<? extends Model>> txnQueryCacheMap = new HashMap<Class<? extends Model>, QueryCache<? extends Model>>();
+		private Map<String, QueryCache> txnQueryCacheMap = new HashMap<String, QueryCache>();
 
-		public <M extends Model> QueryCache<M> getCache(Class<M> modelClass) {
-        	QueryCache<M> queryCache = (QueryCache<M>) txnQueryCacheMap.get(modelClass);
+		public QueryCache getCache(Class<? extends Model> modelClass) {
+			ModelReflector ref = ModelReflector.instance(modelClass);
+			String tableName = ref.getTableName();
+			
+        	QueryCache queryCache = txnQueryCacheMap.get(tableName);
 			if (queryCache == null) {
-				queryCache = new QueryCache<M>(modelClass);
-				txnQueryCacheMap.put(modelClass, queryCache);
+				queryCache = new QueryCache(tableName);
+				txnQueryCacheMap.put(tableName, queryCache);
 			}
 			return queryCache;
 		}

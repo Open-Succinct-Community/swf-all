@@ -8,7 +8,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
+import com.venky.core.string.StringUtil;
+import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.routing.Path;
@@ -23,8 +26,10 @@ import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.layout.Table.TBody;
 import com.venky.swf.views.controls.page.layout.Table.THead;
+import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
+import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
  *
@@ -112,15 +117,24 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         form.addControl(table);
         Iterator<String> field = getIncludedFields().iterator();
         List<Control> hiddenFields = new ArrayList<Control>();
+        
+        TextBox hiddenHashField = new TextBox();
+        hiddenHashField.setVisible(false);
+        hiddenHashField.setName("_FORM_DIGEST");
+        hiddenFields.add(hiddenHashField);
+        
+        StringBuilder hashFieldValue = new StringBuilder();
+        
         while (field.hasNext()){
             String fieldName = field.next();
+            
             Control fieldData = getInputControl(fieldName, record);
             Label fieldLabel = new Label(getFieldLiteral(fieldName));
         	if (isFieldEditable(fieldName)){
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
                 r.createColumn().addControl(fieldData);
-            }else if (isFieldVisible(fieldName)){
+            }else if (reflector.isFieldVisible(fieldName)){
                 Row r = getRow(table,true);
                 fieldData.setEnabled(false);
                 r.createColumn().addControl(fieldLabel);
@@ -137,8 +151,28 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                 Row streamRow = table.createRow();
                 Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
                 streamColumn.addControl(ftb.getStreamLink());
+                
+            }
+            
+            if (fieldData.isEnabled()){
+            	if (hashFieldValue.length() > 0){
+            		hashFieldValue.append(",");
+            	}
+            	String fieldValue = fieldData.getValue();
+	            if (fieldData instanceof CheckBox){
+	            	fieldValue = StringUtil.valueOf(((CheckBox)fieldData).isChecked());
+	            }
+	            
+            	hashFieldValue.append(fieldName);
+            	hashFieldValue.append("=");
+            	hashFieldValue.append(StringUtil.valueOf(fieldValue));
             }
         }
+        
+        Logger.getGlobal().info("String To Hash: " +hashFieldValue.toString());
+        hiddenHashField.setValue(Encryptor.encrypt(hashFieldValue.toString()));
+        Logger.getGlobal().info("Hash: " + hiddenHashField.getValue());
+        
         Row r = rpadLastRow(table);
         Column c = r.getLastColumn();
         for (Control hiddenField: hiddenFields){
@@ -189,9 +223,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 
 
     }
-    
-    
-    protected boolean isFieldEditable(String fieldName){
-        return isFieldVisible(fieldName) && !isFieldVirtual(fieldName) && !isFieldProtected(fieldName);
+    protected boolean isFieldEditable(String fieldName) {
+        return reflector.isFieldEditable(fieldName);
     }
 }

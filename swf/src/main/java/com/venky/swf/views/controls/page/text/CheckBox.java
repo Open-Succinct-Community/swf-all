@@ -33,6 +33,10 @@ public class CheckBox extends Input{
             super.remove("checked");
         }
     }
+    
+    public boolean isChecked(){
+    	return super.containsKey("checked");
+    }
 
     @Override
     protected void setParent(Control parent){

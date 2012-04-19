@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,16 +28,13 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.digest.Encryptor;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
-import com.venky.swf.db.annotations.column.COLUMN_DEF;
-import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
-import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -216,15 +214,11 @@ public class ModelController<M extends Model> extends Controller {
     	Record newRaw = newrecord.getRawRecord();
     	
     	for (String f:oldRaw.getFieldNames()){
-    		newRaw.put(f, oldRaw.get(f));
+    		if (!reflector.isHouseKeepingField(f)){
+        		newRaw.put(f, oldRaw.get(f));
+    		}
     	}
     	newRaw.setNewRecord(true);
-    	newRaw.remove("ID");
-    	newRaw.remove("LOCK_ID");
-    	newRaw.remove("UPDATED_AT");
-    	newRaw.remove("CREATED_AT");
-    	newRaw.remove("CREATOR_ID");
-    	newRaw.remove("UPDATER_ID");
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, newrecord);
         mev.getIncludedFields().remove("ID");
         return dashboard(mev);
@@ -307,14 +301,8 @@ public class ModelController<M extends Model> extends Controller {
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
     }
-    
-    private View  persistInDB(){
-        HttpServletRequest request = getPath().getRequest();
-        if (!request.getMethod().equalsIgnoreCase("POST")) {
-            throw new RuntimeException("Cannot call save in any other method other than POST");
-        }
-        
-        Map<String,Object> formFields = new HashMap<String, Object>();
+    private Map<String,Object> getFormFields(HttpServletRequest request){
+    	Map<String,Object> formFields = new HashMap<String, Object>();
         boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
         if (isMultiPart){
         	FileItemFactory factory = new DiskFileItemFactory(1024*1024*128, new File(System.getProperty("java.io.tmpdir")));
@@ -342,6 +330,15 @@ public class ModelController<M extends Model> extends Controller {
             	formFields.put(name,request.getParameter(name));
         	}
         }
+        return formFields;
+    }
+    private View  persistInDB(){
+        HttpServletRequest request = getPath().getRequest();
+        if (!request.getMethod().equalsIgnoreCase("POST")) {
+            throw new RuntimeException("Cannot call save in any other method other than POST");
+        }
+        
+        Map<String,Object> formFields = getFormFields(request);
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
         M record = null;
@@ -361,16 +358,13 @@ public class ModelController<M extends Model> extends Controller {
 
         ModelReflector reflector = ModelReflector.instance(modelClass);
         List<String> fields = reflector.getRealFields();
-        fields.remove("ID");
-        fields.remove("LOCK_ID");
-        fields.remove("UPDATED_AT");
-        fields.remove("UPDATER_USER_ID");
         
         Iterator<String> e = formFields.keySet().iterator();
         String buttonName = null;
+        String digest = null;
         while (e.hasNext()) {
             String name = e.next();
-            String fieldName = fields.contains(name) ? name : null;
+            String fieldName = fields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
 
             if (fieldName != null) {
                 Object value = formFields.get(fieldName);
@@ -390,11 +384,12 @@ public class ModelController<M extends Model> extends Controller {
                 }
             }else if ( name.startsWith("_SUBMIT")){
             	buttonName = name;
+            }else if ( name.startsWith("_FORM_DIGEST")){
+            	digest = (String)formFields.get("_FORM_DIGEST");
             }
-
         }
         boolean isNew = false;
-        if (hasUserModifiedData(record)){
+        if (hasUserModifiedData(formFields,digest)){
 	        if (record.getRawRecord().isNewRecord()){
 	        	isNew = true;
 	        	record.setCreatorUserId(getSessionUser().getId());
@@ -424,30 +419,30 @@ public class ModelController<M extends Model> extends Controller {
         return back();
     }
     
-    protected boolean hasUserModifiedData(M model){
-    	Record record = model.getRawRecord();
-        for (String field: record.getDirtyFields()){
-        	Method fieldGetter = reflector.getFieldGetter(field);
-        	if (reflector.isAnnotationPresent(fieldGetter,PROTECTED.class)){
+    protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
+    	StringBuilder hash = null;
+        for (String field: reflector.getFields()){
+        	if (!formFields.containsKey(field)){
         		continue;
         	}
-        	if (reflector.isAnnotationPresent(fieldGetter,HIDDEN.class)){
-        		continue;
-        	}
-    		Object currentValue = record.get(field);
-    		Object defaultValue = null ;
-        	COLUMN_DEF colDef = reflector.getAnnotation(fieldGetter, COLUMN_DEF.class) ;
-        	if (colDef != null){
-        		defaultValue = StandardDefaulter.getDefaultValue(colDef);
-        	}else if (!reflector.getColumnDescriptor(fieldGetter).isNullable()){
-        		defaultValue = Database.getInstance().getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter().valueOf(null);
-        	}
-    		if (!ObjectUtil.equals(defaultValue, currentValue)){
+    		Object currentValue = formFields.get(field);
+    		if (currentValue != null && currentValue instanceof InputStream){
     			return true;
+    		}else {
+    			if (hash != null){
+    				hash.append(",");
+    			}else {
+    				hash = new StringBuilder();
+    			}
+    			hash.append(field).append("=").append((String)currentValue);
     		}
-
         }
-        return false;
+        if (hash != null){
+        	Logger.getGlobal().info("String To Hash: " +hash.toString());
+        }
+        String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
+        Logger.getGlobal().info("Hash: " + newDigest);
+        return !ObjectUtil.equals(newDigest, oldDigest);
     }
     
     public View save() {

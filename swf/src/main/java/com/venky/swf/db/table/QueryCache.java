@@ -5,30 +5,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Select;
 
-public class QueryCache<M extends Model> {
-	private Map<Expression,List<M>> queryCache = new HashMap<Expression, List<M>>();
-	private Class<M> modelClass = null;
-	public QueryCache(Class<M> modelClass){
-		this.modelClass = modelClass;
+public class QueryCache {
+	private Map<Expression,List<? extends Model>> queryCache = new HashMap<Expression, List<? extends Model>>();
+	private final ModelReflector ref ;
+	private final Table table;
+	public QueryCache(String tableName){
+		table = Database.getInstance().getTable(tableName);
+		ref = table.getReflector();
 	}
-	public List<M> getCachedResult(Expression where){
+	
+	public <M extends Model> List<M> getCachedResult(Expression where){
 		if (where != null && where.isEmpty()){
 			where = null;
 		}
-		List<M> result = queryCache.get(where);
+		
+		List<M> result = (List<M>)queryCache.get(where);
 		if (result == null && where != null){
 			synchronized (queryCache) {
-				result = queryCache.get(where);
-				if (result == null && ModelReflector.instance(modelClass).isAnnotationPresent(CONFIGURATION.class)){
-					List<M> completeList = queryCache.get(null);
+				result = (List<M>)queryCache.get(where);
+				if (result == null && ref.isAnnotationPresent(CONFIGURATION.class)){
+					List<M> completeList = (List<M>)queryCache.get(null);
 					if (completeList == null){
-						completeList = new Select().from(modelClass).execute();
+						completeList = new Select().from(table.getTableName()).execute();
 					}
 					if (completeList != null){
 						result = filter(where,completeList);
@@ -39,7 +44,7 @@ public class QueryCache<M extends Model> {
 		}
 		return result;
 	}
-	public List<M> filter(Expression where,List<M> completeList){
+	public <M extends Model> List<M> filter(Expression where,List<M> completeList){
 		List<M> result = new ArrayList<M>();
 		if (where == null || where.isEmpty()){
 			result.addAll(completeList);
@@ -52,17 +57,17 @@ public class QueryCache<M extends Model> {
 		}
 		return result;
 	}
-	public void setCachedResult(Expression where, List<M> result){
+	public void setCachedResult(Expression where, List<? extends Model> result){
 		if (where != null && where.isEmpty()){
 			where = null;
 		}
 		queryCache.put(where, result);
 	}
 	
-	public void add(M record){
+	public <M extends Model> void add(M record){
 		for (Expression cacheKey:queryCache.keySet()){
 			if (cacheKey == null || cacheKey.eval(record)){
-				List<M> values = queryCache.get(cacheKey);
+				List values = queryCache.get(cacheKey);
 				if (!values.contains(record)){
 					values.add(record);
 				}
@@ -70,10 +75,10 @@ public class QueryCache<M extends Model> {
 		}
 		//TODO Propagate Cache to all JVM Threads and other JVMS.
 	}
-	public void remove(M record){
+	public <M extends Model> void remove(M record){
 		for (Expression cacheKey:queryCache.keySet()){
 			if (cacheKey == null || cacheKey.eval(record)){
-				List<M> values = queryCache.get(cacheKey);
+				List values = queryCache.get(cacheKey);
 				values.remove(record);
 			}
 		}

@@ -75,7 +75,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
         
         for (String fieldName : getIncludedFields()) {
-            if (isFieldVisible(fieldName)) {
+            if (reflector.isFieldVisible(fieldName)) {
                 header.createColumn().setText(getFieldLiteral(fieldName));
             }
         }
@@ -115,7 +115,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         
             for (String fieldName : getIncludedFields()) {
                 try {
-                    if (isFieldVisible(fieldName)) {
+                    if (reflector.isFieldVisible(fieldName)) {
                         Column column = row.createColumn(); 
 
                     	Method getter = getFieldGetter(fieldName);
@@ -129,7 +129,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         }else {
                             Object value = getter.invoke(record);
                             String sValue = converter.toString(value);
-                            if (isFieldPassword(fieldName)){
+                            if (reflector.isFieldPassword(fieldName)){
                             	sValue = sValue.replaceAll(".", "\\*");
                             }
                             String parentDescription = getParentDescription(getter, record) ;

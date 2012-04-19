@@ -79,6 +79,9 @@ public class Record {
         return dirtyFields;
     }
     
+    public boolean isFieldDirty(String field){
+    	return dirtyFields.contains(field);
+    }
     
     
     

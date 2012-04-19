@@ -309,7 +309,7 @@ public class Table<M extends Model> {
     }
     
     public M newRecord(){
-        return ModelImpl.getProxy(modelClass,new Record());
+        return ModelInvocationHandler.getProxy(modelClass,new Record());
     }
 
     private Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();

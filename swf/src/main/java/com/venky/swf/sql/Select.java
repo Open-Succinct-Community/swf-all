@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
@@ -107,7 +107,7 @@ public class Select extends SqlStatement{
         PreparedStatement st = null;
         String query = getRealSQL();
         try {
-        	QueryCache<M> cache = Database.getInstance().getCache(modelInterface);
+        	QueryCache cache = Database.getInstance().getCache(modelInterface);
         	List<M> result = cache.getCachedResult(getWhereExpression());
         	if (result != null){
         		return result;
@@ -121,7 +121,7 @@ public class Select extends SqlStatement{
                 while (rs.next()){
                     Record r = new Record();
                     r.load(rs);
-                    M m = ModelImpl.getProxy(modelInterface, r);
+                    M m = ModelInvocationHandler.getProxy(modelInterface, r);
                     result.add(m);
                 }
                 rs.close();

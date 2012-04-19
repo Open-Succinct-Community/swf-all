@@ -27,6 +27,11 @@ import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.PASSWORD;
+import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.column.validations.Mandatory;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
@@ -76,6 +81,7 @@ public class ModelReflector {
     		modelReflectors.put(modelClass,new MReflector<M>(modelClass));
     	}
     }
+    
     
     public <U extends Model> Class<U> getRealModelClass(){
     	Class<?> lastRealClass = null;
@@ -225,6 +231,45 @@ public class ModelReflector {
     public List<String> getRealColumns(){
     	loadAllFields();
     	return getColumns(new RealFieldMatcher());
+    }
+    
+    public boolean isFieldEditable(String fieldName){
+        return isFieldVisible(fieldName) && !isFieldVirtual(fieldName) && !isFieldProtected(fieldName);
+    }
+    
+    public boolean isFieldVisible(String fieldName) {
+        return !isFieldHidden(fieldName);
+    }
+    
+    public boolean isFieldHidden(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return isAnnotationPresent(getter,HIDDEN.class);
+	}
+    
+    
+    public boolean isHouseKeepingField(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return isAnnotationPresent(getter,HOUSEKEEPING.class);
+    }
+    
+    public boolean isFieldPassword(String fieldName){
+        Method getter = getFieldGetter(fieldName);
+        return  isAnnotationPresent(getter,PASSWORD.class);
+    }
+    
+    public boolean isFieldProtected(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return isAnnotationPresent(getter,PROTECTED.class);
+    }
+    
+    public boolean isFieldVirtual(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return isAnnotationPresent(getter,IS_VIRTUAL.class);
+    }
+    
+    public boolean isFieldEnumeration(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	return isAnnotationPresent(getter,Enumeration.class);
     }
     
     public List<String> getColumns(FieldMatcher matcher){
@@ -586,8 +631,8 @@ public class ModelReflector {
         return null;
     }
     
-    List<Class<?>> classHierarchies = new ArrayList<Class<?>>();
-    public List<Class<?>> getClassHierarchies(){
+    List<Class<? extends Model>> classHierarchies = new ArrayList<Class<? extends Model>>();
+    public List<Class<? extends Model>> getClassHierarchies(){
     	if (classHierarchies.isEmpty()){
     		synchronized (classHierarchies) {
 				if (classHierarchies.isEmpty()){

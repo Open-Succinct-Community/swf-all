@@ -25,11 +25,7 @@ import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.IS_VIRTUAL;
-import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
-import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -131,9 +127,9 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
                 control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().getBackTarget());
             }else if (Date.class.isAssignableFrom(returnType)){
             	control = new DateBox(); 
-            }else if (isFieldPassword(fieldName)){
+            }else if (reflector.isFieldPassword(fieldName)){
                 control = new PasswordText();
-            }else if (isFieldEnumeration(fieldName)){
+            }else if (reflector.isFieldEnumeration(fieldName)){
                 Select select = new Select();
                 Enumeration enumeration = getReflector().getAnnotation(getFieldGetter(fieldName),Enumeration.class) ;
                 StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
@@ -154,35 +150,6 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         return control;
     }
 
-    protected boolean isFieldVisible(String fieldName) {
-        return !isFieldHidden(fieldName);
-    }
-    protected boolean isFieldHidden(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	return getReflector().isAnnotationPresent(getter,HIDDEN.class);
-	}
-    
-    protected boolean isFieldPassword(String fieldName){
-        Method getter = getFieldGetter(fieldName);
-        return  getReflector().isAnnotationPresent(getter,PASSWORD.class);
-    }
-    
-    protected boolean isFieldProtected(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	return getReflector().isAnnotationPresent(getter,PROTECTED.class);
-    }
-    
-    protected boolean isFieldVirtual(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	return getReflector().isAnnotationPresent(getter,IS_VIRTUAL.class);
-    }
-    
-    protected boolean isFieldEnumeration(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	return getReflector().isAnnotationPresent(getter,Enumeration.class);
-    }
-    
-    
     protected String getParentDescription(Method parentIdGetter, Model record) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         Method parentModelGetter = getReflector().getReferredModelGetterFor(parentIdGetter);
         
