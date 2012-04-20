@@ -69,7 +69,6 @@ public interface Model {
     public void save();
     public void destroy();
     public void init();
-    public boolean isAccessibleBy(User user);
-    
+    public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     public Record getRawRecord();
 }

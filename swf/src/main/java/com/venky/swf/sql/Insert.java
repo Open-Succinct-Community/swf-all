@@ -5,8 +5,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.venky.swf.db.Database;
-import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 
 public class Insert extends DataManupulationStatement{
@@ -14,10 +13,10 @@ public class Insert extends DataManupulationStatement{
 	private Map<String,BindVariable> values = null;
 	private SortedSet<String> keys = new TreeSet<String>();
 	
-	public Insert(Class<? extends Model> modelClass){
-		this(Database.getInstance().getTable(modelClass).getRealTableName());
+	public Insert(ModelReflector ref){
+		this(ref.getTableName());
 	}
-	private Insert(String table){
+	public Insert(String table){
 		this.table = table;
 	}
 	

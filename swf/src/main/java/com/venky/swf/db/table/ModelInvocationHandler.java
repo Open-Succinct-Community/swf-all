@@ -49,33 +49,33 @@ import com.venky.swf.sql.Update;
  *
  * @author venky
  */
-public class ModelInvocationHandler<M extends Model> implements InvocationHandler {
+public class ModelInvocationHandler implements InvocationHandler {
 
     private Record record = null;
-    private Class<M> modelClass = null;
-    private M proxy = null;
+    private Model proxy = null;
     private ModelReflector reflector = null;
     private List<String> virtualFields = new IgnoreCaseList();
-
-
-	public Class<M> getModelClass() {
-		return modelClass;
-	}
+    private String camelizedTableName = null;
 
 	public ModelReflector getReflector() {
 		return reflector;
 	}
+	
+	public String getCamelizedTableName(){
+		return camelizedTableName;
+	}
+	
 
-	public ModelInvocationHandler(Class<M> modelClass, Record record) {
+	public ModelInvocationHandler(Class<? extends Model> modelClass, Record record) {
         this.record = record;
-        this.modelClass = modelClass;
         this.reflector = ModelReflector.instance(modelClass);
+        this.camelizedTableName = StringUtil.camelize(reflector.getTableName());
         this.virtualFields = reflector.getVirtualFields();
         record.startTracking();
     }
+	
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        setProxy(modelClass.cast(proxy));
-
+        // Not Required. setProxy(getModelClass().cast(proxy));
         String mName = method.getName();
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
@@ -178,7 +178,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     	
     	ModelReflector childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
-            if (fieldName.endsWith(StringUtil.underscorize(getModelClass().getSimpleName() +"Id"))){
+            if (fieldName.endsWith(StringUtil.underscorize(getCamelizedTableName() +"Id"))){
                 children.addAll(getChildren(childClass, fieldName));
             }
         }
@@ -195,16 +195,19 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     	return q.execute();
     }
 
-    public void setProxy(M proxy) {
+    public <M extends Model> void setProxy(M proxy) {
         this.proxy = proxy;
     }
 
-    public M getProxy() {
-		return proxy;
+    public <M extends Model> M getProxy() {
+		return (M)proxy;
 	}
     
-    public boolean isAccessibleBy(User user){
-    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(modelClass);
+    public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
+    	if (!getReflector().reflects(asModel)){
+    		return false;
+    	}
+    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
     	if (columnNameValues.isEmpty()){
     		return true;
     	}
@@ -240,7 +243,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
 		}
 		
 		try {
-	    	ModelInvocationHandler<M> mImpl = new ModelInvocationHandler<M>(modelClass, record);
+	    	ModelInvocationHandler mImpl = new ModelInvocationHandler(modelClass, record);
 	    	M m = modelClass.cast(Proxy.newProxyInstance(modelClass.getClassLoader(), ref.getClassHierarchies().toArray(new Class<?>[]{}), mImpl));
 	    	mImpl.setProxy(m);
 	    	for (Class<?> implClass: modelImplClasses){
@@ -287,7 +290,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
 				if (ModelInvocationHandler.class.isAssignableFrom(modelImplClass)){
 					modelImplClasses.add(modelImplClass);
 				}else {
-					Logger.getGlobal().warning(modelImplClassName + " does not extend " + ModelImpl.class.getName() + " or " + ModelInvocationHandler.class.getName());
+					throw new ClassCastException(modelImplClassName + " does not extend " + ModelImpl.class.getName() + " or " + ModelInvocationHandler.class.getName());
 				}
 			}catch(ClassNotFoundException ex){
 				// Nothing
@@ -303,13 +306,13 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
         validate();
         beforeSave();
         if (record.isNewRecord()) {
-        	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.create", getProxy());
+        	Registry.instance().callExtensions(getCamelizedTableName()+".before.create", getProxy());
             create();
-            Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.create", getProxy());
+            Registry.instance().callExtensions(getCamelizedTableName()+".after.create", getProxy());
         } else {
-        	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.update", getProxy());
+        	Registry.instance().callExtensions(getCamelizedTableName()+".before.update", getProxy());
             update();
-            Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.update", getProxy());
+            Registry.instance().callExtensions(getCamelizedTableName()+".after.update", getProxy());
         }
         afterSave();
 
@@ -329,7 +332,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
 
     protected boolean isModelValid(StringBuilder totalMessage) {
         List<String> fields = reflector.getFields();
-        totalMessage.append(modelClass.getSimpleName()).append(":<br/>");
+        totalMessage.append(getCamelizedTableName()).append(":<br/>");
         boolean ret = true;
         for (String field : fields) {
             StringBuilder message = new StringBuilder();
@@ -364,7 +367,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     }
     protected void beforeValidate(){
     	defaultFields();
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.validate", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName() +".before.validate", getProxy());
     }
     protected void defaultFields(){
         for (String field:reflector.getRealFields()){
@@ -380,24 +383,24 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
         }
     }
     protected void afterValidate(){
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.validate", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName()+".after.validate", getProxy());
     }
     protected void beforeSave() {
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.save", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName()+".before.save", getProxy());
     }
     protected void afterSave() {
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.save", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName()+".after.save", getProxy());
     }
     protected void beforeDestory(){
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".before.destroy", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName()+".before.destroy", getProxy());
     }
     protected void afterDestroy(){
-    	Registry.instance().callExtensions(getModelClass().getSimpleName()+".after.destroy", getProxy());
+    	Registry.instance().callExtensions(getCamelizedTableName()+".after.destroy", getProxy());
     }
     
     public void destroy() {
     	beforeDestory();
-        Delete q = new Delete(modelClass);
+        Delete q = new Delete(getReflector());
         Expression condition = new Expression(Conjunction.AND);
         condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
         condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
@@ -407,7 +410,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
         q.executeUpdate();
 		
         try {
-			Database.getInstance().getCache(modelClass).remove(getProxy());
+			Database.getInstance().getCache(getReflector()).remove(getProxy());
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		} 
@@ -419,8 +422,8 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
-        Table table = Database.getInstance().getTable(reflector.getRealModelClass());
-        Update q = new Update(modelClass);
+        Table table = Database.getInstance().getTable(getReflector().getTableName());
+        Update q = new Update(getReflector());
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
@@ -445,8 +448,8 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
 
     private void create() {
         proxy.setLockId(0);
-        Table<M> table = Database.getInstance().getTable(modelClass);
-        Insert insertSQL = new Insert(modelClass);
+        Table<? extends Model> table = Database.getInstance().getTable(getReflector().getTableName());
+        Insert insertSQL = new Insert(getReflector());
         Map<String,BindVariable> values = new HashMap<String, BindVariable>();
         
         Iterator<String> columnIterator = record.getDirtyFields().iterator();
@@ -484,7 +487,7 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
         record.startTracking();
 
         try {
-			Database.getInstance().getCache(getModelClass()).add(getProxy());
+			Database.getInstance().getCache(getReflector()).add(getProxy());
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -494,13 +497,13 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     	if (o == null){
     		return false;
     	}
-    	if (!(o instanceof ModelInvocationHandler) && !modelClass.isInstance(o)){
+    	if (!(o instanceof ModelInvocationHandler) && !getReflector().canReflect(o)){
     		return false;
     	}
     	if (o instanceof ModelInvocationHandler){
     		return equalImpl((ModelInvocationHandler)o);
     	}else {
-    		return equalsProxy((M)o);
+    		return equalsProxy((Model)o);
     	}
     }
     
@@ -508,10 +511,10 @@ public class ModelInvocationHandler<M extends Model> implements InvocationHandle
     	return (getProxy().getId() == anotherImpl.getProxy().getId()) && getReflector().getTableName().equals(anotherImpl.getReflector().getTableName()); 
     }
     
-    private boolean equalsProxy(M anotherProxy){
+    private boolean equalsProxy(Model anotherProxy){
     	boolean ret = false;
     	if (anotherProxy != null){
-    		ret = getModelClass().isInstance(anotherProxy) && getProxy().getId() == anotherProxy.getId();
+    		ret = getProxy().getId() == anotherProxy.getId();
     	}
     	return ret;
     }

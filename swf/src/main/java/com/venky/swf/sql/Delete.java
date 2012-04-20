@@ -1,19 +1,18 @@
 package com.venky.swf.sql;
 
-import com.venky.swf.db.Database;
-import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
+
 
 
 public class Delete extends DataManupulationStatement {
 	private String table ;
-	public Delete (Class<? extends Model> model){
-		this(Database.getInstance().getTable(model).getRealTableName());
+	public Delete(ModelReflector ref){
+		this(ref.getTableName());
 	}
-	private Delete(String table){
+	
+	public Delete(String table){
 		this.table = table;
 	}
-	
-	
 	@Override
 	public void finalizeParameterizedSQL() {
 		StringBuilder builder = getQuery();

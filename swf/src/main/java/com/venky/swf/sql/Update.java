@@ -6,8 +6,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.venky.swf.db.Database;
-import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 
 public class Update extends DataManupulationStatement{
@@ -15,10 +14,12 @@ public class Update extends DataManupulationStatement{
 	private Map<String,BindVariable> values = new HashMap<String, BindVariable>();
 	private Map<String,String> unBoundedValues = new HashMap<String, String>();
 	private SortedSet<String> keys = new TreeSet<String>();
-	public Update(Class<? extends Model> modelClass){
-		this(Database.getInstance().getTable(modelClass).getRealTableName());
+	
+	public Update(ModelReflector ref){
+		this(ref.getTableName());
 	}
-	private Update(String table){
+	
+	public Update(String table){
 		this.table = table;
 	}
 	public Update setUnBounded(String name,String value){

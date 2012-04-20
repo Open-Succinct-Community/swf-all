@@ -47,7 +47,7 @@ public class Table<M extends Model> {
 	}
     public boolean isReal(){
     	if (reflector != null ){
-        	IS_VIRTUAL isVirtual = reflector.getAnnotation(IS_VIRTUAL.class);
+        	IS_VIRTUAL isVirtual = reflector.getAnnotation(modelClass,IS_VIRTUAL.class);
         	if (isVirtual != null && isVirtual.value()) {
         		return false;
         	}
@@ -84,7 +84,7 @@ public class Table<M extends Model> {
         this.modelClass = modelClass;
         if (modelClass != null){
         	this.reflector = ModelReflector.instance(modelClass);
-        	this.realTableName = tableName(reflector.getRealModelClass());
+        	this.realTableName = reflector.getTableName();
         }else {
         	this.reflector = null;
         	this.realTableName = this.tableName;
@@ -238,7 +238,7 @@ public class Table<M extends Model> {
             	q.addColumn("NEW_"+cd.toString());
                 q.executeUpdate();
                 
-            	Update u = new Update(getModelClass());
+            	Update u = new Update(getRealTableName());
             	u.setUnBounded("NEW_"+columnName, columnName);
             	u.executeUpdate();
             	
@@ -250,7 +250,7 @@ public class Table<M extends Model> {
                 q.addColumn(cd.toString());
                 q.executeUpdate();
                 
-                u = new Update(getModelClass());
+                u = new Update(getRealTableName());
             	u.setUnBounded(columnName,"NEW_" + columnName);
             	u.executeUpdate();
                 
@@ -316,7 +316,7 @@ public class Table<M extends Model> {
     	if (isReal()){
     		return columnDescriptors; 
     	}else {
-    		return Database.getInstance().getTable(getReflector().getRealModelClass()).columnDescriptors();
+    		return Database.getInstance().getTable(getRealTableName()).columnDescriptors();
     	}
     }
     

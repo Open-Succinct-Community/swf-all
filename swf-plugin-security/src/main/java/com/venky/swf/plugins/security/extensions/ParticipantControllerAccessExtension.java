@@ -48,29 +48,35 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if ( possibleTable != null ){
 			modelClass = possibleTable.getModelClass();
 		}
-		if (modelClass != null && parameterValue != null){
-			try {
-				int id = Integer.valueOf(parameterValue);
-				selectedModel = possibleTable.get(id);
-				Map<String,List<Integer>> pOptions = user.getParticipationOptions(modelClass);
-				ModelReflector reflector = ModelReflector.instance(modelClass);
-				for (String referencedModelIdFieldName :pOptions.keySet()){
-					Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
-					if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-						participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));//Remove "_ID" from the end.
+		if (modelClass != null ){
+			Map<String,List<Integer>> pOptions = user.getParticipationOptions(modelClass);
+			if (parameterValue != null){
+				try {
+					int id = Integer.valueOf(parameterValue);
+					selectedModel = possibleTable.get(id);
+					ModelReflector reflector = ModelReflector.instance(modelClass);
+					for (String referencedModelIdFieldName :pOptions.keySet()){
+						Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
+						if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+							participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));//Remove "_ID" from the end.
+						}
 					}
+					if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+						throw new AccessDeniedException(); // User is not a participant on the model.
+					}
+				}catch (NumberFormatException ex){
+					//
+				}catch (InvocationTargetException ex) {
+					throw new RuntimeException(ex.getCause());
+				}catch (IllegalAccessException ex) {
+					throw new RuntimeException(ex);
+				} catch (IllegalArgumentException ex) {
+					throw new RuntimeException(ex);
 				}
-				if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
-					throw new AccessDeniedException(); // User is not a participant on the model.
+			}else {
+				for (String referencedModelIdFieldName :pOptions.keySet()){
+					participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));
 				}
-			}catch (NumberFormatException ex){
-				//
-			}catch (InvocationTargetException ex) {
-				throw new RuntimeException(ex.getCause());
-			}catch (IllegalAccessException ex) {
-				throw new RuntimeException(ex);
-			} catch (IllegalArgumentException ex) {
-				throw new RuntimeException(ex);
 			}
 		}
 

@@ -77,7 +77,7 @@ public class Database {
     	String userid = null; 
     	String password = null; 
     	if (!ObjectUtil.isVoid(dbURL)){
-    		Logger.getLogger(Database.class.getName()).info("DATABASE_URL:" + dbURL );
+    		Logger.getLogger(Database.class.getName()).fine("DATABASE_URL:" + dbURL );
     		URI uri;
 			try {
 				uri = new URI(dbURL);
@@ -299,7 +299,8 @@ public class Database {
                 if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
 					Table table = new Table(modelClass);
 					table.setExistingInDatabase(false);
-					if (!tables.containsKey(table.getTableName())) {
+					String tableName = table.getTableName();
+					if (!tables.containsKey(tableName)) {
 						tables.put(table.getTableName(), table);
 					}
 				}
@@ -327,14 +328,13 @@ public class Database {
 	
 	
 	private static Map<String, QueryCache> configQueryCacheMap = new HashMap<String, QueryCache>();
-    public QueryCache getCache(Class<? extends Model> modelClass) throws SQLException{
-    	ModelReflector ref = ModelReflector.instance(modelClass);
+    public QueryCache getCache(ModelReflector ref) throws SQLException{
     	String tableName = ref.getTableName();
     	if (ref.isAnnotationPresent(CONFIGURATION.class)){
     		QueryCache cacheEntry = configQueryCacheMap.get(tableName);
 			if (cacheEntry == null) {
 				synchronized (configQueryCacheMap) {
-    				cacheEntry = configQueryCacheMap.get(modelClass);
+    				cacheEntry = configQueryCacheMap.get(tableName);
 					if (cacheEntry == null) {
 						cacheEntry = new QueryCache(tableName);
 						configQueryCacheMap.put(tableName, cacheEntry);
@@ -343,7 +343,7 @@ public class Database {
 			}
 			return cacheEntry;
 		} else {
-			return getCurrentTransaction().getCache(modelClass);
+			return getCurrentTransaction().getCache(ref);
 		}
 	}
 
@@ -388,8 +388,7 @@ public class Database {
 
 		private Map<String, QueryCache> txnQueryCacheMap = new HashMap<String, QueryCache>();
 
-		public QueryCache getCache(Class<? extends Model> modelClass) {
-			ModelReflector ref = ModelReflector.instance(modelClass);
+		public QueryCache getCache(ModelReflector ref) {
 			String tableName = ref.getTableName();
 			
         	QueryCache queryCache = txnQueryCacheMap.get(tableName);

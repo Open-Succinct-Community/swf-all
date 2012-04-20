@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
@@ -107,13 +108,13 @@ public class Select extends SqlStatement{
         PreparedStatement st = null;
         String query = getRealSQL();
         try {
-        	QueryCache cache = Database.getInstance().getCache(modelInterface);
+        	QueryCache cache = Database.getInstance().getCache(ModelReflector.instance(modelInterface));
         	List<M> result = cache.getCachedResult(getWhereExpression());
         	if (result != null){
         		return result;
         	}
 
-            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
+            Logger.getLogger(getClass().getName()).log(Level.FINEST, "Executing {0}", query);
             st = prepare();
             result = new ArrayList<M>();
             if (st.execute()){

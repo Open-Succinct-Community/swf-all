@@ -18,7 +18,7 @@ public class DataManupulationStatement extends SqlStatement{
         return executeUpdate(null);
     }
     public int executeUpdate(Record generatedKeyValues,String... generatedKeyColumns){ 
-        Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", getRealSQL());
+        Logger.getLogger(getClass().getName()).log(Level.FINEST, "Executing {0}", getRealSQL());
         
         PreparedStatement st = null;
         try {

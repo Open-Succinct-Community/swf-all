@@ -8,7 +8,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
@@ -169,10 +168,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             }
         }
         
-        Logger.getGlobal().info("String To Hash: " +hashFieldValue.toString());
         hiddenHashField.setValue(Encryptor.encrypt(hashFieldValue.toString()));
-        Logger.getGlobal().info("Hash: " + hiddenHashField.getValue());
-        
+
         Row r = rpadLastRow(table);
         Column c = r.getLastColumn();
         for (Control hiddenField: hiddenFields){

@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -26,6 +25,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
@@ -157,7 +157,7 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/show.png")
     public View show(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
-        if (record.isAccessibleBy(getSessionUser())){
+        if (record.isAccessibleBy(getSessionUser(),modelClass)){
             return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
         }else {
         	throw new AccessDeniedException();
@@ -166,7 +166,7 @@ public class ModelController<M extends Model> extends Controller {
     
     public View view(int id){
     	M record = Database.getInstance().getTable(modelClass).get(id);
-        if (record.isAccessibleBy(getSessionUser())){
+        if (record.isAccessibleBy(getSessionUser(),modelClass)){
             try {
             	for (Method getter : reflector.getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
@@ -196,7 +196,7 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("save")
     public View edit(int id) {
         M record = Database.getInstance().getTable(modelClass).get(id);
-        if (record.isAccessibleBy(getSessionUser())){
+        if (record.isAccessibleBy(getSessionUser(),modelClass)){
             return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
         }else {
         	throw new AccessDeniedException();
@@ -228,7 +228,7 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("save")
     public View blank() {
         M record = Database.getInstance().getTable(modelClass).newRecord();
-        List<ModelInfo> modelElements =getPath().getModelElements();
+        List<ModelInfo> modelElements = getPath().getModelElements();
         
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
 	    	Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
@@ -244,8 +244,9 @@ public class ModelController<M extends Model> extends Controller {
 					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
 						id = idoptions.get(0);
             	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(id);
-            	    	if (referredModel.isAccessibleBy(getSessionUser())){
+            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
             	    		referredModelIdSetter.invoke(record,id);
+            	    		continue;
             	    	}
 					}
 				}
@@ -258,7 +259,7 @@ public class ModelController<M extends Model> extends Controller {
 	        		if (referredModelClass.isAssignableFrom(mi.getModelClass())){
 	        	    	try {
 	            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(mi.getId());
-	            	    	if (referredModel.isAccessibleBy(getSessionUser())){
+	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
 	            	    		referredModelIdSetter.invoke(record, mi.getId());
 	            	    		break;
 	            	    	}
@@ -272,7 +273,8 @@ public class ModelController<M extends Model> extends Controller {
 				throw new RuntimeException(e1);
 			}
 		}
-
+		record.setCreatorUserId(getSessionUser().getId());
+		record.setUpdaterUserId(getSessionUser().getId());
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
         mev.getIncludedFields().remove("ID");
         return dashboard(mev);
@@ -282,7 +284,7 @@ public class ModelController<M extends Model> extends Controller {
     public View destroy(int id){ 
         M record = Database.getInstance().getTable(modelClass).get(id);
         if (record != null){
-            if (record.isAccessibleBy(getSessionUser())){
+            if (record.isAccessibleBy(getSessionUser(),modelClass)){
                 record.destroy();
             }else {
             	throw new AccessDeniedException();
@@ -315,7 +317,7 @@ public class ModelController<M extends Model> extends Controller {
 							formFields.put(fi.getFieldName(), fi.getString());
 						}
 					}else {
-						formFields.put(fi.getFieldName(), fi.getInputStream());
+						formFields.put(fi.getFieldName(), new ByteArrayInputStream(StringUtil.readBytes(fi.getInputStream())));
 					}
 				}
 			} catch (FileUploadException e1) {
@@ -351,12 +353,11 @@ public class ModelController<M extends Model> extends Controller {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
                 }
             }
-            if (!record.isAccessibleBy(getSessionUser())){
+            if (!record.isAccessibleBy(getSessionUser(),modelClass)){
             	throw new AccessDeniedException();
             }
         }
 
-        ModelReflector reflector = ModelReflector.instance(modelClass);
         List<String> fields = reflector.getRealFields();
         
         Iterator<String> e = formFields.keySet().iterator();
@@ -397,11 +398,11 @@ public class ModelController<M extends Model> extends Controller {
 	    	}
 	        record.setUpdaterUserId(getSessionUser().getId());
 	        record.setUpdatedAt(null);
-	        if (record.isAccessibleBy(getSessionUser())){
+	        if (record.isAccessibleBy(getSessionUser(),modelClass)){
 	            record.save();
 	        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
 	        		try {
-						Database.getInstance().getCache(modelClass).clear();
+						Database.getInstance().getCache(reflector).clear();
 					} catch (SQLException e1) {
 						throw new AccessDeniedException(e1);
 					}
@@ -427,21 +428,19 @@ public class ModelController<M extends Model> extends Controller {
         	}
     		Object currentValue = formFields.get(field);
     		if (currentValue != null && currentValue instanceof InputStream){
-    			return true;
-    		}else {
-    			if (hash != null){
-    				hash.append(",");
-    			}else {
-    				hash = new StringBuilder();
+    			if (StringUtil.readBytes((InputStream)currentValue).length > 0){
+    				return true;
     			}
-    			hash.append(field).append("=").append((String)currentValue);
+    			currentValue = "";
     		}
-        }
-        if (hash != null){
-        	Logger.getGlobal().info("String To Hash: " +hash.toString());
+			if (hash != null){
+				hash.append(",");
+			}else {
+				hash = new StringBuilder();
+			}
+			hash.append(field).append("=").append((String)currentValue);
         }
         String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
-        Logger.getGlobal().info("Hash: " + newDigest);
         return !ObjectUtil.equals(newDigest, oldDigest);
     }
     

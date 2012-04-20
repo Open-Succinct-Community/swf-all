@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
@@ -45,48 +46,37 @@ import com.venky.swf.db.table.Table.ColumnDescriptor;
 public class ModelReflector {
     
     private static final Map<String , ModelReflector>  map = new HashMap<String, ModelReflector>();
-    
     public static <M extends Model> ModelReflector instance(Class<M> modelClass){
-    	String tableName =Table.tableName(modelClass);
+    	MReflector<M> ref = MReflector.instance(modelClass);
+    	Class<? extends Model> realModelClass = getRealModelClass(ref);
+
+    	String tableName = Table.tableName(realModelClass);
         ModelReflector reflector = map.get(tableName);
         
-        if (reflector != null){
-        	reflector.registerModelClass(modelClass);
-            return reflector;
+        if (reflector == null){
+	        synchronized(map){
+	            reflector = map.get(tableName);
+	            if (reflector == null){
+	                reflector = new ModelReflector(tableName);
+	                map.put(tableName, reflector);
+	            }
+	        }
         }
-            
-        synchronized(map){
-            reflector = map.get(tableName);
-            if (reflector == null){
-                reflector = new ModelReflector(tableName);
-                map.put(tableName, reflector);
-            }
-        }
+        
         reflector.registerModelClass(modelClass);
         return reflector;
     }
 
-    private List<Class<? extends Model>> modelClasses  = new ArrayList<Class<? extends Model>>();
-    private Map<Class<? extends Model>, MReflector<? extends Model>> modelReflectors = new HashMap<Class<? extends Model>, ModelReflector.MReflector<? extends Model>>();
-    
-    private class MReflector<M extends Model> extends Reflector<Model, M>{
-		protected MReflector(Class<M> reflectedClass) {
-			super(reflectedClass, Model.class);
-		}
-    }
+    private SequenceSet<Class<? extends Model>> modelClasses  = new SequenceSet<Class<? extends Model>>();
     
     public <M extends Model> void  registerModelClass(Class<M> modelClass){
-    	if (!modelReflectors.containsKey(modelClass)){
+    	if (!modelClasses.contains(modelClass)){
     		modelClasses.add(modelClass);
-    		modelReflectors.put(modelClass,new MReflector<M>(modelClass));
     	}
     }
     
-    
-    public <U extends Model> Class<U> getRealModelClass(){
+    private static <U extends Model> Class<U> getRealModelClass(MReflector<? extends Model> ref){
     	Class<?> lastRealClass = null;
-    	Class<?> modelClass = modelClasses.get(0); // First class in class path. (Application model if it exists.)
-		MReflector<? extends Model> ref = modelReflectors.get(modelClass);
     	List<Class<? extends Model>> modelHierarchyClasses = ref.getClassHierarchy(); 
     	for (Class<?> claz:modelHierarchyClasses){
     		IS_VIRTUAL isVirtual = claz.getAnnotation(IS_VIRTUAL.class);
@@ -106,26 +96,31 @@ public class ModelReflector {
     	return (Class<U>) lastRealClass;
     }
     
-    private final String modelName; 
-    private ModelReflector(String modelName){
-    	this.modelName = modelName;
-    }
-    
-    public String getModelName(){
-    	return modelName;
+    private final String tableName; 
+    private ModelReflector(String tableName){
+    	this.tableName = tableName;
     }
     
     public String getTableName(){
-    	Class<? extends Model> realModelClass = getRealModelClass();
-    	if (realModelClass != null){
-    		return Table.tableName(realModelClass);
-    	}
-    	return null;
+    	return tableName;
     }
     
+    public boolean reflects(Class<? extends Model> other){
+    	return modelClasses.contains(other);
+    }
+    
+    public boolean canReflect(Object o){
+    	for (Class<? extends Model> model: modelClasses){
+    		if (model.isInstance(o)){
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+
     public String getDescriptionColumn(){
         for (Class<? extends Model> modelClass: modelClasses){
-        	MReflector<? extends Model> ref = modelReflectors.get(modelClass);
+        	MReflector<? extends Model> ref = MReflector.instance(modelClass);
             HAS_DESCRIPTION_COLUMN descColumn = ref.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
             if (descColumn != null){
             	String column = descColumn.value();
@@ -149,7 +144,7 @@ public class ModelReflector {
     			HashSet<String> signatures = new HashSet<String>();
     			
     			for (Class<? extends Model> modelClass:modelClasses){
-    				List<Method> matchingMethods = modelReflectors.get(modelClass).getMethods(matcher);
+    				List<Method> matchingMethods = MReflector.instance(modelClass).getMethods(matcher);
     				for (Method m: matchingMethods){
     					String signature = Reflector.computeMethodSignature(m);
     					if (!signatures.contains(signature)){
@@ -358,7 +353,7 @@ public class ModelReflector {
          
         Map<Class<? extends Annotation>, Annotation> map = new HashMap<Class<? extends Annotation>, Annotation>();
         for (Class<? extends Model> modelClass:modelClasses){
-        	MReflector<? extends Model> ref = modelReflectors.get(modelClass);
+        	MReflector<? extends Model> ref = MReflector.instance(modelClass);
         	//We could have simple called getAnnotation(getter,Annotation class) but that would mean looping multiple times for 
         	//each annotation needed. hence this optimization.
         	if (map.get(COLUMN_NAME.class) == null){ map.put(COLUMN_NAME.class,ref.getAnnotation(getter,COLUMN_NAME.class)); }
@@ -471,7 +466,7 @@ public class ModelReflector {
     
     public boolean isAnnotationPresent(Method method, Class<? extends Annotation> annotationClass ){
     	for (Class<? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = modelReflectors.get(modelClass);
+    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
     		if (ref.isAnnotationPresent(method,annotationClass)){
     			return true;
     		}
@@ -482,7 +477,7 @@ public class ModelReflector {
     public <A extends Annotation> A getAnnotation(Method method, Class<A> annotationClass){
     	A annotation = null; 
     	for (Class <? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = modelReflectors.get(modelClass);
+    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
     		annotation = ref.getAnnotation(method,annotationClass);
     		if (annotation != null){
     			break;
@@ -490,23 +485,32 @@ public class ModelReflector {
     	}
     	return annotation;
     }
-    
     public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){
+    	return isAnnotationPresent((Class<? extends Model>)null, annotationClass);
+    }
+    public boolean isAnnotationPresent(Class<? extends Model> lowerBound, Class<? extends Annotation> annotationClass){
     	for (Class <? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = modelReflectors.get(modelClass);
-    		if (ref.isAnnotationPresent(annotationClass)){
-    			return true;
+    		if (lowerBound == null || modelClass.isAssignableFrom(lowerBound)){
+        		MReflector<? extends Model> ref = MReflector.instance(modelClass);
+        		if (ref.isAnnotationPresent(annotationClass)){
+        			return true;
+        		}
     		}
     	}
     	return false;
     }
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass){
+    	return getAnnotation((Class<? extends Model>)null, annotationClass);
+    }
+    public <A extends Annotation> A getAnnotation(Class<? extends Model> lowerBound, Class<A> annotationClass){
     	A annotation = null;
     	for (Class <? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = modelReflectors.get(modelClass);
-    		annotation = ref.getAnnotation(annotationClass);
-    		if (annotation != null){
-    			break;
+    		if (lowerBound == null || modelClass.isAssignableFrom(lowerBound)){
+	    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
+	    		annotation = ref.getAnnotation(annotationClass);
+	    		if (annotation != null){
+	    			break;
+	    		}
     		}
     	}
     	return annotation;
@@ -639,7 +643,7 @@ public class ModelReflector {
 					Set<Class<?>> classesAdded = new HashSet<Class<?>>();
 					
 					for (Class<? extends Model> modelClass : modelClasses){
-						for (Class <? extends Model> classInHeirarchy: modelReflectors.get(modelClass).getClassHierarchy()){
+						for (Class <? extends Model> classInHeirarchy: MReflector.instance(modelClass).getClassHierarchy()){
 							if (!classesAdded.contains(classInHeirarchy)){ //Simpler to do a hash Lookup.
 								classHierarchies.add(classInHeirarchy);
 								classesAdded.add(classInHeirarchy);
@@ -651,4 +655,29 @@ public class ModelReflector {
     	}
     	return classHierarchies;
     }
+
+    private static class MReflector<M extends Model> extends Reflector<Model, M>{
+    	
+        private static final Map<Class<? extends Model>, MReflector<? extends Model>> mreflectors = new HashMap<Class<? extends Model>, ModelReflector.MReflector<? extends Model>>();
+        
+        private static <M extends Model> MReflector<M> instance(Class<M> modelClass){
+        	MReflector<M> ref = (MReflector<M>)mreflectors.get(modelClass);
+        	if (ref == null){
+        		synchronized (mreflectors) {
+        			ref = (MReflector<M>)mreflectors.get(modelClass);
+        			if (ref == null){
+        				ref = new MReflector<M>(modelClass);
+        				mreflectors.put(modelClass, ref);
+        			}
+    			}
+        	}
+        	return ref;
+        }
+    	
+		private MReflector(Class<M> reflectedClass) {
+			super(reflectedClass, Model.class);
+		}
+    }
+    
+
 }

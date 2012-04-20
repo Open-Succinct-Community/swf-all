@@ -81,7 +81,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         for (M record : records) {
-        	if (!record.isAccessibleBy(getPath().getSessionUser())){
+        	if (!record.isAccessibleBy(getPath().getSessionUser(),getModelClass())){
         		continue;
         	}
             Row row = table.createRow();
