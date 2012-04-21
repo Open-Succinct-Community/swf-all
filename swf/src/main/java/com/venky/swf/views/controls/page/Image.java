@@ -17,8 +17,16 @@ public class Image extends Control{
 	private static final long serialVersionUID = -2715552311460845810L;
 
 	public Image(String imageUrl){
-        super("img");
-        setProperty("src", imageUrl);
+        this(imageUrl,imageUrl.endsWith("svg"));
     }
-    
+	
+	private Image(String imageUrl, boolean isSvg){
+		super(isSvg ? "object" : "img");
+		String urlProperty = "src";
+		if (isSvg){
+			setProperty("type","image/svg+xml");
+			urlProperty = "data";
+		}
+		setProperty(urlProperty, imageUrl);
+	}
 }

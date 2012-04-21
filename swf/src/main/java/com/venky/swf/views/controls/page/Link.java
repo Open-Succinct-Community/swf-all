@@ -30,4 +30,8 @@ public class Link extends Control{
     public final void setUrl(String path){
         setProperty("href", path);
     }
+    
+    public final String getUrl(){
+    	return getProperty("href");
+    }
 }
