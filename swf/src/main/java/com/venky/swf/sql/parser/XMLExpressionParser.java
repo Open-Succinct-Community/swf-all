@@ -20,7 +20,7 @@ import com.venky.xml.XMLElement;
 public class XMLExpressionParser {
 	Table<? extends Model> table = null;
 	public XMLExpressionParser(Class<? extends Model> modelClass){
-		table = Database.getInstance().getTable(modelClass);
+		table = Database.getTable(modelClass);
 	}
 	public Expression parse(InputStream is) {
 		return parse(StringUtil.read(is));
@@ -90,7 +90,7 @@ public class XMLExpressionParser {
 		
 		Object value = sValue; 
 		if (columnType != Types.VARCHAR){
-			value = Database.getInstance().getJdbcTypeHelper().getTypeRef(columnType).getTypeConverter().valueOf(sValue);
+			value = Database.getJdbcTypeHelper().getTypeRef(columnType).getTypeConverter().valueOf(sValue);
 		}
 		bValues.add(new BindVariable(value,columnType));
 

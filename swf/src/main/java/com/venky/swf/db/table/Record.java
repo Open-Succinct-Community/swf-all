@@ -54,7 +54,7 @@ public class Record {
         	Object columnValue = rs.getObject(i);
         	int type = meta.getColumnType(i);
         	if (JdbcTypeHelper.isLOB(type)){
-        		columnValue = Database.getInstance().getJdbcTypeHelper().getTypeRef(type).getTypeConverter().valueOf(columnValue);
+				columnValue = Database.getJdbcTypeHelper().getTypeRef(type).getTypeConverter().valueOf(columnValue);
         	}
             put(meta.getColumnName(i),columnValue);
         }

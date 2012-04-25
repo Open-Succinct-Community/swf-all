@@ -5,7 +5,8 @@
 package com.venky.swf.views;
 
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
+
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,7 +26,6 @@ public class BytesView extends View{
         this.contentType = contentType;
     }
 
-    @Override
     public void write() throws IOException {
         HttpServletResponse response = getPath().getResponse();
         if (contentType != null ) {

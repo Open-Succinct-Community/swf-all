@@ -3,6 +3,7 @@ package com.venky.swf.views.controls.page.text;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls._IControl;
 
 public class Select extends Control {
 
@@ -37,7 +38,7 @@ public class Select extends Control {
 		
 	}
     public void setValue(final Object value){
-    	for (Control control:getContainedControls()){
+    	for (_IControl control:getContainedControls()){
     		if (control instanceof Option){
     			Option o = (Option)control;
     			if (ObjectUtil.equals(o.getValue(),value)){
@@ -51,7 +52,7 @@ public class Select extends Control {
     
     public String getValue(){
     	String value = null;
-    	for (Control control:getContainedControls()){
+    	for (_IControl control:getContainedControls()){
     		if (control instanceof Option){
     			Option o = (Option)control;
     			if (value == null){

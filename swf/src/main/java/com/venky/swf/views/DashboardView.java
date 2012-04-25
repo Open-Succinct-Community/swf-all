@@ -7,10 +7,10 @@ package com.venky.swf.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
-import com.venky.swf.routing.Path;
 import com.venky.swf.views.controls.page.Body;
-import com.venky.swf.views.controls.page.Menu;
+import com.venky.swf.views.controls.page._IMenu;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.LineBreak;
 
@@ -34,7 +34,7 @@ public class DashboardView extends HtmlView{
     }
     public void createBody(Body b, boolean includeMenu) {
     	if (includeMenu){
-            Menu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
+            _IMenu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null){
                 Div nav = new Div();
                 nav.setProperty("class", "nav");
@@ -48,5 +48,4 @@ public class DashboardView extends HtmlView{
             child.createBody(b);
         }
     }
-    
 }

@@ -5,7 +5,7 @@
 package com.venky.swf.views.model;
 
 import com.venky.swf.db.model.Model;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.page.Body;
 
 /**

@@ -11,7 +11,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
-import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls._IControl;
 
 /**
  *
@@ -34,7 +34,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         this.modelClass = modelClass;
         this.descriptionColumn = ModelReflector.instance(modelClass).getDescriptionColumn();
         this.description = new TextBox();
-        Table<M> table = Database.getInstance().getTable(modelClass);
+		Table<M> table = Database.getTable(modelClass);
         this.description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
         setVisible(true);
     }
@@ -49,7 +49,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         return modelClass;
     }
     @Override
-    protected void setParent(Control parent){
+    public void setParent(_IControl parent){
         super.setParent(parent);
         description.setEnabled(isEnabled());
         parent.addControl(description);
@@ -65,7 +65,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     public void setValue(Object value){
         super.setValue(value);
         if (!ObjectUtil.isVoid(value)){
-            M model = Database.getInstance().getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
+			M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
                 ModelReflector reflector = ModelReflector.instance(modelClass);
                 Method descriptionGetter = reflector.getFieldGetter(descriptionColumn);

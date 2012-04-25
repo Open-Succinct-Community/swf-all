@@ -16,7 +16,7 @@ public class Installer {
 		installUsers();
 	}
 	protected void installUsers(){
-		Table<User> USER = Database.getInstance().getTable(User.class);
+		Table<User> USER = Database.getTable(User.class);
 		
 		Select q = new Select().from(User.class);
 		ModelReflector ref = ModelReflector.instance(User.class);

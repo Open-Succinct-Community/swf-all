@@ -72,7 +72,7 @@ public class Expression {
 		while (index >= 0) {
 			BindVariable parameter = parameters.get(p);
 			String pStr = StringUtil.valueOf(parameter.getValue()) ;
-			if (Database.getInstance().getJdbcTypeHelper().getTypeRef(parameter.getJdbcType()).isQuotedWhenUnbounded()){
+			if (Database.getJdbcTypeHelper().getTypeRef(parameter.getJdbcType()).isQuotedWhenUnbounded()){
 				pStr = "'" + pStr + "'";
 			}
 			builder.replace(index, index+1, pStr);

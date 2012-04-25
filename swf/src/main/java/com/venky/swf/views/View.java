@@ -4,15 +4,14 @@
  */
 package com.venky.swf.views;
 
-import com.venky.swf.routing.Path;
-import java.io.IOException;
+import com.venky.swf.path.Path;
 
 /**
  *
  * @author venky
  */
-public abstract class View {
-    Path path;
+public abstract class View implements _IView{
+    private Path path;
     public View(Path path){
         this.path = path;
     }
@@ -20,7 +19,8 @@ public abstract class View {
     public Path getPath() {
         return path;
     }
-
-    public abstract void write() throws IOException;
+    public boolean isBeingRedirected(){
+    	return false;
+    }
     
 }

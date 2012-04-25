@@ -13,16 +13,17 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.page.Menu;
 
 /**
  *
  * @author venky
  */
-public class DefaultMenuBuilder implements MenuBuilder{
+public class DefaultMenuBuilder implements _IMenuBuilder{
     
-    public Menu createAppMenu(Path path) {
+    public Menu createAppMenu(_IPath path) {
         Menu appmenu  = new Menu();
         User user = (User)path.getSession().getAttribute("user");
         createUserMenu(appmenu,user);
@@ -55,10 +56,10 @@ public class DefaultMenuBuilder implements MenuBuilder{
     }
     
     protected Menu modelMenu(User user,Class<? extends Annotation> annotationFilter){
-    	Set<String> tableNames = Database.getInstance().getTableNames();
+		Set<String> tableNames = Database.getTableNames();
         Menu modelMenu = new Menu();
         for (String tableName : tableNames){
-            Table<?> table = Database.getInstance().getTable(tableName);
+			Table<?> table = Database.getTable(tableName);
             addMenuItem(user,modelMenu, table, annotationFilter);
         }
         return modelMenu;

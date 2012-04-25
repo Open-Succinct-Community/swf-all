@@ -374,7 +374,7 @@ public class ModelReflector {
         
         cd = new ColumnDescriptor();
         cd.setName(name == null ? getFieldName(getter) : name.value());
-        TypeRef<?> typeRef = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType());
+		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
         assert typeRef != null;
         cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
         cd.setNullable(isNullable != null ? isNullable.value() : !getter.getReturnType().isPrimitive());
@@ -555,9 +555,9 @@ public class ModelReflector {
     private class FieldGetterMatcher extends GetterMatcher{ 
         @Override
         public boolean matches(Method method){
-            if (super.matches(method) && 
+			if (super.matches(method) && 
                     !Model.class.isAssignableFrom(method.getReturnType()) &&
-                    Database.getInstance().getJdbcTypeHelper().getTypeRef(method.getReturnType()) != null){
+                    Database.getJdbcTypeHelper().getTypeRef(method.getReturnType()) != null){
                  return true;
             }
             return false;
@@ -581,7 +581,7 @@ public class ModelReflector {
     private class FieldSetterMatcher extends SetterMatcher{ 
         @Override
         public boolean matches(Method method){
-            if (super.matches(method) && Database.getInstance().getJdbcTypeHelper().getTypeRef(method.getParameterTypes()[0]) != null){
+			if (super.matches(method) && Database.getJdbcTypeHelper().getTypeRef(method.getParameterTypes()[0]) != null){
                  return true;
             }
             return false;

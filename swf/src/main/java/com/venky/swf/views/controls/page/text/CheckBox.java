@@ -4,7 +4,7 @@
  */
 package com.venky.swf.views.controls.page.text;
 
-import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls._IControl;
 
 /**
  *
@@ -39,7 +39,7 @@ public class CheckBox extends Input{
     }
 
     @Override
-    protected void setParent(Control parent){
+    public void setParent(_IControl parent){
         super.setParent(parent);
         TextBox hiddenTextBox = new TextBox() ;
         hiddenTextBox.setVisible(false);

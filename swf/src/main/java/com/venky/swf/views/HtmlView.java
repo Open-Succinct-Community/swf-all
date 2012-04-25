@@ -9,7 +9,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
 import com.venky.extension.Registry;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
 import com.venky.swf.views.controls.page.Head;

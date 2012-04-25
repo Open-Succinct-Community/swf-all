@@ -10,7 +10,7 @@ import com.venky.swf.views.controls.Control;
  *
  * @author venky
  */
-public class Menu extends Control{
+public class Menu extends Control implements _IMenu{
     /**
 	 * 
 	 */

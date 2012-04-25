@@ -20,9 +20,9 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.path.Path;
 import com.venky.swf.plugins.security.db.model.RolePermission;
 import com.venky.swf.plugins.security.db.model.UserRole;
-import com.venky.swf.routing.Path;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -97,7 +97,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 														.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
 		permissionQueryWhere.add(controllerActionWhere);
 
-		String userRole = Database.getInstance().getTable(UserRole.class).getRealTableName() ;
+		String userRole = Database.getTable(UserRole.class).getRealTableName() ;
 		Select userRoleQuery = new Select("role_id").from(userRole).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute();
 		List<Integer> userRoleIds = new ArrayList<Integer>();

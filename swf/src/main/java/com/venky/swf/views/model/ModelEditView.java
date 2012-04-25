@@ -13,9 +13,10 @@ import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
@@ -68,8 +69,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         if (table.getContainedControls().isEmpty()){
             row = table.createRow();
         }else {
-            List<Control> rows = table.getContainedControls();
-            Control c = rows.get(rows.size()-1);
+            List<_IControl> rows = table.getContainedControls();
+            _IControl c = rows.get(rows.size()-1);
             if (c instanceof Row) {
             	row = (Row)c;
             }else if (c instanceof TBody || c instanceof THead){
@@ -208,17 +209,15 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	}
         }
         for (Class<? extends Model> childClass: childModels){
-        	Path childPath = new Path(getPath().getTarget()+"/"+Database.getInstance().getTable(childClass).getTableName().toLowerCase() + "/index");
+			Path childPath = new Path(getPath().getTarget()+"/"+Database.getTable(childClass).getTableName().toLowerCase() + "/index");
         	childPath.setRequest(getPath().getRequest());
         	childPath.setResponse(getPath().getResponse());
         	childPath.setSession(getPath().getSession());
         	if (childPath.canAccessControllerAction()){
-            	DashboardView view = (DashboardView)childPath.invoke();
+            	DashboardView view =  (DashboardView)childPath.invoke();
             	view.createBody(body,false);
         	}
-        }
-
-
+        }    
     }
     protected boolean isFieldEditable(String fieldName) {
         return reflector.isFieldEditable(fieldName);

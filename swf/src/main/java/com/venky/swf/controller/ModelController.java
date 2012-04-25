@@ -42,8 +42,8 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
-import com.venky.swf.routing.Path;
-import com.venky.swf.routing.Path.ModelInfo;
+import com.venky.swf.path.Path;
+import com.venky.swf.path.Path.ModelInfo;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -70,26 +70,23 @@ public class ModelController<M extends Model> extends Controller {
         
     }
     
-    private List<Method> getReferredModelGetters(Map<Class<? extends  Model>,List<Method>> referredModelGettersMap, Class<? extends Model> referredModelClass){
+    private List<Method> getReferredModelGetters(Map<ModelReflector,List<Method>> referredModelGettersMap, ModelReflector referredModelReflector){
     	List<Method> referredModelGetters = new  ArrayList<Method>();
-    	for (Class<? extends Model> rmc: referredModelGettersMap.keySet()){
-    		if (rmc.isAssignableFrom(referredModelClass)){
-    			referredModelGetters.addAll(referredModelGettersMap.get(rmc));
-    		}
-    	}
-		
+		referredModelGetters.addAll(referredModelGettersMap.get(referredModelReflector));
     	return referredModelGetters;
     }
+    
     public Expression getWhereClause(){
     	Expression where = new Expression(Conjunction.AND);
-		Map<Class<? extends Model>, List<Method>> referredModelGetterMap = new HashMap<Class<? extends Model>, List<Method>>();
+		Map<ModelReflector, List<Method>> referredModelGetterMap = new HashMap<ModelReflector, List<Method>>();
 
 		for (Method referredModelGetter : reflector.getReferredModelGetters()){
 			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-			List<Method> getters = referredModelGetterMap.get(referredModelClass);
+			ModelReflector referredModelReflector = ModelReflector.instance(referredModelClass);
+			List<Method> getters = referredModelGetterMap.get(referredModelReflector);
 			if (getters == null){
 				getters = new ArrayList<Method>();
-				referredModelGetterMap.put(referredModelClass, getters);
+				referredModelGetterMap.put(referredModelReflector, getters);
 			}
 			getters.add(referredModelGetter);
 		}
@@ -106,14 +103,14 @@ public class ModelController<M extends Model> extends Controller {
     			//last model is self.
     			break;
     		}
-    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getModelClass());
+    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector());
     		
     		if (referredModelGetters.isEmpty()){
     			continue;
     		}
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
-	    	ModelReflector referredModelReflector = ModelReflector.instance(mi.getModelClass());
+	    	ModelReflector referredModelReflector = mi.getReflector();
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		if (referredModelReflector.getChildModelClass(childGetter).isAssignableFrom(modelClass)){
 	            	CONNECTED_VIA join = reflector.getAnnotation(childGetter,CONNECTED_VIA.class);
@@ -156,7 +153,7 @@ public class ModelController<M extends Model> extends Controller {
     
     @SingleRecordAction(icon="/resources/images/show.png")
     public View show(int id) {
-        M record = Database.getInstance().getTable(modelClass).get(id);
+		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
         }else {
@@ -165,7 +162,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View view(int id){
-    	M record = Database.getInstance().getTable(modelClass).get(id);
+		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             try {
             	for (Method getter : reflector.getFieldGetters()){
@@ -195,7 +192,7 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/edit.png")
     @Depends("save")
     public View edit(int id) {
-        M record = Database.getInstance().getTable(modelClass).get(id);
+        M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
         }else {
@@ -206,7 +203,7 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/clone.png")
     @Depends("save")
     public View clone(int id){
-    	Table<M> table = Database.getInstance().getTable(modelClass);
+		Table<M> table = Database.getTable(modelClass);
     	M record = table.get(id);
     	M newrecord = table.newRecord();
     	
@@ -227,7 +224,7 @@ public class ModelController<M extends Model> extends Controller {
     
     @Depends("save")
     public View blank() {
-        M record = Database.getInstance().getTable(modelClass).newRecord();
+		M record = Database.getTable(modelClass).newRecord();
         List<ModelInfo> modelElements = getPath().getModelElements();
         
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
@@ -243,7 +240,7 @@ public class ModelController<M extends Model> extends Controller {
 				if (oldValue == null){
 					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
 						id = idoptions.get(0);
-            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(id);
+						Model referredModel = Database.getTable(referredModelClass).get(id);
             	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
             	    		referredModelIdSetter.invoke(record,id);
             	    		continue;
@@ -256,9 +253,10 @@ public class ModelController<M extends Model> extends Controller {
 		    			//last model is self.
 		    			break;
 		    		}
-	        		if (referredModelClass.isAssignableFrom(mi.getModelClass())){
+		    		
+	        		if (mi.getReflector().reflects(referredModelClass)){
 	        	    	try {
-	            	    	Model referredModel = Database.getInstance().getTable(referredModelClass).get(mi.getId());
+							Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
 	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
 	            	    		referredModelIdSetter.invoke(record, mi.getId());
 	            	    		break;
@@ -282,7 +280,7 @@ public class ModelController<M extends Model> extends Controller {
 
     @SingleRecordAction(icon="/resources/images/destroy.png")
     public View destroy(int id){ 
-        M record = Database.getInstance().getTable(modelClass).get(id);
+		M record = Database.getTable(modelClass).get(id);
         if (record != null){
             if (record.isAccessibleBy(getSessionUser(),modelClass)){
                 record.destroy();
@@ -345,9 +343,9 @@ public class ModelController<M extends Model> extends Controller {
         String lockId = (String)formFields.get("LOCK_ID");
         M record = null;
         if (ObjectUtil.isVoid(id)) {
-            record = Database.getInstance().getTable(modelClass).newRecord();
+			record = Database.getTable(modelClass).newRecord();
         } else {
-            record = Database.getInstance().getTable(modelClass).get(Integer.valueOf(id));
+			record = Database.getTable(modelClass).get(Integer.valueOf(id));
             if (!ObjectUtil.isVoid(lockId)) {
                 if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
@@ -372,7 +370,7 @@ public class ModelController<M extends Model> extends Controller {
                 Method getter = reflector.getFieldGetter(fieldName);
                 Method setter = reflector.getFieldSetter(fieldName);
 
-                TypeRef<?> typeRef = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType());
+				TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 
                 try {
                 	if (ObjectUtil.isVoid(value) && reflector.getColumnDescriptor(getter).isNullable()){

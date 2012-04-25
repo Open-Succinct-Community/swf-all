@@ -4,18 +4,19 @@
  */
 package com.venky.swf.views.controls;
 
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+
 /**
  *
  * @author venky
  */
-public class Control extends Properties {
+public class Control extends Properties implements _IControl{
 
     /**
      * 
@@ -42,7 +43,7 @@ public class Control extends Properties {
         super.setProperty(name, StringUtil.valueOf(value));
     }
     private String tag = null;
-    private Control parent = null;
+    private _IControl parent = null;
 
     public void setId(String id) {
         setProperty("id", id);
@@ -51,9 +52,9 @@ public class Control extends Properties {
     public String getId() {
         return getProperty("id");
     }
-    private List<Control> containedControls = new ArrayList<Control>();
+    private List<_IControl> containedControls = new ArrayList<_IControl>();
 
-    public Control getParent() {
+    public _IControl getParent() {
         return parent;
     }
 
@@ -61,19 +62,19 @@ public class Control extends Properties {
         return tag;
     }
 
-    protected void setParent(Control parent) {
+    public void setParent(_IControl parent) {
         this.parent = parent;
     }
 
-    public void addControl(int index,Control control){
+    public void addControl(int index,_IControl control){
     	containedControls.add(index,control);
         control.setParent(this);
     }
-    public void addControl(Control control) {
+    public void addControl(_IControl control) {
         addControl(containedControls.size(), control);
     }
 
-    public List<Control> getContainedControls() {
+    public List<_IControl> getContainedControls() {
         return Collections.unmodifiableList(containedControls);
     }
 
@@ -89,7 +90,7 @@ public class Control extends Properties {
             b.append(">");
         }
         b.append(getText());
-        for (Control contained : containedControls) {
+        for (_IControl contained : containedControls) {
             b.append(contained);
         }
         if (getTag() != null){

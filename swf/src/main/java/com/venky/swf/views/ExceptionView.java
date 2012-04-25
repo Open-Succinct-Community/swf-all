@@ -5,7 +5,7 @@
 package com.venky.swf.views;
 
 import com.venky.core.util.ExceptionUtil;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.text.Label;
 import java.io.PrintWriter;

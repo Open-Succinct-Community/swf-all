@@ -32,7 +32,7 @@ public class SQLExpressionParser {
 	
 	Table<? extends Model> table = null; 
 	public SQLExpressionParser(Class<? extends Model> modelClass){
-		table = Database.getInstance().getTable(modelClass);
+		table = Database.getTable(modelClass);
 	}
 	
 	public Expression parse(InputStream is){
@@ -112,7 +112,7 @@ public class SQLExpressionParser {
 			if (cd != null){
 				int jdbcType = cd.getJDBCType();
 				if (jdbcType != Types.VARCHAR){
-					value = Database.getInstance().getJdbcTypeHelper().getTypeRef(jdbcType).getTypeConverter().valueOf(sValue);
+					value = Database.getJdbcTypeHelper().getTypeRef(jdbcType).getTypeConverter().valueOf(sValue);
 				}
 			}
 			values.add(new BindVariable(value));

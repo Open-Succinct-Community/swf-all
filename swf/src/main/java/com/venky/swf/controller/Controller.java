@@ -19,7 +19,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -39,7 +39,7 @@ import com.venky.xml.XMLElement;
  * @author venky
  */
 public class Controller {
-    protected final Path path;
+    protected Path path;
 
     public Path getPath() {
         return path;
@@ -103,7 +103,7 @@ public class Controller {
     	return (U)getPath().getSessionUser();
     }
     public Class<? extends User> getUserClass(){
-    	return Database.getInstance().getTable(User.class).getModelClass(); //Ensures correct model class is seen.
+		return Database.getTable(User.class).getModelClass(); //Ensures correct model class is seen.
     }
     protected User getUser(String username){
         Select q = new Select().from(getUserClass());

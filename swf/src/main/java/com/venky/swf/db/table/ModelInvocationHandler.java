@@ -54,21 +54,21 @@ public class ModelInvocationHandler implements InvocationHandler {
     private Model proxy = null;
     private ModelReflector reflector = null;
     private List<String> virtualFields = new IgnoreCaseList();
-    private String camelizedTableName = null;
+    private String modelName = null;
 
 	public ModelReflector getReflector() {
 		return reflector;
 	}
 	
-	public String getCamelizedTableName(){
-		return camelizedTableName;
+	public String getModelName(){
+		return modelName;
 	}
 	
 
 	public ModelInvocationHandler(Class<? extends Model> modelClass, Record record) {
         this.record = record;
         this.reflector = ModelReflector.instance(modelClass);
-        this.camelizedTableName = StringUtil.camelize(reflector.getTableName());
+        this.modelName = Table.getSimpleModelClassName(reflector.getTableName());
         this.virtualFields = reflector.getVirtualFields();
         record.startTracking();
     }
@@ -87,7 +87,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
                 Object value = record.get(columnName);
 
-                TypeRef<?> ref =Database.getInstance().getJdbcTypeHelper().getTypeRef(retType);
+				TypeRef<?> ref =Database.getJdbcTypeHelper().getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (value == null) {
                 	Object defaultValue = null;
@@ -159,7 +159,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 		} 
 		P parent = null;
 		if (parentId != null) {
-			parent = Database.getInstance().getTable(parentClass).get(parentId);
+			parent = Database.getTable(parentClass).get(parentId);
 		}
         return parent;
     }
@@ -177,7 +177,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	
     	ModelReflector childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
-            if (fieldName.endsWith(StringUtil.underscorize(getCamelizedTableName() +"Id"))){
+            if (fieldName.endsWith(StringUtil.underscorize(getModelName() +"Id"))){
                 children.addAll(getChildren(childClass, fieldName));
             }
         }
@@ -206,10 +206,10 @@ public class ModelInvocationHandler implements InvocationHandler {
     	if (!getReflector().reflects(asModel)){
     		return false;
     	}
-    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
+    	Map<String,List<Integer>> columnNameValues = ((User)user).getParticipationOptions(asModel);
     	if (columnNameValues.isEmpty()){
     		return true;
-    	}
+    	}	
     	for (String fieldName:columnNameValues.keySet()){
     		List values = columnNameValues.get(fieldName);
     		String columnName = reflector.getColumnDescriptor(fieldName).getName();
@@ -305,13 +305,13 @@ public class ModelInvocationHandler implements InvocationHandler {
         validate();
         beforeSave();
         if (record.isNewRecord()) {
-        	Registry.instance().callExtensions(getCamelizedTableName()+".before.create", getProxy());
+        	Registry.instance().callExtensions(getModelName()+".before.create", getProxy());
             create();
-            Registry.instance().callExtensions(getCamelizedTableName()+".after.create", getProxy());
+            Registry.instance().callExtensions(getModelName()+".after.create", getProxy());
         } else {
-        	Registry.instance().callExtensions(getCamelizedTableName()+".before.update", getProxy());
+        	Registry.instance().callExtensions(getModelName()+".before.update", getProxy());
             update();
-            Registry.instance().callExtensions(getCamelizedTableName()+".after.update", getProxy());
+            Registry.instance().callExtensions(getModelName()+".after.update", getProxy());
         }
         afterSave();
 
@@ -331,7 +331,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     protected boolean isModelValid(StringBuilder totalMessage) {
         List<String> fields = reflector.getFields();
-        totalMessage.append(getCamelizedTableName()).append(":<br/>");
+        totalMessage.append(getModelName()).append(":<br/>");
         boolean ret = true;
         for (String field : fields) {
             StringBuilder message = new StringBuilder();
@@ -366,7 +366,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     protected void beforeValidate(){
     	defaultFields();
-    	Registry.instance().callExtensions(getCamelizedTableName() +".before.validate", getProxy());
+    	Registry.instance().callExtensions(getModelName() +".before.validate", getProxy());
     }
     protected void defaultFields(){
         for (String field:reflector.getRealFields()){
@@ -382,19 +382,19 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     }
     protected void afterValidate(){
-    	Registry.instance().callExtensions(getCamelizedTableName()+".after.validate", getProxy());
+    	Registry.instance().callExtensions(getModelName()+".after.validate", getProxy());
     }
     protected void beforeSave() {
-    	Registry.instance().callExtensions(getCamelizedTableName()+".before.save", getProxy());
+    	Registry.instance().callExtensions(getModelName()+".before.save", getProxy());
     }
     protected void afterSave() {
-    	Registry.instance().callExtensions(getCamelizedTableName()+".after.save", getProxy());
+    	Registry.instance().callExtensions(getModelName()+".after.save", getProxy());
     }
     protected void beforeDestory(){
-    	Registry.instance().callExtensions(getCamelizedTableName()+".before.destroy", getProxy());
+    	Registry.instance().callExtensions(getModelName()+".before.destroy", getProxy());
     }
     protected void afterDestroy(){
-    	Registry.instance().callExtensions(getCamelizedTableName()+".after.destroy", getProxy());
+    	Registry.instance().callExtensions(getModelName()+".after.destroy", getProxy());
     }
     
     public void destroy() {
@@ -421,7 +421,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
-        Table table = Database.getInstance().getTable(getReflector().getTableName());
+		Table table = Database.getTable(getReflector().getTableName());
         Update q = new Update(getReflector());
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
@@ -447,7 +447,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     private void create() {
         proxy.setLockId(0);
-        Table<? extends Model> table = Database.getInstance().getTable(getReflector().getTableName());
+		Table<? extends Model> table = Database.getTable(getReflector().getTableName());
         Insert insertSQL = new Insert(getReflector());
         Map<String,BindVariable> values = new HashMap<String, BindVariable>();
         
@@ -465,7 +465,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         List<String> generatedKeys = new ArrayList<String>();
         
         for (String anAutoIncrementColumn:autoIncrementColumns){
-        	if ( Database.getInstance().getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB() ){
+			if ( Database.getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB() ){
         		generatedKeys.add(anAutoIncrementColumn.toLowerCase());
         	}else {
         		generatedKeys.add(anAutoIncrementColumn);

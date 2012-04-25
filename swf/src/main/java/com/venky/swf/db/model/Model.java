@@ -21,7 +21,7 @@ import com.venky.swf.db.table.Record;
  *
  * @author venky
  */
-public interface Model {
+public interface Model extends _Identifiable{
     @IS_NULLABLE(false)
     @IS_AUTOINCREMENT
     @HIDDEN

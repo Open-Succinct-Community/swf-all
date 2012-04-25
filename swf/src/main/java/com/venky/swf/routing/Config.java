@@ -14,9 +14,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.PackageUtil;
-import com.venky.swf.menu.MenuBuilder;
+import com.venky.swf.menu._IMenuBuilder;
 
 /**
  *
@@ -71,7 +70,6 @@ public class Config {
         synchronized (Config.class){
             if (_instance == null) {
                 _instance = new Config();
-                _instance.loadExtensions();
             }
         }
         return _instance;
@@ -104,13 +102,29 @@ public class Config {
     	return modelPackages;
     }
     
+    public List<String> getModelClasses(){ 
+    	List<String> modelClasses = new ArrayList<String>();
+		for (String root : Config.instance().getModelPackageRoots()) {
+			for (URL url : Config.instance().getResouceBaseUrls()) {
+        		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
+			}
+		}
+		return modelClasses;
+    }
+    
     public List<String> getControllerPackageRoots(){
     	if (controllerPackages == null){
     		controllerPackages = getPropertyValueList(CONTROLLER_PACKAGE_ROOT);
     	}
     	return controllerPackages;
     }
-    
+    private List<String> extensionPackageRoots = null; 
+    public List<String> getExtensionPackageRoots(){
+    	if (extensionPackageRoots == null){
+    		extensionPackageRoots = getPropertyValueList(EXTENSION_PACKAGE_ROOT);
+    	}
+    	return extensionPackageRoots;
+    }
     public List<String> getInstallers(){
     	if (installers == null){
     		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
@@ -127,37 +141,18 @@ public class Config {
     	return values;
 	}
     
-    MenuBuilder builder = null;
-    public MenuBuilder getMenuBuilder(){
-    	if (builder != null){
-            return builder;
-        }
-        synchronized (this){
-            if (builder == null){
-                String className = properties.getProperty(MENU_BUILDER_CLASS);
-                try { 
-                    builder = (MenuBuilder)Class.forName(className).newInstance();
-                }catch (Exception ex){
-                    throw new RuntimeException(ExceptionUtil.getRootCause(ex));
-                }
-            }
-        }
-        return builder;
+    String getMenuBuilderClassName(){
+        return properties.getProperty(MENU_BUILDER_CLASS);
+    }
+    
+    _IMenuBuilder builder = null;
+    public void setMenuBuilder(_IMenuBuilder builder){
+    	this.builder = builder;
+    }
+    public _IMenuBuilder getMenuBuilder(){
+    	return builder;
     }
     
     
-    private void loadExtensions(){
-		for (String root : Config.instance().getPropertyValueList(EXTENSION_PACKAGE_ROOT)){
-			for (URL url:Config.instance().getResouceBaseUrls()){
-				for (String extnClassName : PackageUtil.getClasses(url, root.replace('.', '/'))){
-					try {
-						Class.forName(extnClassName);
-					} catch (ClassNotFoundException e) {
-						throw new RuntimeException(e);
-					}
-				}
-        	}
-        }
-    }
 	
 }

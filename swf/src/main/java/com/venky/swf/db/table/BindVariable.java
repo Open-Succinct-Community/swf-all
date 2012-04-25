@@ -19,10 +19,10 @@ public class BindVariable {
     private final TypeRef<?> ref;
     private final Object value;
     public BindVariable(Object value){
-        this(value,Database.getInstance().getJdbcTypeHelper().getTypeRef(value.getClass()));
+        this(value,Database.getJdbcTypeHelper().getTypeRef(value.getClass()));
     }
     public BindVariable(Object value,int jdbcType){
-    	this(value,Database.getInstance().getJdbcTypeHelper().getTypeRef(jdbcType));
+    	this(value,Database.getJdbcTypeHelper().getTypeRef(jdbcType));
     }
     public BindVariable(Object value, TypeRef<?> ref){
     	this.ref = ref;

@@ -2,13 +2,14 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.venky.swf.routing;
+package com.venky.swf.path;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,17 +23,23 @@ import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model._Identifiable;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views._IView;
 
 /**
  *
  * @author venky
  */
-public class Path {
-
+public class Path implements _IPath{
+	static {
+		Logger.getLogger("Path").info("Loaded by " + Path.class.getClassLoader());
+	}
     private List<String> pathelements = new ArrayList<String>();
     private String controllerClassName = null;
     private int controllerPathIndex = 0;
@@ -46,7 +53,30 @@ public class Path {
     	if (getSession() == null){
     		return null;
     	}
-    	return (User)getSession().getAttribute("user");
+    	_Identifiable user = null; 
+    	try {
+    		user =  (_Identifiable)getSession().getAttribute("user");
+    		return (User)user;
+    	}catch (ClassCastException ex){
+    		boolean isModel = false;
+    		boolean isUser = false; 
+    		for (Class<?> infc:user.getClass().getInterfaces()){
+    			if (infc.getName().equals(Model.class.getName())){
+    				isModel = true;
+    			}
+    			if (infc.getName().equals(User.class.getName())){
+    				isUser = true;
+    			}
+    		}
+    		if (isModel && isUser && user.getClass().getClassLoader() != getClass().getClassLoader()){
+				user = Database.getTable(User.class).get(user.getId()); // Reload the user with new class loader.
+    			getSession().setAttribute("user", user);
+    		}else {
+    			user = null;
+    		}
+    		//ClassLoaded may be reloaded force relogin. 
+    		return (User)user; 
+    	}
     }
 
     public HttpSession getSession() {
@@ -105,18 +135,16 @@ public class Path {
     }
     
     public static class ModelInfo{
-    	private Class<? extends Model> modelClass;
+    	private ModelReflector reflector;
     	private Integer id;
     	private String action = "index";
     	public ModelInfo(Class<? extends Model> modelClass){
-    		setModelClass(modelClass);
+    		reflector = ModelReflector.instance(modelClass);
     	}
-		public Class<? extends Model> getModelClass() {
-			return modelClass;
-		}
-		public void setModelClass(Class<? extends Model> modelClass) {
-			this.modelClass = modelClass;
-		}
+    	public ModelReflector getReflector(){
+    		return reflector;
+    	}
+		
 		public Integer getId() {
 			return id;
 		}
@@ -132,7 +160,7 @@ public class Path {
 		
     }
     
-    List<ModelInfo> modelElements = new ArrayList<Path.ModelInfo>();
+    private List<ModelInfo> modelElements = new ArrayList<Path.ModelInfo>();
     
     public List<ModelInfo> getModelElements(){
     	return modelElements;
@@ -230,7 +258,7 @@ public class Path {
     }
     public static <M extends Model> Table<M> getTable(String pathElement){
         String tableName = Table.tableName(StringUtil.singularize(camelize(pathElement)));
-        Table<M> table = Database.getInstance().getTable(tableName);
+		Table<M> table = Database.getTable(tableName);
         return table;
     }
     
@@ -250,15 +278,9 @@ public class Path {
         return parameter;
     }
 
-    private Object controller = null; 
-    public Object controller() {
-        if (controller != null){
-            return controller;
-        }
-        
+    private Controller createController() {
         try {
-            controller = getControllerClass().getConstructor(Path.class).newInstance(this);
-            return controller;
+            return (Controller)getControllerClass().getConstructor(Path.class).newInstance(this);
         } catch (NoSuchMethodException ex) {
             throw new RuntimeException(ex);
         } catch (SecurityException ex) {
@@ -285,7 +307,7 @@ public class Path {
     }
     
     
-    public View invoke() throws AccessDeniedException{
+    public _IView invoke() throws AccessDeniedException{
 
     	for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
@@ -298,15 +320,16 @@ public class Path {
             			ensureControllerActionAccess();	
             		}
             	}
+            	Controller controller = createController();
             	try {
                     if (m.getParameterTypes().length == 0 && parameter() == null){
-                        return (View)m.invoke(controller());
+                        return (View)m.invoke(controller);
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
-                        return (View)m.invoke(controller(), parameter());
+                        return (View)m.invoke(controller, parameter());
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
-                        return (View)m.invoke(controller(), Integer.valueOf(parameter()));
+                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class){
-                        return (View)m.invoke(controller(), Long.valueOf(parameter()));
+                        return (View)m.invoke(controller, Long.valueOf(parameter()));
                     }
             	}catch(Exception e){
         			throw new RuntimeException(e);
@@ -346,7 +369,7 @@ public class Path {
     }
     
 
-    private Class getControllerClass() {
+    public Class getControllerClass() {
         return getClass(getControllerClassName());
     }
 
@@ -384,4 +407,5 @@ public class Path {
     	path.setSession(getSession());
     	return path;
     }
+
 }

@@ -4,8 +4,10 @@
  */
 package com.venky.swf.views.controls.page.layout;
 
-import com.venky.swf.views.controls.Control;
 import java.util.List;
+
+import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls._IControl;
 
 /**
  *
@@ -38,7 +40,7 @@ public class Table extends Control{
     	if (tbody.getContainedControls().isEmpty()){
     		createRow();
     	}
-    	List<Control> rows = tbody.getContainedControls();
+    	List<_IControl> rows = tbody.getContainedControls();
     	
     	return (Row)rows.get(rows.size()-1);
     }
@@ -46,7 +48,7 @@ public class Table extends Control{
     	if (tbody.getContainedControls().isEmpty()){
     		createRow();
     	}
-    	List<Control> rows = tbody.getContainedControls();
+    	List<_IControl> rows = tbody.getContainedControls();
     	return (Row)rows.get(0);
     }
     
@@ -93,7 +95,7 @@ public class Table extends Control{
         }
         
         public Column getLastColumn(){
-            List<Control> controls = getContainedControls();
+            List<_IControl> controls = getContainedControls();
             if (controls.isEmpty()){
                 return createColumn();
             }else {
@@ -102,7 +104,7 @@ public class Table extends Control{
         }
 
         @Override
-        public void addControl(Control control) {
+        public void addControl(_IControl control) {
             if (control instanceof Column){
                 super.addControl(control);
             }else {

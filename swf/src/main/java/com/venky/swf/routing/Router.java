@@ -4,19 +4,27 @@
  */
 package com.venky.swf.routing;
 
-import com.venky.swf.db.Database;
-import com.venky.swf.views.ExceptionView;
-import com.venky.swf.views.RedirectorView;
-import com.venky.swf.views.View;
 import java.io.IOException;
+import java.net.URL;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+
+import com.venky.core.util.ExceptionUtil;
+import com.venky.core.util.PackageUtil;
+import com.venky.extension.Registry;
+import com.venky.swf.db._IDatabase;
+import com.venky.swf.menu._IMenuBuilder;
+import com.venky.swf.path._IPath;
+import com.venky.swf.views._IView;
 
 /**
  *
@@ -24,35 +32,146 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
  */
 public class Router extends AbstractHandler {
 
-    public Router() {
+    protected Router() {
+    	
+    }
+    
+    private static Router router = new Router();
+    public static Router instance(){
+    	return router;
+    }
+    
+    private ClassLoader loader = null; 
+    public ClassLoader getLoader() {
+    	synchronized (this) {
+    		return loader;
+		}
+	}
+	public void setLoader(ClassLoader loader) {
+		synchronized (this) {
+			if (this.loader != loader) {
+				this.loader = loader;
+				if (loader != null){
+					_IDatabase db = getDatabase(true);
+					db.close();
+					setMenuBuilder();
+					loadExtensions();
+					try {
+						getPathClass();
+						getExceptionViewClass();
+					} catch (Exception e) {
+						Logger.getLogger(Router.class.getName()).log(Level.SEVERE,e.getMessage(),e);
+					}
+				}
+			}
+		}
+	}
+	private void setMenuBuilder(){
+		String className = Config.instance().getMenuBuilderClassName(); 
+		try {
+			_IMenuBuilder builder = (_IMenuBuilder) (getClass(className).newInstance());
+	    	Config.instance().setMenuBuilder(builder);
+		}catch (Exception ex){
+			throw new RuntimeException(ExceptionUtil.getRootCause(ex));
+		}
+	}
+	
+    public void loadExtensions(){
+    	Registry.instance().clearExtensions();
+		for (String root : Config.instance().getExtensionPackageRoots()){
+			for (URL url:Config.instance().getResouceBaseUrls()){
+				for (String extnClassName : PackageUtil.getClasses(url, root.replace('.', '/'))){
+					try {
+						getClass(extnClassName);
+					} catch (ClassNotFoundException e) {
+						throw new RuntimeException(e);
+					}
+				}
+        	}
+        }
     }
 
-    
+	private _IPath createPath(String target){
+    	try {
+			Class ipc = getPathClass();
+			_IPath path = (_IPath)(ipc.getConstructor(String.class).newInstance(target));
+			return path;
+		} catch (Exception e){
+			throw new RuntimeException(e);
+		}
+    }
+	
+	private Class getClass(String className) throws ClassNotFoundException{
+		return Class.forName(className,true,getLoader());
+	}
+	
+	private Class getPathClass() throws ClassNotFoundException{
+		return getClass("com.venky.swf.path.Path");
+	}
+	private Class getExceptionViewClass() throws ClassNotFoundException {
+		return getClass("com.venky.swf.views.ExceptionView");
+	}
+	private Class getDatabaseClass() throws ClassNotFoundException{
+		return getClass("com.venky.swf.db.Database");
+	}
+	
+	private _IView createExceptionView(_IPath p, Throwable th){
+		try {
+			Class evc = getExceptionViewClass();
+			_IView ev = (_IView) evc.getConstructor(getPathClass(),Throwable.class).newInstance(p,th);
+			return ev;
+		}catch (Exception e){
+			throw new RuntimeException(e);
+		}
+	}
+	private _IDatabase getDatabase(){
+		return getDatabase(false);
+	}
+	private _IDatabase getDatabase(boolean migrate){
+		try {
+			//Database.getInstance()
+			Class<_IDatabase> c = getDatabaseClass();
+			_IDatabase idb = (_IDatabase)(c.getMethod("getInstance",boolean.class).invoke(c,migrate));
+			return idb;
+		}catch(Exception ex){
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         HttpSession session  = request.getSession(false); 
+        _IView view = null;
+        _IView ev = null ;
         
-        Path p = new Path(target);
+        _IPath p = createPath(target);
         p.setSession(session);
         p.setRequest(request);
         p.setResponse(response);
         
         baseRequest.setHandled(true);
-        
+        _IDatabase db = null ;
         try {
-            View view = p.invoke();
-            if (view instanceof RedirectorView){
-            	Database.getInstance().getCurrentTransaction().commit();
+        	db = getDatabase(); 
+        	db.open();
+            view = p.invoke();
+            if (view.isBeingRedirected()){
+            	db.getCurrentTransaction().commit();
             }
             view.write();
-            Database.getInstance().getCurrentTransaction().commit();
+            db.getCurrentTransaction().commit();
         }catch(Exception e){
         	try { 
-        		Database.getInstance().getCurrentTransaction().rollback();
+        		db.getCurrentTransaction().rollback();
         	}catch (SQLException ex){
         		ex.printStackTrace();
         	}
-            ExceptionView ev = new ExceptionView(p, e);
+            ev = createExceptionView(p, e);
             ev.write();
+        }finally {
+        	if (db != null ){
+        		db.close();
+        	}
         }
     }
 }

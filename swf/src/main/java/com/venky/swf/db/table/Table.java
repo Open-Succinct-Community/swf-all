@@ -316,7 +316,7 @@ public class Table<M extends Model> {
     	if (isReal()){
     		return columnDescriptors; 
     	}else {
-    		return Database.getInstance().getTable(getRealTableName()).columnDescriptors();
+			return Database.getTable(getRealTableName()).columnDescriptors();
     	}
     }
     
@@ -438,11 +438,11 @@ public class Table<M extends Model> {
 		@Override
         public String toString(){
             StringBuilder buff = new StringBuilder();
-            TypeRef<?> ref = Database.getInstance().getJdbcTypeHelper().getTypeRef(getJDBCType());
+			TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getJDBCType());
             
             buff.append(getName()).append(" ");
             if (isAutoIncrement()){
-                buff.append(Database.getInstance().getJdbcTypeHelper().getAutoIncrementInstruction());
+                buff.append(Database.getJdbcTypeHelper().getAutoIncrementInstruction());
             }else {
                 buff.append(ref.getSqlType());
                 if (ref.getSize() > 0 && getSize() > 0){ 

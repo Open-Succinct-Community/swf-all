@@ -29,7 +29,7 @@ import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
@@ -61,7 +61,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             this.includedFields.retainAll(Arrays.asList(includedFields));
         }
         
-        ControllerReflector<? extends Controller> ref = new ControllerReflector(path.controller().getClass(),Controller.class);
+        ControllerReflector<? extends Controller> ref = new ControllerReflector(path.getControllerClass(),Controller.class);
         singleRecordActions = ref.getMethods(new SingleRecordActionMatcher(ref));
     }
     
@@ -108,7 +108,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         }
 
         Class<?> returnType = getter.getReturnType();
-        TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
+        TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
         Control control = null;
         if (boolean.class.isAssignableFrom(returnType) || Boolean.class.isAssignableFrom(returnType)) {
             CheckBox cb = new CheckBox();

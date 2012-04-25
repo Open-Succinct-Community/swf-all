@@ -17,7 +17,7 @@ public class QueryCache {
 	private final ModelReflector ref ;
 	private final Table table;
 	public QueryCache(String tableName){
-		table = Database.getInstance().getTable(tableName);
+		table = Database.getTable(tableName);
 		ref = table.getReflector();
 	}
 	

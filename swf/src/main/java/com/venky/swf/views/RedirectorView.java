@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 
 /**
  *
@@ -42,11 +42,14 @@ public class RedirectorView extends View{
 
     
     
-    @Override
     public void write() throws IOException {
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/plain");
         response.sendRedirect(redirectUrl);
     }
-    
+
+    @Override
+    public boolean isBeingRedirected(){
+    	return true;
+    }
 }

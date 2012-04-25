@@ -16,7 +16,7 @@ import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.routing.Path;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Image;
@@ -119,7 +119,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                         Column column = row.createColumn(); 
 
                     	Method getter = getFieldGetter(fieldName);
-                        TypeConverter<?> converter = Database.getInstance().getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
+						TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
                         Control control = null;
                         
                         if (InputStream.class.isAssignableFrom(getter.getReturnType())){
@@ -136,7 +136,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                             if (!ObjectUtil.isVoid(parentDescription)){
                             	Object parentId = getter.invoke(record);
                             	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
-                            	String tableName = Database.getInstance().getTable(parentModelClass).getTableName().toLowerCase();
+								String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
                             	sValue = parentDescription;
                             	
                             	Path parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
