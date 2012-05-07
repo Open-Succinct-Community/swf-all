@@ -29,10 +29,11 @@ public interface User extends Model{
     public boolean authenticate(String password);
     public static final String USER_AUTHENTICATE = "user.authenticate" ;
    
-    
     public <M extends Model> Map<String,List<Integer>> getParticipationOptions(Class<M> modelClass);
+    public Map<String,List<Integer>> getParticipationOptions(Class<? extends Model> modelClass,Model model);
     public static final String GET_PARTICIPATION_OPTION = "get.participation.option";//++ModelClass.SimpleName
     
     public <M extends Model> Expression getDataSecurityWhereClause(Class<M> modelClass);
+    public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass,Model model);
     
 }

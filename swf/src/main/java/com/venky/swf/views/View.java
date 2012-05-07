@@ -4,19 +4,19 @@
  */
 package com.venky.swf.views;
 
-import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 
 /**
  *
  * @author venky
  */
 public abstract class View implements _IView{
-    private Path path;
-    public View(Path path){
+    private _IPath path;
+    public View(_IPath path){
         this.path = path;
     }
 
-    public Path getPath() {
+    public _IPath getPath() {
         return path;
     }
     public boolean isBeingRedirected(){

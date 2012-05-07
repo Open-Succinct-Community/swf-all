@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.venky.swf.db.model.reflection;
 
 import java.lang.annotation.Annotation;
@@ -9,14 +5,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.Database;
@@ -30,103 +26,69 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
-import com.venky.swf.db.annotations.column.validations.Mandatory;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.table.Table;
+import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 
-/**
- *
- * @author venky
- */
-public class ModelReflector {
+public class ModelReflector<M extends Model> {
+    private static final Map<Class<? extends Model> , ModelReflector>  modelReflectorByModelClass = new HashMap<Class<? extends Model>, ModelReflector>();
     
-    private static final Map<String , ModelReflector>  map = new HashMap<String, ModelReflector>();
-    public static <M extends Model> ModelReflector instance(Class<M> modelClass){
-    	MReflector<M> ref = MReflector.instance(modelClass);
-    	Class<? extends Model> realModelClass = getRealModelClass(ref);
-
-    	String tableName = Table.tableName(realModelClass);
-        ModelReflector reflector = map.get(tableName);
+    public static <M extends Model> ModelReflector<M> instance(Class<M> modelClass){
+    	ModelReflector<M> ref = modelReflectorByModelClass.get(modelClass);
+    	if (ref == null){
+    		synchronized (modelReflectorByModelClass) {
+				ref = modelReflectorByModelClass.get(modelClass);
+				if (ref == null){
+					TableReflector tr = TableReflector.instance(modelClass);
+					if (tr != null){
+						ref = new ModelReflector<M>(modelClass, tr );
+					}
+					modelReflectorByModelClass.put(modelClass, ref);
+				}
+			}
+    	}
+    	return ref;
+    }
         
-        if (reflector == null){
-	        synchronized(map){
-	            reflector = map.get(tableName);
-	            if (reflector == null){
-	                reflector = new ModelReflector(tableName);
-	                map.put(tableName, reflector);
-	            }
-	        }
-        }
-        
-        reflector.registerModelClass(modelClass);
-        return reflector;
-    }
+	private final Class<M> modelClass  ;  
+	private final TableReflector reflector ;
+	private ModelReflector(Class<M> modelClass,TableReflector reflector){
+		this.modelClass = modelClass;
+		this.reflector = reflector;
+	}
 
-    private SequenceSet<Class<? extends Model>> modelClasses  = new SequenceSet<Class<? extends Model>>();
-    
-    public <M extends Model> void  registerModelClass(Class<M> modelClass){
-    	if (!modelClasses.contains(modelClass)){
-    		modelClasses.add(modelClass);
-    	}
-    }
-    
-    private static <U extends Model> Class<U> getRealModelClass(MReflector<? extends Model> ref){
-    	Class<?> lastRealClass = null;
-    	List<Class<? extends Model>> modelHierarchyClasses = ref.getClassHierarchy(); 
-    	for (Class<?> claz:modelHierarchyClasses){
-    		IS_VIRTUAL isVirtual = claz.getAnnotation(IS_VIRTUAL.class);
-    		if (isVirtual != null){
-    			if (isVirtual.value()){
-    				lastRealClass = null;
-    			}else if (lastRealClass == null){
-    				lastRealClass = claz;
-    			}
-    		}else if (lastRealClass == null){
-    			lastRealClass = claz;
-    		}
-    	}
-    	if (lastRealClass == Model.class){
-    		lastRealClass = null;
-    	}
-    	return (Class<U>) lastRealClass;
-    }
-    
-    private final String tableName; 
-    private ModelReflector(String tableName){
-    	this.tableName = tableName;
-    }
-    
-    public String getTableName(){
-    	return tableName;
-    }
-    
-    public boolean reflects(Class<? extends Model> other){
-    	return modelClasses.contains(other);
-    }
-    
-    public boolean canReflect(Object o){
-    	for (Class<? extends Model> model: modelClasses){
-    		if (model.isInstance(o)){
-    			return true;
-    		}
-    	}
-    	return false;
-    }
+	public Class<M> getModelClass(){
+		return modelClass;
+	}
+
+	public String getTableName() {
+ 		return reflector.getTableName();
+ 	}
+ 	
+	public Class<? extends Model> getRealModelClass(){
+		return TableReflector.getRealModelClass(getModelClass());
+	}
+	
+	public boolean reflects(Class<? extends Model> referredModelClass) {
+		return reflector.reflects(referredModelClass);
+	}
+
+	public boolean canReflect(Object o) {
+		return reflector.canReflect(o);
+	}
 
     public String getDescriptionColumn(){
-        for (Class<? extends Model> modelClass: modelClasses){
-        	MReflector<? extends Model> ref = MReflector.instance(modelClass);
-            HAS_DESCRIPTION_COLUMN descColumn = ref.getAnnotation(HAS_DESCRIPTION_COLUMN.class);
-            if (descColumn != null){
-            	String column = descColumn.value();
-                if (getFields().contains(column)){
-                	return column;
-                }
+    	HAS_DESCRIPTION_COLUMN descColumn = getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+    	
+        if (descColumn != null){
+        	String column = descColumn.value();
+            if (getFields().contains(column)){
+            	return column;
             }
         }
         if (getFields().contains("NAME")){
@@ -135,28 +97,28 @@ public class ModelReflector {
         return "ID";
     }
     
-    private void loadMethods(List<Method> into , MethodMatcher matcher ){
-    	if (!into.isEmpty()){
-    		return;
-    	}
-    	synchronized (into) {
-    		if (into.isEmpty()){
-    			HashSet<String> signatures = new HashSet<String>();
-    			
-    			for (Class<? extends Model> modelClass:modelClasses){
-    				List<Method> matchingMethods = MReflector.instance(modelClass).getMethods(matcher);
-    				for (Method m: matchingMethods){
-    					String signature = Reflector.computeMethodSignature(m);
-    					if (!signatures.contains(signature)){
-    						into.add(m);
-    						signatures.add(signature);
-    					}
-    				}
-				}
-    		}		
-		}
+    public void set(Model record, String fieldName, Object value){
+        Method getter = getFieldGetter(fieldName);
+        Method setter = getFieldSetter(fieldName);
+
+		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
+
+        try {
+        	if (ObjectUtil.isVoid(value) && getColumnDescriptor(getter).isNullable()){
+                setter.invoke(record, getter.getReturnType().cast(null));
+    		}else {
+                setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
+        	}
+        } catch (Exception e1) {
+            throw new RuntimeException(e1);
+        }
+
     }
-    
+
+	public void loadMethods(List<Method> into, MethodMatcher matcher) {
+		reflector.loadMethods(getModelClass(), into, matcher);
+	}
+
     private List<Method> fieldGetters = new ArrayList<Method>(); 
     public List<Method> getFieldGetters(){
     	loadMethods(fieldGetters, getFieldGetterMatcher());
@@ -169,16 +131,16 @@ public class ModelReflector {
     	return fieldSetters;
     }
     
-    private List<Method> referredModelGetters = new ArrayList();
+    private List<Method> referredModelGetters = new ArrayList<Method>();
     public List<Method> getReferredModelGetters(){ 
     	loadMethods(referredModelGetters, getReferredModelGetterMatcher());
     	return referredModelGetters;
     }
     
-    private List<Method> parentModelGetters = new ArrayList<Method>();
-    public List<Method> getParentModelGetters(){
-    	loadMethods(parentModelGetters,getParentModelGetterMatcher());
-    	return parentModelGetters;
+    private List<Method> participantModelGetters = new ArrayList<Method>();
+    public List<Method> getParticipantModelGetters(){
+    	loadMethods(participantModelGetters, getParticipantModelGetterMatcher());
+    	return participantModelGetters;
     }
     
     private List<Method> childModelGetters = new ArrayList<Method>();
@@ -228,6 +190,16 @@ public class ModelReflector {
     	return getColumns(new RealFieldMatcher());
     }
     
+    public List<String> getColumns(FieldMatcher matcher){
+    	List<String> fields = getFields(matcher);
+    	List<String> columns = new IgnoreCaseList();
+    	for (String field:fields){
+    		columns.add(getColumnDescriptor(field).getName());
+    	}
+    	return columns;
+    }
+
+
     public boolean isFieldEditable(String fieldName){
         return isFieldVisible(fieldName) && !isFieldVirtual(fieldName) && !isFieldProtected(fieldName);
     }
@@ -238,9 +210,9 @@ public class ModelReflector {
     
     public boolean isFieldHidden(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return isAnnotationPresent(getter,HIDDEN.class);
+    	HIDDEN hidden = getAnnotation(getter,HIDDEN.class);
+    	return (hidden == null ? false : hidden.value());
 	}
-    
     
     public boolean isHouseKeepingField(String fieldName){
     	Method getter = getFieldGetter(fieldName);
@@ -251,30 +223,25 @@ public class ModelReflector {
         Method getter = getFieldGetter(fieldName);
         return  isAnnotationPresent(getter,PASSWORD.class);
     }
-    
+
     public boolean isFieldProtected(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return isAnnotationPresent(getter,PROTECTED.class);
+    	PROTECTED p = getAnnotation(getter,PROTECTED.class);
+    	return (p == null ? false : p.value());
     }
     
     public boolean isFieldVirtual(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	return isAnnotationPresent(getter,IS_VIRTUAL.class);
+    	IS_VIRTUAL p = getAnnotation(getter,IS_VIRTUAL.class);
+    	return (p == null ? false : p.value());
     }
+    
     
     public boolean isFieldEnumeration(String fieldName){
     	Method getter = getFieldGetter(fieldName);
     	return isAnnotationPresent(getter,Enumeration.class);
     }
-    
-    public List<String> getColumns(FieldMatcher matcher){
-    	List<String> fields = getFields(matcher);
-    	List<String> columns = new IgnoreCaseList();
-    	for (String field:fields){
-    		columns.add(getColumnDescriptor(field).getName());
-    	}
-    	return columns;
-    }
+
     
     public String getFieldName(Method method){
         if (getFieldGetterMatcher().matches(method) ){
@@ -289,70 +256,59 @@ public class ModelReflector {
         return null;
     }
 
+
     private static final String[] getterPrefixes = new String[]{"get" , "is"};
     
+    private Map<String,Method> fieldGetterMap = new IgnoreCaseMap<Method>();
     public Method getFieldGetter(String fieldName){
-        StringBuilder unrecognizedGetters = new StringBuilder();
-        
-    	for (Class<? extends Model> reflectedClass: modelClasses){
-	        for (String getterPrefix:getterPrefixes){
-	            String getterName = getterPrefix + StringUtil.camelize(fieldName);
-        		try {
-	                Method getter = reflectedClass.getMethod(getterName, new Class<?>[]{});
-	                if (getFieldGetterMatcher().matches(getter)){
-	                    return getter;
-	                }
-	                unrecognizedGetters.append("GetterNotRecognized. Check Return type").append(" ").append(getterName);
-                }catch(NoSuchMethodException ex){
-                    unrecognizedGetters.append(ex.toString()).append(" ").append(getterName);
-                }catch (SecurityException ex){
-                    unrecognizedGetters.append(ex.toString()).append(" ").append(getterName);
-                }
-        	}
-        }
-        throw new RuntimeException(unrecognizedGetters.toString());
-    }
-    
-    public Method getFieldSetter(String fieldName){
-    	StringBuilder unrecognizedSetters = new StringBuilder();
-    	
-        Method getter = getFieldGetter(fieldName);
-    	String setterName = "set"+StringUtil.camelize(fieldName);
-    	for (Class<? extends Model> reflectedClass: modelClasses){
-	        try {
-                Method setter = reflectedClass.getMethod(setterName,getter.getReturnType());
-                if (getFieldSetterMatcher().matches(setter)){
-                    return setter; 
-                }else {
-                    unrecognizedSetters.append(reflectedClass.getName() + "." + setter.getName() +" not recognized as a setter. Check Parameters and return type " );
-                }
-	        } catch (NoSuchMethodException ex) {
-                unrecognizedSetters.append(ex.toString() + reflectedClass.getName() + "." + setterName + " ");
-	        } catch (SecurityException ex) {
-                unrecognizedSetters.append(ex.toString() + reflectedClass.getName() + "." + setterName + " ");
-	        }
+    	if (fieldGetterMap.isEmpty()){
+    		List<Method> fieldGetters = getFieldGetters();
+    		for (Method fieldGetter: fieldGetters){
+    			fieldGetterMap.put(getFieldName(fieldGetter), fieldGetter);
+    		}
     	}
-    	throw new RuntimeException(unrecognizedSetters.toString());
+    	Method getter = fieldGetterMap.get(fieldName);
+    	if (getter == null){
+    		String getterName = "get/is" + StringUtil.camelize(fieldName);
+    		throw new RuntimeException("Method " + getterName + "() with appropriate return type is missing");
+    	}
+    	return getter;
     }
     
+    private Map<String,Method> fieldSetterMap = new IgnoreCaseMap<Method>();
+    public Method getFieldSetter(String fieldName){
+    	if (fieldSetterMap.isEmpty()){
+    		List<Method> fieldSetters = getFieldSetters();
+    		for (Method fieldSetter: fieldSetters){
+    			fieldSetterMap.put(getFieldName(fieldSetter), fieldSetter);
+    		}
+    	}
+    	Method setter = fieldSetterMap.get(fieldName);
+    	if (setter == null){
+            Method getter = getFieldGetter(fieldName);
+        	String setterName = "set"+StringUtil.camelize(fieldName) +"(" + getter.getReturnType().getName() + ")";
+    		throw new RuntimeException("Method: public void " + setterName + " missing!");
+    	}
+    	return setter;
+    }
+
     public ColumnDescriptor getColumnDescriptor(String fieldName){
         return getColumnDescriptor(getFieldGetter(fieldName));
     }
-    
-    private Map<Method,ColumnDescriptor> columnDescriptors = new HashMap<Method,ColumnDescriptor>();
-    
-    public ColumnDescriptor getColumnDescriptor(Method getter){
+
+    private Map<String,ColumnDescriptor> columnDescriptors = new HashMap<String,ColumnDescriptor>();
+    public ColumnDescriptor getColumnDescriptor(Method getter ){
         if (!getFieldGetterMatcher().matches(getter)){
             throw new RuntimeException("Method:" + getter.getName() + " is not recognizable as a a FieldGetter");
         }
-
-        ColumnDescriptor cd = columnDescriptors.get(Reflector.computeMethodSignature(getter));
+        String getterSignature = Reflector.computeMethodSignature(getter);
+        ColumnDescriptor cd = columnDescriptors.get(getterSignature);
         if (cd != null){
         	return cd;
         }
          
         Map<Class<? extends Annotation>, Annotation> map = new HashMap<Class<? extends Annotation>, Annotation>();
-        for (Class<? extends Model> modelClass:modelClasses){
+        for (Class<? extends Model> modelClass:reflector.getSiblingModelClasses(getModelClass())){
         	MReflector<? extends Model> ref = MReflector.instance(modelClass);
         	//We could have simple called getAnnotation(getter,Annotation class) but that would mean looping multiple times for 
         	//each annotation needed. hence this optimization.
@@ -371,54 +327,131 @@ public class ModelReflector {
         IS_NULLABLE isNullable = (IS_NULLABLE)map.get(IS_NULLABLE.class);
         IS_AUTOINCREMENT isAutoIncrement = (IS_AUTOINCREMENT)map.get(IS_AUTOINCREMENT.class);
         IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
-        
-        cd = new ColumnDescriptor();
-        cd.setName(name == null ? getFieldName(getter) : name.value());
-		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
-        assert typeRef != null;
-        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
-        cd.setNullable(isNullable != null ? isNullable.value() : !getter.getReturnType().isPrimitive());
-        cd.setSize(size == null? typeRef.getSize() : size.value());
-        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
-        cd.setAutoIncrement(isAutoIncrement == null? false : true);
-        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
-        columnDescriptors.put(getter,cd);
+        cd = null;
+        if (name != null && !getFieldName(getter).equalsIgnoreCase(name.value())){
+        	// Check if there is a field by that name
+        	if (getFields().contains(name.value())){
+        		cd = getColumnDescriptor(name.value());
+        	}
+        }
+        if (cd == null){
+	        cd = new ColumnDescriptor();
+	        cd.setName(name == null ? getFieldName(getter) : name.value());
+			TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
+	        assert typeRef != null;
+	        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
+	        cd.setNullable(isNullable != null ? isNullable.value() : !getter.getReturnType().isPrimitive());
+	        cd.setSize(size == null? typeRef.getSize() : size.value());
+	        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
+	        cd.setAutoIncrement(isAutoIncrement == null? false : true);
+	        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
+        }
+        columnDescriptors.put(getterSignature,cd);
 
         return cd;
     }
-    
-    private final MethodMatcher getterMatcher = new GetterMatcher();
-    public  MethodMatcher getGetterMatcher(){
-        return getterMatcher;
-    }
 
-    private final MethodMatcher fieldGetterMatcher = new FieldGetterMatcher();
-    public MethodMatcher getFieldGetterMatcher() {
-        return fieldGetterMatcher;
-    }
-    
-    private final MethodMatcher fieldSetterMatcher = new FieldSetterMatcher();
-    public MethodMatcher getFieldSetterMatcher() {
-        return fieldSetterMatcher;
-    }
-    
-    private final MethodMatcher referredModelGetterMatcher=  new ReferredModelGetterMatcher();
-    public MethodMatcher getReferredModelGetterMatcher(){ 
-        return referredModelGetterMatcher;
-    }
-    
-    private final MethodMatcher parentModelGetterMatcher = new ParentModelGetterMatcher();
-    
-    private MethodMatcher getParentModelGetterMatcher() {
-    	return parentModelGetterMatcher;
-    }
-    
-    private final MethodMatcher childrenGetterMatcher=  new ChildrenGetterMatcher();
-    public MethodMatcher getChildrenGetterMatcher(){ 
-        return childrenGetterMatcher;
-    }
+    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){
+     	return reflector.isAnnotationPresent(getModelClass(), annotationClass);
+     }
 
-    public interface FieldMatcher {
+     public boolean isAnnotationPresent(Method method, Class<? extends Annotation> annotationClass ){
+     	return reflector.isAnnotationPresent(getModelClass() ,method,  annotationClass) ; 
+     }
+     
+
+     public <A extends Annotation> A getAnnotation(Class<A> annotationClass){
+     	return reflector.getAnnotation(getModelClass(), annotationClass);
+     }
+     
+     public <A extends Annotation> A getAnnotation(Method method, Class<A> annotationClass){
+     	return reflector.getAnnotation(getModelClass() ,method, annotationClass);
+     }
+     
+     public Class<? extends Model> getChildModelClass(Method method){
+         Class<?> possibleChildClass = null;
+         if (!getClassForests().contains(method.getDeclaringClass())){
+         	return null;
+         }
+         if (getGetterMatcher().matches(method)){
+             Class<?> retType = method.getReturnType();
+             if (List.class.isAssignableFrom(retType)){
+                 ParameterizedType parameterizedType = (ParameterizedType)method.getGenericReturnType();
+                 possibleChildClass = (Class<?>)parameterizedType.getActualTypeArguments()[0];
+             }else {
+                 possibleChildClass = retType;
+             }
+             if (Model.class.isAssignableFrom(possibleChildClass)){
+                 // Validate That child has a parentReferenceId. 
+                 Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
+                 ModelReflector<? extends Model> childReflector = ModelReflector.instance(childClass);
+                 for (String fieldName: childReflector.getFields()){
+                 	for (Class<? extends Model> parentModelClass: reflector.getSiblingModelClasses(getModelClass())){
+ 	                    if (fieldName.endsWith(StringUtil.underscorize(parentModelClass.getSimpleName() +"Id"))){
+ 	                        return childClass;
+ 	                    }
+                 	}
+                 }
+             }
+         }
+         return null;
+     }
+
+
+     public Class<? extends Model> getReferredModelClass(Method method){
+     	if (!getClassForests().contains(method.getDeclaringClass())) {
+     		return null;
+     	}
+         Class<? extends Model> referredModelClass = null;
+         Class<?> possibleReferredModelClass = method.getReturnType();
+         if (Model.class.isAssignableFrom(possibleReferredModelClass) && getGetterMatcher().matches(method)){
+             String referredIdFieldName = getReferredModelIdFieldName(method);
+             if (getFields().contains(referredIdFieldName)){
+                 referredModelClass = (Class<? extends Model>)possibleReferredModelClass;
+             }
+          }
+         return referredModelClass;
+         
+     }
+
+     public String getReferredModelIdFieldName(Method parentGetter){
+		return StringUtil.underscorize(parentGetter.getName().substring(3) + "Id");
+	}
+
+
+
+    public Method getReferredModelGetterFor(Method referredModelIdGetter){
+        if (!getFieldGetterMatcher().matches(referredModelIdGetter)){
+            return null;
+        }
+        String methodName = referredModelIdGetter.getName();
+        if (methodName.startsWith("get") && methodName.endsWith("Id") && !methodName.equals("getId") && 
+        		(referredModelIdGetter.getReturnType() == int.class || referredModelIdGetter.getReturnType() == Integer.class)){
+            String referredModelMethodName = methodName.substring(0,methodName.length()-"Id".length());
+        	for (Class<? extends Model> modelClass : reflector.getSiblingModelClasses(getModelClass()) ){
+        		try {
+                	Method referredModelGetter = modelClass.getMethod(referredModelMethodName);
+                    if (Model.class.isAssignableFrom(referredModelGetter.getReturnType())){
+                        return referredModelGetter;
+                    }
+        		}catch (NoSuchMethodException ex){
+        			//
+        		}
+        	}
+        }
+        return null;
+    }
+	public SequenceSet<Class<? extends Model>> getClassHierarchies() {
+		return reflector.getClassHierarchies(getModelClass());
+	}
+	
+	public SequenceSet<Class<?>> getClassForests(){
+		return reflector.getClassForests(getModelClass());
+	}
+
+
+    //Field MAtchers
+    private interface FieldMatcher {
         public boolean matches(ColumnDescriptor cd);
     }
 
@@ -432,6 +465,13 @@ public class ModelReflector {
             return cd.isVirtual();
         }
     }
+    
+    //Method Matcher
+    private final MethodMatcher getterMatcher = new GetterMatcher();
+    public  MethodMatcher getGetterMatcher(){
+        return getterMatcher;
+    }
+
     private class GetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
             String mName = method.getName();
@@ -446,111 +486,10 @@ public class ModelReflector {
 
         }
     }
-    
-    private class ReferredModelGetterMatcher implements MethodMatcher{
-        public boolean matches(Method method){
-            return getReferredModelClass(method) != null;
-        }
+    private final MethodMatcher fieldGetterMatcher = new FieldGetterMatcher();
+    public MethodMatcher getFieldGetterMatcher() {
+        return fieldGetterMatcher;
     }
-    
-    private class ParentModelGetterMatcher extends ReferredModelGetterMatcher{
-    	public boolean matches(Method method){
-            boolean isReferredModelGetter =  super.matches(method);
-            if (isReferredModelGetter){
-            	String referredModelIdFieldName = getReferredModelIdFieldName(method);
-            	return isAnnotationPresent(getFieldGetter(referredModelIdFieldName),Mandatory.class);
-            }
-            return isReferredModelGetter;
-        }
-    }
-    
-    public boolean isAnnotationPresent(Method method, Class<? extends Annotation> annotationClass ){
-    	for (Class<? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
-    		if (ref.isAnnotationPresent(method,annotationClass)){
-    			return true;
-    		}
-    	}
-    	return false;
-    }
-    
-    public <A extends Annotation> A getAnnotation(Method method, Class<A> annotationClass){
-    	A annotation = null; 
-    	for (Class <? extends Model> modelClass: modelClasses){
-    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
-    		annotation = ref.getAnnotation(method,annotationClass);
-    		if (annotation != null){
-    			break;
-    		}
-    	}
-    	return annotation;
-    }
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){
-    	return isAnnotationPresent((Class<? extends Model>)null, annotationClass);
-    }
-    public boolean isAnnotationPresent(Class<? extends Model> lowerBound, Class<? extends Annotation> annotationClass){
-    	for (Class <? extends Model> modelClass: modelClasses){
-    		if (lowerBound == null || modelClass.isAssignableFrom(lowerBound)){
-        		MReflector<? extends Model> ref = MReflector.instance(modelClass);
-        		if (ref.isAnnotationPresent(annotationClass)){
-        			return true;
-        		}
-    		}
-    	}
-    	return false;
-    }
-    public <A extends Annotation> A getAnnotation(Class<A> annotationClass){
-    	return getAnnotation((Class<? extends Model>)null, annotationClass);
-    }
-    public <A extends Annotation> A getAnnotation(Class<? extends Model> lowerBound, Class<A> annotationClass){
-    	A annotation = null;
-    	for (Class <? extends Model> modelClass: modelClasses){
-    		if (lowerBound == null || modelClass.isAssignableFrom(lowerBound)){
-	    		MReflector<? extends Model> ref = MReflector.instance(modelClass);
-	    		annotation = ref.getAnnotation(annotationClass);
-	    		if (annotation != null){
-	    			break;
-	    		}
-    		}
-    	}
-    	return annotation;
-    }
-        
-    public Class<? extends Model> getChildModelClass(Method method){
-        Class<?> possibleChildClass = null;
-        @SuppressWarnings("unchecked")
-		Class<? extends Model> parentModelClass = (Class<? extends Model>)method.getDeclaringClass();
-        if (!Model.class.isAssignableFrom(parentModelClass)){
-            return null;
-        }
-        if (getGetterMatcher().matches(method)){
-            Class<?> retType = method.getReturnType();
-            if (List.class.isAssignableFrom(retType)){
-                ParameterizedType parameterizedType = (ParameterizedType)method.getGenericReturnType();
-                possibleChildClass = (Class<?>)parameterizedType.getActualTypeArguments()[0];
-            }else {
-                possibleChildClass = retType;
-            }
-            if (Model.class.isAssignableFrom(possibleChildClass)){
-                // Validate That child has a parentReferenceId. 
-                Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
-                ModelReflector childReflector = ModelReflector.instance(childClass);
-                for (String fieldName: childReflector.getFields()){
-                    if (fieldName.endsWith(StringUtil.underscorize(parentModelClass.getSimpleName() +"Id"))){
-                        return childClass;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-    
-    private class ChildrenGetterMatcher implements MethodMatcher{
-        public boolean matches(Method method){
-            return (getChildModelClass(method) != null);
-        }
-    }
-    
     
     private class FieldGetterMatcher extends GetterMatcher{ 
         @Override
@@ -578,6 +517,12 @@ public class ModelReflector {
 
         }
     }
+
+    private final MethodMatcher fieldSetterMatcher = new FieldSetterMatcher();
+    public MethodMatcher getFieldSetterMatcher() {
+        return fieldSetterMatcher;
+    }
+
     private class FieldSetterMatcher extends SetterMatcher{ 
         @Override
         public boolean matches(Method method){
@@ -588,96 +533,38 @@ public class ModelReflector {
 
         }
     }
-
-    public Class<? extends Model> getReferredModelClass(Method method){
-        Class<? extends Model> modelClass = (Class<? extends Model>)method.getDeclaringClass();
-        if (!Model.class.isAssignableFrom(modelClass)){
-            return null;
-        }
-        ModelReflector reflector = ModelReflector.instance(modelClass);
-        Class<? extends Model> referredModelClass = null;
-        Class<?> possibleReferredModelClass = method.getReturnType();
-        if (Model.class.isAssignableFrom(possibleReferredModelClass) && getGetterMatcher().matches(method)){
-            String referredIdFieldName = getReferredModelIdFieldName(method);
-            if (reflector.getFields().contains(referredIdFieldName)){
-                referredModelClass = (Class<? extends Model>)possibleReferredModelClass;
-            }
-         }
-        return referredModelClass;
-        
+    
+    //RelationShip Methods matchers
+    private final MethodMatcher referredModelGetterMatcher=  new ReferredModelGetterMatcher();
+    public MethodMatcher getReferredModelGetterMatcher(){ 
+        return referredModelGetterMatcher;
     }
     
-    public String getReferredModelIdFieldName(Method parentGetter){
-    	return StringUtil.underscorize(parentGetter.getName().substring(3) + "Id");
-    }
-    
-    public Method getReferredModelGetterFor(Method referredModelIdGetter){
-        Class<? extends Model> modelClass = (Class<? extends Model>)referredModelIdGetter.getDeclaringClass();
-        if (!Model.class.isAssignableFrom(modelClass)){
-            return null;
+    private class ReferredModelGetterMatcher implements MethodMatcher{
+        public boolean matches(Method method){
+            return getReferredModelClass(method) != null;
         }
-        if (!getFieldGetterMatcher().matches(referredModelIdGetter)){
-            return null;
-        }
-        String methodName = referredModelIdGetter.getName();
-        if (methodName.startsWith("get") && methodName.endsWith("Id") && !methodName.equals("getId") && 
-        		(referredModelIdGetter.getReturnType() == int.class || referredModelIdGetter.getReturnType() == Integer.class)){
-            String referredModelMethodName = methodName.substring(0,methodName.length()-"Id".length());
-            try {
-                Method referredModelGetter = modelClass.getMethod(referredModelMethodName);
-                if (Model.class.isAssignableFrom(referredModelGetter.getReturnType())){
-                    return referredModelGetter;
-                }
-            } catch (Exception ex) {
-                //
-            }
-        }
-        return null;
-    }
-    
-    List<Class<? extends Model>> classHierarchies = new ArrayList<Class<? extends Model>>();
-    public List<Class<? extends Model>> getClassHierarchies(){
-    	if (classHierarchies.isEmpty()){
-    		synchronized (classHierarchies) {
-				if (classHierarchies.isEmpty()){
-					Set<Class<?>> classesAdded = new HashSet<Class<?>>();
-					
-					for (Class<? extends Model> modelClass : modelClasses){
-						for (Class <? extends Model> classInHeirarchy: MReflector.instance(modelClass).getClassHierarchy()){
-							if (!classesAdded.contains(classInHeirarchy)){ //Simpler to do a hash Lookup.
-								classHierarchies.add(classInHeirarchy);
-								classesAdded.add(classInHeirarchy);
-							}
-						}
-					}
-				}
-			}
-    	}
-    	return classHierarchies;
     }
 
-    private static class MReflector<M extends Model> extends Reflector<Model, M>{
-    	
-        private static final Map<Class<? extends Model>, MReflector<? extends Model>> mreflectors = new HashMap<Class<? extends Model>, ModelReflector.MReflector<? extends Model>>();
-        
-        private static <M extends Model> MReflector<M> instance(Class<M> modelClass){
-        	MReflector<M> ref = (MReflector<M>)mreflectors.get(modelClass);
-        	if (ref == null){
-        		synchronized (mreflectors) {
-        			ref = (MReflector<M>)mreflectors.get(modelClass);
-        			if (ref == null){
-        				ref = new MReflector<M>(modelClass);
-        				mreflectors.put(modelClass, ref);
-        			}
-    			}
-        	}
-        	return ref;
-        }
-    	
-		private MReflector(Class<M> reflectedClass) {
-			super(reflectedClass, Model.class);
-		}
+    private final MethodMatcher participantModelGetterMatcher = new ParticipantModelGetterMatcher();
+    public MethodMatcher getParticipantModelGetterMatcher(){ 
+        return participantModelGetterMatcher;
     }
     
+    private class ParticipantModelGetterMatcher extends ReferredModelGetterMatcher{
+        public boolean matches(Method method){
+            return isAnnotationPresent(method, PARTICIPANT.class) && super.matches(method);
+        }
+    }
+    private final MethodMatcher childrenGetterMatcher=  new ChildrenGetterMatcher();
+    public MethodMatcher getChildrenGetterMatcher(){ 
+        return childrenGetterMatcher;
+    }
+
+    private class ChildrenGetterMatcher implements MethodMatcher{
+        public boolean matches(Method method){
+            return (getChildModelClass(method) != null);
+        }
+    }
 
 }

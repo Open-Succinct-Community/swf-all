@@ -32,7 +32,7 @@ import com.venky.digest.Encryptor;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -62,7 +62,7 @@ import com.venky.swf.views.model.ModelShowView;
 public class ModelController<M extends Model> extends Controller {
 
     private Class<M> modelClass;
-    private ModelReflector reflector ;
+    private ModelReflector<M> reflector ;
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
@@ -70,24 +70,30 @@ public class ModelController<M extends Model> extends Controller {
         
     }
     
-    private List<Method> getReferredModelGetters(Map<ModelReflector,List<Method>> referredModelGettersMap, ModelReflector referredModelReflector){
-    	List<Method> referredModelGetters = new  ArrayList<Method>();
-		referredModelGetters.addAll(referredModelGettersMap.get(referredModelReflector));
-    	return referredModelGetters;
+    private List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
+    	List<Method> rmg = referredModelGettersMap.get(referredTableName);
+    	if (rmg == null){
+    		rmg = new ArrayList<Method>();
+    	}
+    	return rmg;
     }
-    
+
     public Expression getWhereClause(){
     	Expression where = new Expression(Conjunction.AND);
-		Map<ModelReflector, List<Method>> referredModelGetterMap = new HashMap<ModelReflector, List<Method>>();
+		Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
 
 		for (Method referredModelGetter : reflector.getReferredModelGetters()){
 			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-			ModelReflector referredModelReflector = ModelReflector.instance(referredModelClass);
-			List<Method> getters = referredModelGetterMap.get(referredModelReflector);
+			
+			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+			String referredTableName = referredModelReflector.getTableName();
+			
+			List<Method> getters = referredModelGetterMap.get(referredTableName);
 			if (getters == null){
 				getters = new ArrayList<Method>();
-				referredModelGetterMap.put(referredModelReflector, getters);
+				referredModelGetterMap.put(referredTableName, getters);
 			}
+			
 			getters.add(referredModelGetter);
 		}
 		
@@ -103,17 +109,18 @@ public class ModelController<M extends Model> extends Controller {
     			//last model is self.
     			break;
     		}
-    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector());
+    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector().getTableName());
     		
-    		if (referredModelGetters.isEmpty()){
+    		if (referredModelGetters.isEmpty() || mi.getId() == null){
     			continue;
     		}
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
-	    	ModelReflector referredModelReflector = mi.getReflector();
+	    	ModelReflector<?> referredModelReflector = mi.getReflector();
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
-	    		if (referredModelReflector.getChildModelClass(childGetter).isAssignableFrom(modelClass)){
-	            	CONNECTED_VIA join = reflector.getAnnotation(childGetter,CONNECTED_VIA.class);
+	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
+	    		if (reflector.reflects(childModelClass)){
+	            	CONNECTED_VIA join = referredModelReflector.getAnnotation(childGetter,CONNECTED_VIA.class);
 	            	if (join == null){
 	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
 	            		for (Method referredModelGetter: referredModelGetters){ 
@@ -217,7 +224,11 @@ public class ModelController<M extends Model> extends Controller {
     	}
     	newRaw.setNewRecord(true);
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, newrecord);
-        mev.getIncludedFields().remove("ID");
+		for (String field : reflector.getFields()){
+			if (reflector.isHouseKeepingField(field)){
+		        mev.getIncludedFields().remove(field);
+			}
+		}
         return dashboard(mev);
     	
     }
@@ -274,7 +285,11 @@ public class ModelController<M extends Model> extends Controller {
 		record.setCreatorUserId(getSessionUser().getId());
 		record.setUpdaterUserId(getSessionUser().getId());
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
-        mev.getIncludedFields().remove("ID");
+		for (String field : reflector.getFields()){
+			if (reflector.isHouseKeepingField(field)){
+		        mev.getIncludedFields().remove(field);
+			}
+		}
         return dashboard(mev);
     }
 
@@ -332,6 +347,7 @@ public class ModelController<M extends Model> extends Controller {
         }
         return formFields;
     }
+      
     private View  persistInDB(){
         HttpServletRequest request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
@@ -364,23 +380,9 @@ public class ModelController<M extends Model> extends Controller {
         while (e.hasNext()) {
             String name = e.next();
             String fieldName = fields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
-
             if (fieldName != null) {
                 Object value = formFields.get(fieldName);
-                Method getter = reflector.getFieldGetter(fieldName);
-                Method setter = reflector.getFieldSetter(fieldName);
-
-				TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
-
-                try {
-                	if (ObjectUtil.isVoid(value) && reflector.getColumnDescriptor(getter).isNullable()){
-                        setter.invoke(record, getter.getReturnType().cast(null));
-            		}else {
-                        setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
-                	}
-                } catch (Exception e1) {
-                    throw new RuntimeException(e1);
-                }
+                reflector.set(record, fieldName, value);
             }else if ( name.startsWith("_SUBMIT")){
             	buttonName = name;
             }else if ( name.startsWith("_FORM_DIGEST")){
@@ -447,8 +449,44 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View autocomplete(String value) {
-    	ModelReflector reflector = ModelReflector.instance(modelClass);
-        return super.autocomplete(modelClass,getWhereClause(), reflector.getDescriptionColumn(), value);
+    	List<ModelInfo> mes = getPath().getModelElements();
+    	Expression where = new Expression(Conjunction.AND);
+    	
+    	if (mes.size() >= 2){
+    		ModelInfo secondLast = mes.get(mes.size()-2);
+    		String[] splits = secondLast.getAction().split("autoComplete"); 
+    		if (splits.length == 2){
+    			String autoCompleteFieldName = splits[1];
+    			
+        		ModelReflector<? extends Model> autoCompletedModelReflector = secondLast.getReflector();
+        		Class<? extends Model> autoCompletedModelClass = autoCompletedModelReflector.getModelClass();
+        		Model autoCompletedModel = null;
+        		if (secondLast.getId() != null){
+            		autoCompletedModel = Database.getTable(autoCompletedModelClass).get(secondLast.getId());
+        		}else {
+        			autoCompletedModel = Database.getTable(autoCompletedModelClass).newRecord();
+        		}
+        		List<String> fields = autoCompletedModelReflector.getFields();
+        		Map<String,Object> formData = getFormFields(getPath().getRequest());
+        		for (String fieldName : formData.keySet()){
+        			if (fields.contains(fieldName) && !fieldName.equalsIgnoreCase(autoCompleteFieldName)){
+        				Object ov = formData.get(fieldName); 
+        				autoCompletedModelReflector.set(autoCompletedModel,fieldName, ov);
+        			}
+        		}
+        		if (autoCompletedModelReflector.isAnnotationPresent(autoCompletedModelReflector.getFieldGetter(autoCompleteFieldName),PARTICIPANT.class)){
+            		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(autoCompletedModelClass,autoCompletedModel);
+            		if (pOptions.containsKey(autoCompleteFieldName)){
+            			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
+            			if (!autoCompleteFieldValues.isEmpty()){
+            				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
+            			}
+            		}
+        		}
+    		}
+    	}
+    	where.add(getWhereClause());
+        return super.autocomplete(modelClass, where, reflector.getDescriptionColumn(), value);
     }
     
     

@@ -1,5 +1,6 @@
 package com.venky.swf.db.extensions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,11 +33,17 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 	
 	public void invoke(Object... context) {
 		User user = (User)context[0];
-		String fieldName =  (String)context[1];
-		Map<String,List<Integer>> participatingOptions = (Map<String, List<Integer>>)context[2];
-		List<Integer> allowedValues = getAllowedFieldValues(user,fieldName);
+		M model = (M) context[1];
+		String fieldName =  (String)context[2];
+		Map<String,List<Integer>> participatingOptions = (Map<String, List<Integer>>)context[3];
+		List<Integer> allowedValues = getAllowedFieldValues(user,model,fieldName);
 		if (allowedValues != null){ 
-			participatingOptions.put(fieldName, allowedValues);
+			List<Integer> existing = participatingOptions.get(fieldName);
+			if (existing == null){
+				existing = new ArrayList<Integer>();
+				participatingOptions.put(fieldName, existing);
+			}
+			existing.addAll(allowedValues);
 		}
 	}
 
@@ -46,5 +53,5 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 	 * @param fieldName
 	 * @return Allowed field values for passed used. <code>null</code> implies all values are allowed. 
 	 */
-	protected abstract List<Integer> getAllowedFieldValues(User user, String fieldName);
+	protected abstract List<Integer> getAllowedFieldValues(User user, M partiallyFilledModel, String fieldName);
 }

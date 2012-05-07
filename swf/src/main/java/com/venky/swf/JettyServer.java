@@ -45,20 +45,34 @@ public class JettyServer {
 
 	public static void main(String[] args) throws Exception {
 		String port = System.getenv("PORT");
-		if (ObjectUtil.isVoid(port)) {
+		if (ObjectUtil.isVoid(port)){
 			port = "8080";
 		}
-
+		
 		JettyServer s = new JettyServer(Integer.valueOf(port));
 		s.start();
 	}
 
+	public boolean isDevelopmentEnvironment(){
+		String environment = Config.instance().getProperty("swf.env","development");
+		if ("development".equalsIgnoreCase(environment)){
+			return true;
+		}
+		return false;
+	}
+	
 	public void start() throws Exception {
-		addDirectoryWatches();
+		if (isDevelopmentEnvironment()){
+			addDirectoryWatches();
+		}
 		Server server = new Server(this.port);
 		server.setGracefulShutdown(100);
 		Router router = Router.instance();
-		router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
+		if (isDevelopmentEnvironment()){
+			router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
+		}else {
+			router.setLoader(getClass().getClassLoader());
+		}
 		SessionHandler sessionHandler = new SessionHandler();
 		sessionHandler.setHandler(router);
 		server.setHandler(sessionHandler);

@@ -69,13 +69,12 @@ public class Path implements _IPath{
     			}
     		}
     		if (isModel && isUser && user.getClass().getClassLoader() != getClass().getClassLoader()){
-				user = Database.getTable(User.class).get(user.getId()); // Reload the user with new class loader.
-    			getSession().setAttribute("user", user);
+				User reloadedUser = Database.getTable(User.class).get(user.getId()); // Reload the user with new class loader.
+    			getSession().setAttribute("user", reloadedUser);
+    			return reloadedUser;
     		}else {
-    			user = null;
+    			return null;
     		}
-    		//ClassLoaded may be reloaded force relogin. 
-    		return (User)user; 
     	}
     }
 
@@ -135,16 +134,16 @@ public class Path implements _IPath{
     }
     
     public static class ModelInfo{
-    	private ModelReflector reflector;
+    	private ModelReflector<? extends Model> reflector;
     	private Integer id;
     	private String action = "index";
     	public ModelInfo(Class<? extends Model> modelClass){
-    		reflector = ModelReflector.instance(modelClass);
+    		this.reflector = ModelReflector.instance(modelClass);
     	}
-    	public ModelReflector getReflector(){
+    	public ModelReflector<? extends Model> getReflector(){
     		return reflector;
     	}
-		
+    	
 		public Integer getId() {
 			return id;
 		}

@@ -14,11 +14,11 @@ import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
 import com.venky.swf.controller.annotations.Unrestricted;
-import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -102,15 +102,14 @@ public class Controller {
     public <U extends User> U getSessionUser(){
     	return (U)getPath().getSessionUser();
     }
-    public Class<? extends User> getUserClass(){
-		return Database.getTable(User.class).getModelClass(); //Ensures correct model class is seen.
-    }
+    
+    //Can be cast to any user model class as the proxy implements all the user classes.
     protected User getUser(String username){
-        Select q = new Select().from(getUserClass());
-        String nameColumn = ModelReflector.instance(getUserClass()).getColumnDescriptor("name").getName();
+        Select q = new Select().from(User.class);
+        String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor("name").getName();
         q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(username)));
         
-		List<? extends User> users  = q.execute(getUserClass());
+		List<? extends User> users  = q.execute();
         if (users.size() == 1){
         	return users.get(0);
         }
@@ -171,10 +170,15 @@ public class Controller {
     public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
-        XMLElement elem = null ;
-        ModelReflector reflector = ModelReflector.instance(modelClass);
+        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+        ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
+
+        if (fd.isNullable()){
+        	createEntry(root, "-Not Selected-", " ");
+        }
+
         Select q = new Select().from(modelClass);
-        String columnName = reflector.getColumnDescriptor(fieldName).getName();
+        String columnName = fd.getName();
         Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);
         where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
@@ -182,9 +186,7 @@ public class Controller {
         List<M> records = q.execute(modelClass);
         for (M record:records){
             try {
-                elem = root.createChildElement("entry");
-                elem.setAttribute("name", reflector.getFieldGetter(fieldName).invoke(record));
-                elem.setAttribute("id", record.getId());
+            	createEntry(root,reflector.getFieldGetter(fieldName).invoke(record),record.getId());
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             } catch (IllegalArgumentException ex) {
@@ -194,6 +196,11 @@ public class Controller {
             }
         }
         return new BytesView(path, String.valueOf(doc).getBytes());
+    }
+    private void createEntry(XMLElement root,Object name, Object id){
+        XMLElement elem = root.createChildElement("entry");
+        elem.setAttribute("name", name);
+        elem.setAttribute("id", id);
     }
     
 }

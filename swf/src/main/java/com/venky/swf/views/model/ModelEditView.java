@@ -102,7 +102,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     private Row rpadLastRow(Table table){
         Row r = getRow(table, false);
         if (r.numColumns() < getNumColumnsPerRow()){
-            r.createColumn(getNumColumnsPerRow() - r.numColumns());
+        	r.createColumn(getNumColumnsPerRow() - r.numColumns());
         }
         return r;
     }

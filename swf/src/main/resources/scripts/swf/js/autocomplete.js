@@ -8,12 +8,18 @@ $(function(){
         var autocompleteurl = $(this).attr("autocompleteurl");
         var name=$(this).attr("name");
         var hidden_field_name=name.substring("_AUTO_COMPLETE_".length, name.length);
+        var $inputs = $('form:first :input[name$="_ID"]:not([name^="_AUTO"])')
+        var values = {} ;
+        $inputs.each(function() { 
+          values[this.name] = $(this).val();
+        });
+
         $(this).autocomplete({ 
             source: function(request,response){ 
                     $.ajax({ 
                       url: autocompleteurl + request.term ,
                       dataType: "xml",
-                      data: { maxRows: 12, q: request.term }, 
+                      data: values, //{ maxRows: 12, q: request.term ,f: values }, 
                       success:   function(xmlresponse){ 
                                     response( $('entry',xmlresponse).map(  function(){ 
                                         return { label: $(this).attr("name"), value:  $(this).attr("name") , id: $(this).attr("id") };

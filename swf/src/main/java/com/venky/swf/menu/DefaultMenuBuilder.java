@@ -83,12 +83,12 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     		return true;
     	}
     	
-    	ModelReflector ref = ModelReflector.instance(modelClass);
-        if (!ref.isAnnotationPresent(modelClass,annotationFilter)) {
+    	ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+        if (!ref.isAnnotationPresent(annotationFilter)) {
         	return false;
         }
         
-        Annotation a = ref.getAnnotation(modelClass,annotationFilter);
+        Annotation a = ref.getAnnotation(annotationFilter);
         
         try {
 			Method value = annotationFilter.getDeclaredMethod("value");

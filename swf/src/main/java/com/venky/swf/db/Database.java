@@ -255,8 +255,8 @@ public class Database implements _IDatabase{
                 if (!className.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)){
 					Table table = new Table(modelClass);
 					table.setExistingInDatabase(false);
-					String tableName = table.getTableName();
-					if (!tables.containsKey(tableName)) {
+					String tableName = table.getTableName(); 
+					if (table.getRealTableName() != null && !tables.containsKey(tableName)) {
 						tables.put(table.getTableName(), table);
 					}
 				}

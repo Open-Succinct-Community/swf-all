@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 
 public class SWFClassLoader extends ClassLoader {
@@ -49,22 +50,22 @@ public class SWFClassLoader extends ClassLoader {
 		String loc = name.replace('.', '/') + ".class";
 		for (File file : pathsHandled){
 			try {
-				InputStream classStream = null;
+				byte[] clazzByte = null;
 				if (file.isDirectory()){
 					File classFile = new File(file,loc);
 					if (!classFile.exists()){
 						continue;
 					}
-					classStream = new FileInputStream(classFile);
+					clazzByte = StringUtil.readBytes(new FileInputStream(classFile));
 				}else {
 					JarFile jf = new JarFile(file);
 					JarEntry entry = jf.getJarEntry(loc);
 					if (entry == null){
 						continue;
 					}
-					classStream = jf.getInputStream(entry);
+					clazzByte = StringUtil.readBytes(jf.getInputStream(entry));
+					jf.close();
 				}
-				byte[] clazzByte = StringUtil.readBytes(classStream);
 				return defineClass(name, clazzByte, 0, clazzByte.length);
 			}catch (IOException e) {
 				continue;
@@ -72,5 +73,31 @@ public class SWFClassLoader extends ClassLoader {
 		}
 	
 		return super.loadClass(name);
+	}
+	public InputStream getResourceAsStream(String name) {
+		for (File file : pathsHandled){
+			try {
+				byte[] clazzByte = null;
+				if (file.isDirectory()){
+					File classFile = new File(file,name);
+					if (!classFile.exists()){
+						continue;
+					}
+					clazzByte = StringUtil.readBytes(new FileInputStream(classFile));
+				}else {
+					JarFile jf = new JarFile(file);
+					JarEntry entry = jf.getJarEntry(name);
+					if (entry == null){
+						continue;
+					}
+					clazzByte = StringUtil.readBytes(jf.getInputStream(entry));
+					jf.close();
+				}
+				return new ByteArrayInputStream(clazzByte);
+			}catch(IOException e){
+				continue;
+			}
+		}
+		return super.getResourceAsStream(name);
 	}
 }

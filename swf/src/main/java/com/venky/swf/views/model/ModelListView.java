@@ -16,7 +16,9 @@ import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Image;
@@ -81,7 +83,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         for (M record : records) {
-        	if (!record.isAccessibleBy(getPath().getSessionUser(),getModelClass())){
+        	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
         		continue;
         	}
             Row row = table.createRow();
@@ -139,7 +141,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 								String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
                             	sValue = parentDescription;
                             	
-                            	Path parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
+                            	_IPath parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
                             	if (parentTarget.canAccessControllerAction()){
                                 	control = new Link(parentTarget.getTarget());
                                 	control.setText(sValue);

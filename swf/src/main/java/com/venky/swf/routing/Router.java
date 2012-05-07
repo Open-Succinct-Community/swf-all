@@ -118,7 +118,7 @@ public class Router extends AbstractHandler {
 	private _IView createExceptionView(_IPath p, Throwable th){
 		try {
 			Class evc = getExceptionViewClass();
-			_IView ev = (_IView) evc.getConstructor(getPathClass(),Throwable.class).newInstance(p,th);
+			_IView ev = (_IView) evc.getConstructor(_IPath.class,Throwable.class).newInstance(p,th);
 			return ev;
 		}catch (Exception e){
 			throw new RuntimeException(e);

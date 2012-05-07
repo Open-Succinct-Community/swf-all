@@ -13,6 +13,7 @@ import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
@@ -41,13 +42,13 @@ import com.venky.swf.sql.Update;
 public class Table<M extends Model> {
     private final String tableName ;
     private final Class<M> modelClass;
-    private final ModelReflector reflector;
-    public ModelReflector getReflector() {
+    private final ModelReflector<M> reflector;
+    public ModelReflector<M> getReflector() {
 		return reflector;
 	}
     public boolean isReal(){
     	if (reflector != null ){
-        	IS_VIRTUAL isVirtual = reflector.getAnnotation(modelClass,IS_VIRTUAL.class);
+        	IS_VIRTUAL isVirtual = reflector.getAnnotation(IS_VIRTUAL.class);
         	if (isVirtual != null && isVirtual.value()) {
         		return false;
         	}
@@ -166,11 +167,16 @@ public class Table<M extends Model> {
     
     private void createFields(CreateTable q){
         List<String> fields = reflector.getRealFields();
+        SequenceSet<String> columnSpecs = new SequenceSet<String>();
+        
         Iterator<String> fieldIterator = fields.iterator();
         while( fieldIterator.hasNext() ){
             String fieldName = fieldIterator.next();
             ColumnDescriptor d = reflector.getColumnDescriptor(fieldName);
-            q.addColumn(d.toString());
+            columnSpecs.add(d.toString());
+        }
+        for (String columnSpec:columnSpecs){
+            q.addColumn(columnSpec);
         }
     }
     
@@ -440,10 +446,11 @@ public class Table<M extends Model> {
             StringBuilder buff = new StringBuilder();
 			TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getJDBCType());
             
-            buff.append(getName()).append(" ");
+            buff.append(getName());
             if (isAutoIncrement()){
                 buff.append(Database.getJdbcTypeHelper().getAutoIncrementInstruction());
             }else {
+            	buff.append(" ");
                 buff.append(ref.getSqlType());
                 if (ref.getSize() > 0 && getSize() > 0){ 
                     buff.append("(").append(getSize()); 

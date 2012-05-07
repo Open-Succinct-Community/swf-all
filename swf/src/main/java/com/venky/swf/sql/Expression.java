@@ -1,6 +1,7 @@
 package com.venky.swf.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -16,6 +17,35 @@ public class Expression {
 	String columnName = null;
 	List<BindVariable> values = new ArrayList<BindVariable>() ;
 	Operator op = null;
+	static final int CHUNK_SIZE = 30; 
+	public static Expression createExpression(String columnName, Operator op, Object... values){
+		if (values.length < CHUNK_SIZE){
+			return new Expression(columnName,op,values);
+		}
+		List<List<Object>> chunks = getValueChunks(Arrays.asList(values));
+		Expression e = new Expression(Conjunction.OR);
+		for (List<Object> chunk : chunks){
+			e.add(new Expression(columnName,op,chunk.toArray()));
+		}
+		return e;
+	}
+	
+	public static List<List<Object>> getValueChunks(List<Object> values){
+		List<List<Object>> chunks = new ArrayList<List<Object>>();
+		for (Object bv: values){
+			if (chunks.isEmpty()){
+				chunks.add(new ArrayList<Object>());
+			}
+			List<Object> aChunk = chunks.get(chunks.size()-1);
+			if (aChunk.size() >= CHUNK_SIZE){
+				aChunk = new ArrayList<Object>();
+				chunks.add(aChunk);
+			}
+			aChunk.add(bv);
+		}
+		return chunks;
+	}
+	
 	public Expression(String columnName,Operator op, Object... values){
 		this.columnName = columnName; 
 		this.op = op ;
@@ -25,10 +55,8 @@ public class Expression {
 			}else {
 				this.values.add(new BindVariable(values[i]));
 			}
-			
 		}
 	}
-	
 	Conjunction conjunction = null;
 	public Expression(Conjunction conjunction){
 		this.conjunction = conjunction;

@@ -4,12 +4,13 @@
  */
 package com.venky.swf.views;
 
-import com.venky.core.util.ExceptionUtil;
-import com.venky.swf.path.Path;
-import com.venky.swf.views.controls.page.Body;
-import com.venky.swf.views.controls.page.text.Label;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import com.venky.core.util.ExceptionUtil;
+import com.venky.swf.path._IPath;
+import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls.page.text.Label;
 
 /**
  *
@@ -17,7 +18,7 @@ import java.io.StringWriter;
  */
 public class ExceptionView extends HtmlView{
     Throwable th;
-    public ExceptionView(Path path,Throwable th){
+    public ExceptionView(_IPath path,Throwable th){
         super(path);
         this.th = ExceptionUtil.getRootCause(th);
     }

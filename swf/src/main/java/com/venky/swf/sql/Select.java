@@ -114,7 +114,7 @@ public class Select extends SqlStatement{
         		return result;
         	}
 
-            Logger.getLogger(getClass().getName()).log(Level.FINEST, "Executing {0}", query);
+            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
             st = prepare();
             result = new ArrayList<M>();
             if (st.execute()){

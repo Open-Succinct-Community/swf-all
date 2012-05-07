@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -52,11 +53,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     private Record record = null;
     private Model proxy = null;
-    private ModelReflector reflector = null;
+    private ModelReflector<? extends Model> reflector = null;
     private List<String> virtualFields = new IgnoreCaseList();
     private String modelName = null;
 
-	public ModelReflector getReflector() {
+	public ModelReflector<? extends Model> getReflector() {
 		return reflector;
 	}
 	
@@ -130,7 +131,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        		return inModelImplClass.invoke(impl, args);
 	        	}
         	}catch(Exception ex){
-        		//
+        		//ex.printStackTrace();
         	}
         }
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);
@@ -175,7 +176,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	List<C> children = new ArrayList<C>();
     	
-    	ModelReflector childReflector = ModelReflector.instance(childClass);
+    	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
             if (fieldName.endsWith(StringUtil.underscorize(getModelName() +"Id"))){
                 children.addAll(getChildren(childClass, fieldName));
@@ -202,11 +203,23 @@ public class ModelInvocationHandler implements InvocationHandler {
 		return (M)proxy;
 	}
     
+    public List<User> getUsersAllowed(Class<? extends Model> asModel){
+    	List<User> users = new ArrayList<User>();
+    	if (!getReflector().reflects(asModel)){
+    		return users;
+    	}
+    	//TODO VENKY participantOptions reverse lookup.
+    	return users;
+    	
+    }
+    public boolean isAccessibleBy(User user){
+    	return isAccessibleBy(user, getReflector().getModelClass());
+    }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
     	if (!getReflector().reflects(asModel)){
     		return false;
     	}
-    	Map<String,List<Integer>> columnNameValues = ((User)user).getParticipationOptions(asModel);
+    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
     	if (columnNameValues.isEmpty()){
     		return true;
     	}	
@@ -228,7 +241,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     
 	@SuppressWarnings("unchecked")
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
-		ModelReflector ref = ModelReflector.instance(modelClass);
+		ModelReflector<M> ref = ModelReflector.instance(modelClass);
 		
 		List<Class<?>> modelImplClasses = modelImplsMap.get(modelClass)	;		
 		if (modelImplClasses == null){
@@ -253,7 +266,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 			throw new RuntimeException(e);
 		}
 	}
-	private static Object constructImpl(Class<?> implClass, Model m, ModelReflector ref){
+	private static Object constructImpl(Class<?> implClass, Model m, ModelReflector<?> ref){
 		Constructor c = null;
 		for (Class<?> clazz:ref.getClassHierarchies()){
 			try {
@@ -279,7 +292,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	
 	
 	private static <M extends Model> List<Class<?>> getModelImplClasses(Class<M> modelClass){
-		List<Class<? extends Model>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
+		SequenceSet<Class<? extends Model>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
 		List<Class<?>> modelImplClasses = new ArrayList<Class<?>>();
 		
 		for (Class<?> c : modelClasses){
@@ -305,13 +318,13 @@ public class ModelInvocationHandler implements InvocationHandler {
         validate();
         beforeSave();
         if (record.isNewRecord()) {
-        	Registry.instance().callExtensions(getModelName()+".before.create", getProxy());
+        	callExtensions("before.create");
             create();
-            Registry.instance().callExtensions(getModelName()+".after.create", getProxy());
+        	callExtensions("after.create");
         } else {
-        	Registry.instance().callExtensions(getModelName()+".before.update", getProxy());
+        	callExtensions("before.update");
             update();
-            Registry.instance().callExtensions(getModelName()+".after.update", getProxy());
+            callExtensions("after.update");
         }
         afterSave();
 
@@ -364,9 +377,27 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
         afterValidate();
     }
+    
+    private <R extends Model> SequenceSet<String> getExtensionPoints(Class<R> modelClass, String extnPointNameSuffix){
+    	SequenceSet<String> extnPoints = new SequenceSet<String>();
+		ModelReflector<R> ref = ModelReflector.instance(modelClass);
+		for (Class<? extends Model> inHierarchy : ref.getClassHierarchies()){
+			String extnPoint = inHierarchy.getSimpleName() + "." + extnPointNameSuffix;
+			extnPoints.add(extnPoint);
+		}
+		return extnPoints;
+	}
+    
+    private <R extends Model> void callExtensions(String extnPointNameSuffix){
+    	for (String extnPoint: getExtensionPoints(reflector.getModelClass(), extnPointNameSuffix)){
+    		Registry.instance().callExtensions(extnPoint, getProxy());
+    	}
+    }
+    
+    
     protected void beforeValidate(){
     	defaultFields();
-    	Registry.instance().callExtensions(getModelName() +".before.validate", getProxy());
+    	callExtensions("before.validate");
     }
     protected void defaultFields(){
         for (String field:reflector.getRealFields()){
@@ -382,19 +413,20 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     }
     protected void afterValidate(){
-    	Registry.instance().callExtensions(getModelName()+".after.validate", getProxy());
+    	callExtensions("after.validate");
     }
+    
     protected void beforeSave() {
-    	Registry.instance().callExtensions(getModelName()+".before.save", getProxy());
+    	callExtensions("before.save");
     }
     protected void afterSave() {
-    	Registry.instance().callExtensions(getModelName()+".after.save", getProxy());
+    	callExtensions("after.save");
     }
     protected void beforeDestory(){
-    	Registry.instance().callExtensions(getModelName()+".before.destroy", getProxy());
+    	callExtensions("before.destroy");
     }
     protected void afterDestroy(){
-    	Registry.instance().callExtensions(getModelName()+".after.destroy", getProxy());
+    	callExtensions("after.destroy");
     }
     
     public void destroy() {

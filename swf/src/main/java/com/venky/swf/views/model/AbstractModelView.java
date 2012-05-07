@@ -47,7 +47,7 @@ import com.venky.swf.views.controls.page.text.TextBox;
 public abstract class AbstractModelView<M extends Model> extends HtmlView {
 
     Class<M> modelClass;
-    ModelReflector reflector;
+    ModelReflector<M> reflector;
     
     List<String> includedFields = new IgnoreCaseList();
 
@@ -75,7 +75,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
 		} 
     }
     
-    public ModelReflector getReflector() {
+    public ModelReflector<M> getReflector() {
         return reflector;
     }
     
@@ -124,14 +124,14 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         }else {
             Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);
             if (parentModelGetter != null){
-                control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().getBackTarget());
+                control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().controllerPath()+"/autoComplete"+fieldName);
             }else if (Date.class.isAssignableFrom(returnType)){
             	control = new DateBox(); 
             }else if (reflector.isFieldPassword(fieldName)){
                 control = new PasswordText();
             }else if (reflector.isFieldEnumeration(fieldName)){
                 Select select = new Select();
-                Enumeration enumeration = getReflector().getAnnotation(getFieldGetter(fieldName),Enumeration.class) ;
+                Enumeration enumeration = reflector.getAnnotation(getFieldGetter(fieldName),Enumeration.class) ;
                 StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
                 
                 while (allowedValues.hasMoreTokens()){
@@ -157,8 +157,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             Model parentModel = (Model)parentModelGetter.invoke(record);
             if (parentModel != null){
                 @SuppressWarnings("unchecked")
-				Class<Model> parentModelClass = (Class<Model>)parentModelGetter.getReturnType();
-                ModelReflector parentModelReflector = ModelReflector.instance(parentModelClass);
+				Class<? extends Model> parentModelClass = (Class<? extends Model>)parentModelGetter.getReturnType();
+                ModelReflector<? extends Model> parentModelReflector = ModelReflector.instance(parentModelClass);
                 String descriptionColumn = parentModelReflector.getDescriptionColumn();
                 Object descValue = parentModelReflector.getFieldGetter(descriptionColumn).invoke(parentModel);
                 return StringUtil.valueOf(descValue);

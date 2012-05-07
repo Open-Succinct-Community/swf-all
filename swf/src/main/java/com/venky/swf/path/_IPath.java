@@ -18,5 +18,12 @@ public interface _IPath {
 	HttpServletResponse getResponse();
 	
 	_IView invoke();
-
+    String getTarget();
+	String getBackTarget();
+	String controllerPath();
+	boolean canAccessControllerAction();
+	boolean canAccessControllerAction(String action);
+	boolean canAccessControllerAction(String action, String parameter);
+	_IPath createRelativePath(String toUrl);
+	Object getSessionUser();
 }
