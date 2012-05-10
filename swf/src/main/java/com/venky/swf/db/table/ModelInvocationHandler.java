@@ -130,8 +130,8 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        	if (retType.isAssignableFrom(inModelImplClass.getReturnType())){
 	        		return inModelImplClass.invoke(impl, args);
 	        	}
-        	}catch(Exception ex){
-        		//ex.printStackTrace();
+        	}catch(NoSuchMethodException ex){
+        		//	
         	}
         }
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);

@@ -305,11 +305,11 @@ public class Database implements _IDatabase{
 		    		}
 		    		jdbcurl = jdbcurl + uri.getHost() + uri.getPath() ;
 					info.setProperty("url", jdbcurl);
-					info.setProperty("user", uri.getUserInfo().split(":")[0]);
+					info.setProperty("username", uri.getUserInfo().split(":")[0]);
 					info.setProperty("password", uri.getUserInfo().split(":")[1]);
 		    	}else { 
 					info.setProperty("url", Config.instance().getProperty("swf.jdbc.url"));
-					info.setProperty("user", Config.instance().getProperty("swf.jdbc.userid"));
+					info.setProperty("username", Config.instance().getProperty("swf.jdbc.userid"));
 					info.setProperty("password",Config.instance().getProperty("swf.jdbc.password"));
 		    	}
 				
