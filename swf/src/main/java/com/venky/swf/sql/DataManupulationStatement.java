@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import com.venky.swf.db.table.Record;
 
 public class DataManupulationStatement extends SqlStatement{
-	protected Level level = Level.FINE;
+	protected Level level = Level.INFO;
 	public DataManupulationStatement(){
 		
 	}
@@ -28,9 +28,11 @@ public class DataManupulationStatement extends SqlStatement{
         try {
             st = prepare(generatedKeyColumns);
             int ret = st.executeUpdate();
-            ResultSet rs = st.getGeneratedKeys(); 
-            if (generatedKeyValues != null && rs != null && rs.next()){
-                generatedKeyValues.load(rs);
+            if (generatedKeyValues != null){
+                ResultSet rs = st.getGeneratedKeys(); 
+            	if (rs != null && rs.next()){
+                    generatedKeyValues.load(rs);
+            	}
             }
             return ret;
         } catch (SQLException ex) {

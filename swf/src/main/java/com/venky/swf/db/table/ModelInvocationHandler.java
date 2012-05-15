@@ -113,16 +113,12 @@ public class ModelInvocationHandler implements InvocationHandler {
         } else if (getReflector().getReferredModelGetterMatcher().matches(method)) {
             return getParent(method);
         } else if (getReflector().getChildrenGetterMatcher().matches(method)) {
-            if (Model.class.isAssignableFrom(method.getReturnType())){
-                return getChild((Class<? extends Model>) method.getReturnType());
-            }else {
-            	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
-            	if (join != null){
-            		return getChildren(getReflector().getChildModelClass(method),join.value());
-            	}else {
-            		return getChildren(getReflector().getChildModelClass(method));
-            	}
-            }
+        	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
+        	if (join != null){
+        		return getChildren(getReflector().getChildModelClass(method),join.value());
+        	}else {
+        		return getChildren(getReflector().getChildModelClass(method));
+        	}
         }
         for (Object impl: modelImplObjects){
         	try {
@@ -165,14 +161,6 @@ public class ModelInvocationHandler implements InvocationHandler {
         return parent;
     }
     
-    public <C extends Model> C getChild(Class<C> childClass){
-    	C child = null; 
-        List<C> children =  getChildren(childClass);
-        if (children.size() > 0){
-        	child = children.get(0);
-        }
-        return child;
-    }
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	List<C> children = new ArrayList<C>();
     	
@@ -192,7 +180,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	Select  q = new Select();
     	q.from(childClass);
     	q.where(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
-    	return q.execute();
+    	return q.execute(childClass);
     }
 
     public <M extends Model> void setProxy(M proxy) {
@@ -350,7 +338,8 @@ public class ModelInvocationHandler implements InvocationHandler {
             StringBuilder message = new StringBuilder();
             Object value = record.get(field);
             Method getter = reflector.getFieldGetter(field);
-            if (!isFieldValid(getter, value, message)) {
+            
+            if (!reflector.isHouseKeepingField(field) && !isFieldValid(getter, value, message)) {
                 totalMessage.append("<br/>").append(field).append("=").append(value).append(":").append(message);
                 ret = false;
             }
@@ -428,25 +417,61 @@ public class ModelInvocationHandler implements InvocationHandler {
     protected void afterDestroy(){
     	callExtensions("after.destroy");
     }
-    
+    public boolean isBeingDestroyed(){
+    	return beingDestroyed;
+    }
+    private boolean beingDestroyed = false;
+    private void destroyCascade(){
+        ModelReflector<? extends Model> ref = getReflector();
+        for (Method childrenGetter : ref.getChildGetters()){
+        	Class<? extends Model> childModelClass = ref.getChildModelClass(childrenGetter);
+        	ModelReflector<? extends Model> childReflector = ModelReflector.instance(childModelClass);
+        	List<String> referenceFields = childReflector.getReferenceFields(ref.getModelClass());
+        	
+        	for (String referenceField: referenceFields){
+        		Method referenceFieldGetter = childReflector.getFieldGetter(referenceField);
+        		
+				try {
+					List<Model> children = (List<Model>)childrenGetter.invoke(getProxy());
+					for (Model child : children){
+		        		if (!childReflector.getColumnDescriptor(referenceFieldGetter).isNullable()){
+		        			child.destroy();
+		        		}else {
+		        			childReflector.set(child,referenceField,null);
+		        		}
+					}
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+        	}
+        }
+    }
     public void destroy() {
-    	beforeDestory();
-        Delete q = new Delete(getReflector());
-        Expression condition = new Expression(Conjunction.AND);
-        condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
-        condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
-        
-        q.where(condition);
-        
-        q.executeUpdate();
-		
-        try {
-			Database.getInstance().getCache(getReflector()).remove(getProxy());
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		} 
-		
-        afterDestroy();
+    	if (isBeingDestroyed()){
+    		return;
+    	}
+    	try {
+    		beingDestroyed = true;
+    		beforeDestory();
+	    	destroyCascade();
+	
+	    	Delete q = new Delete(getReflector());
+	        Expression condition = new Expression(Conjunction.AND);
+	        condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
+	        condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
+	        q.where(condition);
+	        q.executeUpdate();
+	        
+	        try {
+				Database.getInstance().getCache(getReflector()).remove(getProxy());
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			} 
+			
+	        afterDestroy();
+		}finally{
+			beingDestroyed = false;
+		}
     }
 
     private void update() {
@@ -509,7 +534,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         if (generatedKeys.size() == 1){
             assert (generatedValues.getDirtyFields().size() == 1);
             String fieldName = generatedKeys.get(0);
-            String virtualFieldName = generatedValues.getDirtyFields().first();
+            String virtualFieldName = generatedValues.getDirtyFields().iterator().next();
             int id = ((Number)generatedValues.get(virtualFieldName)).intValue();
             record.put(fieldName, id);
         }

@@ -13,7 +13,6 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
-import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -97,9 +96,8 @@ public class ParticipantControllerAccessExtension implements Extension{
 														.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
 		permissionQueryWhere.add(controllerActionWhere);
 
-		String userRole = Database.getTable(UserRole.class).getRealTableName() ;
-		Select userRoleQuery = new Select("role_id").from(userRole).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
-		List<UserRole> userRoles = userRoleQuery.execute();
+		Select userRoleQuery = new Select().from(UserRole.class).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
+		List<UserRole> userRoles = userRoleQuery.execute(UserRole.class);
 		List<Integer> userRoleIds = new ArrayList<Integer>();
 		Expression roleWhere = new Expression(Conjunction.OR);
 		roleWhere.add(new Expression("role_id",Operator.EQ));

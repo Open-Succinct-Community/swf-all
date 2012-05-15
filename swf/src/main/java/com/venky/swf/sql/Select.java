@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -109,26 +111,33 @@ public class Select extends SqlStatement{
         String query = getRealSQL();
         try {
         	QueryCache cache = Database.getInstance().getCache(ModelReflector.instance(modelInterface));
-        	List<M> result = cache.getCachedResult(getWhereExpression());
-        	if (result != null){
-        		return result;
+        	SortedSet<Record> result = cache.getCachedResult(getWhereExpression());
+        	if (result == null){
+	            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
+	            st = prepare();
+	            result = new TreeSet<Record>();
+	            if (st.execute()){
+	                ResultSet rs = st.getResultSet();
+	                while (rs.next()){
+	                    Record r = new Record();
+	                    r.load(rs);
+	                    Record cached = cache.getCachedRecord(r);
+	                    if (cached != null){
+	                    	result.add(cached);
+	                    }else {
+	                    	result.add(r);
+	                    }
+	                }
+	                rs.close();
+	            }
+	            cache.setCachedResult(getWhereExpression(), result);
         	}
-
-            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
-            st = prepare();
-            result = new ArrayList<M>();
-            if (st.execute()){
-                ResultSet rs = st.getResultSet();
-                while (rs.next()){
-                    Record r = new Record();
-                    r.load(rs);
-                    M m = ModelInvocationHandler.getProxy(modelInterface, r);
-                    result.add(m);
-                }
-                rs.close();
-            }
-            cache.setCachedResult(getWhereExpression(), result);
-            return result;
+        	List<M> ret = new ArrayList<M>();
+        	for (Record record: result){
+                M m = ModelInvocationHandler.getProxy(modelInterface, record);
+                ret.add(m);
+        	}
+        	return ret;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         } finally {

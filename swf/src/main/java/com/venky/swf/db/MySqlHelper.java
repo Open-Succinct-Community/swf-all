@@ -21,6 +21,15 @@ public class MySqlHelper extends JdbcTypeHelper{
     public String getAutoIncrementInstruction() {
             return (" INTEGER NOT NULL AUTO_INCREMENT ");
     }
+    @Override
+    public String getCurrentDateKW(){
+    	return null;
+    }
+    @Override
+    public String getCurrentTimeStampKW(){
+    	return null;
+    }
+
     protected MySqlHelper() {
             /**
              * Specify size and scale for a data type only if the database accepts

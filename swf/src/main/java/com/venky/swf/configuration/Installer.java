@@ -23,7 +23,7 @@ public class Installer {
 		String nameColumn = ref.getColumnDescriptor("name").getName();
 		
 		
-		List<User> users = q.where(new Expression(nameColumn,Operator.EQ,new BindVariable("root"))).execute();
+		List<User> users = q.where(new Expression(nameColumn,Operator.EQ,new BindVariable("root"))).execute(User.class);
 		
 		if (users.isEmpty()){
 			User u = USER.newRecord();

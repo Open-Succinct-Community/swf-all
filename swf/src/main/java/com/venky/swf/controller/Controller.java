@@ -109,7 +109,7 @@ public class Controller {
         String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor("name").getName();
         q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(username)));
         
-		List<? extends User> users  = q.execute();
+		List<? extends User> users  = q.execute(User.class);
         if (users.size() == 1){
         	return users.get(0);
         }

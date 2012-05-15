@@ -124,7 +124,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         }else {
             Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);
             if (parentModelGetter != null){
-                control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().controllerPath()+"/autoComplete"+fieldName);
+                control = new AutoCompleteText(getReflector().getReferredModelClass(parentModelGetter),getPath().controllerPath()+"/autocomplete");
             }else if (Date.class.isAssignableFrom(returnType)){
             	control = new DateBox(); 
             }else if (reflector.isFieldPassword(fieldName)){

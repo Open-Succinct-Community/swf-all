@@ -32,7 +32,7 @@ import com.venky.core.util.ObjectUtil;
  * 
  * @author venky
  */
-public class JdbcTypeHelper {
+public abstract class JdbcTypeHelper {
 	public boolean isColumnNameAutoLowerCasedInDB(){
 		return false;
 	}
@@ -106,6 +106,10 @@ public class JdbcTypeHelper {
     public static abstract class TypeConverter<M> {
 
         public abstract M valueOf(Object o);
+        
+        public Object dbValueOf(Object o){
+        	return valueOf(o);
+        }
 
         public String toString(Object m) {
         	return StringUtil.valueOf(m);
@@ -115,6 +119,14 @@ public class JdbcTypeHelper {
     }
 
     public static class BooleanConverter extends TypeConverter<Boolean> {
+        @Override
+    	public Object dbValueOf(Object o){
+        	if (valueOf(o)){
+        		return 1;
+        	}else {
+        		return 0;
+        	}
+        }
 
         public Boolean valueOf(Object s) {
             if (ObjectUtil.isVoid(s)) {
@@ -460,4 +472,7 @@ public class JdbcTypeHelper {
     public String getAutoIncrementInstruction() {
         return " INTEGER NOT NULL ";
     }
+    
+    public abstract String getCurrentTimeStampKW();
+    public abstract String getCurrentDateKW();
 }

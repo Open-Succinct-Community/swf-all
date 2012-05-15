@@ -440,6 +440,14 @@ public class Table<M extends Model> {
 		public void setVirtual(boolean virtual) {
 			this.virtual = virtual;
 		}
+		
+		public void setColumnDefault(Object defaultValue){
+			put("COLUMN_DEF",defaultValue);
+		}
+		
+		public Object getColumnDefault(){
+			return get("COLUMN_DEF");
+		}
 
 		@Override
         public String toString(){
@@ -461,6 +469,9 @@ public class Table<M extends Model> {
                 }
                 if (!isNullable()){
                     buff.append(" NOT NULL ");
+                    if (getColumnDefault() != null){
+                    	buff.append(" DEFAULT " ).append(getColumnDefault());
+                    }
                 }
             }
             

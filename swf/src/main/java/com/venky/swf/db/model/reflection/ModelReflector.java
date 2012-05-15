@@ -16,7 +16,9 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DATA_TYPE;
@@ -26,6 +28,8 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
@@ -73,7 +77,9 @@ public class ModelReflector<M extends Model> {
 	public Class<? extends Model> getRealModelClass(){
 		return TableReflector.getRealModelClass(getModelClass());
 	}
-	
+	public SequenceSet<Class<? extends Model>> getModelClasses(){
+		return reflector.getModelClasses();
+	}
 	public boolean reflects(Class<? extends Model> referredModelClass) {
 		return reflector.reflects(referredModelClass);
 	}
@@ -150,6 +156,9 @@ public class ModelReflector<M extends Model> {
     }
 
     private List<String> allfields = new IgnoreCaseList();
+    private Map<String,List<String>> columnFields = new IgnoreCaseMap<List<String>>();
+    private Map<String,String> fieldColumn = new IgnoreCaseMap<String>();
+
     private void loadAllFields(){
         if (!allfields.isEmpty()){
             return;
@@ -160,13 +169,27 @@ public class ModelReflector<M extends Model> {
             }
             List<Method> fieldGetters = getFieldGetters();
             for (Method fieldGetter : fieldGetters){
-                allfields.add(getFieldName(fieldGetter));
+        		String fieldName = getFieldName(fieldGetter);
+
+        		Map<Class<? extends Annotation>,Annotation> map = getAnnotationMap(fieldGetter);
+        		COLUMN_NAME name = (COLUMN_NAME)map.get(COLUMN_NAME.class);
+        		String columnName = ( name == null ? fieldName : name.value());
+        		
+                allfields.add(fieldName);
+        		List<String> fields = columnFields.get(columnName);
+        		if (fields == null){
+        			fields = new ArrayList<String>();
+        			columnFields.put(columnName, fields);
+        		}
+        		fields.add(fieldName);
+        		fieldColumn.put(fieldName, columnName);
             }
         }
     }
+    
     public List<String> getFields(){
-       loadAllFields();
-       return new IgnoreCaseList(allfields);
+    	loadAllFields();
+    	return new IgnoreCaseList(allfields);
     }
     
     public List<String> getRealFields(){
@@ -176,7 +199,7 @@ public class ModelReflector<M extends Model> {
         return getFields(new VirtualFieldMatcher());
     }
     public List<String> getFields(FieldMatcher matcher){
-        loadAllFields();
+		loadAllFields();
         List<String> fields = new IgnoreCaseList();
         for (String field: allfields){
             if (matcher == null || matcher.matches(getColumnDescriptor(field))){
@@ -186,7 +209,6 @@ public class ModelReflector<M extends Model> {
         return fields;
     }
     public List<String> getRealColumns(){
-    	loadAllFields();
     	return getColumns(new RealFieldMatcher());
     }
     
@@ -213,6 +235,19 @@ public class ModelReflector<M extends Model> {
     	HIDDEN hidden = getAnnotation(getter,HIDDEN.class);
     	return (hidden == null ? false : hidden.value());
 	}
+    
+    public String getFieldName(final String columnName){
+    	loadAllFields();
+    	List<String> fields = columnFields.get(columnName);
+    	
+    	if (!fields.isEmpty()){
+    		if (fields.contains(columnName)){
+    			return columnName;
+    		}
+    		return fields.get(0);
+    	}
+    	return null;
+    }
     
     public boolean isHouseKeepingField(String fieldName){
     	Method getter = getFieldGetter(fieldName);
@@ -292,22 +327,14 @@ public class ModelReflector<M extends Model> {
     	return setter;
     }
 
-    public ColumnDescriptor getColumnDescriptor(String fieldName){
-        return getColumnDescriptor(getFieldGetter(fieldName));
-    }
-
-    private Map<String,ColumnDescriptor> columnDescriptors = new HashMap<String,ColumnDescriptor>();
-    public ColumnDescriptor getColumnDescriptor(Method getter ){
-        if (!getFieldGetterMatcher().matches(getter)){
-            throw new RuntimeException("Method:" + getter.getName() + " is not recognizable as a a FieldGetter");
-        }
-        String getterSignature = Reflector.computeMethodSignature(getter);
-        ColumnDescriptor cd = columnDescriptors.get(getterSignature);
-        if (cd != null){
-        	return cd;
-        }
-         
-        Map<Class<? extends Annotation>, Annotation> map = new HashMap<Class<? extends Annotation>, Annotation>();
+    private Map<String,Map<Class<? extends Annotation>, Annotation>> annotationMap = new HashMap<String, Map<Class<? extends Annotation>,Annotation>>(); 
+    private Map<Class<? extends Annotation>, Annotation> getAnnotationMap(Method getter){
+    	String signature = Reflector.computeMethodSignature(getter);
+    	Map<Class<? extends Annotation>, Annotation> map = annotationMap.get(signature);
+    	if (map != null){
+    		return map;
+    	}
+		map = new HashMap<Class<? extends Annotation>, Annotation>();
         for (Class<? extends Model> modelClass:reflector.getSiblingModelClasses(getModelClass())){
         	MReflector<? extends Model> ref = MReflector.instance(modelClass);
         	//We could have simple called getAnnotation(getter,Annotation class) but that would mean looping multiple times for 
@@ -319,34 +346,74 @@ public class ModelReflector<M extends Model> {
         	if (map.get(IS_NULLABLE.class) == null){ map.put(IS_NULLABLE.class,ref.getAnnotation(getter,IS_NULLABLE.class)); }
         	if (map.get(IS_AUTOINCREMENT.class) == null){ map.put(IS_AUTOINCREMENT.class,ref.getAnnotation(getter,IS_AUTOINCREMENT.class)); }
         	if (map.get(IS_VIRTUAL.class) == null){ map.put(IS_VIRTUAL.class,ref.getAnnotation(getter,IS_VIRTUAL.class)); }
+        	if (map.get(COLUMN_DEF.class) == null){ map.put(COLUMN_DEF.class,ref.getAnnotation(getter,COLUMN_DEF.class)); }
         }
-        COLUMN_NAME name = (COLUMN_NAME) map.get(COLUMN_NAME.class);
+
+		annotationMap.put(signature, map);
+        return map;
+    }
+    
+    public ColumnDescriptor getColumnDescriptor(String fieldName){
+        return getColumnDescriptor(getFieldGetter(fieldName));
+    }
+
+    public boolean hasMultipleAccess(String columnName){
+    	List<String> fields = columnFields.get(columnName);
+    	return (fields != null && fields.size() > 1);
+    }
+
+    private Map<String,ColumnDescriptor> columnDescriptors = new HashMap<String,ColumnDescriptor>();
+    public ColumnDescriptor getColumnDescriptor(Method fieldGetter ){
+    	loadAllFields();
+    	
+        if (!getFieldGetterMatcher().matches(fieldGetter)){
+            throw new RuntimeException("Method:" + fieldGetter.getName() + " is not recognizable as a a FieldGetter");
+        }
+        
+        Map<Class<? extends Annotation>, Annotation> map = getAnnotationMap(fieldGetter);
         COLUMN_SIZE size = (COLUMN_SIZE) map.get(COLUMN_SIZE.class);
         DATA_TYPE type 	 = (DATA_TYPE) map.get(DATA_TYPE.class);
         DECIMAL_DIGITS digits = (DECIMAL_DIGITS) map.get(DECIMAL_DIGITS.class);
         IS_NULLABLE isNullable = (IS_NULLABLE)map.get(IS_NULLABLE.class);
         IS_AUTOINCREMENT isAutoIncrement = (IS_AUTOINCREMENT)map.get(IS_AUTOINCREMENT.class);
         IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
-        cd = null;
-        if (name != null && !getFieldName(getter).equalsIgnoreCase(name.value())){
-        	// Check if there is a field by that name
-        	if (getFields().contains(name.value())){
-        		cd = getColumnDescriptor(name.value());
+        COLUMN_DEF colDef = (COLUMN_DEF)map.get(COLUMN_DEF.class);
+        
+        String fieldName = getFieldName(fieldGetter);
+        String columnName = fieldColumn.get(fieldName);
+
+        ColumnDescriptor cd = columnDescriptors.get(columnName);
+        if (cd != null){
+        	return cd;
+        }else if (hasMultipleAccess(columnName)){
+        	if (!columnFields.get(columnName).contains(columnName)){
+        		throw new RuntimeException(columnName + " has multiple access while none of the field has the same name!");
+        	}else if (!columnName.equalsIgnoreCase(fieldName)){
+        		return getColumnDescriptor(columnName);
         	}
         }
-        if (cd == null){
-	        cd = new ColumnDescriptor();
-	        cd.setName(name == null ? getFieldName(getter) : name.value());
-			TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
-	        assert typeRef != null;
-	        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
-	        cd.setNullable(isNullable != null ? isNullable.value() : !getter.getReturnType().isPrimitive());
-	        cd.setSize(size == null? typeRef.getSize() : size.value());
-	        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
-	        cd.setAutoIncrement(isAutoIncrement == null? false : true);
-	        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
+
+        cd = new ColumnDescriptor();
+        cd.setName(columnName);
+        JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+		TypeRef<?> typeRef = helper.getTypeRef(fieldGetter.getReturnType());
+        assert typeRef != null;
+        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
+        cd.setNullable(isNullable != null ? isNullable.value() : !fieldGetter.getReturnType().isPrimitive());
+        cd.setSize(size == null? typeRef.getSize() : size.value());
+        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
+        cd.setAutoIncrement(isAutoIncrement == null? false : true);
+        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
+        if (colDef != null){
+        	if (colDef.value() == StandardDefault.CURRENT_DATE){
+        		cd.setColumnDefault(helper.getCurrentDateKW());
+        	}else if (colDef.value() == StandardDefault.CURRENT_TIMESTAMP){
+        		cd.setColumnDefault(helper.getCurrentTimeStampKW());
+        	}else {
+        		cd.setColumnDefault(typeRef.getTypeConverter().dbValueOf(StandardDefaulter.getDefaultValue(colDef)));
+        	}
         }
-        columnDescriptors.put(getterSignature,cd);
+        columnDescriptors.put(columnName,cd);
 
         return cd;
     }
@@ -378,25 +445,38 @@ public class ModelReflector<M extends Model> {
              if (List.class.isAssignableFrom(retType)){
                  ParameterizedType parameterizedType = (ParameterizedType)method.getGenericReturnType();
                  possibleChildClass = (Class<?>)parameterizedType.getActualTypeArguments()[0];
-             }else {
-                 possibleChildClass = retType;
              }
-             if (Model.class.isAssignableFrom(possibleChildClass)){
+             if (possibleChildClass != null && Model.class.isAssignableFrom(possibleChildClass)){
                  // Validate That child has a parentReferenceId. 
                  Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
                  ModelReflector<? extends Model> childReflector = ModelReflector.instance(childClass);
-                 for (String fieldName: childReflector.getFields()){
-                 	for (Class<? extends Model> parentModelClass: reflector.getSiblingModelClasses(getModelClass())){
- 	                    if (fieldName.endsWith(StringUtil.underscorize(parentModelClass.getSimpleName() +"Id"))){
- 	                        return childClass;
- 	                    }
-                 	}
+                 if (!childReflector.getReferenceFields(getModelClass()).isEmpty()){
+                	return childClass; 
                  }
              }
          }
          return null;
      }
-
+     
+     public List<String> getReferenceFields(Class<? extends Model> referredModelClass){
+    	 List<String> names = new ArrayList<String>();
+    	 for (Method referredModelGetter : getReferredModelGetters(referredModelClass)){
+    		 names.add(getReferenceField(referredModelGetter));
+    	 }
+    	 return names;
+     }
+     
+     public List<Method> getReferredModelGetters(final Class<? extends Model> referredModelClass){
+    	 ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+    	 List<Method> referredModelGetters = getReferredModelGetters();
+    	 List<Method> ret = new ArrayList<Method>();
+    	 for (Method aReferredModelGetter: referredModelGetters){
+    		 if (referredModelReflector.reflects((Class <? extends Model>)aReferredModelGetter.getReturnType())){
+    			 ret.add(aReferredModelGetter);
+    		 }
+    	 }
+    	 return ret;
+     }
 
      public Class<? extends Model> getReferredModelClass(Method method){
      	if (!getClassForests().contains(method.getDeclaringClass())) {
@@ -405,7 +485,7 @@ public class ModelReflector<M extends Model> {
          Class<? extends Model> referredModelClass = null;
          Class<?> possibleReferredModelClass = method.getReturnType();
          if (Model.class.isAssignableFrom(possibleReferredModelClass) && getGetterMatcher().matches(method)){
-             String referredIdFieldName = getReferredModelIdFieldName(method);
+             String referredIdFieldName = getReferenceField(method);
              if (getFields().contains(referredIdFieldName)){
                  referredModelClass = (Class<? extends Model>)possibleReferredModelClass;
              }
@@ -414,13 +494,13 @@ public class ModelReflector<M extends Model> {
          
      }
 
-     public String getReferredModelIdFieldName(Method parentGetter){
+     public String getReferenceField(Method parentGetter){
 		return StringUtil.underscorize(parentGetter.getName().substring(3) + "Id");
-	}
+     }
 
 
 
-    public Method getReferredModelGetterFor(Method referredModelIdGetter){
+     public Method getReferredModelGetterFor(Method referredModelIdGetter){
         if (!getFieldGetterMatcher().matches(referredModelIdGetter)){
             return null;
         }

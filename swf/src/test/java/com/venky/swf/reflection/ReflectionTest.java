@@ -48,7 +48,26 @@ public class ReflectionTest {
         System.out.println(type.getActualTypeArguments()[0]);
     }
     
+    @Test
+    public void test2() throws Exception{
+    	System.out.println(new B().getParameterizedClass().getName());
+    }
+    
     public List<Integer> getList(){
         return null;
     }
+    
+    public static class A<M> {
+        public Class getParameterizedClass(){
+            ParameterizedType pt = (ParameterizedType)(this.getClass().getGenericSuperclass());
+            return (Class)(pt.getActualTypeArguments()[0]);
+          }
+
+    }
+    public static class B<K> extends A<String> {
+    	
+    }
+
+    
+    
 }

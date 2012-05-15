@@ -31,6 +31,8 @@ public interface Model extends _Identifiable{
     
     @HIDDEN
     @HOUSEKEEPING
+    @IS_NULLABLE(false)
+    @COLUMN_DEF(StandardDefault.ZERO)
     public int getLockId();
     public void setLockId(int lockid);
     
@@ -72,4 +74,5 @@ public interface Model extends _Identifiable{
     public boolean isAccessibleBy(User user);
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     public Record getRawRecord();
+    
 }

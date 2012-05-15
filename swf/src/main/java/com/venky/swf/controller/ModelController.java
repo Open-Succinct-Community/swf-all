@@ -69,16 +69,21 @@ public class ModelController<M extends Model> extends Controller {
     	reflector = ModelReflector.instance(modelClass);
         
     }
+    protected ModelReflector<M> getReflector(){
+    	return reflector;
+    }
     
-    private List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
+    private static List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
     	List<Method> rmg = referredModelGettersMap.get(referredTableName);
     	if (rmg == null){
     		rmg = new ArrayList<Method>();
     	}
     	return rmg;
     }
-
     public Expression getWhereClause(){
+    	return getWhereClause(reflector);
+    }
+    public Expression getWhereClause(ModelReflector<?> reflector){
     	Expression where = new Expression(Conjunction.AND);
 		Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
 
@@ -124,7 +129,7 @@ public class ModelController<M extends Model> extends Controller {
 	            	if (join == null){
 	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
 	            		for (Method referredModelGetter: referredModelGetters){ 
-    	        	    	String referredModelIdFieldName =  StringUtil.underscorize(referredModelGetter.getName().substring(3) +"Id");
+    	        	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
     	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
 
     	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
@@ -141,28 +146,30 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	}
 		
-		Expression dsw = getDataSecurityWhere();
+		Expression dsw = getSessionUser().getDataSecurityWhereClause(reflector.getModelClass());
 		if (dsw.getParameterizedSQL().length()> 0){
 			where.add(dsw); 
 		}
+		
     	return where;
 		    	
-    }
-    public Expression getDataSecurityWhere(){
-    	return getSessionUser().getDataSecurityWhereClause(modelClass);
     }
     @Override
     public View index() {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getWhereClause()).execute(modelClass);
-        return dashboard(new ModelListView<M>(getPath(), modelClass, null, records));
+        return dashboard(new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records));
+    }
+    
+    protected String[] getIncludedFields(){
+    	return null;
     }
     
     @SingleRecordAction(icon="/resources/images/show.png")
     public View show(int id) {
 		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            return dashboard(new ModelShowView<M>(getPath(), modelClass, null, record));
+            return dashboard(new ModelShowView<M>(getPath(), modelClass, getIncludedFields(), record));
         }else {
         	throw new AccessDeniedException();
         }
@@ -201,7 +208,7 @@ public class ModelController<M extends Model> extends Controller {
     public View edit(int id) {
         M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            return dashboard(new ModelEditView<M>(getPath(), modelClass, null, record));
+            return dashboard(new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), record));
         }else {
         	throw new AccessDeniedException();
         }
@@ -217,13 +224,13 @@ public class ModelController<M extends Model> extends Controller {
     	Record oldRaw = record.getRawRecord();
     	Record newRaw = newrecord.getRawRecord();
     	
-    	for (String f:oldRaw.getFieldNames()){
-    		if (!reflector.isHouseKeepingField(f)){
+    	for (String f:oldRaw.getFieldNames()){ //Fields in raw records are column names.
+    		if (!reflector.isHouseKeepingField(reflector.getFieldName(f))){
         		newRaw.put(f, oldRaw.get(f));
     		}
     	}
     	newRaw.setNewRecord(true);
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, newrecord);
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), newrecord);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
 		        mev.getIncludedFields().remove(field);
@@ -240,7 +247,7 @@ public class ModelController<M extends Model> extends Controller {
         
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
 	    	Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
-	    	String referredModelIdFieldName =  reflector.getReferredModelIdFieldName(referredModelGetter);
+	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
 	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
 	    	try {
@@ -284,7 +291,7 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		record.setCreatorUserId(getSessionUser().getId());
 		record.setUpdaterUserId(getSessionUser().getId());
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, null, record);
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), record);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
 		        mev.getIncludedFields().remove(field);
@@ -448,45 +455,45 @@ public class ModelController<M extends Model> extends Controller {
     	return persistInDB();
     }
 
-    public View autocomplete(String value) {
-    	List<ModelInfo> mes = getPath().getModelElements();
+    public View autocomplete() {
+		List<String> fields = reflector.getFields();
+		Map<String,Object> formData = getFormFields(getPath().getRequest());
+		M model = null;
+		if (formData.containsKey("ID")){
+			model = Database.getTable(modelClass).get(Integer.valueOf(formData.get("ID").toString()));
+		}else {
+			model = Database.getTable(modelClass).newRecord();
+		}
+			
+		String autoCompleteFieldName = null;
+		String value = "";
+		for (String fieldName : formData.keySet()){
+			if (fields.contains(fieldName)){
+				Object ov = formData.get(fieldName); 
+				reflector.set(model,fieldName, ov);
+			}else if (fieldName.startsWith("_AUTO_COMPLETE_")){
+				autoCompleteFieldName = fieldName.split("_AUTO_COMPLETE_")[1];
+				value = StringUtil.valueOf(formData.get(fieldName));
+			}
+		}
+		model.getRawRecord().remove(autoCompleteFieldName);
+		
     	Expression where = new Expression(Conjunction.AND);
-    	
-    	if (mes.size() >= 2){
-    		ModelInfo secondLast = mes.get(mes.size()-2);
-    		String[] splits = secondLast.getAction().split("autoComplete"); 
-    		if (splits.length == 2){
-    			String autoCompleteFieldName = splits[1];
-    			
-        		ModelReflector<? extends Model> autoCompletedModelReflector = secondLast.getReflector();
-        		Class<? extends Model> autoCompletedModelClass = autoCompletedModelReflector.getModelClass();
-        		Model autoCompletedModel = null;
-        		if (secondLast.getId() != null){
-            		autoCompletedModel = Database.getTable(autoCompletedModelClass).get(secondLast.getId());
-        		}else {
-        			autoCompletedModel = Database.getTable(autoCompletedModelClass).newRecord();
-        		}
-        		List<String> fields = autoCompletedModelReflector.getFields();
-        		Map<String,Object> formData = getFormFields(getPath().getRequest());
-        		for (String fieldName : formData.keySet()){
-        			if (fields.contains(fieldName) && !fieldName.equalsIgnoreCase(autoCompleteFieldName)){
-        				Object ov = formData.get(fieldName); 
-        				autoCompletedModelReflector.set(autoCompletedModel,fieldName, ov);
-        			}
-        		}
-        		if (autoCompletedModelReflector.isAnnotationPresent(autoCompletedModelReflector.getFieldGetter(autoCompleteFieldName),PARTICIPANT.class)){
-            		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(autoCompletedModelClass,autoCompletedModel);
-            		if (pOptions.containsKey(autoCompleteFieldName)){
-            			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
-            			if (!autoCompleteFieldValues.isEmpty()){
-            				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
-            			}
-            		}
-        		}
+		if (reflector.isAnnotationPresent(reflector.getFieldGetter(autoCompleteFieldName),PARTICIPANT.class)){
+    		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
+    		if (pOptions.containsKey(autoCompleteFieldName)){
+    			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
+    			if (!autoCompleteFieldValues.isEmpty()){
+    				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
+    			}
     		}
-    	}
-    	where.add(getWhereClause());
-        return super.autocomplete(modelClass, where, reflector.getDescriptionColumn(), value);
+		}
+		
+		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(autoCompleteFieldName)));
+		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
+		
+		where.add(getWhereClause(autoCompleteModelReflector));//
+        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionColumn(), value);
     }
     
     

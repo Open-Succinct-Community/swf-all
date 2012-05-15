@@ -21,12 +21,19 @@ public class PostgresqlHelper extends JdbcTypeHelper{
 		return true;
 	}
 
-
     @Override
     public String getAutoIncrementInstruction() {
             return (" SERIAL ");
     }
-
+    
+    @Override
+    public String getCurrentTimeStampKW(){
+    	return "now()";
+    }
+    public String getCurrentDateKW(){
+    	return "('now'::text)::date";
+    }
+    
     protected PostgresqlHelper() {
             /**
              * Specify size and scale for a data type only if the database accepts
@@ -34,10 +41,18 @@ public class PostgresqlHelper extends JdbcTypeHelper{
              */
             registerjdbcSQLType(Boolean.class, new TypeRef<Boolean>(
                             java.sql.Types.BIT, "BOOLEAN", 0, 0,
-                            new BooleanConverter()));
+                            new BooleanConverter(){
+                            	public Object dbValueOf(Object o){
+                            		return super.valueOf(o);
+                            	}
+                            }));
             registerjdbcSQLType(boolean.class, new TypeRef<Boolean>(
                             java.sql.Types.BIT, "BOOLEAN", 0, 0,
-                            new BooleanConverter()));
+                            new BooleanConverter(){
+                            	public Object dbValueOf(Object o){
+                            		return super.valueOf(o);
+                            	}
+                            }));
 
             registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.SMALLINT,
                             "SMALLINT", 0, 0, new ByteConverter()));

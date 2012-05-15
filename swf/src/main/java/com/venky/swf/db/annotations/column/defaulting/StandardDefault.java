@@ -4,9 +4,21 @@ public enum StandardDefault {
 	NULL,
 	ZERO,
 	ONE,
-	CURRENT_DATE,
-	CURRENT_TIMESTAMP,
 	BOOLEAN_TRUE,
 	BOOLEAN_FALSE,
-	SOME_VALUE
+	SOME_VALUE,
+	CURRENT_DATE(){
+		public boolean isComputed(){
+			return true;
+		}
+	},
+	CURRENT_TIMESTAMP(){
+		public boolean isComputed(){
+			return true;
+		}
+	};
+	
+	public boolean isComputed(){
+		return false;
+	}
 }

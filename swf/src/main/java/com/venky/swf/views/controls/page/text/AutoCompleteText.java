@@ -10,7 +10,6 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.Table;
 import com.venky.swf.views.controls._IControl;
 
 /**
@@ -30,12 +29,11 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     public AutoCompleteText(Class<M> modelClass){
     	this(modelClass,"");
     }
-    public AutoCompleteText(Class<M> modelClass,String urlPrefix){
+    public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
         this.descriptionColumn = ModelReflector.instance(modelClass).getDescriptionColumn();
         this.description = new TextBox();
-		Table<M> table = Database.getTable(modelClass);
-        this.description.setAutocompleteServiceURL(urlPrefix+"/"+table.getTableName().toLowerCase()+"/autocomplete/" );
+        this.description.setAutocompleteServiceURL(url);
         setVisible(true);
     }
     

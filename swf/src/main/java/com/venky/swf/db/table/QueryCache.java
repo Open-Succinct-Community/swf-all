@@ -1,9 +1,10 @@
 package com.venky.swf.db.table;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
@@ -13,7 +14,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Select;
 
 public class QueryCache {
-	private Map<Expression,List<? extends Model>> queryCache = new HashMap<Expression, List<? extends Model>>();
+	private Map<Expression,SortedSet<Record>> queryCache = new HashMap<Expression, SortedSet<Record>>();
 	private final ModelReflector ref ;
 	private final Table table;
 	public QueryCache(String tableName){
@@ -21,19 +22,24 @@ public class QueryCache {
 		ref = table.getReflector();
 	}
 	
-	public <M extends Model> List<M> getCachedResult(Expression where){
+	public SortedSet<Record> getCachedResult(Expression where){
 		if (where != null && where.isEmpty()){
 			where = null;
 		}
 		
-		List<M> result = (List<M>)queryCache.get(where);
+		SortedSet<Record> result = queryCache.get(where);
 		if (result == null && where != null){
 			synchronized (queryCache) {
-				result = (List<M>)queryCache.get(where);
+				result = queryCache.get(where);
 				if (result == null && ref.isAnnotationPresent(CONFIGURATION.class)){
-					List<M> completeList = (List<M>)queryCache.get(null);
+					SortedSet<Record> completeList = queryCache.get(null);
 					if (completeList == null){
-						completeList = new Select().from(table.getTableName()).execute();
+						completeList = new TreeSet<Record>();
+						List<Model> models = new Select().from(table.getTableName()).execute();
+						for (Model model:models){
+							Record record = model.getRawRecord();
+							completeList.add(record);
+						}
 					}
 					if (completeList != null){
 						result = filter(where,completeList);
@@ -44,45 +50,60 @@ public class QueryCache {
 		}
 		return result;
 	}
-	public <M extends Model> List<M> filter(Expression where,List<M> completeList){
-		List<M> result = new ArrayList<M>();
+	public SortedSet<Record> filter(Expression where,SortedSet<Record> completeList){
+		SortedSet<Record> result = new TreeSet<Record>();
 		if (where == null || where.isEmpty()){
 			result.addAll(completeList);
 			return result;
 		}
-		for (M m:completeList){
+		for (Record m:completeList){
 			if (where.eval(m)){
 				result.add(m);
 			}
 		}
 		return result;
 	}
-	public void setCachedResult(Expression where, List<? extends Model> result){
+	public void setCachedResult(Expression where, SortedSet<Record> result){
 		if (where != null && where.isEmpty()){
 			where = null;
 		}
 		queryCache.put(where, result);
 	}
 	
-	public <M extends Model> void add(M record){
+	public Record getCachedRecord(Record record){
+		if (queryCache.containsKey(null)){
+			SortedSet<Record> values = queryCache.get(null);
+			if (values.contains(record)){
+				return values.tailSet(record).first(); 
+			}
+			return null;
+		}
 		for (Expression cacheKey:queryCache.keySet()){
 			if (cacheKey == null || cacheKey.eval(record)){
-				List values = queryCache.get(cacheKey);
-				if (!values.contains(record)){
-					values.add(record);
+				SortedSet<Record> values = queryCache.get(cacheKey);
+				if (values.contains(record)){
+					return values.tailSet(record).first(); 
 				}
 			}
 		}
-		//TODO Propagate Cache to all JVM Threads and other JVMS.
+		return null;
 	}
-	public <M extends Model> void remove(M record){
+	
+	public <M extends Model> void add(M m){
 		for (Expression cacheKey:queryCache.keySet()){
-			if (cacheKey == null || cacheKey.eval(record)){
-				List values = queryCache.get(cacheKey);
-				values.remove(record);
+			if (cacheKey == null || cacheKey.eval(m)){
+				SortedSet<Record> values = queryCache.get(cacheKey);
+				values.add(m.getRawRecord());
 			}
 		}
-		//TODO Propagate Cache to all JVM Threads and other JVMS.
+	}
+	public <M extends Model> void remove(M m){
+		for (Expression cacheKey:queryCache.keySet()){
+			if (cacheKey == null || cacheKey.eval(m)){
+				SortedSet<Record> values = queryCache.get(cacheKey);
+				values.remove(m.getRawRecord());
+			}
+		}
 	}
 	
 	public void clear(){

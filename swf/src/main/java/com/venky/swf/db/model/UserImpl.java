@@ -62,7 +62,7 @@ public class UserImpl extends ModelImpl<User>{
 		User user = getProxy();
 		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 		for (Method referredModelGetter : ref.getReferredModelGetters()){
-			String referredModelIdFieldName = ref.getReferredModelIdFieldName(referredModelGetter);
+			String referredModelIdFieldName = ref.getReferenceField(referredModelGetter);
 			Method referredModelIdGetter = ref.getFieldGetter(referredModelIdFieldName);
 			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
 			Model referredModel = null;
@@ -93,8 +93,8 @@ public class UserImpl extends ModelImpl<User>{
 				if (!extnFound) {
 					Map<String,List<Integer>> referredModelParticipatingOptions = user.getParticipationOptions(referredModelClass,referredModel);
 					if (!referredModelParticipatingOptions.isEmpty()){
-						Select q = new Select("ID").from(referredModelClass).where(getDataSecurityWhereClause(referredModelClass,referredModel));
-						List<? extends Model> referables = q.execute();
+						Select q = new Select().from(referredModelClass).where(getDataSecurityWhereClause(referredModelClass,referredModel));
+						List<? extends Model> referables = q.execute(referredModelClass);
 						List<Integer> ids = new ArrayList<Integer>();
 						for (Model referable:referables){
 							ids.add(referable.getId());
@@ -132,7 +132,12 @@ public class UserImpl extends ModelImpl<User>{
 	    	if (values.isEmpty()){
 	    		dsw.add(new Expression(cd.getName(),Operator.EQ));
 	    	}else if (values.size() == 1){
-	    		dsw.add(new Expression(cd.getName(),Operator.EQ, new BindVariable(values.get(0))));
+	    		Integer value = values.get(0);
+	    		if (value == null){
+	    			dsw.add(new Expression(cd.getName(),Operator.EQ));
+	    		}else {
+	    			dsw.add(new Expression(cd.getName(),Operator.EQ, new BindVariable(values.get(0))));
+	    		}
 	    	}else {
 	    		List<BindVariable> parameters = new ArrayList<BindVariable>();
 	    		for (Integer value: values){

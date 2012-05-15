@@ -134,7 +134,7 @@ public class Expression {
 						//To handle In clause.
 						builder.append(",");
 					}
-					builder.append(" ?");
+					builder.append(" ? ");
 				}
 				
 				if (op.isMultiValued()){
@@ -189,8 +189,7 @@ public class Expression {
 		return getRealSQL().equals(e.getRealSQL());
 	}
 	
-	public <M extends Model> boolean eval(M m){
-		Record record = m.getRawRecord();
+	public boolean eval(Record record){
 		if (conjunction == null){
 			Object value = record.get(columnName);
 			if (value == null){
@@ -230,18 +229,23 @@ public class Expression {
 			boolean ret = connected.isEmpty();
 			for (Iterator<Expression> i = connected.iterator(); !ret && i.hasNext() ;){
 				Expression e = i.next();
-				ret = ret || e.eval(m);
+				ret = ret || e.eval(record);
 			}
 			return ret;
 		}else if (conjunction == Conjunction.AND){
 			boolean ret = true;
 			for (Iterator<Expression> i = connected.iterator(); ret && i.hasNext() ;){
 				Expression e = i.next();
-				ret = ret && e.eval(m);
+				ret = ret && e.eval(record);
 			}
 			return ret;
 		}
 		return false;
+		
+	}
+	public <M extends Model> boolean eval(M m){
+		Record record = m.getRawRecord();
+		return eval(record);
 	}
 	
 }
