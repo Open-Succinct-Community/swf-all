@@ -7,13 +7,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -43,14 +43,21 @@ public class UserImpl extends ModelImpl<User>{
 		}
 	}
 	
-	public <R extends Model> SequenceSet<String> getParticipationExtensionPoints(Class<R> modelClass){
-		SequenceSet<String> extnPoints = new SequenceSet<String>();
-		ModelReflector<R> ref = ModelReflector.instance(modelClass);
-		for (Class<? extends Model> inHierarchy : ref.getClassHierarchies()){
-			String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ inHierarchy.getSimpleName();
-			extnPoints.add(extnPoint);
+	
+	private Cache<Class<? extends Model>, SequenceSet<String>> participantExtensionPointsCache = new Cache<Class<? extends Model>, SequenceSet<String>>() {
+		@Override
+		protected SequenceSet<String> getValue(Class<? extends Model> modelClass) {
+			SequenceSet extnPoints = new SequenceSet<String>();
+			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+			for (Class<? extends Model> inHierarchy : ref.getClassHierarchies()){
+				String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ inHierarchy.getSimpleName();
+				extnPoints.add(extnPoint);
+			}
+			return extnPoints;
 		}
-		return extnPoints;
+	};
+	public <R extends Model> SequenceSet<String> getParticipationExtensionPoints(Class<R> modelClass){
+		return participantExtensionPointsCache.get(modelClass);
 	}
 	
 	public <R extends Model> Map<String,List<Integer>> getParticipationOptions(Class<R> modelClass){
@@ -58,24 +65,14 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	public Map<String,List<Integer>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
-		Map<String, List<Integer>> mapParticipatingOptions = new HashMap<String, List<Integer>>();
-		User user = getProxy();
-		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
-		for (Method referredModelGetter : ref.getReferredModelGetters()){
-			String referredModelIdFieldName = ref.getReferenceField(referredModelGetter);
-			Method referredModelIdGetter = ref.getFieldGetter(referredModelIdFieldName);
-			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-			Model referredModel = null;
-			
-			Integer rmid = (Integer)model.getRawRecord().get(referredModelIdFieldName);
-			if (rmid != null){
-				referredModel = Database.getTable(referredModelClass).get(rmid);
-			}
-			if (referredModel == null){
-				referredModel = Database.getTable(referredModelClass).newRecord(); //Dummy;
-			}
+		Timer timer = Timer.startTimer();
+		try {
+			Map<String, List<Integer>> mapParticipatingOptions = new HashMap<String, List<Integer>>();
+			User user = getProxy();
+			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+			for (Method referredModelGetter : ref.getParticipantModelGetters()){
+				String referredModelIdFieldName = ref.getReferenceField(referredModelGetter);
 
-			if (ref.isAnnotationPresent(referredModelIdGetter,PARTICIPANT.class)){
 				boolean extnFound = false;
 				for (String extnPoint: getParticipationExtensionPoints(modelClass)){
 					if (Registry.instance().hasExtensions(extnPoint)){
@@ -91,15 +88,25 @@ public class UserImpl extends ModelImpl<User>{
 				}
 				
 				if (!extnFound) {
+					Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
+					Integer rmid = (Integer)model.getRawRecord().get(referredModelIdFieldName);
+					Model referredModel = null;
+					if (rmid != null){
+						referredModel = Database.getTable(referredModelClass).get(rmid);
+					}
+					if (referredModel == null){
+						referredModel = Database.getTable(referredModelClass).newRecord(); //Dummy;
+					}
+		
 					Map<String,List<Integer>> referredModelParticipatingOptions = user.getParticipationOptions(referredModelClass,referredModel);
+					ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 					if (!referredModelParticipatingOptions.isEmpty()){
-						Select q = new Select().from(referredModelClass).where(getDataSecurityWhereClause(referredModelClass,referredModel));
+						Select q = new Select().from(referredModelClass).where(getDataSecurityWhereClause(referredModelReflector,referredModelParticipatingOptions));
 						List<? extends Model> referables = q.execute(referredModelClass);
 						List<Integer> ids = new ArrayList<Integer>();
 						for (Model referable:referables){
 							ids.add(referable.getId());
 						}
-						ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 						if (referredModelReflector.reflects(User.class)){
 							ids.add(user.getId());
 						}
@@ -107,25 +114,30 @@ public class UserImpl extends ModelImpl<User>{
 					}
 				}
 			}
+			
+			return mapParticipatingOptions;
+		}finally{
+			timer.stop();
 		}
-		
-		return mapParticipatingOptions;
 	}
 
 	public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass){
 		Model dummy = Database.getTable(modelClass).newRecord();
 		return getDataSecurityWhereClause(modelClass, dummy);
 	}
+	
 	public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass,Model model){
 		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
-		Map<String,List<Integer>> columnValuesMap = getParticipationOptions(modelClass,model);
-		
+		Map<String,List<Integer>> participatingOptions = getParticipationOptions(modelClass,model);
+		return getDataSecurityWhereClause(ref, participatingOptions);
+	}
+	public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Map<String,List<Integer>> participatingOptions){
 		Expression dsw = new Expression(Conjunction.OR);
-		Iterator<String> fieldNameIterator = columnValuesMap.keySet().iterator();
+		Iterator<String> fieldNameIterator = participatingOptions.keySet().iterator();
 		
 		while (fieldNameIterator.hasNext()){
 			String key = fieldNameIterator.next();
-			List<Integer> values = columnValuesMap.get(key);
+			List<Integer> values = participatingOptions.get(key);
 			
 	    	ColumnDescriptor cd = ref.getColumnDescriptor(key);
 
@@ -136,14 +148,10 @@ public class UserImpl extends ModelImpl<User>{
 	    		if (value == null){
 	    			dsw.add(new Expression(cd.getName(),Operator.EQ));
 	    		}else {
-	    			dsw.add(new Expression(cd.getName(),Operator.EQ, new BindVariable(values.get(0))));
+	    			dsw.add(new Expression(cd.getName(),Operator.EQ, values.get(0)));
 	    		}
 	    	}else {
-	    		List<BindVariable> parameters = new ArrayList<BindVariable>();
-	    		for (Integer value: values){
-	    			parameters.add(new BindVariable(value));
-	    		}
-	    		dsw.add(Expression.createExpression(cd.getName(),Operator.IN, parameters.toArray()));
+	    		dsw.add(Expression.createExpression(cd.getName(),Operator.IN, values.toArray()));
 	    	}
 		}
 		return dsw;

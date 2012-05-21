@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
@@ -98,46 +96,71 @@ public class Select extends SqlStatement{
 		
 	}
 	
+	public static final int MAX_RECORDS_ALL_RECORDS = 0; 
+	
 	public <M extends Model> List<M> execute(){
+		return execute(MAX_RECORDS_ALL_RECORDS);
+	}
+	
+	public <M extends Model> List<M> execute(int maxRecords){
 		if (tableNames.length != 1){
 			throw new UnsupportedOperationException("Query is a join.Don't know what Collection to return.");
 		}
 		Table<M> table = Database.getTable(tableNames[0]);
-		return execute(table.getModelClass());
+		return execute(table.getModelClass(),maxRecords);
 	}
 	
-	public <M extends Model> List<M> execute(Class<M> modelInterface) {
+	public <M extends Model> List<M> execute(Class<M> modelInterface){
+		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS);
+	}
+	
+	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords) {
         PreparedStatement st = null;
-        String query = getRealSQL();
         try {
         	QueryCache cache = Database.getInstance().getCache(ModelReflector.instance(modelInterface));
-        	SortedSet<Record> result = cache.getCachedResult(getWhereExpression());
+        	SortedSet<Record> result = cache.getCachedResult(getWhereExpression(),maxRecords);
         	if (result == null){
-	            Logger.getLogger(getClass().getName()).log(Level.INFO, "Executing {0}", query);
-	            st = prepare();
-	            result = new TreeSet<Record>();
-	            if (st.execute()){
-	                ResultSet rs = st.getResultSet();
-	                while (rs.next()){
-	                    Record r = new Record();
-	                    r.load(rs);
-	                    Record cached = cache.getCachedRecord(r);
-	                    if (cached != null){
-	                    	result.add(cached);
-	                    }else {
-	                    	result.add(r);
-	                    }
-	                }
-	                rs.close();
+	            Timer queryTimer = Timer.startTimer(getRealSQL());
+	            try {
+		            st = prepare();
+		            if (maxRecords > 0){
+		            	st.setMaxRows(maxRecords+1); //Rquest one more so that you can know if the list is complete or not.
+		            }
+		            result = new TreeSet<Record>();
+		            if (st.execute()){
+		                ResultSet rs = st.getResultSet();
+		                while (rs.next()){
+		                    Record r = new Record();
+		                    r.load(rs);
+		                    Record cachedRecord = cache.getCachedRecord(r);
+		                    if (cachedRecord != null){
+		                    	r = cachedRecord;
+		                    }else {
+		                    	cache.add(r);
+		                    }
+		                    result.add(r);
+		                }
+		                rs.close();
+		            }
+		            if (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || result.size() <= maxRecords){ // We are requesting maxRecords + 1;!
+		            	//We have fetched every thing. Hence cache the whereClause.
+		            	cache.setCachedResult(getWhereExpression(), result);
+		            }
+	            }finally{
+	            	queryTimer.stop();
 	            }
-	            cache.setCachedResult(getWhereExpression(), result);
         	}
-        	List<M> ret = new ArrayList<M>();
-        	for (Record record: result){
-                M m = ModelInvocationHandler.getProxy(modelInterface, record);
-                ret.add(m);
+        	Timer creatingProxies = Timer.startTimer("creatingProxies");
+        	try {
+	        	List<M> ret = new ArrayList<M>();
+	        	for (Record record: result){
+	                M m = record.getAsProxy(modelInterface);
+	                ret.add(m);
+	        	}
+	        	return ret;
+        	}finally {
+        		creatingProxies.stop();
         	}
-        	return ret;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         } finally {

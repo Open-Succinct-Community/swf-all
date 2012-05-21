@@ -18,6 +18,8 @@ import javax.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
+import com.venky.core.log.TimerStatistics;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
@@ -140,38 +142,46 @@ public class Router extends AbstractHandler {
 	
 	
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        HttpSession session  = request.getSession(false); 
-        _IView view = null;
-        _IView ev = null ;
-        
-        _IPath p = createPath(target);
-        p.setSession(session);
-        p.setRequest(request);
-        p.setResponse(response);
-        
-        baseRequest.setHandled(true);
-        _IDatabase db = null ;
-        try {
-        	db = getDatabase(); 
-        	db.open();
-            view = p.invoke();
-            if (view.isBeingRedirected()){
-            	db.getCurrentTransaction().commit();
-            }
-            view.write();
-            db.getCurrentTransaction().commit();
-        }catch(Exception e){
-        	try { 
-        		db.getCurrentTransaction().rollback();
-        	}catch (SQLException ex){
-        		ex.printStackTrace();
-        	}
-            ev = createExceptionView(p, e);
-            ev.write();
-        }finally {
-        	if (db != null ){
-        		db.close();
-        	}
-        }
+		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
+		
+    	Timer timer = Timer.startTimer();
+    	try {
+	        HttpSession session  = request.getSession(false); 
+	        _IView view = null;
+	        _IView ev = null ;
+	        
+	        _IPath p = createPath(target);
+	        p.setSession(session);
+	        p.setRequest(request);
+	        p.setResponse(response);
+	        
+	        baseRequest.setHandled(true);
+	        _IDatabase db = null ;
+	        try {
+	        	db = getDatabase(); 
+	        	db.open();
+	            view = p.invoke();
+	            if (view.isBeingRedirected()){
+	            	db.getCurrentTransaction().commit();
+	            }
+	            view.write();
+	            db.getCurrentTransaction().commit();
+	        }catch(Exception e){
+	        	try { 
+	        		db.getCurrentTransaction().rollback();
+	        	}catch (SQLException ex){
+	        		ex.printStackTrace();
+	        	}
+	            ev = createExceptionView(p, e);
+	            ev.write();
+	        }finally {
+	        	if (db != null ){
+	        		db.close();
+	        	}
+	        }
+    	}finally{
+    		timer.stop();
+    		TimerStatistics.dumpStatistics();
+    	}
     }
 }

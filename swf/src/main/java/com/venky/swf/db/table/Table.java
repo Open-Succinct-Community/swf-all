@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
@@ -199,6 +200,8 @@ public class Table<M extends Model> {
             if (tableColumn == null){
                 fieldsAltered.get(FIELDS_ADDED).add(fieldName);
             }else if (!modelColumn.equals(tableColumn)){
+            	Logger.getLogger(Table.class.getName()).info("Model: " + modelColumn.toString());
+            	Logger.getLogger(Table.class.getName()).info("Table: " + tableColumn.toString());
             	fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
             }
         }
@@ -301,7 +304,7 @@ public class Table<M extends Model> {
     }
     
     public M get(int id) {
-        Select q = new Select().from(getModelClass());
+    	Select q = new Select().from(getModelClass());
         String idColumn = getReflector().getColumnDescriptor("id").getName();
         q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
         List<M> result = q.execute(getModelClass());
@@ -453,8 +456,11 @@ public class Table<M extends Model> {
         public String toString(){
             StringBuilder buff = new StringBuilder();
 			TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getJDBCType());
-            
-            buff.append(getName());
+            if (Database.getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB()){
+            	buff.append(getName().toLowerCase());
+            }else {
+            	buff.append(getName());
+            }
             if (isAutoIncrement()){
                 buff.append(Database.getJdbcTypeHelper().getAutoIncrementInstruction());
             }else {
@@ -470,7 +476,8 @@ public class Table<M extends Model> {
                 if (!isNullable()){
                     buff.append(" NOT NULL ");
                     if (getColumnDefault() != null){
-                    	buff.append(" DEFAULT " ).append(getColumnDefault());
+                    	buff.append(" DEFAULT " );
+                		buff.append(getColumnDefault());
                     }
                 }
             }

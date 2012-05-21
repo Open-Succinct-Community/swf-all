@@ -24,9 +24,13 @@ import java.util.Map;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.DoubleUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 
 /**
  * 
@@ -102,15 +106,11 @@ public abstract class JdbcTypeHelper {
     public static boolean isLOB(int jdbcType){
     	return Arrays.binarySearch(LOBTYPES, jdbcType) > 0 ;
     }
-
-    public static abstract class TypeConverter<M> {
+    
+    public abstract class TypeConverter<M> {
 
         public abstract M valueOf(Object o);
         
-        public Object dbValueOf(Object o){
-        	return valueOf(o);
-        }
-
         public String toString(Object m) {
         	return StringUtil.valueOf(m);
         }
@@ -118,17 +118,9 @@ public abstract class JdbcTypeHelper {
         public abstract String getDisplayClassName();
     }
 
-    public static class BooleanConverter extends TypeConverter<Boolean> {
-        @Override
-    	public Object dbValueOf(Object o){
-        	if (valueOf(o)){
-        		return 1;
-        	}else {
-        		return 0;
-        	}
-        }
+    public class BooleanConverter extends TypeConverter<Boolean> {
 
-        public Boolean valueOf(Object s) {
+    	public Boolean valueOf(Object s) {
             if (ObjectUtil.isVoid(s)) {
                 return false;
             }
@@ -141,7 +133,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public static class CharacterConverter extends TypeConverter<Character> {
+    public class CharacterConverter extends TypeConverter<Character> {
 
         public Character valueOf(Object object) {
             if (ObjectUtil.isVoid(object)) {
@@ -161,7 +153,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public static class ByteConverter extends TypeConverter<Byte> {
+    public class ByteConverter extends TypeConverter<Byte> {
 
         public Byte valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -175,13 +167,13 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public abstract static class NumberConverter<N extends Number> extends TypeConverter<N> {
+    public abstract class NumberConverter<N extends Number> extends TypeConverter<N> {
 		@Override
 		public String getDisplayClassName() {
 			return "number";
 		}
     }
-    public abstract static class NumericConverter<N extends Number> extends NumberConverter<N> {
+    public abstract class NumericConverter<N extends Number> extends NumberConverter<N> {
 		public String toString(Object o){
 			if (o == null){
 				return "";
@@ -195,7 +187,7 @@ public abstract class JdbcTypeHelper {
 			return fmt.format(n.doubleValue());
 		}
     }
-    public static class ShortConverter extends NumberConverter<Short> {
+    public class ShortConverter extends NumberConverter<Short> {
 
         public Short valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -206,7 +198,7 @@ public abstract class JdbcTypeHelper {
         
     }
 
-    public static class IntegerConverter extends NumberConverter<Integer> {
+    public class IntegerConverter extends NumberConverter<Integer> {
 
         public Integer valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -216,7 +208,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public static class LongConverter extends NumberConverter<Long> {
+    public class LongConverter extends NumberConverter<Long> {
 
         public Long valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -226,7 +218,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public static class FloatConverter extends NumericConverter<Float> {
+    public class FloatConverter extends NumericConverter<Float> {
 
         public Float valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -236,7 +228,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public static class DoubleConverter extends NumericConverter<Double> {
+    public class DoubleConverter extends NumericConverter<Double> {
 
         public Double valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -246,7 +238,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public static class BigDecimalConverter extends NumericConverter<BigDecimal> {
+    public class BigDecimalConverter extends NumericConverter<BigDecimal> {
         public BigDecimal valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return new BigDecimal(0.0);
@@ -255,7 +247,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public static class StringConverter extends TypeConverter<String> {
+    public class StringConverter extends TypeConverter<String> {
 
         public String valueOf(Object o) {
             return StringUtil.valueOf(o);
@@ -270,7 +262,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public static class DateConverter extends TypeConverter<Date> {
+    public class DateConverter extends TypeConverter<Date> {
 
         public Date valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -294,7 +286,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public static class TimeConverter extends TypeConverter<Time> {
+    public class TimeConverter extends TypeConverter<Time> {
 
         public Time valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -317,7 +309,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public static class TimestampConverter extends TypeConverter<Timestamp> {
+    public class TimestampConverter extends TypeConverter<Timestamp> {
 
         public Timestamp valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -338,7 +330,7 @@ public abstract class JdbcTypeHelper {
 		}
 
     }
-    public static class InputStreamConverter extends TypeConverter<InputStream> {
+    public class InputStreamConverter extends TypeConverter<InputStream> {
 
         public InputStream valueOf(Object o) {
             if (o == null) {
@@ -377,7 +369,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public static class ReaderConverter extends TypeConverter<Reader> {
+    public class ReaderConverter extends TypeConverter<Reader> {
 
         public Reader valueOf(Object o) {
             if (o == null) {
@@ -446,13 +438,17 @@ public abstract class JdbcTypeHelper {
         if (ref != null) {
             return ref;
         }
-
-        for (Class<?> key : javaTypeRefMap.keySet()) {
-            if (key.isAssignableFrom(javaClass)) {
-                return javaTypeRefMap.get(key);
-            }
-        }
-        return null;
+        Timer loop = Timer.startTimer("loop:" + javaClass.getName());
+    	try {
+	        for (Class<?> key : javaTypeRefMap.keySet()) {
+	            if (key.isAssignableFrom(javaClass)) {
+	                return javaTypeRefMap.get(key);
+	            }
+	        }
+	        return null;
+    	}finally{
+    		loop.stop();
+    	}
     }
 
     public List<TypeRef<?>> getTypeRefs(int jdbcType) {
@@ -475,4 +471,20 @@ public abstract class JdbcTypeHelper {
     
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();
+    public Object getDefaultKW(COLUMN_DEF def){
+    	Timer timer = Timer.startTimer();
+    	try {
+	    	if (def.value() == StandardDefault.CURRENT_TIMESTAMP){
+	    		return getCurrentTimeStampKW();
+	    	}else if (def.value() == StandardDefault.CURRENT_DATE){
+	    		return getCurrentDateKW();
+	    	}else {
+	    		return StandardDefaulter.getDefaultValue(def);
+	    	}
+    	}finally{
+    		timer.stop();
+    	}
+    }
+    
+
 }

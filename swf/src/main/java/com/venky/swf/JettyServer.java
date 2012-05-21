@@ -52,13 +52,8 @@ public class JettyServer {
 		JettyServer s = new JettyServer(Integer.valueOf(port));
 		s.start();
 	}
-
 	public boolean isDevelopmentEnvironment(){
-		String environment = Config.instance().getProperty("swf.env","development");
-		if ("development".equalsIgnoreCase(environment)){
-			return true;
-		}
-		return false;
+		return Config.instance().isDevelopmentEnvironment();
 	}
 	
 	public void start() throws Exception {

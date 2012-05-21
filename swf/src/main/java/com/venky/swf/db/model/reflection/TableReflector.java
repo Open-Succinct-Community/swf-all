@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.reflection.MethodSignatureCache;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
@@ -134,7 +135,7 @@ public class TableReflector {
     			for (Class<? extends Model> modelClass:getSiblingModelClasses(inModel)){
     				List<Method> matchingMethods = MReflector.instance(modelClass).getMethods(matcher);
     				for (Method m: matchingMethods){
-    					String signature = Reflector.computeMethodSignature(m);
+    					String signature = getSignature(m);
     					if (!signatures.contains(signature)){
     						into.add(m);
     						signatures.add(signature);
@@ -144,7 +145,10 @@ public class TableReflector {
     		}		
 		}
     }
-    
+    private MethodSignatureCache signatureCache = new MethodSignatureCache();
+    public String getSignature(Method method){
+    	return signatureCache.get(method);
+    }
 
     public boolean isAnnotationPresent(Class<? extends Model> inModel, Class<? extends Annotation> annotationClass){
     	return getAnnotation(inModel,annotationClass) != null;

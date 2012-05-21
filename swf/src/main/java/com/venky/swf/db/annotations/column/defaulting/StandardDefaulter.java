@@ -35,6 +35,7 @@ public class StandardDefaulter {
 				break;
 			case SOME_VALUE:
 				ret = someValue;
+				break;
 		}
 		return ret;
 	}

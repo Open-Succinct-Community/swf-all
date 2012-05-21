@@ -153,6 +153,17 @@ public class Config {
     	return builder;
     }
     
+    public boolean isTimerEnabled(){
+    	return Boolean.valueOf(getProperty("swf.timer.enabled","false"));
+    }
     
+	public boolean isDevelopmentEnvironment(){
+		String environment = getProperty("swf.env","development");
+		if ("development".equalsIgnoreCase(environment)){
+			return true;
+		}
+		return false;
+	}
+
 	
 }

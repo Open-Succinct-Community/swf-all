@@ -11,10 +11,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
+import com.venky.swf.db.model.Model;
 
 /**
  *
@@ -128,6 +130,21 @@ public class Record implements Comparable<Record>{
 		return this.getId().compareTo(o.getId());
 	}
     
+	
+	private static class ProxyCache extends Cache<Class<? extends Model>,Model> {
+		Record record;
+		ProxyCache(Record record){
+			this.record = record;
+		}
+		@Override
+		protected Model getValue(Class<? extends Model> k) {
+			return ModelInvocationHandler.getProxy(k, record);
+		}
+	}
+	private ProxyCache proxyCache = new ProxyCache(this);
+	public <M extends Model> M getAsProxy(Class<M> modelClass){
+		return (M)proxyCache.get(modelClass);
+	}
 	
     
 }

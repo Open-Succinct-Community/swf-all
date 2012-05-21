@@ -27,13 +27,28 @@
       <includes>
         <include>.classpath</include>
         <include>.project</include>
+        <include>.gitignore</include>
       </includes>
     </fileSet>
   </fileSets>
   <requiredProperties>
     <requiredProperty key="archetypeVersion"/>
+    <requiredProperty key="pluginName"/>
+
+    <requiredProperty key="groupId">
+      <defaultValue>com.github.venkatramanm.swf-all</defaultValue>
+    </requiredProperty>
+
+    <requiredProperty key="artifactId">
+      <defaultValue>swf-plugin-${pluginName}</defaultValue>
+    </requiredProperty>
+
+    <requiredProperty key="version">
+      <defaultValue>${archetypeVersion}</defaultValue>
+    </requiredProperty>
+
     <requiredProperty key="package">
-      <defaultValue>${groupId}.${artifactId}</defaultValue>
+      <defaultValue>com.venky.swf.plugins.${pluginName}</defaultValue>
     </requiredProperty>
   </requiredProperties>
 </archetype-descriptor>

@@ -11,6 +11,8 @@ import java.sql.Timestamp;
 import java.sql.Date;
 import java.sql.Time;
 
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+
 /**
  *
  * @author venky
@@ -29,6 +31,21 @@ public class DerbyHelper extends JdbcTypeHelper{
     public String getCurrentDateKW(){
     	return "CURRENT_DATE";
     }
+
+    @Override
+	public Object getDefaultKW(COLUMN_DEF def) {
+		Object value = super.getDefaultKW(def);
+    	if (value instanceof Boolean){
+    		if ((Boolean)value){
+    			return 1;
+    		}else {
+    			return 0;
+    		}
+    	}
+    	return value;
+	}
+
+
 
     protected DerbyHelper() {
             /**
@@ -103,6 +120,4 @@ public class DerbyHelper extends JdbcTypeHelper{
                             "BLOB", 0, 0, true , new InputStreamConverter()));
 
     }
-
-
 }

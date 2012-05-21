@@ -33,7 +33,7 @@
 	                </goals>
 	              </pluginExecutionFilter>
 	              <action>
-	                <ignore />
+	                <ignore/>
 	              </action>
 	            </pluginExecution>
 	          </pluginExecutions>
@@ -67,8 +67,10 @@
   <modules>
 		<module>swf</module>
 		<module>swf-archetype</module>
+		<module>swf-plugin-archetype</module>
 		<module>swf-maven-plugin</module>
 		<module>swf-plugin-security</module>
 		<module>swf-plugin-oauth</module>
+    <module>swf-plugin-lucene</module>
   </modules>
 </project>

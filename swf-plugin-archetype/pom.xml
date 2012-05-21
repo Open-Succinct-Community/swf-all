@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.github.venkatramanm.swf-all</groupId>
+    <artifactId>swf-all</artifactId>
+    <version>1.1.7-SNAPSHOT</version>
+  </parent>
+  <artifactId>swf-plugin-archetype</artifactId>
+  <packaging>maven-archetype</packaging>
+  <name>swf-plugin-archetype</name>
+  <description>Archetype to create plugins for SWF</description>
+  <url>http://maven.apache.org</url>
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>LICENSE.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git@github.com:venkatramanm/swf-all.git</connection>
+    <developerConnection>scm:git:git@github.com:venkatramanm/swf-all.git</developerConnection>
+    <url>git@github.com:venkatramanm/swf-all.git</url>
+  </scm>
+
+  <developers>
+    <developer> 
+      <id>venky</id>
+      <name>Venkatraman Mahadevan</name>
+      <email>venkatramanm@yahoo.com</email>
+    </developer>
+  </developers>
+
+  <properties>
+  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.archetype</groupId>
+        <artifactId>archetype-packaging</artifactId>
+        <version>2.0</version>
+      </extension>
+    </extensions>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-archetype-plugin</artifactId>
+          <version>2.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

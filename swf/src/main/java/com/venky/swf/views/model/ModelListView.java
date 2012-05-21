@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
@@ -44,6 +45,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
     @Override
     protected void createBody(Body b) {
+    	
     	Table container = new Table();
     	container.addClass("hfill");
     	b.addControl(container);
@@ -87,6 +89,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         		continue;
         	}
             Row row = table.createRow();
+        	Timer timer = Timer.startTimer("paintAllActions");
             for (Method m : getSingleRecordActions()){
             	String actionName = m.getName();
             	boolean canAccessAction = getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
@@ -114,8 +117,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                 	row.createColumn();
                 }
             }
-                        
+            timer.stop();
             for (String fieldName : getIncludedFields()) {
+                timer = Timer.startTimer("paintField." + fieldName);
                 try {
                     if (reflector.isFieldVisible(fieldName)) {
                         Column column = row.createColumn(); 
@@ -161,6 +165,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                     throw new RuntimeException(ex);
                 } catch (InvocationTargetException ex) {
                     throw new RuntimeException(ex);
+                }finally {
+                	timer.stop();
                 }
             }
         }

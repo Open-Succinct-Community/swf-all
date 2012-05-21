@@ -39,7 +39,11 @@ public class SqlStatement {
         return st;
     }
 
+	private String realSQL = null;
 	public String getRealSQL(){
+		if (realSQL != null) {
+			return realSQL;
+		}
 		StringBuilder builder = new StringBuilder(getParameterizedSQL());
 		List<BindVariable> parameters = getValues();
 		
@@ -52,14 +56,17 @@ public class SqlStatement {
 			index = builder.indexOf("?",index+pStr.length());
 		}
 		
-		return builder.toString();
-		
+		String sql = builder.toString();
+		if (finalized){
+			realSQL = sql;
+		}
+		return sql;
 	}
 
 	private StringBuilder query = new StringBuilder();
 	private List<BindVariable> values = new ArrayList<BindVariable>();
 	private boolean finalized = false;
-	public String getParameterizedSQL() {
+	private String getParameterizedSQL() {
 		if (!finalized){
 			finalizeParameterizedSQL();
 			finalized = true;

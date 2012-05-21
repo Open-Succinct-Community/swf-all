@@ -2,6 +2,7 @@ package com.venky.swf.sql;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class Expression {
 	List<BindVariable> values = new ArrayList<BindVariable>() ;
 	Operator op = null;
 	static final int CHUNK_SIZE = 30; 
+	
 	public static Expression createExpression(String columnName, Operator op, Object... values){
 		if (values.length < CHUNK_SIZE){
 			return new Expression(columnName,op,values);
@@ -56,12 +58,37 @@ public class Expression {
 				this.values.add(new BindVariable(values[i]));
 			}
 		}
+		setFinalized(true);
 	}
 	Conjunction conjunction = null;
 	public Expression(Conjunction conjunction){
 		this.conjunction = conjunction;
 	}
 
+	private boolean finalized = false;
+	private boolean isFinalized(){
+		return finalized;
+	}
+	
+	private void setFinalized(boolean finalized){
+		this.finalized = finalized;
+	}
+	
+	private void ensureModifiable(){
+		if (isFinalized()){
+			throw new ExpressionFinalizedException();
+		}
+	}
+	
+	public static class ExpressionFinalizedException extends RuntimeException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1865905730160016333L;
+		
+	}
+	
 	private List<Expression> connected = new ArrayList<Expression>();
 	private Expression parent = null;
 	
@@ -74,11 +101,13 @@ public class Expression {
 		return parent;
 	}
 
+	
 	public void setParent(Expression parent) {
 		this.parent = parent;
 	}
 
 	public Expression add(Expression expression){
+		ensureModifiable();
 		expression.setParent(this);
 		connected.add(expression);
 		addValues(expression.getValues());
@@ -86,12 +115,18 @@ public class Expression {
 	}
 	
 	private void addValues(List<BindVariable> values){
+		ensureModifiable();
 		this.values.addAll(values);
 		if (parent != null){
 			parent.addValues(values);
 		}
 	}
+	
+	private String realSQL = null;
 	public String getRealSQL(){
+		if (realSQL != null){
+			return realSQL;
+		}
 		StringBuilder builder = new StringBuilder(getParameterizedSQL());
 		List<BindVariable> parameters = getValues();
 		
@@ -108,11 +143,19 @@ public class Expression {
 			index = builder.indexOf("?",index+pStr.length());
 		}
 		
-		return builder.toString();
-		
+		String sql = builder.toString();
+		if (isFinalized()){
+			realSQL = sql;
+		}
+		return sql;
 	}
 	
+	private String parameterizedSQL = null ;
 	public String getParameterizedSQL(){
+		if (parameterizedSQL != null){
+			return parameterizedSQL;
+		}
+		
 		StringBuilder builder = new StringBuilder();
 		if (conjunction == null){
 			builder.append(columnName);
@@ -161,20 +204,25 @@ public class Expression {
 				builder.append(" )");
 			}
 		}
-		return builder.toString();
+		
+		String sql = builder.toString();
+		if (isFinalized()){
+			parameterizedSQL = sql;
+		}
+		return sql;
 	}
 	
 	public List<BindVariable> getValues(){
-		return values;
+		return Collections.unmodifiableList(values);
 	}
 	
 	public boolean isEmpty(){
 		return conjunction != null && connected.isEmpty() ;
-		//return getParameterizedSQL().length() == 0;
 	}
 	
 	@Override
 	public int hashCode(){
+		setFinalized(true);
 		return getRealSQL().hashCode();
 	}
 	
@@ -186,6 +234,8 @@ public class Expression {
 			return false;
 		}
 		Expression e = (Expression) other;
+		setFinalized(true);
+		e.setFinalized(true);
 		return getRealSQL().equals(e.getRealSQL());
 	}
 	

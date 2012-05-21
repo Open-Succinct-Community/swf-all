@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
@@ -307,31 +308,35 @@ public class Path implements _IPath{
     
     
     public _IView invoke() throws AccessDeniedException{
-
     	for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
-            	boolean securedAction = isSecuredAction(m) ;
-            	if (securedAction){
-            		if (!isUserLoggedOn()){
-                		return new RedirectorView(this,"","login");
-            		}else {
-            			ensureControllerActionAccess();	
-            		}
-            	}
-            	Controller controller = createController();
+            	Timer timer = Timer.startTimer(); 
             	try {
-                    if (m.getParameterTypes().length == 0 && parameter() == null){
-                        return (View)m.invoke(controller);
-                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
-                        return (View)m.invoke(controller, parameter());
-                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
-                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
-                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class){
-                        return (View)m.invoke(controller, Long.valueOf(parameter()));
-                    }
-            	}catch(Exception e){
-        			throw new RuntimeException(e);
+	            	boolean securedAction = isSecuredAction(m) ;
+	            	if (securedAction){
+	            		if (!isUserLoggedOn()){
+	                		return new RedirectorView(this,"","login");
+	            		}else {
+	            			ensureControllerActionAccess();	
+	            		}
+	            	}
+	            	Controller controller = createController();
+	            	try {
+	                    if (m.getParameterTypes().length == 0 && parameter() == null){
+	                        return (View)m.invoke(controller);
+	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
+	                        return (View)m.invoke(controller, parameter());
+	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
+	                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
+	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class){
+	                        return (View)m.invoke(controller, Long.valueOf(parameter()));
+	                    }
+	            	}catch(Exception e){
+	        			throw new RuntimeException(e);
+	            	}
+            	}finally{
+            		timer.stop();
             	}
             }
         }

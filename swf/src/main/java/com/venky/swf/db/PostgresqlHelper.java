@@ -11,6 +11,9 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+
 /**
  *
  * @author venky
@@ -33,6 +36,15 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     public String getCurrentDateKW(){
     	return "('now'::text)::date";
     }
+
+    @Override
+    public Object getDefaultKW(COLUMN_DEF def){
+    	if (!ObjectUtil.isVoid(def.someValue())){
+    		return "'" + def.someValue() + "'::character varying";
+    	}
+    	return super.getDefaultKW(def);
+    }
+
     
     protected PostgresqlHelper() {
             /**
@@ -41,18 +53,10 @@ public class PostgresqlHelper extends JdbcTypeHelper{
              */
             registerjdbcSQLType(Boolean.class, new TypeRef<Boolean>(
                             java.sql.Types.BIT, "BOOLEAN", 0, 0,
-                            new BooleanConverter(){
-                            	public Object dbValueOf(Object o){
-                            		return super.valueOf(o);
-                            	}
-                            }));
+                            new BooleanConverter()));
             registerjdbcSQLType(boolean.class, new TypeRef<Boolean>(
                             java.sql.Types.BIT, "BOOLEAN", 0, 0,
-                            new BooleanConverter(){
-                            	public Object dbValueOf(Object o){
-                            		return super.valueOf(o);
-                            	}
-                            }));
+                            new BooleanConverter()));
 
             registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.SMALLINT,
                             "SMALLINT", 0, 0, new ByteConverter()));

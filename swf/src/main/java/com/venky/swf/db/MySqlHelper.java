@@ -11,25 +11,38 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
+
 /**
  *
  * @author venky
  */
 public class MySqlHelper extends JdbcTypeHelper{
-	
     @Override
     public String getAutoIncrementInstruction() {
             return (" INTEGER NOT NULL AUTO_INCREMENT ");
     }
     @Override
-    public String getCurrentDateKW(){
-    	return null;
+    public String getCurrentTimeStampKW(){
+    	return "0000-00-00 00:00:00";
     }
     @Override
-    public String getCurrentTimeStampKW(){
-    	return null;
+    public String getCurrentDateKW(){
+    	return null ;
     }
-
+	@Override
+	public Object getDefaultKW(COLUMN_DEF def) {
+		Object value = super.getDefaultKW(def);
+    	if (value != null && value instanceof Boolean){
+    		if ((Boolean)value){
+    			return "b'1'";
+    		}else {
+    			return "b'0'";
+    		}
+    	}
+    	return value;
+	}
+	
     protected MySqlHelper() {
             /**
              * Specify size and scale for a data type only if the database accepts

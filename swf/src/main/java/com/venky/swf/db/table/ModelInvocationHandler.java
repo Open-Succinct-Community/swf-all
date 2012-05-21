@@ -5,9 +5,9 @@
 package com.venky.swf.db.table;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,8 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -80,7 +82,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
 
-        if (getReflector().getFieldGetterMatcher().matches(method)) {
+        if (getReflector().getFieldGetters().contains(method)) {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
                 ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
@@ -104,15 +106,15 @@ public class ModelInvocationHandler implements InvocationHandler {
                     return converter.valueOf(value);
                 }
             }
-        } else if (getReflector().getFieldSetterMatcher().matches(method) ) {
+        } else if (getReflector().getFieldSetters().contains(method) ) {
             String fieldName = StringUtil.underscorize(mName.substring(3));
             if (!virtualFields.contains(fieldName)){
                 String columnName = getReflector().getColumnDescriptor(fieldName).getName(); 
                 return record.put(columnName, args[0]);
             }
-        } else if (getReflector().getReferredModelGetterMatcher().matches(method)) {
+        } else if (getReflector().getReferredModelGetters().contains(method)) {
             return getParent(method);
-        } else if (getReflector().getChildrenGetterMatcher().matches(method)) {
+        } else if (getReflector().getChildGetters().contains(method)) {
         	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
         	if (join != null){
         		return getChildren(getReflector().getChildModelClass(method),join.value());
@@ -124,7 +126,12 @@ public class ModelInvocationHandler implements InvocationHandler {
         	try {
 	        	Method inModelImplClass = impl.getClass().getMethod(mName, parameters); 
 	        	if (retType.isAssignableFrom(inModelImplClass.getReturnType())){
-	        		return inModelImplClass.invoke(impl, args);
+					Timer timer = Timer.startTimer(inModelImplClass.toString());
+	        		try {
+	        			return inModelImplClass.invoke(impl, args);
+	        		}finally{
+	        			timer.stop();
+	        		}
 	        	}
         	}catch(NoSuchMethodException ex){
         		//	
@@ -191,34 +198,30 @@ public class ModelInvocationHandler implements InvocationHandler {
 		return (M)proxy;
 	}
     
-    public List<User> getUsersAllowed(Class<? extends Model> asModel){
-    	List<User> users = new ArrayList<User>();
-    	if (!getReflector().reflects(asModel)){
-    		return users;
-    	}
-    	//TODO VENKY participantOptions reverse lookup.
-    	return users;
-    	
-    }
     public boolean isAccessibleBy(User user){
-    	return isAccessibleBy(user, getReflector().getModelClass());
+		return isAccessibleBy(user, getReflector().getModelClass());
     }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
-    	if (!getReflector().reflects(asModel)){
-    		return false;
+    	Timer timer = Timer.startTimer();
+    	try {
+	    	if (!getReflector().reflects(asModel)){
+	    		return false;
+	    	}
+	    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
+	    	if (columnNameValues.isEmpty()){
+	    		return true;
+	    	}	
+	    	for (String fieldName:columnNameValues.keySet()){
+	    		List values = columnNameValues.get(fieldName);
+	    		String columnName = reflector.getColumnDescriptor(fieldName).getName();
+	    		if (values.contains(record.get(columnName))) {
+	    			return true;
+	    		}
+	    	}
+	    	return false;
+    	}finally{
+    		timer.stop();
     	}
-    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
-    	if (columnNameValues.isEmpty()){
-    		return true;
-    	}	
-    	for (String fieldName:columnNameValues.keySet()){
-    		List values = columnNameValues.get(fieldName);
-    		String columnName = reflector.getColumnDescriptor(fieldName).getName();
-    		if (values.contains(record.get(columnName))) {
-    			return true;
-    		}
-    	}
-    	return false;
     }
     
     public Record getRawRecord(){
@@ -247,56 +250,58 @@ public class ModelInvocationHandler implements InvocationHandler {
 	    	M m = modelClass.cast(Proxy.newProxyInstance(modelClass.getClassLoader(), ref.getClassHierarchies().toArray(new Class<?>[]{}), mImpl));
 	    	mImpl.setProxy(m);
 	    	for (Class<?> implClass: modelImplClasses){
-	    		mImpl.addModelImplObject(constructImpl(implClass, m, ref));
+	    		mImpl.addModelImplObject(constructImpl(implClass, m));
 	    	}
 	    	return m;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-	private static Object constructImpl(Class<?> implClass, Model m, ModelReflector<?> ref){
-		Constructor c = null;
-		for (Class<?> clazz:ref.getClassHierarchies()){
-			try {
-				if (ModelImpl.class.isAssignableFrom(implClass)) {
-					c = implClass.getConstructor(clazz);
-					return c.newInstance(m);
-				}else if (ModelInvocationHandler.class.isAssignableFrom(implClass)){
-					c = implClass.getConstructor(Class.class,Record.class);
-					ModelInvocationHandler impl = (ModelInvocationHandler)c.newInstance(clazz,m.getRawRecord());
-					impl.setProxy(m);
-					return impl;
+	private static Object constructImpl(Class<?> implClass, Model m){
+		if (ModelImpl.class.isAssignableFrom(implClass)){
+			if (ModelImpl.class.equals(implClass)) {
+				return new ModelImpl(m);
+			}else {
+				ParameterizedType pt = (ParameterizedType)implClass.getGenericSuperclass();
+				Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
+				try {
+					return implClass.getConstructor(modelClass).newInstance(m);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
 				}
-			} catch (Exception e) {
-				//
 			}
 		}
-		return c;
+		throw new RuntimeException("Don't know how to instantiate " + implClass.getName());
 	}
 	private List<Object> modelImplObjects = new ArrayList<Object>();
 	private void addModelImplObject(Object o){
 		modelImplObjects.add(o);
 	}
 	
-	
-	private static <M extends Model> List<Class<?>> getModelImplClasses(Class<M> modelClass){
-		SequenceSet<Class<? extends Model>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
-		List<Class<?>> modelImplClasses = new ArrayList<Class<?>>();
-		
-		for (Class<?> c : modelClasses){
-			String modelImplClassName = c.getName()+"Impl";
-			try { 
-				Class<?> modelImplClass = Class.forName(modelImplClassName);
-				if (ModelInvocationHandler.class.isAssignableFrom(modelImplClass)){
-					modelImplClasses.add(modelImplClass);
-				}else {
-					throw new ClassCastException(modelImplClassName + " does not extend " + ModelImpl.class.getName() + " or " + ModelInvocationHandler.class.getName());
+	private static Cache<Class<? extends Model>,List<Class<?>>> modelImplClassesCache = new Cache<Class<? extends Model>, List<Class<?>>>() {
+		@Override
+		protected List<Class<?>> getValue(Class<? extends Model> modelClass) {
+			SequenceSet<Class<? extends Model>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
+			List<Class<?>> modelImplClasses = new ArrayList<Class<?>>();
+			
+			for (Class<?> c : modelClasses){
+				String modelImplClassName = c.getName()+"Impl";
+				try { 
+					Class<?> modelImplClass = Class.forName(modelImplClassName);
+					if (ModelImpl.class.isAssignableFrom(modelImplClass)){
+						modelImplClasses.add(modelImplClass);
+					}else {
+						throw new ClassCastException(modelImplClassName + " does not extend " + ModelImpl.class.getName());
+					}
+				}catch(ClassNotFoundException ex){
+					// Nothing
 				}
-			}catch(ClassNotFoundException ex){
-				// Nothing
 			}
+			return modelImplClasses;
 		}
-		return modelImplClasses;
+	};
+	private static <M extends Model> List<Class<?>> getModelImplClasses(Class<M> modelClass){
+		return modelImplClassesCache.get(modelClass);
 	}
 
     public void save() {
@@ -463,7 +468,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        q.executeUpdate();
 	        
 	        try {
-				Database.getInstance().getCache(getReflector()).remove(getProxy());
+				Database.getInstance().getCache(getReflector()).registerDestroy(getProxy());
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			} 
@@ -500,6 +505,12 @@ public class ModelInvocationHandler implements InvocationHandler {
 
         proxy.setLockId(newLockId);
         record.startTracking();
+        
+        try {
+			Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
     }
 
     private void create() {
@@ -543,7 +554,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         record.startTracking();
 
         try {
-			Database.getInstance().getCache(getReflector()).add(getProxy());
+			Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
