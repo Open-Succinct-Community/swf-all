@@ -29,9 +29,6 @@ public class TableReflector {
     
     public static <M extends Model> TableReflector instance(Class<M> modelClass){
     	Class<? extends Model> realModelClass = getRealModelClass(modelClass);
-    	if (realModelClass == null){
-    		throw new NullPointerException("Real Model is null");
-    	}
     	
     	String tableName = Table.tableName(realModelClass);
         TableReflector reflector = tableReflectorByTableName.get(tableName);

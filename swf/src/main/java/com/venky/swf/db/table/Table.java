@@ -18,6 +18,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Model;
@@ -444,25 +445,26 @@ public class Table<M extends Model> {
 			this.virtual = virtual;
 		}
 		
-		public void setColumnDefault(Object defaultValue){
+		public void setColumnDefault(String defaultValue){
 			put("COLUMN_DEF",defaultValue);
 		}
 		
-		public Object getColumnDefault(){
-			return get("COLUMN_DEF");
+		public String getColumnDefault(){
+			return (String)get("COLUMN_DEF");
 		}
 
 		@Override
         public String toString(){
             StringBuilder buff = new StringBuilder();
-			TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getJDBCType());
-            if (Database.getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB()){
+            JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+			TypeRef<?> ref = helper.getTypeRef(getJDBCType());
+            if (helper.isColumnNameAutoLowerCasedInDB()){
             	buff.append(getName().toLowerCase());
             }else {
             	buff.append(getName());
             }
             if (isAutoIncrement()){
-                buff.append(Database.getJdbcTypeHelper().getAutoIncrementInstruction());
+                buff.append(helper.getAutoIncrementInstruction());
             }else {
             	buff.append(" ");
                 buff.append(ref.getSqlType());
@@ -475,9 +477,18 @@ public class Table<M extends Model> {
                 }
                 if (!isNullable()){
                     buff.append(" NOT NULL ");
-                    if (getColumnDefault() != null){
+                    String def = getColumnDefault();
+                    if (def != null){
                     	buff.append(" DEFAULT " );
-                		buff.append(getColumnDefault());
+                    	if (ref.isColumnDefaultQuoted()){
+                			if (def.startsWith("'")){
+                				buff.append(def);
+                			}else {
+                				buff.append("'").append(def).append("'");
+                			}
+                    	}else {
+                    		buff.append(def);
+                    	}
                     }
                 }
             }

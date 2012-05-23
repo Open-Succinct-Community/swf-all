@@ -478,21 +478,14 @@ public class ModelReflector<M extends Model> {
         cd.setAutoIncrement(isAutoIncrement == null? false : true);
         cd.setVirtual(isVirtual == null ? false : isVirtual.value());
         if (colDef != null){
-    		cd.setColumnDefault(getDefaultKW(colDef,helper));
+    		cd.setColumnDefault(toDefaultKW(typeRef,colDef));
         }
         columnDescriptors.put(columnName,cd);
         return cd;
     }
     
-    private Cache<COLUMN_DEF,Object> defaultKWCache = new Cache<COLUMN_DEF, Object>(){
-		@Override
-		protected Object getValue(COLUMN_DEF k) {
-    		return Database.getJdbcTypeHelper().getDefaultKW(k);
-		}
-    	
-    };
-    private Object getDefaultKW(COLUMN_DEF def,JdbcTypeHelper helper){
-    	return defaultKWCache.get(def);
+    private String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
+    	return Database.getJdbcTypeHelper().toDefaultKW(ref,def);
     }
 
     public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){

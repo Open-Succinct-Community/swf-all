@@ -49,23 +49,24 @@ public abstract class JdbcTypeHelper {
         TypeConverter<M> typeConverter;
         Class<?> javaClass;
         boolean quotedWhenUnbounded;
-        public TypeRef(int jdbcType, String sqlType, int size, int scale, 
-                TypeConverter<M> typeConverter) {
-        	this(jdbcType,sqlType,size,scale,false,typeConverter);
-        }
-        public TypeRef(int jdbcType, String sqlType, int size, int scale, boolean quotedWhenUnbounded,
+        boolean columnDefaultQuoted;
+        public TypeRef(int jdbcType, String sqlType, int size, int scale, boolean quotedWhenUnbounded, boolean columnDefaultQuoted,
                 TypeConverter<M> typeConverter) {
             this.jdbcType = jdbcType;
             this.sqlType = sqlType;
             this.size = size;
             this.scale = scale;
             this.quotedWhenUnbounded = quotedWhenUnbounded;
+            this.columnDefaultQuoted = columnDefaultQuoted;
             this.typeConverter = typeConverter;
         }
-
+        public boolean isColumnDefaultQuoted() {
+			return columnDefaultQuoted;
+		}
         public boolean isQuotedWhenUnbounded() {
 			return quotedWhenUnbounded;
 		}
+        
 		public int getJdbcType() {
             return jdbcType;
         }
@@ -85,6 +86,10 @@ public abstract class JdbcTypeHelper {
         public boolean isLOB(){
         	return JdbcTypeHelper.isLOB(jdbcType);
         }
+        
+        public boolean isNumeric(){
+        	return JdbcTypeHelper.isNumeric(javaClass);
+        }
 
         public Class<?> getJavaClass(){
         	return javaClass;
@@ -103,6 +108,18 @@ public abstract class JdbcTypeHelper {
     	Arrays.sort(LOBTYPES);
     }
     
+    private static Class[] NUMERICTYPES = new Class[] { int.class, short.class, long.class, float.class, double.class, Number.class };
+    public static boolean isNumeric(Class<?> clazz){
+    	if (clazz == null){
+    		throw new NullPointerException("Trying to find if null class is numeric!");
+    	}
+    	for (int i = 0 ; i < NUMERICTYPES.length ; i ++ ){
+    		if (NUMERICTYPES[i].isAssignableFrom(clazz)){
+    			return true;
+    		}
+    	}
+    	return false;
+    }
     public static boolean isLOB(int jdbcType){
     	return Arrays.binarySearch(LOBTYPES, jdbcType) > 0 ;
     }
@@ -471,7 +488,7 @@ public abstract class JdbcTypeHelper {
     
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();
-    public Object getDefaultKW(COLUMN_DEF def){
+    public String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
     	Timer timer = Timer.startTimer();
     	try {
 	    	if (def.value() == StandardDefault.CURRENT_TIMESTAMP){
@@ -479,12 +496,18 @@ public abstract class JdbcTypeHelper {
 	    	}else if (def.value() == StandardDefault.CURRENT_DATE){
 	    		return getCurrentDateKW();
 	    	}else {
-	    		return StandardDefaulter.getDefaultValue(def);
+	    		return getDefaultKW(ref,StandardDefaulter.getDefaultValue(def));
 	    	}
     	}finally{
     		timer.stop();
     	}
     }
-    
-
+    public String getDefaultKW(TypeRef ref, Object value){
+    	if ( ref.isColumnDefaultQuoted() && !StringUtil.valueOf(value).startsWith("'")){
+			return "'" + value + "'";
+    	}else {
+    		return StringUtil.valueOf(value);
+    	}
+    }
+	
 }

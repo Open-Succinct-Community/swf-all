@@ -1,21 +1,5 @@
 package com.venky.swf.maven.plugin;
 
-/*
- * Copyright 2001-2005 The Apache Software Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,19 +9,22 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
-import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
@@ -72,9 +59,8 @@ public class ModelGeneratorMojo extends AbstractMojo {
 	}
 	
     public void generateModels(File directory) throws MojoExecutionException{
-        Database db =Database.getInstance(false);
-        db.loadTables(true);
-        for (Table<?> table: db.getTables().values()){
+        Database.loadTables(true);
+        for (Table<?> table: Database.getTables().values()){
             generateModelClass(table, directory);
         }
     }
@@ -95,7 +81,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
 
 		String srcFileName = directory.getPath() + "/" + fQModelClassName.replace('.', '/')+".java";
     	File srcFile = new File(srcFileName);
-		
+		srcFile.getParentFile().mkdirs(); //Create all directories in the path.
 		if (!table.isExistingInDatabase()) {
 			if (srcFile.exists()) {
 				getLog().info("Manually remove " + srcFileName + " to drop model");
@@ -121,7 +107,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
 		}
     }
     private void writeFile(OutputStreamWriter osw,Table<?> table,String packageName){
-    	JdbcTypeHelper helper = Database.getInstance().getJdbcTypeHelper();
+    	JdbcTypeHelper helper = Database.getJdbcTypeHelper();
 		Set<String> columnsPresentInFrameworkModel = new IgnoreCaseSet();
 		columnsPresentInFrameworkModel.addAll(ModelReflector.instance(Model.class).getRealColumns());
 		
@@ -137,7 +123,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
     			imports.add("com.venky.swf.db.model.Model");
     			extendingClass = "Model";
     		}
-    		if (table.getModelClass().getName().startsWith("com.venky.swf.db.model")){
+    		if (!table.getModelClass().getName().startsWith(packageName)){
         		columnsPresentInFrameworkModel.addAll(table.getReflector().getRealColumns());
     		}
     	}
@@ -177,20 +163,31 @@ public class ModelGeneratorMojo extends AbstractMojo {
         			imports.add(ref.getJavaClass().getName());
     			}
     			code.add("\t");
-    			if (!cd.isNullable()){
+    			if (!cd.isNullable() && !ref.getJavaClass().isPrimitive()){
     				imports.add(IS_NULLABLE.class.getName());
     				code.add("\t@IS_NULLABLE(false)");
     			}
-    			if (cd.getSize() > 0){
+    			if (cd.getSize() > 0 && ref.getSize() > 0 && ref.getSize() != cd.getSize() ){
     				imports.add(COLUMN_SIZE.class.getName());
     				code.add("\t@COLUMN_SIZE("+cd.getSize()+")");
     			}
-    			if (cd.getScale() > 0){
+    			if (cd.getScale() > 0 && ref.getScale() != cd.getScale()){
     				imports.add(DECIMAL_DIGITS.class.getName());
     				code.add("\t@DECIMAL_DIGITS("+cd.getScale() +")");
     			}
+    			
+                if (!cd.isNullable() && !ObjectUtil.isVoid(cd.getColumnDefault())){
+                	if (!cd.getColumnDefault().equals(helper.getDefaultKW(ref,ref.getTypeConverter().valueOf(null)))){
+        				imports.add(COLUMN_DEF.class.getName());
+        				imports.add(StandardDefault.class.getName());
+        				code.add("\t"+toAppDefaultStr(helper, ref, cd.getColumnDefault()));	
+                	}
+                }
+                /*
     			imports.add(COLUMN_NAME.class.getName());
     			code.add("\t@COLUMN_NAME(\""+ cd.getName() + "\")");
+    			Column name not required as name derived from getter we are putting is going to be the same any way.
+    			*/
     			code.add("\tpublic "+ ref.getJavaClass().getSimpleName() + " " + getterPrefix +  camelfieldName + "();");
     			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(cd.getName(),false) + ");");
     		}
@@ -206,4 +203,38 @@ public class ModelGeneratorMojo extends AbstractMojo {
     		w.println(line);
 		}
     }
+    
+    private String toAppDefaultStr(JdbcTypeHelper helper , TypeRef<?> ref , String dbDefault){
+		if (ObjectUtil.equals(dbDefault,helper.getCurrentTimeStampKW())){
+			return "@COLUMN_DEF(StandardDefault.CURRENT_TIMESTAMP)";
+		}else if (ObjectUtil.equals(dbDefault, helper.getCurrentDateKW())){
+			return "@COLUMN_DEF(StandardDefault.CURRENT_DATE)";
+		}else if (dbDefault != null ){
+			Class refClass = ref.getJavaClass();
+			if (refClass == boolean.class || refClass == Boolean.class){
+				if (helper.getDefaultKW(ref,Boolean.valueOf(true)).equals(dbDefault)){
+					return "@COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)";
+				}else {
+					return "@COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)";
+				}
+			}else if (ref.isNumeric()){
+				if (helper.getDefaultKW(ref,0).equals(dbDefault)){
+					return "@COLUMN_DEF(StandardDefault.ZERO)";
+				}
+				if (helper.getDefaultKW(ref,1).equals(dbDefault)){
+					return "@COLUMN_DEF(StandardDefault.ONE)";
+				}
+			}
+			if (ref.isColumnDefaultQuoted()) {
+				StringTokenizer tok = new StringTokenizer(dbDefault, "'",false);
+				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,someValue=\""+tok.nextToken() +"\")";
+			}else {
+				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,someValue=\""+dbDefault+"\")";
+			}
+		}else {
+			return "@COLUMN_DEF(value=StandardDefault.NULL)";
+		}
+	}
+    
+
 }
