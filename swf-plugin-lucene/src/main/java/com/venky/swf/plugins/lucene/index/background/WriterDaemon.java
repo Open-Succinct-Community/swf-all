@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
@@ -18,15 +19,23 @@ import com.venky.swf.db.Database;
 public class WriterDaemon extends Thread {
 
 	private IndexWriter writer = null;
+	private final Directory directory ;
 	public WriterDaemon(Directory directory){
 		super();
+		this.directory = directory;
+	}
+	
+	public IndexWriter getIndexWriter(){
 		try {
-			this.writer = new IndexWriter(directory,new IndexWriterConfig(Version.LUCENE_35,new StandardAnalyzer(Version.LUCENE_35)));
+			if (writer == null){
+				writer = new IndexWriter(directory,new IndexWriterConfig(Version.LUCENE_35,new StandardAnalyzer(Version.LUCENE_35)));
+			}
+			return writer;
 		}catch (IOException ex){
 			throw new RuntimeException(ex);
 		}
 	}
-
+	
 	private static enum Operation { 
 		ADD,
 		MODIFY,
@@ -40,16 +49,17 @@ public class WriterDaemon extends Thread {
 			this.document = document;
 		}
 		public void perform() throws IOException{
+			IndexWriter w = getIndexWriter();
 			switch(op){
 			case ADD:
-				writer.addDocument(document);
+				w.addDocument(document);
 				break;
 			case MODIFY:
-				writer.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
-				writer.addDocument(document);
+				w.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
+				w.addDocument(document);
 				break;
 			case DELETE: 
-				writer.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
+				w.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
 				break;
 			}
 		}
@@ -95,9 +105,15 @@ public class WriterDaemon extends Thread {
 				try {
 					if (writer != null){
 						writer.commit();
+						try {
+							Database db = Database.getInstance();
+							db.getCurrentTransaction().commit();
+							db.close();
+						}catch (SQLException ex){
+							Logger.getLogger(WriterDaemon.class.getName()).warning(Thread.currentThread().getName() + ": encountered exception " + ex.getMessage());
+							shutdown();
+						}
 					}
-					Database.getInstance().close();/*Release connection back to pool!. 
-													We will auto open on demand.*/
 					if (shutingDown){
 						break;
 					}

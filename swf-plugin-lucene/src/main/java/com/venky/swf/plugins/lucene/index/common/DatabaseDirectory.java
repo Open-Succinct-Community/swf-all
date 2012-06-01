@@ -12,7 +12,7 @@ import java.util.Set;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.store.NoLockFactory;
+import org.apache.lucene.store.SingleInstanceLockFactory;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -38,7 +38,7 @@ public class DatabaseDirectory extends Directory {
 		if (directory == null){
 			throw new FileNotFoundException("Directory entry missing for " + tableName +". Check if there are any field getters marked with annotation @Index in any of it's models.");
 		}
-		setLockFactory(NoLockFactory.getNoLockFactory());
+		setLockFactory(new SingleInstanceLockFactory());
 	}
 	
 	private IndexDirectory directory = null;

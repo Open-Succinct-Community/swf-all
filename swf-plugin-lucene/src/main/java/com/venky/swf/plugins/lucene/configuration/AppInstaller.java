@@ -16,6 +16,7 @@ import com.venky.swf.sql.Select;
 public class AppInstaller implements Installer{
 	
 	public void install(){
+		
 		Table<IndexDirectory> table = Database.getTable(IndexDirectory.class);
 		for (String tableName: Database.getTableNames()){
 			
