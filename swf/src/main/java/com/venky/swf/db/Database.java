@@ -29,6 +29,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
@@ -44,15 +45,21 @@ public class Database implements _IDatabase{
 
     }
 
-
-	public void open() {
+    private User currentUser ;
+	public void open(Object currentUser) {
 		if (getConnection() == null) {
 			throw new RuntimeException("Failed to open connection to database");
 		}
+		this.currentUser = (User)currentUser;
 	}
-
+	
+	public User getCurrentUser(){
+		return currentUser;
+	}
+	
 	public void close() {
 		closeConnection();
+		currentUser = null;
 	}
 
 	private Connection connection = null;
@@ -72,6 +79,10 @@ public class Database implements _IDatabase{
 	private void closeConnection() {
 		if (connection != null) {
 			try {
+				if (!transactionStack.isEmpty()){
+					Logger.getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
+					transactionStack.clear();
+				}
 				connection.rollback();
 				connection.close();
 			} catch (SQLException ex) {
@@ -270,8 +281,13 @@ public class Database implements _IDatabase{
     	List<String> installerNames = Config.instance().getInstallers();
 		try {
 			for (String installerName : installerNames){
-				Installer installer = (Installer)Class.forName(installerName).newInstance();
-				installer.install();
+				Logger.getLogger(Database.class.getName()).info("Installing ... " + installerName );
+				try{
+					Installer installer = (Installer)Class.forName(installerName).newInstance();
+					installer.install();
+				}finally {
+					Logger.getLogger(Database.class.getName()).info("done!");
+				}
 			}
 			Database.getInstance().getCurrentTransaction().commit();
 		} catch (Exception e) {
@@ -344,7 +360,7 @@ public class Database implements _IDatabase{
 		} else {
 			loadTables(false);
 		}
-		return  _instance.get();
+		return _instance.get();
 	}
 
 	private static JdbcTypeHelper _helper = null;

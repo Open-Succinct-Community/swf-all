@@ -4,7 +4,10 @@
 package ${package}.configuration;
 
 import com.venky.swf.configuration.Installer;
+public class AppInstaller implements Installer{
 
-public class AppInstaller extends Installer{
-	
+  public void install() {
+    
+  }
 }
+

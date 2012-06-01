@@ -40,6 +40,7 @@ public interface Model extends _Identifiable{
 	@COLUMN_NAME("updater_id")
 	@PROTECTED
 	@HOUSEKEEPING
+	@COLUMN_DEF(StandardDefault.CURRENT_USER)
 	public Integer getUpdaterUserId();
 	public void setUpdaterUserId(Integer updaterUserId);
 	public User getUpdaterUser();
@@ -56,6 +57,7 @@ public interface Model extends _Identifiable{
 	@COLUMN_NAME("creator_id")
 	@PROTECTED
 	@HOUSEKEEPING
+	@COLUMN_DEF(StandardDefault.CURRENT_USER)
 	public Integer getCreatorUserId();
 	public void setCreatorUserId(Integer creatorUserId);
 	public User getCreatorUser();

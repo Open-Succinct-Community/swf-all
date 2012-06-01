@@ -38,6 +38,7 @@ import com.venky.swf.views.controls.page.text.DateBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.Select;
+import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
@@ -114,6 +115,10 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
+        }else if (Reader.class.isAssignableFrom(returnType)){
+        	TextArea txtArea = new TextArea();
+        	txtArea.setText(converter.toString(value));
+        	control = txtArea;
         }else if (InputStream.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType)){
         	FileTextBox ftb = new FileTextBox();
         	CONTENT_TYPE type = reflector.getAnnotation(getter,CONTENT_TYPE.class);

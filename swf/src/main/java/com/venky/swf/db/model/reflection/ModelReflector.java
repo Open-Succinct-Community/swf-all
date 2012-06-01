@@ -703,7 +703,7 @@ public class ModelReflector<M extends Model> {
         return getterMatcher;
     }
 
-    private class GetterMatcher implements MethodMatcher{
+    public static class GetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
 			Timer timer = Timer.startTimer();
 			try {
@@ -726,7 +726,7 @@ public class ModelReflector<M extends Model> {
         return fieldGetterMatcher;
     }
     
-    private class FieldGetterMatcher extends GetterMatcher{ 
+    public static class FieldGetterMatcher extends GetterMatcher{ 
         @Override
         public boolean matches(Method method){
     		Timer timer = Timer.startTimer();
@@ -743,7 +743,7 @@ public class ModelReflector<M extends Model> {
         }
     }
 
-    private class SetterMatcher implements MethodMatcher{
+    public static class SetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
         	Timer timer = Timer.startTimer();
         	try {
@@ -766,7 +766,7 @@ public class ModelReflector<M extends Model> {
         return fieldSetterMatcher;
     }
 
-    private class FieldSetterMatcher extends SetterMatcher{ 
+    public static class FieldSetterMatcher extends SetterMatcher{ 
         @Override
         public boolean matches(Method method){
         	Timer timer = Timer.startTimer();

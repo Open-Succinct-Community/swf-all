@@ -100,7 +100,7 @@ public class ModelInvocationHandler implements InvocationHandler {
                 	}
 
                 	return cd.isNullable() ? defaultValue : converter.valueOf(defaultValue);
-                } else if (retType.isInstance(value)) {
+                } else if (retType.isInstance(value) && !ref.isLOB()) {
                     return value;
                 } else {
                     return converter.valueOf(value);
@@ -394,6 +394,10 @@ public class ModelInvocationHandler implements InvocationHandler {
     	callExtensions("before.validate");
     }
     protected void defaultFields(){
+        if (!record.isNewRecord()){
+        	proxy.setUpdatedAt(null);
+        	proxy.setUpdaterUserId(null);
+        }
         for (String field:reflector.getRealFields()){
         	String columnName = reflector.getColumnDescriptor(field).getName();
         	if (record.get(columnName) == null){
@@ -406,6 +410,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	}
         }
     }
+
     protected void afterValidate(){
     	callExtensions("after.validate");
     }
@@ -514,7 +519,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
 
     private void create() {
-        proxy.setLockId(0);
+    	proxy.setLockId(0);
 		Table<? extends Model> table = Database.getTable(getReflector().getTableName());
         Insert insertSQL = new Insert(getReflector());
         Map<String,BindVariable> values = new HashMap<String, BindVariable>();

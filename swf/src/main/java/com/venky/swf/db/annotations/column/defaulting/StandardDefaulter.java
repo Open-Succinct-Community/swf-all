@@ -3,11 +3,16 @@ package com.venky.swf.db.annotations.column.defaulting;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.model.User;
 
 public class StandardDefaulter {
 	public static Object getDefaultValue(COLUMN_DEF columnDef){
 		return getDefaultValue(columnDef.value(), columnDef.someValue());
+	}
+	public static Object getDefaultValue(StandardDefault defaultKey){
+		return getDefaultValue(defaultKey,"");
 	}
 	public static Object getDefaultValue(StandardDefault defaultKey,String someValue){
 		Object ret = null;
@@ -20,6 +25,10 @@ public class StandardDefaulter {
 				break;
 			case ZERO:
 				ret = 0;
+				break;
+			case CURRENT_USER:
+				User user = Database.getInstance().getCurrentUser();
+				ret = user == null ? 0 : user.getId();
 				break;
 			case CURRENT_DATE:
 				ret = new Date(System.currentTimeMillis());

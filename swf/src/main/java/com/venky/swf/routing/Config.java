@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -128,6 +129,7 @@ public class Config {
     public List<String> getInstallers(){
     	if (installers == null){
     		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
+    		Collections.reverse(installers);// To make sure framework installers are installed first.
     	}
     	return installers;
     }

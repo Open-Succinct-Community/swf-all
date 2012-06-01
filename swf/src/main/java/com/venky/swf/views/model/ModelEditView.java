@@ -29,6 +29,7 @@ import com.venky.swf.views.controls.page.layout.Table.THead;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
+import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
@@ -131,9 +132,16 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             Control fieldData = getInputControl(fieldName, record);
             Label fieldLabel = new Label(getFieldLiteral(fieldName));
         	if (isFieldEditable(fieldName)){
+            	if (fieldData instanceof TextArea){
+            		rpadLastRow(table);
+            	}
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
-                r.createColumn().addControl(fieldData);
+            	if (fieldData instanceof TextArea){
+                    r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
+            	}else {
+            		r.createColumn().addControl(fieldData);
+            	}
             }else if (reflector.isFieldVisible(fieldName)){
                 Row r = getRow(table,true);
                 fieldData.setEnabled(false);
@@ -151,8 +159,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                 Row streamRow = table.createRow();
                 Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
                 streamColumn.addControl(ftb.getStreamLink());
-                
             }
+            
             
             if (fieldData.isEnabled()){
             	if (hashFieldValue.length() > 0){

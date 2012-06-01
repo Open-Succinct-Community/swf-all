@@ -7,6 +7,11 @@ public enum StandardDefault {
 	BOOLEAN_TRUE,
 	BOOLEAN_FALSE,
 	SOME_VALUE,
+	CURRENT_USER() {
+		public boolean isComputed(){
+			return true;
+		}
+	},
 	CURRENT_DATE(){
 		public boolean isComputed(){
 			return true;
@@ -18,7 +23,9 @@ public enum StandardDefault {
 		}
 	};
 	
+	
 	public boolean isComputed(){
 		return false;
 	}
+	
 }

@@ -4,6 +4,7 @@
  */
 package com.venky.swf.db;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -87,6 +88,14 @@ public abstract class JdbcTypeHelper {
         	return JdbcTypeHelper.isLOB(jdbcType);
         }
         
+        public boolean isCLOB(){
+        	return JdbcTypeHelper.isCLOB(jdbcType);
+        }
+        
+        public boolean isBLOB(){
+        	return JdbcTypeHelper.isBLOB(jdbcType);
+        }
+        
         public boolean isNumeric(){
         	return JdbcTypeHelper.isNumeric(javaClass);
         }
@@ -103,11 +112,16 @@ public abstract class JdbcTypeHelper {
         }
     }
     
-    private static int[] LOBTYPES = new int[] {Types.CLOB,Types.BLOB , Types.LONGVARBINARY , Types.LONGVARCHAR, Types.BINARY} ;
+    private static int[] CLOBTYPES = new int[] {Types.CLOB,Types.LONGVARCHAR} ;
     static {
-    	Arrays.sort(LOBTYPES);
+    	Arrays.sort(CLOBTYPES);
     }
     
+    private static int[] BLOBTYPES = new int[] {Types.BLOB , Types.LONGVARBINARY , Types.BINARY} ;
+    static {
+    	Arrays.sort(BLOBTYPES);
+    }
+
     private static Class[] NUMERICTYPES = new Class[] { int.class, short.class, long.class, float.class, double.class, Number.class };
     public static boolean isNumeric(Class<?> clazz){
     	if (clazz == null){
@@ -120,8 +134,14 @@ public abstract class JdbcTypeHelper {
     	}
     	return false;
     }
-    public static boolean isLOB(int jdbcType){
-    	return Arrays.binarySearch(LOBTYPES, jdbcType) > 0 ;
+    public static boolean isCLOB(int jdbcType) {
+    	return Arrays.binarySearch(CLOBTYPES,jdbcType)> 0;
+	}
+	public static boolean isBLOB(int jdbcType) {
+    	return Arrays.binarySearch(BLOBTYPES,jdbcType)> 0;
+	}
+	public static boolean isLOB(int jdbcType){
+    	return isCLOB(jdbcType) || isBLOB(jdbcType);
     }
     
     public abstract class TypeConverter<M> {
@@ -363,7 +383,9 @@ public abstract class JdbcTypeHelper {
             }
             if (o instanceof InputStream) {
             	if (o instanceof ByteArrayInputStream){
-            		return (InputStream) o;
+            		ByteArrayInputStream is = (ByteArrayInputStream)o;
+            		is.reset();
+            		return is;
             	}else {
             		return new ByteArrayInputStream(StringUtil.readBytes((InputStream)o));
             	}
@@ -402,6 +424,11 @@ public abstract class JdbcTypeHelper {
             }
             if (o instanceof Reader) {
             	if (o instanceof StringReader){
+            		try {
+						((StringReader)o).reset();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
             		return (Reader) o;
             	}else {
             		return new StringReader(StringUtil.read((Reader)o));

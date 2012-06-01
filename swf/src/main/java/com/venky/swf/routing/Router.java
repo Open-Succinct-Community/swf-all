@@ -71,7 +71,10 @@ public class Router extends AbstractHandler {
 	private void setMenuBuilder(){
 		String className = Config.instance().getMenuBuilderClassName(); 
 		try {
-			_IMenuBuilder builder = (_IMenuBuilder) (getClass(className).newInstance());
+			_IMenuBuilder builder = null; 
+			if (className != null ){
+				builder = (_IMenuBuilder) (getClass(className).newInstance());
+			}
 	    	Config.instance().setMenuBuilder(builder);
 		}catch (Exception ex){
 			throw new RuntimeException(ExceptionUtil.getRootCause(ex));
@@ -159,7 +162,7 @@ public class Router extends AbstractHandler {
 	        _IDatabase db = null ;
 	        try {
 	        	db = getDatabase(); 
-	        	db.open();
+	        	db.open(p.getSessionUser());
 	            view = p.invoke();
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
