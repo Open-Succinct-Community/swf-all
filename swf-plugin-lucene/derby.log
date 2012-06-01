@@ -1,8 +1,0 @@
-----------------------------------------------------------------
-2012-05-28 18:54:20.320 GMT:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.6.2.1 - (999685): instance a816c00e-0137-94cc-8368-0000014188e0 
-on database directory /home/venky/Projects/java/github/swf-all/swf-plugin-lucene/database/lucene  with class loader sun.misc.Launcher$AppClassLoader@145f572 
-Loaded from file:/home/venky/.m2/repository/org/apache/derby/derby/10.6.2.1/derby-10.6.2.1.jar
-java.vendor=Oracle Corporation
-java.runtime.version=1.7.0_03-b147
-Database Class Loader started - derby.database.classpath=''
