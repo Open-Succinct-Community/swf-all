@@ -1,7 +1,6 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
@@ -101,29 +100,19 @@ public class WriterDaemon extends Thread {
 	
 	private Job next(){
 		synchronized (this) {
-			while(jobs.isEmpty()){
+			while(jobs.isEmpty() && !shutingDown){
 				try {
 					if (writer != null){
 						writer.commit();
-						try {
-							Database db = Database.getInstance();
-							db.getCurrentTransaction().commit();
-							db.close();
-						}catch (SQLException ex){
-							Logger.getLogger(WriterDaemon.class.getName()).warning(Thread.currentThread().getName() + ": encountered exception " + ex.getMessage());
-							shutdown();
-						}
-					}
-					if (shutingDown){
-						break;
+						Database db = Database.getInstance();
+						db.getCurrentTransaction().commit();
+						db.close();
 					}
 					wait();
 				}catch (InterruptedException e) {
-					if (shutingDown || !jobs.isEmpty()){
-						break;
-					}
+					//
 				}catch (IOException e) {
-					throw new RuntimeException(e);
+					shutdown();
 				}
 			}
 			if (!jobs.isEmpty()){

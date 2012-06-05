@@ -1,7 +1,5 @@
 package com.venky.swf.plugins.lucene.index;
 
-import java.sql.SQLException;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.search.Query;
@@ -19,12 +17,7 @@ public class LuceneIndexerTest {
 	public void setUp(){ 
 		Router.instance().setLoader(getClass().getClassLoader());
 		Database.getTable(IndexFile.class).truncate();
-		try {
-			Database.getInstance().getCurrentTransaction().commit();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			throw new RuntimeException(e);
-		}
+		Database.getInstance().getCurrentTransaction().commit();
 		createSample("Jack");
 		createSample("Venky");
 	}
@@ -60,8 +53,6 @@ public class LuceneIndexerTest {
 				}
 			});
 			Database.getInstance().getCurrentTransaction().commit();
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
 		}finally{
 			Database.getInstance().close();
 		}

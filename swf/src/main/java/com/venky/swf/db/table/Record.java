@@ -146,5 +146,11 @@ public class Record implements Comparable<Record>{
 		return (M)proxyCache.get(modelClass);
 	}
 	
-    
+	private boolean locked = false;
+	public boolean isLocked(){
+		return locked;
+	}
+	public void setLocked(boolean locked){
+		this.locked = locked;
+	}
 }

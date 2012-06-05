@@ -1,0 +1,4 @@
+/target/
+/database/
+/.settings/
+derby.log

@@ -52,6 +52,7 @@ public interface Model extends _Identifiable{
 	@HOUSEKEEPING
 	public Timestamp getUpdatedAt();
 	public void setUpdatedAt(Timestamp updatedAt);
+	public static final String UPDATED_AT_COLUMN_NAME = "UPDATED_AT";
 
 	@COLUMN_SIZE(10)
 	@COLUMN_NAME("creator_id")

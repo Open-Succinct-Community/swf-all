@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -408,11 +407,7 @@ public class ModelController<M extends Model> extends Controller {
 	        if (record.isAccessibleBy(getSessionUser(),modelClass)){
 	            record.save();
 	        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
-	        		try {
-						Database.getInstance().getCache(reflector).clear();
-					} catch (SQLException e1) {
-						throw new AccessDeniedException(e1);
-					}
+					Database.getInstance().getCache(reflector).clear();
 	        		throw new AccessDeniedException();	
 	        	}
 	        }else {

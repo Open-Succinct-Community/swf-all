@@ -1,7 +1,6 @@
 package com.venky.swf.plugins.lucene.index;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -28,17 +27,12 @@ import com.venky.swf.sql.Select;
 public class DatabaseDirectoryTest {
 	@Before
 	public void openDB(){
-		try {
-			Database db = Database.getInstance(true);
-			Select sel = new Select().from(IndexFile.class);
-			for (IndexFile f : sel.execute(IndexFile.class) ){
-				f.destroy();
-			}
-			db.getCurrentTransaction().commit();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			throw new RuntimeException(e);
+		Database db = Database.getInstance(true);
+		Select sel = new Select().from(IndexFile.class);
+		for (IndexFile f : sel.execute(IndexFile.class) ){
+			f.destroy();
 		}
+		db.getCurrentTransaction().commit();
 	}
 	@Test
 	public void test() throws IOException, ParseException {

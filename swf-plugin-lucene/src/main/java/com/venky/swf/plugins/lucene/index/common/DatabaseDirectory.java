@@ -2,7 +2,6 @@ package com.venky.swf.plugins.lucene.index.common;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashSet;
@@ -146,7 +145,7 @@ public class DatabaseDirectory extends Directory {
 	public void sync(Collection<String> names) throws IOException {
 		try {
 			Database.getInstance().getCurrentTransaction().commit();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			throw new IOException(e);
 		}
 	}

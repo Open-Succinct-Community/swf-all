@@ -26,6 +26,7 @@ import org.apache.commons.dbcp.BasicDataSourceFactory;
 
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
@@ -96,74 +97,20 @@ public class Database implements _IDatabase{
 
 
 	private Stack<Transaction> transactionStack = new Stack<Transaction>();
-	public Transaction createTransaction() throws SQLException {
+	public Transaction createTransaction() {
 		Transaction transaction = new Transaction();
 		transactionStack.push(transaction);
 		return transaction;
 	}
 
-	public Transaction getCurrentTransaction() throws SQLException {
+	public Transaction getCurrentTransaction(){
 		if (transactionStack.isEmpty()) {
 			createTransaction();
 		}
 		return transactionStack.peek();
 	}
 
-	public class Transaction implements _ITransaction{
-		private Savepoint savepoint = null;
-		private RuntimeException ex = null;
-
-		public Transaction() throws SQLException {
-			int transactionNo = transactionStack.size();
-            ex = new RuntimeException("Transaction " + transactionNo + " not completed ");
-            savepoint = getConnection().setSavepoint(String.valueOf(transactionNo));
-		}
-
-		public void commit() throws SQLException {
-			getConnection().releaseSavepoint(savepoint);
-            savepoint = getConnection().setSavepoint(String.valueOf(transactionStack.size()));
-			updateTransactionStack();
-		}
-
-		public void rollback() throws SQLException {
-			getConnection().rollback(savepoint);
-			updateTransactionStack();
-		}
-
-		private void updateTransactionStack() throws SQLException {
-			Transaction t = transactionStack.peek();
-			if (t != this) {
-				throw ex;
-			}
-			transactionStack.pop();
-			if (transactionStack.isEmpty()) {
-				getConnection().commit();
-			}
-		}
-
-        public PreparedStatement createStatement(String sql) throws SQLException{
-            return getConnection().prepareStatement(sql);
-		}
-        public PreparedStatement createStatement(String sql,String[] columnNames) throws SQLException{ 
-			return getConnection().prepareStatement(sql, columnNames );
-		}
-
-		private Map<String, QueryCache> txnQueryCacheMap = new HashMap<String, QueryCache>();
-
-		public QueryCache getCache(ModelReflector ref) {
-			String tableName = ref.getTableName();
-			
-        	QueryCache queryCache = txnQueryCacheMap.get(tableName);
-			if (queryCache == null) {
-				queryCache = new QueryCache(tableName);
-				txnQueryCacheMap.put(tableName, queryCache);
-			}
-			return queryCache;
-		}
-
-	}
-
-	public QueryCache getCache(ModelReflector ref) throws SQLException{
+	public QueryCache getCache(ModelReflector ref) {
     	String tableName = ref.getTableName();
     	if (ref.isAnnotationPresent(CONFIGURATION.class)){
     		QueryCache cacheEntry = configQueryCacheMap.get(tableName);
@@ -180,6 +127,120 @@ public class Database implements _IDatabase{
 		} else {
 			return getCurrentTransaction().getCache(ref);
 		}
+	}
+
+	public class Transaction implements _ITransaction{
+		private Savepoint savepoint = null;
+		private RuntimeException ex = null;
+		private int transactionNo = -1 ;
+
+		private Savepoint setSavepoint(String name){
+			try {
+				return getConnection().setSavepoint(name);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+			
+		}
+		private void releaseSavepoint(Savepoint sp){
+			try {
+				getConnection().releaseSavepoint(sp);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		private void rollback(Savepoint sp){
+			try {
+				getConnection().rollback(sp);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		public Transaction() {
+			transactionNo = transactionStack.size();
+            ex = new RuntimeException("Transaction " + transactionNo + " not completed ");
+            savepoint = setSavepoint(String.valueOf(transactionNo));
+		}
+
+		public void commit() {
+			releaseSavepoint(savepoint);
+            savepoint = setSavepoint(String.valueOf(transactionStack.size()));
+			updateTransactionStack();
+			if (!transactionStack.isEmpty()){
+				Transaction parent = transactionStack.peek();
+				parent.merge(this);
+			}
+		}
+
+		public void rollback() {
+			rollback(savepoint);
+			updateTransactionStack();
+		}
+
+		private void updateTransactionStack() {
+			Transaction completedTransaction = transactionStack.peek();
+			if (completedTransaction != this) {
+				throw ex;
+			}
+			transactionStack.pop();
+			
+			if (transactionStack.isEmpty()) {
+				try {
+					Registry.instance().callExtensions("before.commit",this);
+					getConnection().commit();
+					Registry.instance().callExtensions("after.commit",this);
+				} catch (SQLException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
+        private void merge(Transaction completedTransaction) {
+        	for (String table : completedTransaction.txnQueryCacheMap.keySet()){
+    			QueryCache completedTransactionCache = completedTransaction.txnQueryCacheMap.get(table);
+        		if (txnQueryCacheMap.containsKey(table)){
+        			QueryCache currentTransactionCache = txnQueryCacheMap.get(table);
+        			currentTransactionCache.merge(completedTransactionCache);
+        		}else {
+        			txnQueryCacheMap.put(table, completedTransactionCache);
+        		}
+        	}
+        	
+		}
+		public PreparedStatement createStatement(String sql) throws SQLException{
+            return getConnection().prepareStatement(sql);
+		}
+        public PreparedStatement createStatement(String sql,String[] columnNames) throws SQLException{ 
+			return getConnection().prepareStatement(sql, columnNames );
+		}
+
+		private Map<String, QueryCache> txnQueryCacheMap = new HashMap<String, QueryCache>();
+
+		public QueryCache getCache(ModelReflector ref) {
+			String tableName = ref.getTableName();
+			
+        	QueryCache queryCache = txnQueryCacheMap.get(tableName);
+        	if (queryCache != null){
+        		return queryCache;
+        	}
+        	
+        	QueryCache parentQueryCache = null ;
+            if (transactionNo >= 1){
+            	Transaction parentTransaction = transactionStack.get(transactionNo - 1);//Parent transaction
+        		parentQueryCache = parentTransaction.txnQueryCacheMap.get(tableName);
+    		}
+
+            if (parentQueryCache != null){
+    			queryCache = parentQueryCache.copy();
+    		}else {
+    			queryCache = new QueryCache(tableName);
+            }
+			txnQueryCacheMap.put(tableName, queryCache);
+			return queryCache;
+		}
+
 	}
 
 	// Class level methods and variables.

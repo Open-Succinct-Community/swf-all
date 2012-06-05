@@ -9,7 +9,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -470,14 +469,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
 	        condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
 	        q.where(condition);
-	        q.executeUpdate();
+	        if (q.executeUpdate() <= 0){
+	        	throw new RecordNotFoundException();
+	        }
 	        
-	        try {
-				Database.getInstance().getCache(getReflector()).registerDestroy(getProxy());
-			} catch (SQLException e) {
-				throw new RuntimeException(e);
-			} 
-			
+			Database.getInstance().getCache(getReflector()).registerDestroy(getProxy());
 	        afterDestroy();
 		}finally{
 			beingDestroyed = false;
@@ -506,16 +502,13 @@ public class ModelInvocationHandler implements InvocationHandler {
 
         q.where(condition);
         
-        q.executeUpdate();
-
+        if (q.executeUpdate() <= 0){
+        	throw new RecordNotFoundException();
+        }
         proxy.setLockId(newLockId);
         record.startTracking();
         
-        try {
-			Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
+		Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
     }
 
     private void create() {
@@ -558,12 +551,8 @@ public class ModelInvocationHandler implements InvocationHandler {
         record.setNewRecord(false);
         record.startTracking();
 
-        try {
-			Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
-    }
+    	Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
+	}
     @Override
     public boolean equals(Object o){
     	if (o == null){

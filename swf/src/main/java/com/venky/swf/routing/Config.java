@@ -82,6 +82,15 @@ public class Config {
     public String getProperty(String name,String defaultValue){
     	return System.getProperty(name,properties.getProperty(name, defaultValue));
     }
+    public int getIntProperty(String name){
+    	String sValue = getProperty(name);
+		return Integer.parseInt(sValue);
+    }
+    public int getIntProperty(String name,int defaultValue){
+    	String sValue = getProperty(name, String.valueOf(defaultValue));
+		return Integer.parseInt(sValue);
+    }
+    
     private static final String CONTROLLER_PACKAGE_ROOT = "swf.controller.package.root";
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";
     private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";

@@ -6,9 +6,9 @@
     <artifactId>swf-all</artifactId>
     <version>1.1.7-SNAPSHOT</version>
   </parent>
-  <artifactId>swf-plugin-lucene</artifactId>
-  <name>swf-plugin-lucene</name>
-  <description>swf-plugin-lucene</description>
+  <artifactId>swf-plugin-background</artifactId>
+  <name>swf-plugin-background</name>
+  <description>swf-plugin-background</description>
 
   <url>http://maven.apache.org</url>
   <licenses>
@@ -39,21 +39,16 @@
   		  <artifactId>swf</artifactId>
         <version>${project.version}</version>
   	</dependency>
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-core</artifactId>
-			<version>3.5.0</version>
-		</dependency>
-  	<dependency>
-  		<groupId>org.apache.derby</groupId>
-  		<artifactId>derby</artifactId>
-  		<version>10.6.2.1</version>
-      <scope>test</scope>
-  	</dependency>
   	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
   		<version>4.10</version>
+  		<scope>test</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.apache.derby</groupId>
+  		<artifactId>derby</artifactId>
+  		<version>10.6.2.1</version>
   		<scope>test</scope>
   	</dependency>
   </dependencies>
