@@ -9,17 +9,19 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 
-public class QueryCache {
-	private SortedSet<Record> cachedRecords = new TreeSet<Record>();
-	private Map<Expression, Set<Record>> queryCache = new HashMap<Expression, Set<Record>>();
-	private final Table table;
+public class QueryCache implements Mergeable<QueryCache> , Cloneable{
+	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
+	private HashMap<Expression, Set<Record>> queryCache = new HashMap<Expression, Set<Record>>();
+	private Table table;
 
 	public Table getTable() {
 		return table;
@@ -33,7 +35,21 @@ public class QueryCache {
 	private QueryCache(Table table){
 		this.table = table;
 	}
-
+	
+	public QueryCache clone(){
+		try {
+			QueryCache clone = (QueryCache) super.clone();
+			clone.cachedRecords = (TreeSet<Record>) cachedRecords.clone();
+			clone.queryCache = (HashMap<Expression, Set<Record>>) queryCache.clone();
+			
+			ObjectUtil.cloneValues(clone.cachedRecords);
+			ObjectUtil.cloneValues(clone.queryCache);
+			return clone;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+		
+	}
 	public Set<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
 		Timer timer = Timer.startTimer();
 		
@@ -133,16 +149,31 @@ public class QueryCache {
 			}
 		}
 	}
-	public void registerUpdate(Record record) {
-		remove(record);
+	
+	public Record registerUpdate(Record updatedRecord) {
+		Record recordInCache = getCachedRecord(updatedRecord);
+
+		Record record = null;
+		if (recordInCache != null){
+			if (recordInCache != updatedRecord){ // No need to merge is the updatedRecord is already an object in the cache.
+				recordInCache.merge(updatedRecord);// Will get used only in nested transactions.
+			}
+			record = recordInCache;
+		}else {
+			record = updatedRecord;
+		}
 		for (Expression cacheKey: queryCache.keySet()){
 			Set<Record> keyedRecords = queryCache.get(cacheKey);
-			keyedRecords.remove(record);
 			if (cacheKey == null || cacheKey.eval(record)){
-				keyedRecords.add(record);
+				keyedRecords.add(record); // Will not be added if already exists.
+			}else {
+				keyedRecords.remove(record);
 			}
 		}
-		add(record);
+		if (recordInCache == null){
+			add(record);
+		}
+		return record;
 	}
 	public void registerDestroy(Record record) {
 		if (remove(record)) {
@@ -174,27 +205,34 @@ public class QueryCache {
 	}
 	
 	public void merge(QueryCache completedTransactionCache) {
-		Set<Record> mergedRecords = new HashSet<Record>();
+		Map<Record,Record> mergedRecords = new HashMap<Record,Record>();
 		
 		for (Expression exp: completedTransactionCache.queryCache.keySet()){
 			Set<Record> recentRecords = completedTransactionCache.queryCache.get(exp);
+			
 			if (queryCache.containsKey(exp)){
-				Set<Record> oldRecords = queryCache.get(exp);
-				oldRecords.removeAll(recentRecords);
-				if (!oldRecords.isEmpty()){
-					//There have got removed. 
-					for (Record record:oldRecords){
-						registerDestroy(record);
+				Set<Record> oldRecords = new HashSet(queryCache.get(exp));
+				for (Record old:oldRecords){ 
+					if (!recentRecords.contains(old)){
+						registerDestroy(old);
 					}
 				}
 			}
+			Set<Record> currentRecords = new HashSet<Record>();
 			for (Record record:recentRecords){
-				if (!mergedRecords.contains(record)){
-					registerUpdate(record);
-					mergedRecords.add(record);
+				Record mergedRecord = mergedRecords.get(record);
+				if (mergedRecord == null){
+					mergedRecord = registerUpdate(record);
+					mergedRecords.put(record,mergedRecord);
 				}
+				currentRecords.add(mergedRecord);
 			}
-			queryCache.put(exp, recentRecords);
+			
+			if (!queryCache.containsKey(exp)){
+				queryCache.put(exp, currentRecords);
+			}//else{ 
+			// registerUpdate would have fixed the map value against exp.
+			//}
 		}
 	}
 	

@@ -1,7 +1,11 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -66,18 +70,26 @@ public class WriterDaemon extends Thread {
 	
 
 	private LinkedList<Job> jobs = new LinkedList<WriterDaemon.Job>();
-	private boolean addJob(Job job){
+	private boolean addJobs(Collection<Document> documents, Operation operation){
+		List<Job> jobs = new ArrayList<Job>();
+		for (Document document:documents){
+			jobs.add(new Job(operation,document));
+		}
+		return addJobs(jobs);
+	}
+	private boolean addJobs(Collection<Job> jobs){
 		if (shutingDown){
 			return false;
 		}
 		synchronized (this) {
 			try {
-				return jobs.add(job);
-			}finally {
+				return this.jobs.addAll(jobs);
+			}finally{
 				notify();
 			}
 		}
 	}
+	
 	private boolean shutingDown = false;
 	public void shutdown(){
 		synchronized (this) {
@@ -85,17 +97,25 @@ public class WriterDaemon extends Thread {
 			notify();
 		}
 	}
-
+	public boolean addDocuments(Collection<Document> documents){
+		return addJobs(documents,Operation.ADD);
+	}
+	public boolean updateDocuments(Collection<Document> documents){
+		return addJobs(documents,Operation.MODIFY);
+	}
+	public boolean removeDocuments(Collection<Document> documents){
+		return addJobs(documents,Operation.DELETE);
+	}
 	public boolean addDocument(Document document){
-		return addJob(new Job(Operation.ADD,document));
+		return addDocuments(Arrays.asList(document));
 	}
 	
 	public boolean updateDocument(Document document){
-		return addJob(new Job(Operation.MODIFY,document));
+		return updateDocuments(Arrays.asList(document));
 	}
 	
 	public boolean removeDocument(Document document){
-		return addJob(new Job(Operation.DELETE,document));
+		return removeDocuments(Arrays.asList(document));
 	}
 	
 	private Job next(){

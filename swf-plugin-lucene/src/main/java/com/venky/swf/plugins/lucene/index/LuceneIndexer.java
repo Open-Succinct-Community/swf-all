@@ -31,6 +31,7 @@ import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 
 public class LuceneIndexer {
 	private static Cache<String, LuceneIndexer> indexerCache = new Cache<String, LuceneIndexer>() {
+
 		@Override
 		protected LuceneIndexer getValue(String tableName) {
 			return new LuceneIndexer(tableName);
@@ -115,6 +116,20 @@ public class LuceneIndexer {
 		return doc;
 	}
 	
+	public List<Document> getDocuments(String luceneOperation){
+		Cache<String,List<Document>> documentsByTable = (Cache<String,List<Document>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
+		if (documentsByTable == null){
+			documentsByTable = new Cache<String, List<Document>>() {
+				@Override
+				protected List<Document> getValue(String k) {
+					return new ArrayList<Document>();
+				}
+				
+			};
+			Database.getInstance().getCurrentTransaction().setAttribute(luceneOperation,documentsByTable);
+		}
+		return documentsByTable.get(tableName);
+	}
 	
 	public void addDocument(Record r) throws IOException{
 		if (!hasIndexedFields()){
@@ -122,7 +137,7 @@ public class LuceneIndexer {
 		}
 		Document doc = getDocument(r);
 		if (doc != null){
-			IndexManager.instance().addDocument(tableName, doc);
+			getDocuments("lucene.added").add(doc);
 		}
 	}
 	public void updateDocument(Record r) throws IOException{
@@ -131,7 +146,7 @@ public class LuceneIndexer {
 		}
 		Document doc = getDocument(r);
 		if (doc != null){
-			IndexManager.instance().updateDocument(tableName, doc);
+			getDocuments("lucene.updated").add(doc);
 		}
 	}
 	public void removeDocument(Record r) throws IOException{
@@ -140,7 +155,7 @@ public class LuceneIndexer {
 		}
 		Document doc = getDocument(r);
 		if (doc != null){
-			IndexManager.instance().removeDocument(tableName, doc);
+			getDocuments("lucene.removed").add(doc);
 		}
 	}
 	

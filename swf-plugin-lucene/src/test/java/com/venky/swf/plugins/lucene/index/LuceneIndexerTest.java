@@ -20,6 +20,7 @@ public class LuceneIndexerTest {
 		Database.getInstance().getCurrentTransaction().commit();
 		createSample("Jack");
 		createSample("Venky");
+		Database.getInstance().getCurrentTransaction().commit();
 	}
 	
 	private void createSample(String name){

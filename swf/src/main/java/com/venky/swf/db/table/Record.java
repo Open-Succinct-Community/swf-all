@@ -7,11 +7,10 @@ package com.venky.swf.db.table;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 
 import com.venky.cache.Cache;
+import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -22,8 +21,23 @@ import com.venky.swf.db.model.Model;
  *
  * @author venky
  */
-public class Record implements Comparable<Record>{
-    private Map<String,Object> fieldValues = new IgnoreCaseMap<Object>();
+public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>{
+    private IgnoreCaseMap<Object> fieldValues = new IgnoreCaseMap<Object>();
+    private IgnoreCaseMap<Object> dirtyFields = new IgnoreCaseMap<Object>();
+
+    @Override
+    public Record clone(){
+    	Record r;
+		try {
+			r = (Record)super.clone();
+			r.fieldValues = (IgnoreCaseMap<Object>)fieldValues.clone();
+			r.dirtyFields = (IgnoreCaseMap<Object>)dirtyFields.clone(); 
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Should have not happened",e);
+		}
+    	
+    	return r;
+    }
     
     public Set<String> getFieldNames(){
         return fieldValues.keySet();
@@ -56,7 +70,22 @@ public class Record implements Comparable<Record>{
     public Object remove(String fieldName){
         return fieldValues.remove(fieldName);
     }
-    
+    public void merge(Record record){
+    	if (ObjectUtil.equals(getId(),record.getId())){
+			this.fieldValues.clear(); 
+	    	this.fieldValues.putAll(record.fieldValues);
+	
+	    	this.dirtyFields.clear();
+			this.dirtyFields.putAll(record.dirtyFields);
+			
+			this.locked = record.locked;
+			this.newRecord = record.newRecord;
+    	}else {
+    		throw new MergeFailedException("Cannot merge with a different record");
+    	}
+		//this.proxyCache left out intentionally as it is only a cache and the cache on the current object is what we want anyway 
+		//and not the one on passed record.
+    }
     public void load(ResultSet rs) throws SQLException{
         ResultSetMetaData meta = rs.getMetaData(); 
         for (int i = 1 ; i <= meta.getColumnCount() ; i ++ ){
@@ -69,7 +98,6 @@ public class Record implements Comparable<Record>{
         }
     }
     
-    private SortedMap<String,Object> dirtyFields = new IgnoreCaseMap();
     boolean newRecord = false; 
     void startTracking(){
         dirtyFields.clear();
@@ -141,7 +169,7 @@ public class Record implements Comparable<Record>{
 			return ModelInvocationHandler.getProxy(k, record);
 		}
 	}
-	private ProxyCache proxyCache = new ProxyCache(this);
+	private transient ProxyCache proxyCache = new ProxyCache(this);
 	public <M extends Model> M getAsProxy(Class<M> modelClass){
 		return (M)proxyCache.get(modelClass);
 	}

@@ -4,6 +4,7 @@
  */
 package com.venky.swf.db;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
@@ -24,6 +25,9 @@ import java.util.logging.Logger;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.dbcp.BasicDataSourceFactory;
 
+import com.venky.core.checkpoint.Checkpoint;
+import com.venky.core.checkpoint.Checkpointed;
+import com.venky.core.checkpoint.MergeableMap;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
@@ -84,6 +88,7 @@ public class Database implements _IDatabase{
 					Logger.getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
 					transactionStack.clear();
 				}
+				txnUserAttributes.rollback();
 				connection.rollback();
 				connection.close();
 			} catch (SQLException ex) {
@@ -133,6 +138,7 @@ public class Database implements _IDatabase{
 		private Savepoint savepoint = null;
 		private RuntimeException ex = null;
 		private int transactionNo = -1 ;
+		private Checkpoint<MergeableMap<String,Object>> checkpoint = null;
 
 		private Savepoint setSavepoint(String name){
 			try {
@@ -162,31 +168,15 @@ public class Database implements _IDatabase{
 			transactionNo = transactionStack.size();
             ex = new RuntimeException("Transaction " + transactionNo + " not completed ");
             savepoint = setSavepoint(String.valueOf(transactionNo));
+            checkpoint = txnUserAttributes.createCheckpoint();
 		}
 
 		public void commit() {
 			releaseSavepoint(savepoint);
             savepoint = setSavepoint(String.valueOf(transactionStack.size()));
-			updateTransactionStack();
-			if (!transactionStack.isEmpty()){
-				Transaction parent = transactionStack.peek();
-				parent.merge(this);
-			}
-		}
-
-		public void rollback() {
-			rollback(savepoint);
-			updateTransactionStack();
-		}
-
-		private void updateTransactionStack() {
-			Transaction completedTransaction = transactionStack.peek();
-			if (completedTransaction != this) {
-				throw ex;
-			}
-			transactionStack.pop();
-			
-			if (transactionStack.isEmpty()) {
+			txnUserAttributes.commit(checkpoint);
+            updateTransactionStack();
+			if (transactionStack.isEmpty()){
 				try {
 					Registry.instance().callExtensions("before.commit",this);
 					getConnection().commit();
@@ -197,18 +187,20 @@ public class Database implements _IDatabase{
 			}
 		}
 
-        private void merge(Transaction completedTransaction) {
-        	for (String table : completedTransaction.txnQueryCacheMap.keySet()){
-    			QueryCache completedTransactionCache = completedTransaction.txnQueryCacheMap.get(table);
-        		if (txnQueryCacheMap.containsKey(table)){
-        			QueryCache currentTransactionCache = txnQueryCacheMap.get(table);
-        			currentTransactionCache.merge(completedTransactionCache);
-        		}else {
-        			txnQueryCacheMap.put(table, completedTransactionCache);
-        		}
-        	}
-        	
+		public void rollback() {
+			rollback(savepoint);
+			txnUserAttributes.rollback(checkpoint);
+			updateTransactionStack();
 		}
+
+		private void updateTransactionStack() {
+			Transaction completedTransaction = transactionStack.peek();
+			if (completedTransaction != this) {
+				throw ex;
+			}
+			transactionStack.pop();
+		}
+
 		public PreparedStatement createStatement(String sql) throws SQLException{
             return getConnection().prepareStatement(sql);
 		}
@@ -216,32 +208,34 @@ public class Database implements _IDatabase{
 			return getConnection().prepareStatement(sql, columnNames );
 		}
 
-		private Map<String, QueryCache> txnQueryCacheMap = new HashMap<String, QueryCache>();
-
 		public QueryCache getCache(ModelReflector ref) {
 			String tableName = ref.getTableName();
 			
-        	QueryCache queryCache = txnQueryCacheMap.get(tableName);
-        	if (queryCache != null){
-        		return queryCache;
+			QueryCache queryCache = (QueryCache)getAttribute(QueryCache.class.getName()+".for."+tableName);
+			
+        	if (queryCache == null){
+        		queryCache = new QueryCache(tableName);
         	}
         	
-        	QueryCache parentQueryCache = null ;
-            if (transactionNo >= 1){
-            	Transaction parentTransaction = transactionStack.get(transactionNo - 1);//Parent transaction
-        		parentQueryCache = parentTransaction.txnQueryCacheMap.get(tableName);
-    		}
-
-            if (parentQueryCache != null){
-    			queryCache = parentQueryCache.copy();
-    		}else {
-    			queryCache = new QueryCache(tableName);
-            }
-			txnQueryCacheMap.put(tableName, queryCache);
+			setAttribute(QueryCache.class.getName() + ".for." + tableName, queryCache);
 			return queryCache;
 		}
-
+		
+		public void setAttribute(String name,Object value){
+			checkpoint.getValue().put(name, value);
+			if (value != null && !(value instanceof Serializable) && !(value instanceof Cloneable)){
+				Logger.getLogger(getClass().getName()).warning(value.getClass().getName() + " not Serializable or Cloneable. Checkpointing in nested transactions may exhibit unexpected behaviour!");
+			}
+		}
+		
+		public Object getAttribute(String name){
+			return checkpoint.getValue().get(name);
+		}
 	}
+
+	private Checkpointed<MergeableMap<String,Object>> txnUserAttributes = new Checkpointed<MergeableMap<String,Object>>(new MergeableMap<String, Object>());
+	
+	
 
 	// Class level methods and variables.
 	private static Map<String, QueryCache> configQueryCacheMap = new HashMap<String, QueryCache>();

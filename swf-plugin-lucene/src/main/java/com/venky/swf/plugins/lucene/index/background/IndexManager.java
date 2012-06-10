@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -46,17 +47,16 @@ public class IndexManager {
 			return daemon;
 		}
 	};
-
-	public void addDocument(String tableName, Document document) {
-		writerDelegate.get(tableName).addDocument(document);
+	public void addDocuments(String tableName, List<Document> documents){
+		writerDelegate.get(tableName).addDocuments(documents);
 	}
 
-	public void updateDocument(String tableName, Document document) {
-		writerDelegate.get(tableName).updateDocument(document);
+	public void updateDocuments(String tableName, List<Document> documents) {
+		writerDelegate.get(tableName).updateDocuments(documents);
 	}
 
-	public void removeDocument(String tableName, Document document) {
-		writerDelegate.get(tableName).removeDocument(document);
+	public void removeDocuments(String tableName, List<Document> documents) {
+		writerDelegate.get(tableName).removeDocuments(documents);
 	}
 
 	private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
