@@ -13,6 +13,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.SingleInstanceLockFactory;
 
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
@@ -57,18 +58,14 @@ public class DatabaseDirectory extends Directory {
 
 	@Override
 	public long fileModified(String name) throws IOException {
-		Select sel = new Select().from(IndexFile.class).where(
-				new Expression("NAME", Operator.EQ, name));
-		List<IndexFile> files = sel.execute();
-		if (!files.isEmpty()) {
-			IndexFile file = files.get(0);
-			return file.getUpdatedAt().getTime();
-		} else {
+		IndexFile file = getFile(name);
+		if (file == null){
 			throw new FileNotFoundException();
 		}
+		return file.getUpdatedAt().getTime();
 	}
 
-	private List<IndexFile> getFiles() throws IOException {
+	private List<IndexFile> getFiles() {
 		return getModelDirectory().getIndexFiles();
 	}
 
@@ -82,14 +79,12 @@ public class DatabaseDirectory extends Directory {
 	}
 
 	public IndexFile getFile(String name) {
-		Select sel = new Select().from(IndexFile.class).where(
-				new Expression("NAME", Operator.EQ, name));
-		List<IndexFile> files = sel.execute();
-		IndexFile file = null;
-		if (!files.isEmpty()) {
-			file = files.get(0);
+		for (IndexFile file: getFiles()){
+			if (StringUtil.equals(file.getName(),name)){
+				return file;
+			}
 		}
-		return file;
+		return null;
 	}
 
 	@Override

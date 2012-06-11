@@ -20,19 +20,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.db.model.IndexFile;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
+import com.venky.swf.routing.Router;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
 public class DatabaseDirectoryTest {
 	@Before
 	public void openDB(){
-		Database db = Database.getInstance(true);
-		Select sel = new Select().from(IndexFile.class);
-		for (IndexFile f : sel.execute(IndexFile.class) ){
+		Router.instance().setLoader(getClass().getClassLoader());
+		Select sel = new Select().from(IndexDirectory.class).where(new Expression("NAME",Operator.EQ,"MODEL"));
+		IndexDirectory dir = sel.execute(IndexDirectory.class,1).get(0);
+		for (IndexFile f : dir.getIndexFiles() ){
 			f.destroy();
 		}
-		db.getCurrentTransaction().commit();
+		
+		Database.getInstance().getCurrentTransaction().commit();
 	}
 	@Test
 	public void test() throws IOException, ParseException {

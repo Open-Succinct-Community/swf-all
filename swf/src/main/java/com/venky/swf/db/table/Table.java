@@ -28,7 +28,6 @@ import com.venky.swf.sql.DDL.AlterTable;
 import com.venky.swf.sql.DDL.CreateTable;
 import com.venky.swf.sql.DDL.DropTable;
 import com.venky.swf.sql.DataManupulationStatement;
-import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -312,10 +311,14 @@ public class Table<M extends Model> {
         }
     }
     
-    public void truncate(){
-    	Delete del = new Delete(getReflector());
-    	del.executeUpdate();
-		Database.getInstance().getCache(getReflector()).clear();
+    public int truncate(){
+    	Select sel = new Select().from(getModelClass());
+    	int numRecords = 0;
+    	for (M m : sel.execute(getModelClass())){
+    		m.destroy();
+    		numRecords ++;
+    	}
+    	return numRecords;
     }
     
     public M newRecord(){
