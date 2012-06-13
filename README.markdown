@@ -7,10 +7,10 @@ Requirements:
 -------------
 git, mvn, mysql/derby  
 
-Creating webapp using Released SWF
-----------------------------------
+Creating webapp using SWF
+-------------------------
 
-mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=1.1.3 \
+mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=[latest](http://repo1.maven.org/maven2/com/github/venkatramanm/swf-all/swf-all/maven-metadata.xml) \
 -DgroupId=[your application group id] -DartifactId=[your artifact id] -Dversion=1.0-SNAPSHOT
 
 * You may want to skip subsequent sections and go directly to "Bringing up your application". 
