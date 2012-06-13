@@ -88,7 +88,8 @@ public class Database implements _IDatabase{
 					Logger.getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
 					transactionStack.clear();
 				}
-				txnUserAttributes.rollback();
+				txnUserAttributes.rollback(); //All check points are clear.
+				txnUserAttributes.getCurrentValue().clear(); // Now restore the initial value to a clear map.
 				connection.rollback();
 				connection.close();
 			} catch (SQLException ex) {

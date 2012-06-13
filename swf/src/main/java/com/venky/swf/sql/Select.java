@@ -130,6 +130,7 @@ public class Select extends SqlStatement{
 	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords) {
 		return execute(modelInterface,maxRecords,lock);
 	}
+	
 	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked) {
         PreparedStatement st = null;
         try {
@@ -173,7 +174,7 @@ public class Select extends SqlStatement{
 	            	queryTimer.stop();
 	            }
         	}else {
-        		requireResultSorting = true;
+            	requireResultSorting = true;
         	}
         	Timer creatingProxies = Timer.startTimer("creatingProxies");
         	try {
