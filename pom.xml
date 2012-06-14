@@ -73,5 +73,6 @@
 		<module>swf-plugin-oauth</module>
     <module>swf-plugin-lucene</module>
     <module>swf-plugin-background</module>
+    <module>swf-plugin-test</module>
   </modules>
 </project>
