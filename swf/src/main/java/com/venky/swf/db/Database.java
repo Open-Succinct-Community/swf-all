@@ -192,6 +192,13 @@ public class Database implements _IDatabase{
 			rollback(savepoint);
 			txnUserAttributes.rollback(checkpoint);
 			updateTransactionStack();
+			if (transactionStack.isEmpty()){
+				try {
+					getConnection().rollback();
+				} catch (SQLException e) {
+					throw new RuntimeException(e);
+				}
+			}
 		}
 
 		private void updateTransactionStack() {
