@@ -161,7 +161,7 @@ public class Expression {
 			builder.append(columnName);
 			builder.append(" ");
 			if (values == null || values.isEmpty()){
-				if (op == Operator.EQ){
+				if (op == Operator.EQ || op == Operator.IN){
 					builder.append(" IS NULL ");
 				}else {
 					builder.append(" IS NOT NULL ");

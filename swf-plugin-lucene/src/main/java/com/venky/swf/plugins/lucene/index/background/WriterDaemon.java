@@ -24,7 +24,7 @@ public class WriterDaemon extends Thread {
 	private IndexWriter writer = null;
 	private final Directory directory ;
 	public WriterDaemon(Directory directory){
-		super();
+		super("WriterDaemon:" + directory.toString());
 		this.directory = directory;
 	}
 	
@@ -123,11 +123,13 @@ public class WriterDaemon extends Thread {
 			while(jobs.isEmpty() && !shutingDown){
 				try {
 					if (writer != null){
-						writer.commit();
-						Database db = Database.getInstance();
-						db.getCurrentTransaction().commit();
-						db.close();
+						writer.close(false);
+						writer = null;
 					}
+					Database db = Database.getInstance();
+					db.getCurrentTransaction().commit();
+					db.close();
+					
 					wait();
 				}catch (InterruptedException e) {
 					//
@@ -135,7 +137,7 @@ public class WriterDaemon extends Thread {
 					shutdown();
 				}
 			}
-			if (!jobs.isEmpty()){
+			if (!jobs.isEmpty()){ 
 				return jobs.remove();
 			}
 			return null;

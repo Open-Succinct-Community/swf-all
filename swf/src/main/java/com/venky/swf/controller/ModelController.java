@@ -48,6 +48,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
+import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
@@ -157,13 +158,23 @@ public class ModelController<M extends Model> extends Controller {
     public View index() {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getWhereClause()).execute(modelClass);
-        return dashboard(new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records));
+        return index(records);
+    }
+    protected View index(List<M> records){
+    	return dashboard(createListView(records));
+    }
+    
+    protected HtmlView createListView(List<M> records){
+    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
     }
     
     protected String[] getIncludedFields(){
     	return null;
     }
-    
+	protected Class<M> getModelClass() {
+		return modelClass;
+	}
+
     @SingleRecordAction(icon="/resources/images/show.png")
     public View show(int id) {
 		M record = Database.getTable(modelClass).get(id);
@@ -240,8 +251,12 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     @Depends("save")
-    public View blank() {
+    public View blank(){
 		M record = Database.getTable(modelClass).newRecord();
+		return blank(record);
+    }
+    
+    protected View blank(M record) {
         List<ModelInfo> modelElements = getPath().getModelElements();
         
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
@@ -322,7 +337,7 @@ public class ModelController<M extends Model> extends Controller {
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
     }
-    private Map<String,Object> getFormFields(HttpServletRequest request){
+    protected Map<String,Object> getFormFields(HttpServletRequest request){
     	Map<String,Object> formFields = new HashMap<String, Object>();
         boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
         if (isMultiPart){
@@ -459,6 +474,7 @@ public class ModelController<M extends Model> extends Controller {
 		}else {
 			model = Database.getTable(modelClass).newRecord();
 		}
+		model = model.cloneProxy();
 			
 		String autoCompleteFieldName = null;
 		String value = "";
@@ -479,6 +495,7 @@ public class ModelController<M extends Model> extends Controller {
     		if (pOptions.containsKey(autoCompleteFieldName)){
     			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
+    				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
     				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
     			}
     		}

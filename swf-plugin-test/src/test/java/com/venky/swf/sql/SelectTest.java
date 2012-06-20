@@ -26,7 +26,6 @@ public class SelectTest {
 	}
 	@Before
 	public void setup(){
-		Transaction t1 = Database.getInstance().createTransaction();
 		User root = new Select().from(User.class).where(new Expression("NAME",Operator.EQ,"root")).execute(User.class).get(0);
 		Database.getInstance().open(root);
 	}

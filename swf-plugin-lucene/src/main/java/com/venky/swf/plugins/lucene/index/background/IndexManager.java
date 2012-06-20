@@ -38,6 +38,7 @@ public class IndexManager {
 		}
 
 	};
+	
 	private Cache<String, WriterDaemon> writerDelegate = new Cache<String, WriterDaemon>() {
 		@Override
 		protected WriterDaemon getValue(String k) {
@@ -60,6 +61,7 @@ public class IndexManager {
 	}
 
 	private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
+		
 		@Override
 		protected IndexSearcher getValue(String k) {
 			try {

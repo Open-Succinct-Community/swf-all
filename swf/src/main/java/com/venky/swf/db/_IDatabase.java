@@ -10,5 +10,6 @@ public interface _IDatabase extends  _ICloseable{
 	public interface _ITransaction {
 		public void commit() throws SQLException;
 		public void rollback() throws SQLException;
+		public Object getAttribute(String string); 
 	}
 }

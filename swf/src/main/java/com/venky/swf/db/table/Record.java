@@ -32,6 +32,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 			r = (Record)super.clone();
 			r.fieldValues = (IgnoreCaseMap<Object>)fieldValues.clone();
 			r.dirtyFields = (IgnoreCaseMap<Object>)dirtyFields.clone(); 
+			r.proxyCache = new ProxyCache(r);
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException("Should have not happened",e);
 		}

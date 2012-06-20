@@ -21,7 +21,7 @@ import com.venky.swf.db.table.Record;
  *
  * @author venky
  */
-public interface Model extends _Identifiable{
+public interface Model extends _Identifiable {
     @IS_NULLABLE(false)
     @IS_AUTOINCREMENT
     @HIDDEN
@@ -77,5 +77,5 @@ public interface Model extends _Identifiable{
     public boolean isAccessibleBy(User user);
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     public Record getRawRecord();
-    
+    public <M extends Model> M cloneProxy();
 }

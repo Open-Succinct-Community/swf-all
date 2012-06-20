@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.lucene.configuration;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.venky.swf.configuration.Installer;
@@ -32,18 +33,34 @@ public class AppInstaller implements Installer{
 			//Do this only for real Tables.
 			LuceneIndexer indexer = LuceneIndexer.instance(currentTable.getReflector());
 			if (indexer.hasIndexedFields()){
-				mkdir(tableName);
+				mkdir(currentTable);
 			}
 		}
 		mkdir("MODEL");
 	}
-	public void mkdir(String tableName){
+	private boolean mkdir(String tableName){
+		boolean created = false;
 		ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
 		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute();
 		if (dirs.isEmpty()){
 			IndexDirectory rec = Database.getTable(IndexDirectory.class).newRecord();
 			rec.setName(tableName);
 			rec.save();
+			created = true;
+		}
+		return created;
+	}
+	private void mkdir(Table currentTable){
+		if (mkdir(currentTable.getTableName())){
+			List<Model> records = new Select().from(currentTable.getModelClass()).execute();
+			for (Model m:records){
+				try {
+					LuceneIndexer.instance(currentTable.getModelClass()).addDocument(m.getRawRecord());
+				} catch (IOException e) {
+					e.printStackTrace();
+					break;
+				}
+			}
 		}
 	}
 }

@@ -1,7 +1,16 @@
 package com.venky.swf.db.annotations.column.ui.mimes;
 
 public enum MimeType {
-	
+	TEXT_MARKDOWN() {
+		public String toString(){
+			return "text/x-web-markdown";
+		}
+
+		@Override
+		public boolean isImage() {
+			return false;
+		}
+	},
 	TEXT_PLAIN(){
 		public String toString(){
 			return "text/plain";

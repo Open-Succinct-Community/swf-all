@@ -54,10 +54,10 @@ public class Router extends AbstractHandler {
 			if (this.loader != loader) {
 				this.loader = loader;
 				if (loader != null){
+					loadExtensions();
 					_IDatabase db = getDatabase(true);
 					db.close();
 					setMenuBuilder();
-					loadExtensions();
 					try {
 						getPathClass();
 						getExceptionViewClass();

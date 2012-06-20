@@ -49,8 +49,9 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
 
     Class<M> modelClass;
     ModelReflector<M> reflector;
+    ControllerReflector<? extends Controller> controllerReflector;
     
-    List<String> includedFields = new IgnoreCaseList();
+	List<String> includedFields = new IgnoreCaseList();
 
     public AbstractModelView(Path path, Class<M> modelClass, final String[] includedFields) {
         super(path);
@@ -62,9 +63,13 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             this.includedFields.retainAll(Arrays.asList(includedFields));
         }
         
-        ControllerReflector<? extends Controller> ref = new ControllerReflector(path.getControllerClass(),Controller.class);
-        singleRecordActions = ref.getMethods(new SingleRecordActionMatcher(ref));
+        controllerReflector = new ControllerReflector(path.getControllerClass(),Controller.class);
+        singleRecordActions = controllerReflector.getMethods(new SingleRecordActionMatcher(controllerReflector));
     }
+    
+    public ControllerReflector<? extends Controller> getControllerReflector() {
+		return controllerReflector;
+	}
     
     private class SingleRecordActionMatcher implements MethodMatcher {
     	final ControllerReflector<? extends Controller> ref ;
@@ -119,7 +124,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         	TextArea txtArea = new TextArea();
         	txtArea.setText(converter.toString(value));
         	control = txtArea;
-        }else if (InputStream.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType)){
+        }else if (InputStream.class.isAssignableFrom(returnType)){
         	FileTextBox ftb = new FileTextBox();
         	CONTENT_TYPE type = reflector.getAnnotation(getter,CONTENT_TYPE.class);
         	if (type != null){

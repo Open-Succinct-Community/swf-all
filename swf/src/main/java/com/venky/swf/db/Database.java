@@ -236,7 +236,7 @@ public class Database implements _IDatabase{
 			}
 		}
 		
-		public Object getAttribute(String name){
+		public Object getAttribute(String name){ 
 			return checkpoint.getValue().get(name);
 		}
 	}

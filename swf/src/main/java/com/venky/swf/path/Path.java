@@ -17,11 +17,13 @@ import javax.servlet.http.HttpSession;
 
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.model.CONTROLLER;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model._Identifiable;
@@ -189,7 +191,14 @@ public class Path implements _IPath{
                 }else {
                     Class<? extends Model> modelClass = getModelClass(pe);
                     if (modelClass != null){
-                        controllerClassName = ModelController.class.getName();
+                    	ModelReflector<?> ref = ModelReflector.instance(modelClass);
+                    	CONTROLLER controller = ref.getAnnotation(CONTROLLER.class);
+                    	if (controller != null){
+                    		controllerClassName = controller.value();
+                    	}
+                    	if (ObjectUtil.isVoid(controllerClassName)){
+                            controllerClassName = ModelController.class.getName();
+                    	}
                         controllerPathIndex = i ;
                         controllerFound = true;
                     }
@@ -308,6 +317,7 @@ public class Path implements _IPath{
     
     
     public _IView invoke() throws AccessDeniedException{
+    	RuntimeException ex = null;
     	for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
@@ -333,13 +343,16 @@ public class Path implements _IPath{
 	                        return (View)m.invoke(controller, Long.valueOf(parameter()));
 	                    }
 	            	}catch(Exception e){
-	        			throw new RuntimeException(e);
+	        			ex = new RuntimeException(e);
 	            	}
             	}finally{
             		timer.stop();
             	}
             }
         }
+    	if (ex != null){
+    		throw ex;
+    	}
 		if (!isUserLoggedOn()){
     		return new RedirectorView(this,"","login");
 		}

@@ -93,7 +93,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             for (Method m : getSingleRecordActions()){
             	String actionName = m.getName();
             	boolean canAccessAction = getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
-            	Depends depends = m.getAnnotation(Depends.class);
+            	Depends depends = getControllerReflector().getAnnotation(m,Depends.class);
             	if (canAccessAction && depends != null ){
             		StringTokenizer tok = new StringTokenizer(depends.value(),",") ;
             		while (tok.hasMoreTokens() && canAccessAction){
@@ -101,7 +101,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             		}
             	}
             	if (canAccessAction){
-                	SingleRecordAction sra = m.getAnnotation(SingleRecordAction.class);
+                	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
                 	String icon = null ; 
                 	if (sra != null) {
                 		icon = sra.icon();

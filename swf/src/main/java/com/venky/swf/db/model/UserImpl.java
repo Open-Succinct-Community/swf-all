@@ -151,6 +151,11 @@ public class UserImpl extends ModelImpl<User>{
 	    			dsw.add(new Expression(cd.getName(),Operator.EQ, values.get(0)));
 	    		}
 	    	}else {
+	    		int indexOfNull = values.indexOf(null);
+	    		if (indexOfNull >= 0){
+	    			values.remove(indexOfNull);
+	    			dsw.add(new Expression(cd.getName(),Operator.EQ));
+	    		}
 	    		dsw.add(Expression.createExpression(cd.getName(),Operator.IN, values.toArray()));
 	    	}
 		}

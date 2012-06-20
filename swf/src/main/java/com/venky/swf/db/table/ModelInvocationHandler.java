@@ -580,4 +580,8 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return ret;
     }
     
+    public <M extends Model> M cloneProxy(){
+		return (M) getRawRecord().clone().getAsProxy(getReflector().getModelClass());
+    }
+    
 }
