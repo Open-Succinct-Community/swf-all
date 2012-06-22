@@ -109,15 +109,14 @@ public class PostgresqlHelper extends JdbcTypeHelper{
                             java.sql.Types.VARCHAR, "VARCHAR", 128, 0, true,true, 
                             new StringConverter())); // ALSO CHAR, LONG VARCHAR
 
-            registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.CLOB,
-                            "TEXT", 0, 0, true, true, new ReaderConverter()));
-
+            registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.VARCHAR,
+                            "VARCHAR",10485760 , 0, true, true, new ReaderConverter()));
 
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BINARY,
                             "BYTEA", 0, 0, true, true, new InputStreamConverter()));
-            registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
-                            "BYTEA", 0, 0, true, true,  new InputStreamConverter()));
             
+            registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
+                            "BYTEA", 0, 0, true, true,  new InputStreamConverter())); 
     
     }
 

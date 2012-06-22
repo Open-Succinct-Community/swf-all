@@ -24,9 +24,14 @@ public class BindVariable {
     public BindVariable(Object value,int jdbcType){
     	this(value,Database.getJdbcTypeHelper().getTypeRef(jdbcType));
     }
+    
     public BindVariable(Object value, TypeRef<?> ref){
     	this.ref = ref;
-    	this.value = value;
+    	if (ref.getJdbcType() == Types.VARCHAR && value != null && !value.getClass().equals(String.class)){
+    		this.value = ref.getTypeConverter().toString(value); //PGSql stores Clobs as Varchar(
+    	}else {
+    		this.value = value;
+    	}
     }
     
 

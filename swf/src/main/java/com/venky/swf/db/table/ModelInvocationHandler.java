@@ -484,12 +484,13 @@ public class ModelInvocationHandler implements InvocationHandler {
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
-		Table table = Database.getTable(getReflector().getTableName());
         Update q = new Update(getReflector());
         Iterator<String> fI = record.getDirtyFields().iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
-            q.set(columnName,new BindVariable(record.get(columnName),table.getColumnDescriptor(columnName).getJDBCType()));
+            String fieldName =  getReflector().getFieldName(columnName);
+            TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
+            q.set(columnName,new BindVariable(record.get(columnName), ref));
         }
         
         String idColumn = getReflector().getColumnDescriptor("id").getName();
@@ -520,7 +521,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         Iterator<String> columnIterator = record.getDirtyFields().iterator();
         while (columnIterator.hasNext()) {
             String columnName = columnIterator.next();
-            values.put(columnName, new BindVariable(record.get(columnName),table.getColumnDescriptor(columnName).getJDBCType()));
+            String fieldName =  getReflector().getFieldName(columnName);
+            TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
+            values.put(columnName,new BindVariable(record.get(columnName), ref));
         }
         insertSQL.values(values);
         
