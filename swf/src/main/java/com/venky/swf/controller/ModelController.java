@@ -272,11 +272,13 @@ public class ModelController<M extends Model> extends Controller {
 				if (oldValue == null){
 					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
 						id = idoptions.get(0);
-						Model referredModel = Database.getTable(referredModelClass).get(id);
-            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-            	    		referredModelIdSetter.invoke(record,id);
-            	    		continue;
-            	    	}
+						if (id != null){
+							Model referredModel = Database.getTable(referredModelClass).get(id);
+	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+	            	    		referredModelIdSetter.invoke(record,id);
+	            	    		continue;
+	            	    	}
+						}
 					}
 				}
 				for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){

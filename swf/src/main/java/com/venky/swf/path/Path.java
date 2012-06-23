@@ -30,6 +30,7 @@ import com.venky.swf.db.model._Identifiable;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
@@ -317,7 +318,7 @@ public class Path implements _IPath{
     
     
     public _IView invoke() throws AccessDeniedException{
-    	RuntimeException ex = null;
+    	MultiException ex = null;
     	for (Method m :getControllerClass().getMethods()){
             if (m.getName().equals(action()) && 
                     View.class.isAssignableFrom(m.getReturnType()) ){
@@ -343,7 +344,11 @@ public class Path implements _IPath{
 	                        return (View)m.invoke(controller, Long.valueOf(parameter()));
 	                    }
 	            	}catch(Exception e){
-	        			ex = new RuntimeException(e);
+	            		if (ex == null){
+	            			ex = new MultiException(e);
+	            		}else {
+	            			ex.add(e);
+	            		}
 	            	}
             	}finally{
             		timer.stop();
