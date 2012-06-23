@@ -28,7 +28,7 @@ public class StandardDefaulter {
 				break;
 			case CURRENT_USER:
 				User user = Database.getInstance().getCurrentUser();
-				ret = user == null ? 0 : user.getId();
+				ret = user == null ? 1 : user.getId();
 				break;
 			case CURRENT_DATE:
 				ret = new Date(System.currentTimeMillis());
