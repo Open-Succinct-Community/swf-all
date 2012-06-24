@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.github.venkatramanm.swf-all</groupId>
 		<artifactId>swf-all</artifactId>
-		<version>1.5</version>
+		<version>1.6-SNAPSHOT</version>
 	</parent>
 	<artifactId>swf</artifactId>
 	<packaging>jar</packaging>
