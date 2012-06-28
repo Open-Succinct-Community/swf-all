@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.user.User;
+import com.venky.swf.pm.DataSecurityFilter;
 
 
 public class UserParticipantExtension extends ParticipantExtension<User>{
@@ -29,7 +31,7 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 			if (partial.getCompanyId() != null && partial.getCompany().isAccessibleBy(user)){
 				return Arrays.asList(partial.getCompanyId());
 			}else {
-				SequenceSet<Integer> ids =  DataSecurityFilter.getIds(DataSecurityFilter.getCompaniesAccessible(user));
+				SequenceSet<Integer> ids =  DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Company.class,user));
 				ids.add(null);
 				return ids;
 			}

@@ -7,7 +7,10 @@ package com.venky.swf.path;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
@@ -23,15 +26,21 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.model.CONTROLLER;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model._Identifiable;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.MultiException;
+import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
@@ -429,5 +438,91 @@ public class Path implements _IPath{
     	path.setSession(getSession());
     	return path;
     }
+    private List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
+    	List<Method> rmg = referredModelGettersMap.get(referredTableName);
+    	if (rmg == null){
+    		rmg = new ArrayList<Method>();
+    	}
+    	return rmg;
+    }
+    public Expression getWhereClause(){
+    	Expression where = new Expression(Conjunction.AND);
+		Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
+		ModelReflector<? extends Model> reflector = ModelReflector.instance(getModelClass());
+		
+		for (Method referredModelGetter : reflector.getReferredModelGetters()){
+			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
+			
+			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+			String referredTableName = referredModelReflector.getTableName();
+			
+			List<Method> getters = referredModelGetterMap.get(referredTableName);
+			if (getters == null){
+				getters = new ArrayList<Method>();
+				referredModelGetterMap.put(referredTableName, getters);
+			}
+			
+			getters.add(referredModelGetter);
+		}
+		
+		if (referredModelGetterMap.isEmpty()){
+			return where;
+		}
 
+		List<ModelInfo> modelElements = getModelElements();
+
+		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){ // The last model is self.
+    		ModelInfo mi = miIter.next();
+    		if(!miIter.hasNext()){
+    			//last model is self.
+    			break;
+    		}
+    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector().getTableName());
+    		
+    		if (referredModelGetters.isEmpty() || mi.getId() == null){
+    			continue;
+    		}
+    		
+    		Expression referredModelWhere = new Expression(Conjunction.AND);
+	    	ModelReflector<?> referredModelReflector = mi.getReflector();
+	    	for (Method childGetter : referredModelReflector.getChildGetters()){
+	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
+	    		if (reflector.reflects(childModelClass)){
+	            	CONNECTED_VIA join = referredModelReflector.getAnnotation(childGetter,CONNECTED_VIA.class);
+	            	if (join == null){
+	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
+	            		for (Method referredModelGetter: referredModelGetters){ 
+    	        	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
+    	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
+
+    	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            		}
+	            		referredModelWhere.add(referredModelWhereChoices);
+	            	}else {
+	            		String referredModelIdColumnName = join.value();
+	            		referredModelWhere.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            	}
+	    		}
+	    	}
+    		if (referredModelWhere.getParameterizedSQL().length() > 0){
+    			where.add(referredModelWhere);
+    		}
+    	}
+		
+		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass());
+		if (!pOptions.isEmpty()){
+			boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(pOptions.keySet(), reflector);
+			
+			if (canFilterInSQL){
+				Expression dsw = getSessionUser().getDataSecurityWhereClause(reflector,pOptions);
+				if (dsw.getParameterizedSQL().length()> 0){
+					where.add(dsw); 
+				}
+			}
+		}
+		
+		
+    	return where;
+
+    }
 }

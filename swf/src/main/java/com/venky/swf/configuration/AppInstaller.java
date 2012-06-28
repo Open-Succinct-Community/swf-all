@@ -30,6 +30,10 @@ public class AppInstaller implements Installer {
 			u.setName("root");
 			u.setPassword("root");
 			u.save();
+			if (u.getId() != 1){
+				u.setId(1);
+				u.save();
+			}
 		}
 	}
 }

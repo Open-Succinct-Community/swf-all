@@ -15,6 +15,7 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
@@ -125,13 +126,20 @@ public class Select extends SqlStatement{
 	}
 	
 	public <M extends Model> List<M> execute(Class<M> modelInterface){
-		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS);
+		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS,lock,null);
+	}
+	public <M extends Model> List<M> execute(Class<M> modelInterface,ResultFilter filter){
+		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS,lock,filter);
 	}
 	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords) {
-		return execute(modelInterface,maxRecords,lock);
+		return execute(modelInterface,maxRecords,lock,null);
+	}
+	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,ResultFilter filter){
+		return execute(modelInterface,maxRecords,lock,filter);
 	}
 	
-	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked) {
+	
+	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter filter) {
         PreparedStatement st = null;
         try {
         	ModelReflector<M> ref = ModelReflector.instance(modelInterface);
@@ -181,7 +189,9 @@ public class Select extends SqlStatement{
 	        	List<M> ret = new ArrayList<M>();
 	        	for (Record record: result){
 	                M m = record.getAsProxy(modelInterface);
-	                ret.add(m);
+	                if (filter == null || filter.pass(m)){
+	                	ret.add(m);
+	                }
 	        	}
 	        	if (requireResultSorting && orderBy != null){
 	        		Collections.sort(ret,new Comparator<M>() {
@@ -227,4 +237,20 @@ public class Select extends SqlStatement{
 		return whereExpression;
 	}
 
+	public static interface ResultFilter<M extends Model> {
+		public boolean pass(M record);
+	}
+	
+	public static final class AccessibilityFilter<M extends Model> implements ResultFilter<M> {
+		private User user ;
+		public AccessibilityFilter(){
+			this(Database.getInstance().getCurrentUser());
+		}
+		public AccessibilityFilter(User user){
+			this.user = user;
+		}
+		public boolean pass(M record) {
+			return user == null || record.isAccessibleBy(user);
+		}
+	}
 }

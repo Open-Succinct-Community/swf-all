@@ -102,6 +102,19 @@ public class ModelReflector<M extends Model> {
         return "ID";
     }
     
+    public <T> T get(Model record, String fieldName){
+    	Timer timer = Timer.startTimer();
+        try {
+            Method getter = getFieldGetter(fieldName);
+    		return (T)getter.invoke(record);
+        } catch (Exception e1) {
+            throw new RuntimeException(e1);
+        } finally {
+        	timer.stop();
+        }
+
+    	
+    }
     public void set(Model record, String fieldName, Object value){
     	Timer timer = Timer.startTimer();
         try {

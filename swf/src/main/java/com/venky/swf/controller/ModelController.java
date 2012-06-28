@@ -43,6 +43,7 @@ import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ModelInfo;
+import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -73,91 +74,10 @@ public class ModelController<M extends Model> extends Controller {
     	return reflector;
     }
     
-    private static List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
-    	List<Method> rmg = referredModelGettersMap.get(referredTableName);
-    	if (rmg == null){
-    		rmg = new ArrayList<Method>();
-    	}
-    	return rmg;
-    }
-    public Expression getWhereClause(){
-    	return getWhereClause(reflector);
-    }
-    public Expression getWhereClause(ModelReflector<?> reflector){
-    	Expression where = new Expression(Conjunction.AND);
-		Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
-
-		for (Method referredModelGetter : reflector.getReferredModelGetters()){
-			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-			
-			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
-			String referredTableName = referredModelReflector.getTableName();
-			
-			List<Method> getters = referredModelGetterMap.get(referredTableName);
-			if (getters == null){
-				getters = new ArrayList<Method>();
-				referredModelGetterMap.put(referredTableName, getters);
-			}
-			
-			getters.add(referredModelGetter);
-		}
-		
-		if (referredModelGetterMap.isEmpty()){
-			return where;
-		}
-
-		List<ModelInfo> modelElements = getPath().getModelElements();
-
-		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){ // The last model is self.
-    		ModelInfo mi = miIter.next();
-    		if(!miIter.hasNext()){
-    			//last model is self.
-    			break;
-    		}
-    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector().getTableName());
-    		
-    		if (referredModelGetters.isEmpty() || mi.getId() == null){
-    			continue;
-    		}
-    		
-    		Expression referredModelWhere = new Expression(Conjunction.AND);
-	    	ModelReflector<?> referredModelReflector = mi.getReflector();
-	    	for (Method childGetter : referredModelReflector.getChildGetters()){
-	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
-	    		if (reflector.reflects(childModelClass)){
-	            	CONNECTED_VIA join = referredModelReflector.getAnnotation(childGetter,CONNECTED_VIA.class);
-	            	if (join == null){
-	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
-	            		for (Method referredModelGetter: referredModelGetters){ 
-    	        	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-    	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
-
-    	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
-	            		}
-	            		referredModelWhere.add(referredModelWhereChoices);
-	            	}else {
-	            		String referredModelIdColumnName = join.value();
-	            		referredModelWhere.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
-	            	}
-	    		}
-	    	}
-    		if (referredModelWhere.getParameterizedSQL().length() > 0){
-    			where.add(referredModelWhere);
-    		}
-    	}
-		
-		Expression dsw = getSessionUser().getDataSecurityWhereClause(reflector.getModelClass());
-		if (dsw.getParameterizedSQL().length()> 0){
-			where.add(dsw); 
-		}
-		
-    	return where;
-		    	
-    }
     @Override
     public View index() {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getWhereClause()).execute(modelClass);
+        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, new Select.AccessibilityFilter<M>());
         return index(records);
     }
     protected View index(List<M> records){
@@ -505,8 +425,8 @@ public class ModelController<M extends Model> extends Controller {
 		
 		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(autoCompleteFieldName)));
 		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
-		
-		where.add(getWhereClause(autoCompleteModelReflector));//
+		Path autoCompletePath = getPath().createRelativePath(autoCompleteModelReflector.getTableName().toLowerCase());
+		where.add(autoCompletePath.getWhereClause());
         return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionColumn(), value);
     }
     

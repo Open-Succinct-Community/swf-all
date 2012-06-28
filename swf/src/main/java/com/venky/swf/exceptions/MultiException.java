@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.core.util.ExceptionUtil;
+
 public class MultiException extends RuntimeException{
 
 	/**
@@ -15,11 +17,11 @@ public class MultiException extends RuntimeException{
 	List<Throwable> throwables = new ArrayList<Throwable>();
 	public MultiException(Throwable t){
 		super("Multiple exeptions found!");
-		throwables.add(t);
+		add(t);
 	}
 	
 	public void add(Throwable t){
-		throwables.add(t);
+		throwables.add(ExceptionUtil.getRootCause(t));
 	}
 	
 	private String newLine(){
@@ -38,11 +40,13 @@ public class MultiException extends RuntimeException{
 	
 	public void printStackTrace(PrintStream s) {
 		super.printStackTrace(s);
+		s.println();
 		if (!throwables.isEmpty()){
 			s.println("------------------------");
 		}
 		for (Throwable th: throwables){
 			th.printStackTrace(s);
+			s.println();
 			s.println("------------------------");
 		}
 		

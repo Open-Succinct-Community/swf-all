@@ -76,7 +76,7 @@ public class IndexedModelController<M extends Model>  extends ModelController<M>
 			List<Integer> ids = indexer.findIds(q, 100);
 			if (!ids.isEmpty()) {
 				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
-				return sel.execute(getModelClass());
+				return sel.execute(getModelClass(),new Select.AccessibilityFilter<M>());
 			}
 		}
 		return new ArrayList<M>();

@@ -17,6 +17,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -69,6 +70,9 @@ public class UserImpl extends ModelImpl<User>{
 		try {
 			Map<String, List<Integer>> mapParticipatingOptions = new HashMap<String, List<Integer>>();
 			User user = getProxy();
+			if (user.isAdmin()){
+				return mapParticipatingOptions;
+			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 			for (Method referredModelGetter : ref.getParticipantModelGetters()){
 				String referredModelIdFieldName = ref.getReferenceField(referredModelGetter);
@@ -101,15 +105,24 @@ public class UserImpl extends ModelImpl<User>{
 					Map<String,List<Integer>> referredModelParticipatingOptions = user.getParticipationOptions(referredModelClass,referredModel);
 					ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 					if (!referredModelParticipatingOptions.isEmpty()){
-						Select q = new Select().from(referredModelClass).where(getDataSecurityWhereClause(referredModelReflector,referredModelParticipatingOptions));
-						List<? extends Model> referables = q.execute(referredModelClass);
+						boolean couldFilterUsingDSW = !DataSecurityFilter.anyFieldIsVirtual(referredModelParticipatingOptions.keySet(),referredModelReflector); 
+						
+						Select q = new Select().from(referredModelClass);
+						Select.ResultFilter filter = null;
+						if (couldFilterUsingDSW){
+							q.where(getDataSecurityWhereClause(referredModelReflector,referredModelParticipatingOptions));
+						}else {
+							filter = new Select.AccessibilityFilter<Model>(user);
+						}
+						List<? extends Model> referables = q.execute(referredModelClass,filter);
 						List<Integer> ids = new ArrayList<Integer>();
 						for (Model referable:referables){
 							ids.add(referable.getId());
 						}
+						/* VENKY TODO  Check why this at all.!! 
 						if (referredModelReflector.reflects(User.class)){
 							ids.add(user.getId());
-						}
+						}*/
 						mapParticipatingOptions.put(referredModelIdFieldName,ids);
 					}
 				}
@@ -120,6 +133,11 @@ public class UserImpl extends ModelImpl<User>{
 			timer.stop();
 		}
 	}
+	
+	public boolean isAdmin(){
+		return getProxy().getId() == 1;
+	}
+	
 
 	public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass){
 		Model dummy = Database.getTable(modelClass).newRecord();
@@ -140,7 +158,9 @@ public class UserImpl extends ModelImpl<User>{
 			List<Integer> values = participatingOptions.get(key);
 			
 	    	ColumnDescriptor cd = ref.getColumnDescriptor(key);
-
+	    	if (cd.isVirtual()){
+	    		continue;
+	    	}
 	    	if (values.isEmpty()){
 	    		dsw.add(new Expression(cd.getName(),Operator.EQ));
 	    	}else if (values.size() == 1){

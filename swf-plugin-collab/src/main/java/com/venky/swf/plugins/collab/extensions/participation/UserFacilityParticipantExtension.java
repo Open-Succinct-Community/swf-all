@@ -6,8 +6,14 @@ import java.util.List;
 
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.User;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
 import com.venky.swf.plugins.collab.db.model.user.UserFacility;
+import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class UserFacilityParticipantExtension extends ParticipantExtension<UserFacility> {
 	static {
@@ -29,7 +35,7 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					}
 				}
 			}else {
-				List<Facility> facilites = DataSecurityFilter.getFacilitiesAccessible(user);
+				List<Facility> facilites = DataSecurityFilter.getRecordsAccessible(Facility.class,user);
  				if (model.getUserId() > 0 ){
  					ret = new ArrayList<Integer>();
 					for (Facility f : facilites){
@@ -56,7 +62,7 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					ret = new ArrayList<Integer>();
 					Facility f = model.getFacility();
 					if (f.isAccessibleBy(user, Facility.class)){
-						List<User> allowedUsers = DataSecurityFilter.getAllowedUsers(f);
+						List<User> allowedUsers = getAllowedUsers(f);
 						Iterator<User> allowedUserIterator = allowedUsers.iterator(); 
 						while (allowedUserIterator.hasNext()){
 							User allowedUser = allowedUserIterator.next();
@@ -67,7 +73,7 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 						ret = DataSecurityFilter.getIds(allowedUsers);
 					}
 				}else {
-					ret = DataSecurityFilter.getIds(DataSecurityFilter.getUsersAccessible(user));
+					ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class,user));
 				}
 				
 			}
@@ -75,5 +81,18 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 		}
 		return ret;	
 	}
+	//If Company participation changes. This function needs to be altered. 
+	private List<User> getAllowedUsers(Company company){
+		Expression where = new Expression(Conjunction.OR);
+		where.add(new Expression("COMPANY_ID",Operator.EQ,company.getId()));
+		where.add(new Expression("ID",Operator.EQ,company.getCreatorUserId()));
+		Select sel = new Select().from(User.class).where(where);
+		return sel.execute();
+	}
+	
+	private List<User> getAllowedUsers(Facility facility){
+		return getAllowedUsers(facility.getCompany());
+	}
+
 
 }

@@ -206,14 +206,14 @@ public class ModelInvocationHandler implements InvocationHandler {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;
 	    	}
-	    	Map<String,List<Integer>> columnNameValues = user.getParticipationOptions(asModel);
-	    	if (columnNameValues.isEmpty()){
+	    	Map<String,List<Integer>> fieldNameValues = user.getParticipationOptions(asModel);
+	    	if (fieldNameValues.isEmpty()){
 	    		return true;
 	    	}	
-	    	for (String fieldName:columnNameValues.keySet()){
-	    		List values = columnNameValues.get(fieldName);
-	    		String columnName = reflector.getColumnDescriptor(fieldName).getName();
-	    		if (values.contains(record.get(columnName))) {
+	    	for (String fieldName:fieldNameValues.keySet()){
+	    		List values = fieldNameValues.get(fieldName);
+	    		Object value = reflector.get(getProxy(), fieldName);
+	    		if (values.contains(value)) {
 	    			return true;
 	    		}
 	    	}
