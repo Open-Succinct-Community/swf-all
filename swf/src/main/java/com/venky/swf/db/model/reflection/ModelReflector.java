@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
@@ -15,6 +16,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Registry;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
@@ -57,6 +59,34 @@ public class ModelReflector<M extends Model> {
     	}
     	return ref;
     }
+    
+	private Cache<String, SequenceSet<String>> extensionPointsCache = new Cache<String, SequenceSet<String>>() {
+
+		@Override
+		protected SequenceSet<String> getValue(String k) {
+			StringTokenizer tok = new StringTokenizer(k, "@");
+			String prefix = tok.nextToken();
+			String suffix = tok.nextToken();
+			SequenceSet<String> extnPoints = new SequenceSet<String>();
+			for (Class<? extends Model> inHierarchy : getClassHierarchies()){
+				String extnPoint = prefix + "."+ inHierarchy.getSimpleName() + "." + suffix;
+				if (Registry.instance().hasExtensions(extnPoint)){
+					extnPoints.add(extnPoint);
+				}
+			}
+			return extnPoints;
+		}
+	};
+	
+	/** 
+	 * Find extension points of the form prefix.<modelClass.getSimpleName()>.suffix for all relevant models in the right sequence.
+	 * @param prefix
+	 * @param suffix
+	 * @return
+	 */
+	public List<String> getExtensionPoints(String prefix,String suffix){
+		return extensionPointsCache.get(prefix+"@"+suffix);
+	}
         
 	private final Class<M> modelClass  ;  
 	private final TableReflector reflector ;
