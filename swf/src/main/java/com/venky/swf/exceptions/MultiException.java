@@ -15,9 +15,8 @@ public class MultiException extends RuntimeException{
 	private static final long serialVersionUID = 7536473966344832621L;
 
 	List<Throwable> throwables = new ArrayList<Throwable>();
-	public MultiException(Throwable t){
-		super("Multiple exeptions found!");
-		add(t);
+	public MultiException(){
+		super();
 	}
 	
 	public void add(Throwable t){
@@ -30,34 +29,24 @@ public class MultiException extends RuntimeException{
 	@Override
 	public String toString(){
 		StringBuilder b = new StringBuilder();
-		b.append(super.toString());
 		for (Throwable th: throwables){
-			b.append(newLine());
 			b.append(th);
+			b.append(newLine());
 		}
 		return b.toString();
 	}
 	
 	public void printStackTrace(PrintStream s) {
-		super.printStackTrace(s);
-		s.println();
-		if (!throwables.isEmpty()){
-			s.println("------------------------");
-		}
 		for (Throwable th: throwables){
 			th.printStackTrace(s);
 			s.println();
 			s.println("------------------------");
 		}
-		
 	}
 	public void printStackTrace(PrintWriter w) {
-		super.printStackTrace(w);
-		if (!throwables.isEmpty()){
-			w.println("------------------------");
-		}
 		for (Throwable th: throwables){
 			th.printStackTrace(w);
+			w.println();
 			w.println("------------------------");
 		}
 	}
