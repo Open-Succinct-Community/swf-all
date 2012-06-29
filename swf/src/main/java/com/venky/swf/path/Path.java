@@ -354,10 +354,9 @@ public class Path implements _IPath{
 	                    }
 	            	}catch(Exception e){
 	            		if (ex == null){
-	            			ex = new MultiException(e);
-	            		}else {
-	            			ex.add(e);
+	            			ex = new MultiException();
 	            		}
+            			ex.add(e);
 	            	}
             	}finally{
             		timer.stop();
