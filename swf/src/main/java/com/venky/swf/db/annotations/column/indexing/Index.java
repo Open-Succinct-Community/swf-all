@@ -1,5 +1,4 @@
-package com.venky.swf.plugins.lucene.db.annotations;
-
+package com.venky.swf.db.annotations.column.indexing;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

@@ -29,8 +29,9 @@ public class TableReflector {
     
     public static <M extends Model> TableReflector instance(Class<M> modelClass){
     	Class<? extends Model> realModelClass = getRealModelClass(modelClass);
-        if (realModelClass == null && !modelClass.equals(Model.class)){
-    		throw new NullPointerException("Real Model is null");
+        if (realModelClass == null){
+    		//The whole tree is Virtual. 
+        	realModelClass = modelClass;
     	}
     	
     	String tableName = Table.tableName(realModelClass);

@@ -31,6 +31,7 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTED;
@@ -178,6 +179,12 @@ public class ModelReflector<M extends Model> {
     public List<Method> getFieldGetters(){
     	loadMethods(fieldGetters, getFieldGetterMatcher());
     	return fieldGetters;
+    }
+    
+    private SequenceSet<Method> indexedFieldGetters = new SequenceSet<Method>();
+    public List<Method> getIndexedFieldGetters(){
+    	loadMethods(indexedFieldGetters, getIndexedFieldGetterMatcher());
+    	return indexedFieldGetters;
     }
     
     private SequenceSet<Method> fieldSetters = new SequenceSet<Method>() ;
@@ -769,6 +776,18 @@ public class ModelReflector<M extends Model> {
         return fieldGetterMatcher;
     }
     
+    private final MethodMatcher indexedFieldGetterMatcher = new IndexedFieldGetterMatcher();
+    public MethodMatcher getIndexedFieldGetterMatcher() {
+        return indexedFieldGetterMatcher;
+    }
+    
+    public class IndexedFieldGetterMatcher extends FieldGetterMatcher {
+		@Override
+        public boolean matches(Method method){
+			return super.matches(method) && isAnnotationPresent(method,Index.class) ;
+		}
+	}
+
     public static class FieldGetterMatcher extends GetterMatcher{ 
         @Override
         public boolean matches(Method method){

@@ -23,9 +23,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.model.reflection.ModelReflector.FieldGetterMatcher;
 import com.venky.swf.db.table.Record;
-import com.venky.swf.plugins.lucene.db.annotations.Index;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 
@@ -60,9 +58,7 @@ public class LuceneIndexer {
 			this.tableName = tableName;
 			for (Class<? extends Model> mClass: Database.getTable(tableName).getReflector().getModelClasses()){
 				ModelReflector<? extends Model> ref = ModelReflector.instance(mClass);
-				SequenceSet<Method> indexedFieldGetters = new SequenceSet<Method>();
-				ref.loadMethods(indexedFieldGetters, matcher);
-				for (Method indexedFieldGetter: indexedFieldGetters){
+				for (Method indexedFieldGetter: ref.getIndexedFieldGetters()){
 					indexedFields.add(ref.getFieldName(indexedFieldGetter));
 				}
 			}
@@ -74,15 +70,6 @@ public class LuceneIndexer {
 	public boolean hasIndexedFields(){
 		return !indexedFields.isEmpty();
 	}
-	
-	private IndexedGetterMatcher matcher = new IndexedGetterMatcher();
-	public class IndexedGetterMatcher extends FieldGetterMatcher {
-		@Override
-        public boolean matches(Method method){
-			return method.isAnnotationPresent(Index.class) && super.matches(method);
-		}
-	}
-	
 	
 	private Document getDocument(Record r) throws IOException {
 		if (!hasIndexedFields()){

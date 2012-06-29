@@ -20,6 +20,7 @@ import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
@@ -291,6 +292,13 @@ public class Table<M extends Model> {
         return true;
     }
 
+    public int recordCount(){
+    	Select sel = new Select("COUNT(1) AS COUNT").from(getModelClass());
+    	Counts count = sel.execute(Counts.class).get(0); // number of records would be one.!!
+    	return count.getCount();
+    }
+    
+    
     public M lock(int id){
     	return get(id,true);
     }

@@ -60,7 +60,9 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         Menu modelMenu = new Menu();
         for (String tableName : tableNames){
 			Table<?> table = Database.getTable(tableName);
-            addMenuItem(user,modelMenu, table, annotationFilter);
+			if (!table.isVirtual()){
+				addMenuItem(user,modelMenu, table, annotationFilter);
+			}
         }
         return modelMenu;
     }

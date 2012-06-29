@@ -37,14 +37,18 @@ import com.venky.swf.views.controls.page.text.Label;
 public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
     private List<M> records;
-
-    public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records) {
+    private Control searchForm ;
+    public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records, Control searchForm) {
         super(path, modelClass, includeFields);
         this.records = records;
+        this.searchForm = searchForm;
     }
 
     @Override
     protected void createBody(Body b) {
+    	if (searchForm != null){
+    		b.addControl(searchForm);
+    	}
     	
     	Table container = new Table();
     	container.addClass("hfill");

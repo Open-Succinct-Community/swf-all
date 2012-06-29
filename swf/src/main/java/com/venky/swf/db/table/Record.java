@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.venky.cache.Cache;
 import com.venky.core.checkpoint.Mergeable;
@@ -129,9 +130,12 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	if (fieldValues.containsKey("ID")){
     		return Integer.valueOf(String.valueOf(fieldValues.get("ID")));
     	}else {
-    		return null;
+    		return fakeId.addAndGet(1);
     	}
     }
+    
+    private static AtomicInteger fakeId = new AtomicInteger();
+    
 	@Override
 	public int hashCode() {
 		final int prime = 31;

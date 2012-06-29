@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.lucene.search.Query;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
@@ -40,6 +42,7 @@ import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ModelInfo;
+import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -48,6 +51,12 @@ import com.venky.swf.views.BytesView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls.page.Form;
+import com.venky.swf.views.controls.page.Form.SubmitMethod;
+import com.venky.swf.views.controls.page.buttons.Submit;
+import com.venky.swf.views.controls.page.layout.Table.Row;
+import com.venky.swf.views.controls.page.text.TextBox;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
@@ -60,11 +69,12 @@ public class ModelController<M extends Model> extends Controller {
 
     private Class<M> modelClass;
     private ModelReflector<M> reflector ;
+    private boolean indexedModel = false; 
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
     	reflector = ModelReflector.instance(modelClass);
-        
+        indexedModel = !reflector.getIndexedFieldGetters().isEmpty();
     }
     protected ModelReflector<M> getReflector(){
     	return reflector;
@@ -72,16 +82,70 @@ public class ModelController<M extends Model> extends Controller {
     
     @Override
     public View index() {
+    	if (indexedModel){
+    		return search();
+    	}else {
+    		return list();
+    	}
+    }
+
+    protected Control createSearchForm(){
+    	if (!indexedModel){
+    		return null;
+    	}
+    	com.venky.swf.views.controls.page.layout.Table table = new com.venky.swf.views.controls.page.layout.Table();
+		Row row = table.createRow();
+		TextBox search = new TextBox();
+		search.setName("q");
+		row.createColumn().addControl(search);
+		row.createColumn().addControl(new Submit("Search"));
+		
+		Form searchForm = new Form();
+		searchForm.setAction(getPath().controllerPath(),"search");
+		searchForm.setMethod(SubmitMethod.GET);
+		
+		searchForm.addControl(table);
+		return searchForm;
+    }
+
+    public View search(){
+    	Map<String,Object> formData = getFormFields(getPath().getRequest());
+		if (!formData.isEmpty()){
+			rewriteQuery(formData);
+			return list(search(formData));
+		}else {
+			return list(new ArrayList<M>());
+		}
+    }
+	protected void rewriteQuery(Map<String,Object> formData){
+		
+	}
+	
+	protected List<M> search(Map<String,Object> formData){
+		String strQuery = StringUtil.valueOf(formData.get("q"));
+		if (!ObjectUtil.isVoid(strQuery)){
+			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
+			Query q = indexer.constructQuery(strQuery);
+			List<Integer> ids = indexer.findIds(q, 100);
+			if (!ids.isEmpty()) {
+				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
+				return sel.execute(getModelClass(),new Select.AccessibilityFilter<M>());
+			}
+		}
+		return new ArrayList<M>();
+	}
+    
+    public View list() {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, new Select.AccessibilityFilter<M>());
-        return index(records);
+        return list(records);
     }
-    protected View index(List<M> records){
+    protected View list(List<M> records){
     	return dashboard(createListView(records));
     }
     
     protected HtmlView createListView(List<M> records){
-    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
+    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records,createSearchForm());
     }
     
     protected String[] getIncludedFields(){

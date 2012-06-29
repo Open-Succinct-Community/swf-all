@@ -138,14 +138,21 @@ public class Select extends SqlStatement{
 		return execute(modelInterface,maxRecords,lock,filter);
 	}
 	
+	private boolean isCacheable(ModelReflector<? extends Model> ref){
+		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null);
+	}
 	
 	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter filter) {
         PreparedStatement st = null;
         try {
         	ModelReflector<M> ref = ModelReflector.instance(modelInterface);
-        	QueryCache cache = Database.getInstance().getCache(ref);
+        	Set<Record> result = null;
+        	QueryCache cache = null;
+        	if (isCacheable(ref)){
+	        	cache = Database.getInstance().getCache(ref);
+	        	result = cache.getCachedResult(getWhereExpression(),maxRecords,locked);
+        	}
         	boolean requireResultSorting = false;
-        	Set<Record> result = cache.getCachedResult(getWhereExpression(),maxRecords,locked);
         	if (result == null){
 	            Timer queryTimer = Timer.startTimer(getRealSQL());
 	            try {
@@ -160,15 +167,17 @@ public class Select extends SqlStatement{
 		                    Record r = new Record();
 		                    r.load(rs);
 		                    r.setLocked(locked);
-		                    Record cachedRecord = cache.getCachedRecord(r);
-		                    if (cachedRecord != null ){
-		                    	if (!locked || locked == cachedRecord.isLocked()){
-		                    		r = cachedRecord;
-		                    	}else {
-		                    		cache.registerUpdate(r);
-		                    	}
-		                    }else {
-		                    	cache.add(r);
+		                    if (cache != null){
+			                    Record cachedRecord = cache.getCachedRecord(r);
+			                    if (cachedRecord != null ){
+			                    	if (!locked || locked == cachedRecord.isLocked()){
+			                    		r = cachedRecord;
+			                    	}else {
+			                    		cache.registerUpdate(r);
+			                    	}
+			                    }else {
+			                    	cache.add(r);
+			                    }
 		                    }
 		                    result.add(r);
 		                }
@@ -176,7 +185,9 @@ public class Select extends SqlStatement{
 		            }
 		            if (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || result.size() <= maxRecords){ // We are requesting maxRecords + 1;!
 		            	//We have fetched every thing. Hence cache the whereClause.
-		            	cache.setCachedResult(getWhereExpression(), result);
+		            	if (cache != null){
+		            		cache.setCachedResult(getWhereExpression(), result);
+		            	}
 		            }
 	            }finally{
 	            	queryTimer.stop();
@@ -192,8 +203,11 @@ public class Select extends SqlStatement{
 	                if (filter == null || filter.pass(m)){
 	                	ret.add(m);
 	                }
+	                if (maxRecords > 0 && ret.size() >= maxRecords){
+	                	break;
+	                }
 	        	}
-	        	if (requireResultSorting && orderBy != null){
+	        	if (requireResultSorting && orderBy != null && orderBy.length > 0){
 	        		Collections.sort(ret,new Comparator<M>() {
 						public int compare(M o1, M o2) {
 							Record r1 = o1.getRawRecord();
