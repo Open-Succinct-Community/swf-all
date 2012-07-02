@@ -32,16 +32,6 @@
   		<version>[${archetypeVersion},)</version>
   	</dependency>
   	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf-plugin-security</artifactId>
-  		<version>[${archetypeVersion},)</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf-plugin-oauth</artifactId>
-  		<version>[${archetypeVersion},)</version>
-  	</dependency>
-  	<dependency>
   		<groupId>mysql</groupId>
   		<artifactId>mysql-connector-java</artifactId>
   		<version>5.1.10</version>
