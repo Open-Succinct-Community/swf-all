@@ -7,8 +7,14 @@ package com.venky.swf.db.model;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
+import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -41,4 +47,17 @@ public interface User extends Model{
     
     @IS_VIRTUAL
     public boolean isAdmin();
+    
+	@COLUMN_NAME("ID")
+	@PROTECTION
+	@PARTICIPANT
+	@HIDDEN
+	@HOUSEKEEPING
+	public Integer getSelfUserId();
+	public void setSelfUserId(Integer userId);
+	@IS_VIRTUAL
+	public User getSelfUser();
+
+	@CONNECTED_VIA("USER_ID")
+	public List<UserEmail> getUserEmails();
 }

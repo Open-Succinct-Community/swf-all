@@ -51,15 +51,5 @@
   		<version>10.6.2.1</version>
       <scope>test</scope>
   	</dependency>
-  	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf-plugin-background</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf-plugin-lucene</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
   </dependencies>
 </project>

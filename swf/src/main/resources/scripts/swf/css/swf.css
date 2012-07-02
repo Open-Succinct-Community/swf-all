@@ -76,6 +76,8 @@ div.nav li ul ul {
     border-left: 1px solid #CCCCCC;
 }
 
+.table .select { width:100% }
+
 .tablesorter .stream img {
 	width: 56px;
     display:block ;

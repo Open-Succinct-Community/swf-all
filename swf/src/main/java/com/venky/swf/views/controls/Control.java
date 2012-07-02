@@ -132,6 +132,16 @@ public class Control extends Properties implements _IControl{
         }
     }
     
+    public final void setReadOnly(final boolean readonly){
+    	if (readonly){
+    		setProperty("readonly","readonly");
+    	}else{
+    		remove("readonly");
+    	}
+    }
+    public boolean isReadOnly(){
+    	return containsKey("readonly");
+    }
     public boolean isEnabled(){
         return !containsKey("disabled");
     }

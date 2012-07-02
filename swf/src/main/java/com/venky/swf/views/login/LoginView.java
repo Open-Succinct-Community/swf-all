@@ -8,9 +8,10 @@ import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
+import com.venky.swf.views.controls.page.LinkedImage;
+import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Row;
-import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
@@ -25,6 +26,7 @@ public class LoginView extends HtmlView{
     }
     @Override
     protected void createBody(Body b) {
+        b.addControl(new LinkedImage("/resources/images/oid.png","/oid/login"));
         Table table = new Table();
 
         Label lbluser = new Label("User: ");

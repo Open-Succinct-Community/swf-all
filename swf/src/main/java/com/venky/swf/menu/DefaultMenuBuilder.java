@@ -4,11 +4,10 @@
  */
 package com.venky.swf.menu;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Set;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -37,10 +36,14 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     }
 
     protected void createApplicationMenu(Menu appmenu, User user){
-    	Menu modelMenu = modelMenu(user,null);
-    	if (!modelMenu.isEmpty()){
-            appmenu.createMenuItem("Manage", modelMenu);
-    	}
+		Set<String> tableNames = Database.getTableNames();
+        for (String tableName : tableNames){
+			Table<?> table = Database.getTable(tableName);
+			if (!table.isVirtual()){
+				addMenuItem(user,appmenu, table);
+			}
+        }
+        return ;
     }
 
     protected Menu userMenu(User user){
@@ -55,55 +58,25 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         return userMenu;
     }
     
-    protected Menu modelMenu(User user,Class<? extends Annotation> annotationFilter){
-		Set<String> tableNames = Database.getTableNames();
-        Menu modelMenu = new Menu();
-        for (String tableName : tableNames){
-			Table<?> table = Database.getTable(tableName);
-			if (!table.isVirtual()){
-				addMenuItem(user,modelMenu, table, annotationFilter);
-			}
-        }
-        return modelMenu;
-    }
 
-    protected void addMenuItem(User user, Menu modelMenu, Table<?> table, Class<? extends Annotation> annotationFilter){
+    protected void addMenuItem(User user, Menu appMenu, Table<?> table){
     	Class<? extends Model> modelClass = table.getModelClass();
-    	if (!matches(modelClass, annotationFilter)){
-    		return;
-    	}
+    	ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+        MENU menu = ref.getAnnotation(MENU.class);
+
+        if (menu == null) {
+        	return ;
+        }
+        
+    	String menuName= menu.value();
+    	Menu subMenu = appMenu.getSubmenu(menuName);
+
     	String controllerPathName = table.getTableName().toLowerCase();
         String target = "/" + controllerPathName  ;
         if (Path.canAccessControllerAction(user,controllerPathName,"index",null) ){
             String modelName = modelClass.getSimpleName();
-        	modelMenu.createMenuItem(modelName, target);
+        	subMenu.createMenuItem(modelName, target);
         }
     }
-    
-    protected  boolean matches(Class<? extends Model> modelClass, Class<? extends Annotation> annotationFilter){
-    	if (annotationFilter == null){
-    		return true;
-    	}
-    	
-    	ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
-        if (!ref.isAnnotationPresent(annotationFilter)) {
-        	return false;
-        }
-        
-        Annotation a = ref.getAnnotation(annotationFilter);
-        
-        try {
-			Method value = annotationFilter.getDeclaredMethod("value");
-			if (Boolean.class.isAssignableFrom(value.getReturnType()) || boolean.class.isAssignableFrom(value.getReturnType())) {
-				Boolean b = Boolean.valueOf(String.valueOf(value.invoke(a)));
-				return b;
-			}
-		} catch (Exception e) {
-			//
-		}
-        
-        return true;
-    }
-    
     
 }

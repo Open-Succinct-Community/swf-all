@@ -34,7 +34,8 @@ import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
 import com.venky.swf.db.model.Model;
@@ -346,8 +347,14 @@ public class ModelReflector<M extends Model> {
 
     public boolean isFieldProtected(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	PROTECTED p = getAnnotation(getter,PROTECTED.class);
-    	return (p == null ? false : p.value());
+    	PROTECTION p = getAnnotation(getter,PROTECTION.class);
+    	return (p == null ? false : p.value() != Kind.EDITABLE);
+    }
+    
+    public Kind getFieldProtection(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	PROTECTION p = getAnnotation(getter,PROTECTION.class);
+    	return p == null ? Kind.EDITABLE : p.value(); 
     }
     
     public boolean isFieldVirtual(String fieldName){

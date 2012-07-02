@@ -1,10 +1,10 @@
-package com.venky.swf.plugins.oauth.extensions;
+package com.venky.swf.extensions;
 
 import java.util.List;
 
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
+import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.exceptions.AccessDeniedException;
-import com.venky.swf.plugins.oauth.db.model.UserEmail;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;

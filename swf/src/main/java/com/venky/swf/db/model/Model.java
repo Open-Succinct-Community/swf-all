@@ -14,13 +14,15 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.table.Record;
 
 /**
  *
  * @author venky
  */
+@MENU("Manage")
 public interface Model extends _Identifiable {
     @IS_NULLABLE(false)
     @IS_AUTOINCREMENT
@@ -38,7 +40,7 @@ public interface Model extends _Identifiable {
     
 	@COLUMN_SIZE(10)
 	@COLUMN_NAME("updater_id")
-	@PROTECTED
+	@PROTECTION
 	@HOUSEKEEPING
 	@COLUMN_DEF(StandardDefault.CURRENT_USER)
 	public Integer getUpdaterUserId();
@@ -48,7 +50,7 @@ public interface Model extends _Identifiable {
 	@COLUMN_NAME("updated_at")
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.CURRENT_TIMESTAMP)
-	@PROTECTED
+	@PROTECTION
 	@HOUSEKEEPING
 	public Timestamp getUpdatedAt();
 	public void setUpdatedAt(Timestamp updatedAt);
@@ -56,7 +58,7 @@ public interface Model extends _Identifiable {
 
 	@COLUMN_SIZE(10)
 	@COLUMN_NAME("creator_id")
-	@PROTECTED
+	@PROTECTION
 	@HOUSEKEEPING
 	@COLUMN_DEF(StandardDefault.CURRENT_USER)
 	public Integer getCreatorUserId();
@@ -66,7 +68,7 @@ public interface Model extends _Identifiable {
 	@COLUMN_NAME("created_at")
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.CURRENT_TIMESTAMP)
-	@PROTECTED
+	@PROTECTION
 	@HOUSEKEEPING
 	public Timestamp getCreatedAt();
 	public void setCreatedAt(Timestamp createdAt);

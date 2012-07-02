@@ -35,20 +35,15 @@
 	</properties>
   <dependencies>
   	<dependency>
-        <groupId>${project.groupId}</groupId>
-  		  <artifactId>swf</artifactId>
-        <version>${project.version}</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf-plugin-oauth</artifactId>
-  		<version>${project.version}</version>
-  	</dependency>
-  	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
   		<version>4.10</version>
   		<scope>test</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.github.venkatramanm.swf-all</groupId>
+  		<artifactId>swf</artifactId>
+  		<version>1.6-SNAPSHOT</version>
   	</dependency>
   </dependencies>
 </project>

@@ -181,4 +181,9 @@ public class UserImpl extends ModelImpl<User>{
 		}
 		return dsw;
 	}
+	
+	public User getSelfUser(){
+		return getProxy();
+	}
+
 }

@@ -1,4 +1,4 @@
-package com.venky.swf.plugins.oauth.controller;
+package com.venky.swf.controller;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -21,13 +21,12 @@ import org.openid4java.message.ax.FetchResponse;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.path.Path;
-import com.venky.swf.plugins.oauth.db.model.UserEmail;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -38,6 +37,8 @@ import com.venky.swf.views.View;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.buttons.Submit;
+import com.venky.swf.views.controls.page.layout.Table;
+import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.TextBox;
 
@@ -55,27 +56,36 @@ public class OidController extends Controller{
 				Form form = new Form();
 				form.setAction(getPath().controllerPath(), "login");
 				form.setMethod(Form.SubmitMethod.POST);
+
+				Submit sbm = new Submit("SignIn");
+				
 		        
+				Table layout = new Table();
+				Row row = layout.createRow();
+
 				Label lblOpenId = new Label();
-				lblOpenId.setText("OpenID:");
-				
-				TextBox txtOpenId = new TextBox();
-				txtOpenId.setName("OPEN_ID");
-				
+				lblOpenId.setText("Choose your OpenID provider");
 				com.venky.swf.views.controls.page.text.Select cmbOpenId = new com.venky.swf.views.controls.page.text.Select();
 				cmbOpenId.setName("SELECTED_OPEN_ID");
 				cmbOpenId.createOption("-Select-", "");
 				cmbOpenId.createOption("Google", "https://www.google.com/accounts/o8/id");
 				cmbOpenId.createOption("Yahoo", "https://me.yahoo.com/");
 				cmbOpenId.createOption("OpenId", "https://myopenid.com/");
-
-				Submit sbm = new Submit("SignIn");
-
-				form.addControl(lblOpenId);
-				form.addControl(txtOpenId);
-				form.addControl(new Label(" OR "));
-				form.addControl(cmbOpenId);
-				form.addControl(sbm);
+				row.createColumn().addControl(lblOpenId);
+				row.createColumn().addControl(cmbOpenId);
+				row.createColumn().addControl(sbm);
+				
+				row = layout.createRow();
+				row.createColumn(3).addControl(new Label("OR"));
+				
+				row = layout.createRow();
+				row.createColumn().addControl(new Label("Enter your OpenID provider"));
+				TextBox txtOpenId = new TextBox();
+				txtOpenId.setName("OPEN_ID");
+				row.createColumn().addControl(txtOpenId);				
+				row.createColumn().addControl(sbm);				
+				
+				form.addControl(layout);
 				b.addControl(form);
 			}
 		};

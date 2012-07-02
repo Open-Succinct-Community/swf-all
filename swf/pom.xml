@@ -78,5 +78,11 @@
 			<artifactId>lucene-core</artifactId>
 			<version>3.5.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.openid4java</groupId>
+			<artifactId>openid4java-consumer</artifactId>
+			<version>0.9.6</version>
+			<type>pom</type>
+		</dependency>
 	</dependencies>
 </project>

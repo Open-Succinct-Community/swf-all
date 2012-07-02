@@ -1,4 +1,4 @@
-package com.venky.swf.db.annotations.column.ui;
+package com.venky.swf.db.annotations.model;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.TYPE)
 
-public @interface PROTECTED {
-	public boolean value() default true;
+public @interface MENU {
+	public String value() default "Manage" ; 
 }

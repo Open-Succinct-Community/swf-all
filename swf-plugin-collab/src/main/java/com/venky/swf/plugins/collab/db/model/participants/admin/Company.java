@@ -10,13 +10,12 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.ui.PROTECTED;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.model.Model;
 
-@MENU_ADMIN
 public interface Company extends Model{
 	@COLUMN_NAME("ID")
-	@PROTECTED
+	@PROTECTION
 	@HIDDEN
 	@HOUSEKEEPING
 	@PARTICIPANT

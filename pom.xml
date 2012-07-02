@@ -69,10 +69,6 @@
 		<module>swf-archetype</module>
 		<module>swf-plugin-archetype</module>
 		<module>swf-maven-plugin</module>
-		<module>swf-plugin-security</module>
-		<module>swf-plugin-oauth</module>
-    <module>swf-plugin-background</module>
-    <module>swf-plugin-test</module>
     <module>swf-plugin-collab</module>
   </modules>
 </project>

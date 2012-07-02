@@ -12,6 +12,7 @@ import java.util.List;
 import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.DashboardView;
@@ -144,7 +145,16 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	}
             }else if (reflector.isFieldVisible(fieldName)){
                 Row r = getRow(table,true);
-                fieldData.setEnabled(false);
+                Kind protectionKind = reflector.getFieldProtection(fieldName);
+                switch(protectionKind){
+                	case DISABLED:
+                        fieldData.setEnabled(false);
+                        break;
+                	case NON_EDITABLE:
+                		fieldData.setEnabled(true);
+                		fieldData.setReadOnly(true);
+                		break;
+                }
                 r.createColumn().addControl(fieldLabel);
                 r.createColumn().addControl(fieldData);
             }else {
