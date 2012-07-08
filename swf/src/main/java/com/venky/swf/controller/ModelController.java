@@ -306,7 +306,10 @@ public class ModelController<M extends Model> extends Controller {
             	throw new AccessDeniedException();
             }
         }
-        return back();
+        return afterDestroyView();
+    }
+    protected View afterDestroyView(){
+    	return back();
     }
     
     public RedirectorView back(){
@@ -319,6 +322,7 @@ public class ModelController<M extends Model> extends Controller {
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
     }
+    
     protected Map<String,Object> getFormFields(HttpServletRequest request){
     	Map<String,Object> formFields = new HashMap<String, Object>();
         boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
@@ -416,6 +420,10 @@ public class ModelController<M extends Model> extends Controller {
         	return redirectTo("blank");
         }
         
+        return afterPersistDBView(record);
+    }
+
+    protected View afterPersistDBView(M record){
         return back();
     }
     
