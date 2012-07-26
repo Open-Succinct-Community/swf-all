@@ -1,0 +1,1 @@
+web: java -Dswf.env=production -cp target/classes/:target/dependency/* com.venky.swf.JettyServer 
