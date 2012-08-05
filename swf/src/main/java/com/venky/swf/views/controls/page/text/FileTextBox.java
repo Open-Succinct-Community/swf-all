@@ -30,8 +30,6 @@ public class FileTextBox extends Input{
 		if (getContentType() != null && getContentType().startsWith("image")){
 			Image image = new Image(url);
     		link.addControl(image);
-		}else {
-			link.setText("Click here to view...");
 		}
 		link.addClass("stream");
 	}

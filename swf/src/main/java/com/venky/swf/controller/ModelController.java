@@ -4,28 +4,21 @@
  */
 package com.venky.swf.controller;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.lucene.search.Query;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
 
-import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
@@ -36,14 +29,17 @@ import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ModelInfo;
+import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -51,14 +47,9 @@ import com.venky.swf.views.BytesView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.Form;
-import com.venky.swf.views.controls.page.Form.SubmitMethod;
-import com.venky.swf.views.controls.page.buttons.Submit;
-import com.venky.swf.views.controls.page.layout.Table.Row;
-import com.venky.swf.views.controls.page.text.TextBox;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
+import com.venky.swf.views.model.ModelLoadView;
 import com.venky.swf.views.model.ModelShowView;
 
 /**
@@ -80,6 +71,41 @@ public class ModelController<M extends Model> extends Controller {
     	return reflector;
     }
     
+    public View load(){
+        HttpServletRequest request = getPath().getRequest();
+
+        if (request.getMethod().equalsIgnoreCase("GET")) {
+        	return dashboard(new ModelLoadView(getPath(), getModelClass(), getIncludedFields()));
+        }else {
+        	Map<String,Object> formFields = getFormFields();
+        	if (!formFields.isEmpty()){
+        		InputStream in = (InputStream)formFields.get("datafile");
+        		try {
+	    			Workbook book = new HSSFWorkbook(in);
+	    			ModelReader<M> modelReader = new ModelReader<M>(book,StringUtil.pluralize(getModelClass().getSimpleName()), getModelClass());
+	    			M m = null ;
+	    			while ((m = modelReader.getNextRecord()) != null){
+	    				String descriptionColumn = getReflector().getDescriptionColumn();
+	    				Object descriptionValue = m.getRawRecord().get(descriptionColumn); 
+	    				if ( !ObjectUtil.isVoid(descriptionColumn) && !ObjectUtil.isVoid(descriptionValue) ){
+	    					for (M preExistingRecord:new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue))
+	    							.execute(getModelClass())){
+	    						preExistingRecord.destroy();
+	    					}
+	    				}
+	    				m.save();
+	    			}
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+    			
+        	}
+        	return redirectTo("index");
+        }
+        
+    }
+    
+    
     @Override
     public View index() {
     	if (indexedModel){
@@ -89,63 +115,63 @@ public class ModelController<M extends Model> extends Controller {
     	}
     }
 
-    protected Control createSearchForm(){
-    	if (!indexedModel){
-    		return null;
-    	}
-    	com.venky.swf.views.controls.page.layout.Table table = new com.venky.swf.views.controls.page.layout.Table();
-		Row row = table.createRow();
-		TextBox search = new TextBox();
-		search.setName("q");
-		row.createColumn().addControl(search);
-		row.createColumn().addControl(new Submit("Search"));
-		
-		Form searchForm = new Form();
-		searchForm.setAction(getPath().controllerPath(),"search");
-		searchForm.setMethod(SubmitMethod.GET);
-		
-		searchForm.addControl(table);
-		return searchForm;
-    }
 
     public View search(){
-    	Map<String,Object> formData = getFormFields(getPath().getRequest());
+    	Map<String,Object> formData = getFormFields();
+    	String q = "";
+    	int maxRecords = MAX_LIST_RECORDS;
 		if (!formData.isEmpty()){
 			rewriteQuery(formData);
-			return list(search(formData));
-		}else {
-			return list(new ArrayList<M>());
-		}
+			q = StringUtil.valueOf(formData.get("q"));
+			Object mr = formData.get("maxRecords");
+			if (!ObjectUtil.isVoid(mr)){
+				maxRecords = Integer.parseInt(StringUtil.valueOf(mr));
+			}
+		}	
+		return search(q,maxRecords);
     }
+    
+    public View search(String strQuery) {
+    	return search(strQuery,MAX_LIST_RECORDS);
+    }
+    
+    private View search(String strQuery,int maxRecords) {
+		if (!ObjectUtil.isVoid(strQuery)){
+			if (!getFormFields().containsKey("q")){
+				getFormFields().put("q", strQuery);
+			}
+			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
+			Query q = indexer.constructQuery(strQuery);
+			List<Integer> ids = indexer.findIds(q, maxRecords);
+			if (!ids.isEmpty()) {
+				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
+				List<M> records = sel.execute(getModelClass(),maxRecords,new Select.AccessibilityFilter<M>());
+				return list(records);
+			}
+		}
+		return list(new ArrayList<M>());
+    }
+    
+    public static final int MAX_LIST_RECORDS = 50 ;
 	protected void rewriteQuery(Map<String,Object> formData){
 		
 	}
 	
-	protected List<M> search(Map<String,Object> formData){
-		String strQuery = StringUtil.valueOf(formData.get("q"));
-		if (!ObjectUtil.isVoid(strQuery)){
-			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
-			Query q = indexer.constructQuery(strQuery);
-			List<Integer> ids = indexer.findIds(q, 100);
-			if (!ids.isEmpty()) {
-				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
-				return sel.execute(getModelClass(),new Select.AccessibilityFilter<M>());
-			}
-		}
-		return new ArrayList<M>();
+	public View list(){
+		return list(Select.MAX_RECORDS_ALL_RECORDS);
 	}
-    
-    public View list() {
+    public View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, new Select.AccessibilityFilter<M>());
+        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, maxRecords ,new Select.AccessibilityFilter<M>());
         return list(records);
     }
+    
     protected View list(List<M> records){
     	return dashboard(createListView(records));
     }
     
     protected HtmlView createListView(List<M> records){
-    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records,createSearchForm());
+    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
     }
     
     protected String[] getIncludedFields(){
@@ -295,6 +321,15 @@ public class ModelController<M extends Model> extends Controller {
 		}
         return dashboard(mev);
     }
+    
+    public View truncate(){
+    	new Delete(getReflector()).executeUpdate();
+    	List<IndexDirectory> dir = new Select().from(IndexDirectory.class).where(new Expression("NAME",Operator.EQ,getReflector().getTableName())).execute(IndexDirectory.class);
+    	for (IndexDirectory d: dir){
+    		d.destroy();
+    	}
+    	return redirectTo("index");
+    }
 
     @SingleRecordAction(icon="/resources/images/destroy.png")
     public View destroy(int id){ 
@@ -323,36 +358,8 @@ public class ModelController<M extends Model> extends Controller {
     	return v;
     }
     
-    protected Map<String,Object> getFormFields(HttpServletRequest request){
-    	Map<String,Object> formFields = new HashMap<String, Object>();
-        boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
-        if (isMultiPart){
-        	FileItemFactory factory = new DiskFileItemFactory(1024*1024*128, new File(System.getProperty("java.io.tmpdir")));
-        	ServletFileUpload fu = new ServletFileUpload(factory);
-        	try {
-				List<FileItem> fis = fu.parseRequest(request);
-				for (FileItem fi:fis){
-					if (fi.isFormField()){
-						if (!formFields.containsKey(fi.getFieldName())){
-							formFields.put(fi.getFieldName(), fi.getString());
-						}
-					}else {
-						formFields.put(fi.getFieldName(), new ByteArrayInputStream(StringUtil.readBytes(fi.getInputStream())));
-					}
-				}
-			} catch (FileUploadException e1) {
-				throw new RuntimeException(e1);
-			} catch (IOException e1){
-				throw new RuntimeException(e1);
-			}
-        }else {
-        	Enumeration<String> parameterNames = request.getParameterNames();
-        	while (parameterNames.hasMoreElements()){
-        		String name =parameterNames.nextElement();
-            	formFields.put(name,request.getParameter(name));
-        	}
-        }
-        return formFields;
+    protected Map<String,Object> getFormFields(){
+    	return getPath().getFormFields();
     }
       
     private View  persistInDB(){
@@ -361,7 +368,7 @@ public class ModelController<M extends Model> extends Controller {
             throw new RuntimeException("Cannot call save in any other method other than POST");
         }
         
-        Map<String,Object> formFields = getFormFields(request);
+        Map<String,Object> formFields = getFormFields();
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
         M record = null;
@@ -379,14 +386,19 @@ public class ModelController<M extends Model> extends Controller {
             }
         }
 
-        List<String> fields = reflector.getRealFields();
+        List<String> setableFields = reflector.getRealFields();
+        for (String virtualField: reflector.getVirtualFields()){
+    		if (reflector.isFieldSettable(virtualField)){
+    			setableFields.add(virtualField);
+    		}
+        }
         
         Iterator<String> e = formFields.keySet().iterator();
         String buttonName = null;
         String digest = null;
         while (e.hasNext()) {
             String name = e.next();
-            String fieldName = fields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
+            String fieldName = setableFields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
             if (fieldName != null) {
                 Object value = formFields.get(fieldName);
                 reflector.set(record, fieldName, value);
@@ -454,10 +466,9 @@ public class ModelController<M extends Model> extends Controller {
     public View save() {
     	return persistInDB();
     }
-
     public View autocomplete() {
 		List<String> fields = reflector.getFields();
-		Map<String,Object> formData = getFormFields(getPath().getRequest());
+		Map<String,Object> formData = getFormFields();
 		M model = null;
 		if (formData.containsKey("ID")){
 			model = Database.getTable(modelClass).get(Integer.valueOf(formData.get("ID").toString()));

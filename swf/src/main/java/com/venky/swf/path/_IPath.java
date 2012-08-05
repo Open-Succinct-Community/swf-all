@@ -1,5 +1,7 @@
 package com.venky.swf.path;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -21,6 +23,8 @@ public interface _IPath {
     String getTarget();
 	String getBackTarget();
 	String controllerPath();
+	String action();
+	Map<String, Object> getFormFields();
 	boolean canAccessControllerAction();
 	boolean canAccessControllerAction(String action);
 	boolean canAccessControllerAction(String action, String parameter);

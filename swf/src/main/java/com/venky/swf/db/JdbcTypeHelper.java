@@ -241,7 +241,7 @@ public abstract class JdbcTypeHelper {
             if (ObjectUtil.isVoid(o)) {
                 return new Integer(0);
             }
-            return Integer.valueOf(StringUtil.valueOf(o));
+            return Double.valueOf(StringUtil.valueOf(o)).intValue();
         }
     }
 
@@ -251,7 +251,7 @@ public abstract class JdbcTypeHelper {
             if (ObjectUtil.isVoid(o)) {
                 return new Long(0);
             }
-            return Long.valueOf(StringUtil.valueOf(o));
+            return Double.valueOf(StringUtil.valueOf(o)).longValue();
         }
     }
 
@@ -261,7 +261,7 @@ public abstract class JdbcTypeHelper {
             if (ObjectUtil.isVoid(o)) {
                 return new Float(0.0);
             }
-            return Float.valueOf(StringUtil.valueOf(o));
+            return Double.valueOf(StringUtil.valueOf(o)).floatValue();
         }
     }
 

@@ -132,35 +132,38 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             
             Control fieldData = getInputControl(fieldName, record);
             Label fieldLabel = new Label(getFieldLiteral(fieldName));
-        	if (isFieldEditable(fieldName)){
-            	if (fieldData instanceof TextArea){
+            if (reflector.isFieldVisible(fieldName)){
+            	if (fieldData instanceof TextArea || fieldData instanceof FileTextBox){
             		rpadLastRow(table);
             	}
-                Row r = getRow(table,true);
-                r.createColumn().addControl(fieldLabel);
-            	if (fieldData instanceof TextArea){
-                    r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
-            	}else {
-            		r.createColumn().addControl(fieldData);
-            	}
-            }else if (reflector.isFieldVisible(fieldName)){
-                Row r = getRow(table,true);
-                Kind protectionKind = reflector.getFieldProtection(fieldName);
-                switch(protectionKind){
-                	case DISABLED:
-                        fieldData.setEnabled(false);
-                        break;
-                	case NON_EDITABLE:
-                		fieldData.setEnabled(true);
-                		fieldData.setReadOnly(true);
-                		break;
-                }
-                r.createColumn().addControl(fieldLabel);
-                r.createColumn().addControl(fieldData);
+            	if (isFieldEditable(fieldName)){
+                    Row r = getRow(table,true);
+                    r.createColumn().addControl(fieldLabel);
+                	if (fieldData instanceof TextArea){
+                        r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
+                	}else {
+                		r.createColumn().addControl(fieldData);
+                	}
+                }else {
+                    Row r = getRow(table,true);
+                    Kind protectionKind = getFieldProtection(fieldName);
+                    switch(protectionKind){
+                    	case DISABLED:
+                            fieldData.setEnabled(false);
+                            break;
+                    	case NON_EDITABLE:
+                    		fieldData.setEnabled(true);
+                    		fieldData.setReadOnly(true);
+                    		break;
+                    }
+                    r.createColumn().addControl(fieldLabel);
+                    r.createColumn().addControl(fieldData);
+                }	
             }else {
                 fieldData.setVisible(false);
                 hiddenFields.add(fieldData);
             }
+            
             if (fieldData instanceof FileTextBox){
             	rpadLastRow(table);
             	form.setProperty("enctype","multipart/form-data");
@@ -239,5 +242,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     }
     protected boolean isFieldEditable(String fieldName) {
         return reflector.isFieldEditable(fieldName);
+    }
+    
+    protected Kind getFieldProtection(String fieldName){
+    	return reflector.getFieldProtection(fieldName);
     }
 }

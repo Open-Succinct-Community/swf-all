@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views.model;
 
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.page.Body;
@@ -22,7 +23,9 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
     protected boolean isFieldEditable(String fieldName) {
         return false;
     }
-    
+    protected Kind getFieldProtection(String fieldName){
+    	return Kind.DISABLED;
+    }
     @Override
     protected String getFormAction(){
         return "back";

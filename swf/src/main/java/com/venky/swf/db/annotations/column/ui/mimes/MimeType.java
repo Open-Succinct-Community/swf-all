@@ -11,6 +11,14 @@ public enum MimeType {
 			return false;
 		}
 	},
+	TEXT_CSV() {
+		public String toString(){
+			return "text/csv";
+		}
+		public boolean isImage(){
+			return false;
+		}
+	},
 	TEXT_PLAIN(){
 		public String toString(){
 			return "text/plain";

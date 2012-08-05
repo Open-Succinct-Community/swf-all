@@ -304,9 +304,19 @@ public class ModelReflector<M extends Model> {
 
 
     public boolean isFieldEditable(String fieldName){
-        return isFieldVisible(fieldName) && !isFieldVirtual(fieldName) && !isFieldProtected(fieldName);
+        return isFieldVisible(fieldName) && isFieldSettable(fieldName) && !isFieldProtected(fieldName) ;
     }
     
+    public boolean isFieldSettable(String fieldName){
+    	loadFieldSetters();
+    	return fieldSetterMap.containsKey(fieldName);
+    }
+    
+    public boolean isFieldGettable(String fieldName){
+    	loadFieldGetters();
+    	return fieldGetterMap.containsKey(fieldName);
+    }
+
     public boolean isFieldVisible(String fieldName) {
         return !isFieldHidden(fieldName);
     }
@@ -401,19 +411,22 @@ public class ModelReflector<M extends Model> {
     private static final String[] getterPrefixes = new String[]{"get" , "is"};
     
     private Map<String,Method> fieldGetterMap = new IgnoreCaseMap<Method>();
+    public void loadFieldGetters(){
+    	if (fieldGetterMap.isEmpty()){
+    		List<Method> fieldGetters = getFieldGetters();
+    		for (Method fieldGetter: fieldGetters){
+    			fieldGetterMap.put(getFieldName(fieldGetter), fieldGetter);
+    		}
+    	}
+    }
     public Method getFieldGetter(String fieldName){
 		Timer timer = Timer.startTimer();
 		try {
-	    	if (fieldGetterMap.isEmpty()){
-	    		List<Method> fieldGetters = getFieldGetters();
-	    		for (Method fieldGetter: fieldGetters){
-	    			fieldGetterMap.put(getFieldName(fieldGetter), fieldGetter);
-	    		}
-	    	}
-	    	Method getter = fieldGetterMap.get(fieldName);
+			loadFieldGetters();
+			Method getter = fieldGetterMap.get(fieldName);
 	    	if (getter == null){
 	    		String getterName = "get/is" + StringUtil.camelize(fieldName);
-	    		throw new RuntimeException("Method " + getterName + "() with appropriate return type is missing");
+	    		throw new FieldGetterMissingException("Method " + getterName + "() with appropriate return type is missing");
 	    	}
 	    	return getter;
 		}finally{
@@ -422,25 +435,40 @@ public class ModelReflector<M extends Model> {
     }
     
     private Map<String,Method> fieldSetterMap = new IgnoreCaseMap<Method>();
+    private void loadFieldSetters(){
+    	if (fieldSetterMap.isEmpty()){
+    		List<Method> fieldSetters = getFieldSetters();
+    		for (Method fieldSetter: fieldSetters){
+    			fieldSetterMap.put(getFieldName(fieldSetter), fieldSetter);
+    		}
+    	}
+    }
     public Method getFieldSetter(String fieldName){
 		Timer timer = Timer.startTimer();
 		try {
-	
-	    	if (fieldSetterMap.isEmpty()){
-	    		List<Method> fieldSetters = getFieldSetters();
-	    		for (Method fieldSetter: fieldSetters){
-	    			fieldSetterMap.put(getFieldName(fieldSetter), fieldSetter);
-	    		}
-	    	}
+			loadFieldSetters();
 	    	Method setter = fieldSetterMap.get(fieldName);
 	    	if (setter == null){
 	            Method getter = getFieldGetter(fieldName);
 	        	String setterName = "set"+StringUtil.camelize(fieldName) +"(" + getter.getReturnType().getName() + ")";
-	    		throw new RuntimeException("Method: public void " + setterName + " missing!");
+	    		throw new FieldSetterMissingException("Method: public void " + setterName + " missing!");
 	    	}
 	    	return setter;
 		}finally{
 			timer.stop();
+		}
+    }
+    
+    public static class FieldSetterMissingException extends RuntimeException {
+		private static final long serialVersionUID = 5976842300991239658L;
+		public FieldSetterMissingException(String message){
+			super(message);
+		}
+    }
+    public static class FieldGetterMissingException extends RuntimeException {
+		private static final long serialVersionUID = 5976842300991239658L;
+		public FieldGetterMissingException(String message){
+			super(message);
 		}
     }
 
@@ -739,7 +767,7 @@ public class ModelReflector<M extends Model> {
 
 
     //Field MAtchers
-    private interface FieldMatcher {
+    public static interface FieldMatcher {
         public boolean matches(ColumnDescriptor cd);
     }
 
@@ -898,4 +926,5 @@ public class ModelReflector<M extends Model> {
         }
     }
 
+    
 }

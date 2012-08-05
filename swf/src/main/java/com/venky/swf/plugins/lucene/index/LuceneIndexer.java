@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -43,7 +45,8 @@ public class LuceneIndexer {
 	}
 	
 	
-	private SequenceSet<String> indexedFields = new SequenceSet<String>();
+	private SequenceSet<String> indexedColumns = new SequenceSet<String>();
+	private Map<String,Class<? extends Model>> indexedReferenceColumns = new HashMap<String,Class<? extends Model>>(); 
 	private final String tableName ;
 
 	public String getTableName() {
@@ -59,7 +62,15 @@ public class LuceneIndexer {
 			for (Class<? extends Model> mClass: Database.getTable(tableName).getReflector().getModelClasses()){
 				ModelReflector<? extends Model> ref = ModelReflector.instance(mClass);
 				for (Method indexedFieldGetter: ref.getIndexedFieldGetters()){
-					indexedFields.add(ref.getFieldName(indexedFieldGetter));
+					String indexedColumnName = ref.getColumnDescriptor(indexedFieldGetter).getName();
+					indexedColumns.add(indexedColumnName);
+					if (ref.getReferredModelGetters().size() > 0){
+						Method referredModelGetter = ref.getReferredModelGetterFor(indexedFieldGetter) ; 
+						if (referredModelGetter != null){
+							Class<? extends Model> referredModelClass = ref.getReferredModelClass(referredModelGetter);
+							indexedReferenceColumns.put(indexedColumnName, referredModelClass);
+						}
+					}
 				}
 			}
 		}catch(Exception e){
@@ -68,7 +79,7 @@ public class LuceneIndexer {
 	}
 	
 	public boolean hasIndexedFields(){
-		return !indexedFields.isEmpty();
+		return !indexedColumns.isEmpty();
 	}
 	
 	private Document getDocument(Record r) throws IOException {
@@ -77,7 +88,7 @@ public class LuceneIndexer {
 		}
 		Document doc = new Document();
 		boolean addedFields = false;
-		for (String fieldName: indexedFields){
+		for (String fieldName: indexedColumns){
 			Object value = r.get(fieldName);
 			if (!ObjectUtil.isVoid(value) ){
 				TypeRef ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
@@ -87,9 +98,21 @@ public class LuceneIndexer {
 						addedFields = true;
 						if (Reader.class.isAssignableFrom(ref.getJavaClass())){
 							doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
-						}else {
-							String sValue = converter.toString(value);
-							doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
+						}else{
+							Class<? extends Model> referredModelClass = indexedReferenceColumns.get(fieldName);
+							if (ref.isNumeric() && referredModelClass != null){
+								ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
+								Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
+								doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
+										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn())), 
+										Field.Store.YES,Field.Index.ANALYZED));
+								doc.add(new Field(fieldName,
+										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn())), 
+										Field.Store.YES,Field.Index.ANALYZED));
+							}else {
+								String sValue = converter.toString(value);
+								doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
+							}
 						}
 					}
 				}
@@ -158,10 +181,10 @@ public class LuceneIndexer {
 	public Query constructQuery(String queryString){
 		String descriptionField = Database.getTable(tableName).getReflector().getDescriptionColumn();
 		String defaultField = null;
-		if (indexedFields.contains(descriptionField)){
+		if (indexedColumns.contains(descriptionField)){
 			defaultField = descriptionField;
-		}else if (!indexedFields.isEmpty()) {
-			defaultField = indexedFields.first();
+		}else if (!indexedColumns.isEmpty()) {
+			defaultField = indexedColumns.first();
 		}else {
 			defaultField = "ID";
 		}

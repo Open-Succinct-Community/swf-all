@@ -4,9 +4,14 @@
  */
 package com.venky.swf.path;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -18,13 +23,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
+import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Unrestricted;
+import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.model.CONTROLLER;
@@ -62,6 +76,45 @@ public class Path implements _IPath{
     private HttpSession session = null ;
     private HttpServletRequest request = null ;
     private HttpServletResponse response = null ;
+    
+    private Map<String,Object> formFields = null;
+    
+    public Map<String, Object> getFormFields(){
+    	if (formFields != null){
+    		return formFields;
+    	}
+    	formFields = new HashMap<String, Object>();
+    	HttpServletRequest request = getRequest();
+        boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
+        if (isMultiPart){
+        	FileItemFactory factory = new DiskFileItemFactory(1024*1024*128, new File(System.getProperty("java.io.tmpdir")));
+        	ServletFileUpload fu = new ServletFileUpload(factory);
+        	try {
+				List<FileItem> fis = fu.parseRequest(request);
+				for (FileItem fi:fis){
+					if (fi.isFormField()){
+						if (!formFields.containsKey(fi.getFieldName())){
+							formFields.put(fi.getFieldName(), fi.getString());
+						}
+					}else {
+						formFields.put(fi.getFieldName(), new ByteArrayInputStream(StringUtil.readBytes(fi.getInputStream())));
+					}
+				}
+			} catch (FileUploadException e1) {
+				throw new RuntimeException(e1);
+			} catch (IOException e1){
+				throw new RuntimeException(e1);
+			}
+        }else {
+        	Enumeration<String> parameterNames = request.getParameterNames();
+        	while (parameterNames.hasMoreElements()){
+        		String name =parameterNames.nextElement();
+            	formFields.put(name,request.getParameter(name));
+        	}
+        }
+        return formFields;
+
+    }
     public User getSessionUser(){
     	if (getSession() == null){
     		return null;
@@ -328,40 +381,73 @@ public class Path implements _IPath{
     
     public _IView invoke() throws AccessDeniedException{
     	MultiException ex = null;
-    	for (Method m :getControllerClass().getMethods()){
-            if (m.getName().equals(action()) && 
-                    View.class.isAssignableFrom(m.getReturnType()) ){
-            	Timer timer = Timer.startTimer(); 
-            	try {
-	            	boolean securedAction = isSecuredAction(m) ;
-	            	if (securedAction){
-	            		if (!isUserLoggedOn()){
-	                		return new RedirectorView(this,"","login");
-	            		}else {
-	            			ensureControllerActionAccess();	
-	            		}
-	            	}
-	            	Controller controller = createController();
-	            	try {
-	                    if (m.getParameterTypes().length == 0 && parameter() == null){
-	                        return (View)m.invoke(controller);
-	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
-	                        return (View)m.invoke(controller, parameter());
-	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
-	                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
-	                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class){
-	                        return (View)m.invoke(controller, Long.valueOf(parameter()));
-	                    }
-	            	}catch(Exception e){
-	            		if (ex == null){
-	            			ex = new MultiException();
-	            		}
-            			ex.add(e);
-	            	}
-            	}finally{
-            		timer.stop();
+    	ControllerReflector<? extends Controller> ref = new ControllerReflector(getControllerClass(),Controller.class);
+    	List<Method> methods = ref.getMethods(new MethodMatcher() {
+			@Override
+			public boolean matches(Method method) {
+				return method.getName().equals(action()) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
+			}
+		});
+    	final int targetParameterLength = ObjectUtil.isVoid(parameter())? 0 : 1;
+    	boolean parameterIsNumeric = false;
+
+		if (targetParameterLength == 1) {
+			try {
+				Double.parseDouble(parameter());
+				parameterIsNumeric = true;
+			}catch (NumberFormatException nfex){
+				// 
+			}
+		}
+		final Class targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
+		
+    	Collections.sort(methods,new Comparator<Method>(){
+    		@Override
+			public int compare(Method o1, Method o2) {
+				int ret = 0 ;
+				int s1 = 0 ; int s2 = 0 ; 
+				s1 = Math.abs(o1.getParameterTypes().length - targetParameterLength);
+				s2 = Math.abs(o2.getParameterTypes().length - targetParameterLength) ;
+				ret = s1 - s2; 
+				if (ret == 0 && o1.getParameterTypes().length == 1){
+					s1 = o1.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
+					s2 = o2.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
+					ret = s1 - s2;
+				}
+				return ret;
+			}
+    		
+    	});
+    	
+    	for (Method m :methods){
+        	Timer timer = Timer.startTimer(); 
+        	try {
+            	boolean securedAction = isSecuredAction(m) ;
+            	if (securedAction){
+            		if (!isUserLoggedOn()){
+                		return new RedirectorView(this,"","login");
+            		}else {
+            			ensureControllerActionAccess();	
+            		}
             	}
-            }
+            	Controller controller = createController();
+            	try {
+                    if (m.getParameterTypes().length == 0 && parameter() == null){
+                        return (View)m.invoke(controller);
+                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
+                        return (View)m.invoke(controller, parameter());
+                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
+                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
+                    }
+            	}catch(Exception e){
+            		if (ex == null){
+            			ex = new MultiException();
+            		}
+        			ex.add(e);
+            	}
+        	}finally{
+        		timer.stop();
+        	}
         }
     	if (ex != null){
     		throw ex;

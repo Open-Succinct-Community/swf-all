@@ -15,6 +15,7 @@ import com.venky.cache.Cache;
 import com.venky.core.util.Bucket;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
+import com.venky.swf.sql.Select;
 
 public class IndexManager {
 	private static IndexManager _instance = new IndexManager();
@@ -124,15 +125,24 @@ public class IndexManager {
 		try {
 			searcher = getIndexSearcher(tableName);
 			incRef(searcher);
-			TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
+			if (numHits == Select.MAX_RECORDS_ALL_RECORDS){
+				CompleteSearchCollector collector = new CompleteSearchCollector();
+				searcher.search(q, collector);
+				for (int docId : collector.getDocIds()){
+					Document d = searcher.doc(docId);
+					callback.found(d);
+				}
+			}else {
+				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
+				searcher.search(q, collector);
+				ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
-			searcher.search(q, collector);
-			ScoreDoc[] hits = collector.topDocs().scoreDocs;
-
-			for (int i = 0; i < hits.length; ++i) {
-				int docId = hits[i].doc;
-				Document d = searcher.doc(docId);
-				callback.found(d);
+				for (int i = 0; i < hits.length; ++i) {
+					int docId = hits[i].doc;
+					Document d = searcher.doc(docId);
+					callback.found(d);
+				}
+				
 			}
 			
 		} catch (Exception ex) {

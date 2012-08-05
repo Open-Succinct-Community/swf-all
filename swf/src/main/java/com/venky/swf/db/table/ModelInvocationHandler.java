@@ -28,6 +28,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
+import com.venky.swf.db.annotations.column.validations.processors.DateFormatValidator;
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
@@ -95,7 +96,7 @@ public class ModelInvocationHandler implements InvocationHandler {
                 	Object defaultValue = null;
                 	COLUMN_DEF colDef = getReflector().getAnnotation(method,COLUMN_DEF.class);
                 	if (colDef != null){
-                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value(),colDef.someValue());
+                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value(),colDef.args());
                 	}
 
                 	return cd.isNullable() ? defaultValue : converter.valueOf(defaultValue);
@@ -332,6 +333,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         validators.add(new MandatoryValidator());
         validators.add(new RegExValidator());
         validators.add(new EnumerationValidator());
+        validators.add(new DateFormatValidator());
     }
 
     protected boolean isModelValid(StringBuilder totalMessage) {
@@ -403,7 +405,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         		Method fieldGetter = reflector.getFieldGetter(field);
         		COLUMN_DEF cdef = reflector.getAnnotation(fieldGetter,COLUMN_DEF.class);
         		if (cdef != null){
-        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value(),cdef.someValue());
+        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value(),cdef.args());
         			record.put(columnName,defaultValue);
         		}
         	}

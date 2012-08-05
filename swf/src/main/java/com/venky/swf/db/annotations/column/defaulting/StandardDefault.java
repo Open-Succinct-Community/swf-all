@@ -21,8 +21,24 @@ public enum StandardDefault {
 		public boolean isComputed(){
 			return true;
 		}
-	};
+	},
 	
+	CURRENT_DAY_OF_MONTH() {
+		public boolean isComputed(){
+			return true;
+		}
+	},
+	CURRENT_MONTH() {
+		public boolean isComputed(){
+			return true;
+		}
+	},
+	CURRENT_YEAR() {
+		public boolean isComputed(){
+			return true;
+		}
+	};
+
 	
 	public boolean isComputed(){
 		return false;

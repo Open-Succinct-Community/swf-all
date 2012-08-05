@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
@@ -22,13 +23,17 @@ import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls.page.Form;
+import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
+import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
  *
@@ -37,17 +42,48 @@ import com.venky.swf.views.controls.page.text.Label;
 public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
     private List<M> records;
-    private Control searchForm ;
-    public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records, Control searchForm) {
+    private boolean indexedModel;
+    public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records) {
         super(path, modelClass, includeFields);
         this.records = records;
-        this.searchForm = searchForm;
+        this.indexedModel = !getReflector().getIndexedFieldGetters().isEmpty();
+    }
+    
+    public static Control createSearchForm(_IPath path){
+    	com.venky.swf.views.controls.page.layout.Table table = new com.venky.swf.views.controls.page.layout.Table();
+		Row row = table.createRow();
+		TextBox search = new TextBox();
+		search.setName("q");
+		search.setValue(path.getFormFields().get("q"));
+
+		row.createColumn().addControl(new Label("Search"));
+		row.createColumn().addControl(search);
+
+		/*
+		TextBox maxRecords = new TextBox();
+		maxRecords.setName("maxRecords");
+		if (ObjectUtil.isVoid(path.getFormFields().get("maxRecords"))){
+			maxRecords.setValue(ModelController.MAX_LIST_RECORDS);
+		}else {
+			maxRecords.setValue(path.getFormFields().get("maxRecords"));
+		}
+		row.createColumn().addControl(new Label("Maximum Records"));
+		row.createColumn().addControl(maxRecords);
+		*/
+		row.createColumn().addControl(new Submit("Search"));
+		
+		Form searchForm = new Form();
+		searchForm.setAction(path.controllerPath(),"search");
+		searchForm.setMethod(SubmitMethod.GET);
+		
+		searchForm.addControl(table);
+		return searchForm;
     }
 
     @Override
     protected void createBody(Body b) {
-    	if (searchForm != null){
-    		b.addControl(searchForm);
+    	if (indexedModel){
+    		b.addControl(createSearchForm(getPath()));
     	}
     	
     	Table container = new Table();
@@ -110,12 +146,18 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                 	if (sra != null) {
                 		icon = sra.icon();
                 	}
-                	if (icon == null){
+                	if (ObjectUtil.isVoid(icon)){
                 		icon = "/resources/images/show.png"; // Default icon.
                 	}
     	            Link actionLink = new Link();
-    	            actionLink.setUrl(getPath().controllerPath()+"/" + actionName +  "/"+record.getId());
-    	            actionLink.addControl(new Image(icon));
+    	            StringBuilder sAction = new StringBuilder();
+    	            if ("search".equals(getPath().action())){
+    	            	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
+    	            }
+	            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
+	            	actionLink.setUrl(sAction.toString());
+
+	            	actionLink.addControl(new Image(icon));
     	            row.createColumn().addControl(actionLink);
             	}else{
                 	row.createColumn();
