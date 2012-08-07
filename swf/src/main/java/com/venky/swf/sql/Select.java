@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 import com.venky.core.collections.SequenceSet;
@@ -142,6 +143,16 @@ public class Select extends SqlStatement{
 		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null);
 	}
 	
+	private String[] splitOrderByColumn(int i){
+		StringTokenizer tok = new StringTokenizer(orderBy[i]);
+		String columnName = tok.nextToken();
+		String orderByType = "ASC";
+		if (tok.hasMoreTokens()){
+			orderByType =  tok.nextToken();
+		}
+		return new String[]{columnName,orderByType};
+	}
+	
 	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter filter) {
         PreparedStatement st = null;
         try {
@@ -214,9 +225,14 @@ public class Select extends SqlStatement{
 							Record r2 = o2.getRawRecord();
 							int ret = 0;
 							for (int i = 0 ; ret == 0 && i < orderBy.length ;  i ++ ){
-								Comparable v1  = (Comparable)r1.get(orderBy[i]);
-								Comparable v2  = (Comparable)r2.get(orderBy[i]);
+								String[] orderByColumnSplit = splitOrderByColumn(i);
+								
+								Comparable v1  = (Comparable)r1.get(orderByColumnSplit[0]);
+								Comparable v2  = (Comparable)r2.get(orderByColumnSplit[0]);
 								ret = v1.compareTo(v2);
+								if (ret != 0 && orderByColumnSplit[1].equalsIgnoreCase("DESC")){
+									ret *= -1 ;
+								}
 							}
 							return ret;
 						}

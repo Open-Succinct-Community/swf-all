@@ -2,6 +2,7 @@ package com.venky.swf.plugins.security.extensions;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -88,12 +89,29 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		permissionQueryWhere.add(participationWhere);
 		
+		boolean defaultController = false;
+		if (ObjectUtil.isVoid(controllerPathElementName)){
+			defaultController = true;
+		}
+		
 		Expression controllerActionWhere = new Expression(Conjunction.OR);
-		controllerActionWhere.add(new Expression("controller_path_element_name",Operator.EQ));
-		controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,new BindVariable(controllerPathElementName)))
+		controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
 														.add(new Expression("action_path_element_name",Operator.EQ)));
-		controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,new BindVariable(controllerPathElementName)))
-														.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+		
+		if (defaultController){
+			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
+														.add(new Expression("action_path_element_name",Operator.EQ)));
+		}else {
+			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,controllerPathElementName))
+					.add(new Expression("action_path_element_name",Operator.EQ)));
+		}
+		if (defaultController){
+			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
+					.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+		}else {
+			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,controllerPathElementName))
+					.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+		}
 		permissionQueryWhere.add(controllerActionWhere);
 
 		Select userRoleQuery = new Select().from(UserRole.class).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));

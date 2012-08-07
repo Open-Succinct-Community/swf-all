@@ -142,14 +142,17 @@ public class ModelController<M extends Model> extends Controller {
 			}
 			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
 			Query q = indexer.constructQuery(strQuery);
+			
 			List<Integer> ids = indexer.findIds(q, maxRecords);
 			if (!ids.isEmpty()) {
 				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
 				List<M> records = sel.execute(getModelClass(),maxRecords,new Select.AccessibilityFilter<M>());
 				return list(records);
+			}else {
+				return list(new ArrayList<M>());
 			}
 		}
-		return list(new ArrayList<M>());
+		return list(maxRecords);
     }
     
     public static final int MAX_LIST_RECORDS = 50 ;
@@ -160,9 +163,10 @@ public class ModelController<M extends Model> extends Controller {
 	public View list(){
 		return list(Select.MAX_RECORDS_ALL_RECORDS);
 	}
-    public View list(int maxRecords) {
+	
+    private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, maxRecords ,new Select.AccessibilityFilter<M>());
+        List<M> records = q.where(getPath().getWhereClause()).orderBy("ID DESC").execute(modelClass, maxRecords ,new Select.AccessibilityFilter<M>());
         return list(records);
     }
     

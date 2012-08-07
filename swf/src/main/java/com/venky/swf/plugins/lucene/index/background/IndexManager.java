@@ -8,7 +8,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 
 import com.venky.cache.Cache;
@@ -133,9 +135,13 @@ public class IndexManager {
 					callback.found(d);
 				}
 			}else {
+				TopDocs tDocs = searcher.search(q,numHits,new Sort(new SortField("ID", SortField.INT ,true)));
+				/*
 				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
 				searcher.search(q, collector);
-				ScoreDoc[] hits = collector.topDocs().scoreDocs;
+				tDocs = collector.topDocs();
+				*/
+				ScoreDoc[] hits = tDocs.scoreDocs;
 
 				for (int i = 0; i < hits.length; ++i) {
 					int docId = hits[i].doc;
