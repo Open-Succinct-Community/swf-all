@@ -15,14 +15,12 @@ import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
-import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.table.Record;
 
 /**
  *
  * @author venky
  */
-@MENU("Manage")
 public interface Model extends _Identifiable {
     @IS_NULLABLE(false)
     @IS_AUTOINCREMENT

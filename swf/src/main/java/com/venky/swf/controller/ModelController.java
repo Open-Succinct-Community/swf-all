@@ -4,8 +4,9 @@
  */
 package com.venky.swf.controller;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,15 +32,14 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.model.reflection.ModelWriter;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ModelInfo;
-import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
-import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -70,8 +70,21 @@ public class ModelController<M extends Model> extends Controller {
     protected ModelReflector<M> getReflector(){
     	return reflector;
     }
+    public View exportcsv(){
+		List<String> fieldsIncluded = getReflector().getFields();
+		Iterator<String> fieldIterator = fieldsIncluded.iterator();
+		while (fieldIterator.hasNext()){
+			if (getReflector().isHouseKeepingField(fieldIterator.next())){
+				fieldIterator.remove();
+			}
+		}
+		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new Select.AccessibilityFilter<M>());
+		StringWriter sw = new StringWriter();
+		new ModelWriter<M>(getModelClass()).write(list, new PrintWriter(sw),fieldsIncluded);
+		return new BytesView(getPath(), sw.toString().getBytes(),MimeType.TEXT_CSV,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".csv");
+    }
     
-    public View load(){
+    public View importxls(){
         HttpServletRequest request = getPath().getRequest();
 
         if (request.getMethod().equalsIgnoreCase("GET")) {
@@ -86,17 +99,29 @@ public class ModelController<M extends Model> extends Controller {
 	    			M m = null ;
 	    			while ((m = modelReader.getNextRecord()) != null){
 	    				String descriptionColumn = getReflector().getDescriptionColumn();
-	    				Object descriptionValue = m.getRawRecord().get(descriptionColumn); 
+	    				Object descriptionValue = m.getRawRecord().get(descriptionColumn);
+	    				boolean createNewRecord = true;
 	    				if ( !ObjectUtil.isVoid(descriptionColumn) && !ObjectUtil.isVoid(descriptionValue) ){
 	    					for (M preExistingRecord:new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue))
 	    							.execute(getModelClass())){
-	    						preExistingRecord.destroy();
+	    						for (String fieldName : m.getRawRecord().getDirtyFields()){
+		    						preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
+	    						}
+	    						preExistingRecord.save();
+	    						createNewRecord = false;
 	    					}
 	    				}
-	    				m.save();
+	    				if(createNewRecord){
+	    					save(m);
+	    				}
 	    			}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
+				} catch (Exception e) {
+					Database.getInstance().getCache(getReflector()).clear();
+					if (!(e instanceof RuntimeException)){
+						throw new RuntimeException(e);
+					}else {
+						throw (RuntimeException)e;
+					}
 				}
     			
         	}
@@ -327,17 +352,17 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View truncate(){
-    	new Delete(getReflector()).executeUpdate();
-    	List<IndexDirectory> dir = new Select().from(IndexDirectory.class).where(new Expression("NAME",Operator.EQ,getReflector().getTableName())).execute(IndexDirectory.class);
-    	for (IndexDirectory d: dir){
-    		d.destroy();
-    	}
+    	Database.getTable(modelClass).truncate();
     	return redirectTo("index");
     }
 
     @SingleRecordAction(icon="/resources/images/destroy.png")
     public View destroy(int id){ 
 		M record = Database.getTable(modelClass).get(id);
+        destroy(record);
+        return afterDestroyView();
+    }
+    private void destroy(M record){
         if (record != null){
             if (record.isAccessibleBy(getSessionUser(),modelClass)){
                 record.destroy();
@@ -345,7 +370,6 @@ public class ModelController<M extends Model> extends Controller {
             	throw new AccessDeniedException();
             }
         }
-        return afterDestroyView();
     }
     protected View afterDestroyView(){
     	return back();
@@ -414,22 +438,8 @@ public class ModelController<M extends Model> extends Controller {
         }
         boolean isNew = false;
         if (hasUserModifiedData(formFields,digest)){
-	        if (record.getRawRecord().isNewRecord()){
-	        	isNew = true;
-	        	record.setCreatorUserId(getSessionUser().getId());
-	        	record.setCreatedAt(null);
-	    	}
-	        record.setUpdaterUserId(getSessionUser().getId());
-	        record.setUpdatedAt(null);
-	        if (record.isAccessibleBy(getSessionUser(),modelClass)){
-	            record.save();
-	        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
-					Database.getInstance().getCache(reflector).clear();
-	        		throw new AccessDeniedException();	
-	        	}
-	        }else {
-	        	throw new AccessDeniedException();
-	        }
+        	isNew = record.getRawRecord().isNewRecord();
+        	save(record);
     	}
         
         if (isNew &&  buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
@@ -437,6 +447,26 @@ public class ModelController<M extends Model> extends Controller {
         }
         
         return afterPersistDBView(record);
+    }
+    
+    private void save(M record){
+        if (record.getRawRecord().isNewRecord()){
+        	record.setCreatorUserId(getSessionUser().getId());
+        	record.setCreatedAt(null);
+    	}
+        record.setUpdaterUserId(getSessionUser().getId());
+        record.setUpdatedAt(null);
+
+    	if (record.isAccessibleBy(getSessionUser(),modelClass)){
+            record.save();
+        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
+				Database.getInstance().getCache(reflector).clear();
+        		throw new AccessDeniedException();	
+        	}
+        }else {
+        	throw new AccessDeniedException();
+        }
+    	
     }
 
     protected View afterPersistDBView(M record){
@@ -510,7 +540,7 @@ public class ModelController<M extends Model> extends Controller {
 		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
 		Path autoCompletePath = getPath().createRelativePath(autoCompleteModelReflector.getTableName().toLowerCase());
 		where.add(autoCompletePath.getWhereClause());
-        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionColumn(), value);
+        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionColumn(), value,reflector.getColumnDescriptor(autoCompleteFieldName).isNullable());
     }
     
     

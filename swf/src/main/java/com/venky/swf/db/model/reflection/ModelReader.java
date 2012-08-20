@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.poi.BeanReader;
 import com.venky.swf.db.Database;
@@ -30,9 +31,9 @@ public class ModelReader<M extends Model> extends BeanReader<M>{
     
     public ModelReader(Sheet beanSheet,Class<M> modelClass) {
     	super(beanSheet,modelClass);
-    	
+    	ref = ModelReflector.instance(getBeanClass());
     }
-    
+    private ModelReflector<M> ref = null; 
     
     
     protected M createInstance(){
@@ -44,7 +45,14 @@ public class ModelReader<M extends Model> extends BeanReader<M>{
     	REFERENCE_MODEL_GETTER,
     	UNKNOWN_GETTER,
     }
-    
+    protected Method getGetter(String heading){
+    	Method m = super.getGetter(heading);
+    	if (m == null){
+        	String field = StringUtil.underscorize(heading);
+        	m = ref.getFieldGetter(field); 
+    	}
+    	return m;
+    }
     protected void fillBeanValues(M m, Row row){
     	String[] heading = getHeading();
     	ModelReflector<M> ref = ModelReflector.instance(getBeanClass());
@@ -124,9 +132,9 @@ public class ModelReader<M extends Model> extends BeanReader<M>{
             			break;
             	}
 
-            	if (!ObjectUtil.isVoid(value)){
+            	if (!ObjectUtil.isVoid(value) || !ref.getColumnDescriptor(getter).isNullable()){
                 	value = converter.valueOf(value);
-                }else {
+                }else if (ref.getColumnDescriptor(getter).isNullable()){
                 	value = null;
                 }
             }
@@ -134,6 +142,7 @@ public class ModelReader<M extends Model> extends BeanReader<M>{
             try {
                 setter.invoke(m, value);
             }catch (Exception e){
+            	e.printStackTrace();
                 throw new RuntimeException("Cannot set " + heading[i] + " as " + value + " of Class " + value.getClass().getName(), e);
             }
         }

@@ -573,11 +573,11 @@ public class ModelInvocationHandler implements InvocationHandler {
     	}
     }
     
-    private boolean equalImpl(ModelInvocationHandler anotherImpl){
+    protected boolean equalImpl(ModelInvocationHandler anotherImpl){
     	return (getProxy().getId() == anotherImpl.getProxy().getId()) && getReflector().getTableName().equals(anotherImpl.getReflector().getTableName()); 
     }
     
-    private boolean equalsProxy(Model anotherProxy){
+    protected boolean equalsProxy(Model anotherProxy){
     	boolean ret = false;
     	if (anotherProxy != null){
     		ret = getProxy().getId() == anotherProxy.getId();

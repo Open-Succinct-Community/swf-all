@@ -30,7 +30,7 @@ public class ModelLoadView<M extends Model> extends AbstractModelView<M>{
 		loadForm.setMethod(SubmitMethod.POST);
 		loadForm.setProperty("enctype","multipart/form-data");
 		
-		loadForm.setAction(getPath().controllerPath(),"load");
+		loadForm.setAction(getPath().controllerPath(),getPath().action());
 		loadForm.addControl(table);
 		
 		return loadForm;

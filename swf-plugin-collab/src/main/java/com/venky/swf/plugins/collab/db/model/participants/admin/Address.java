@@ -28,7 +28,7 @@ public interface Address {
 	public void setStateId(int stateId);
 	public State getState();
 	
-	@RegEx("[0-9]+")
+	@RegEx("[0-9]*")
 	@COLUMN_SIZE(6)
 	public String getPincode();
 	public void setPincode(String pincode);

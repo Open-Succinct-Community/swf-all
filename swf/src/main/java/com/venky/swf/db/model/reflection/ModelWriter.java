@@ -41,7 +41,7 @@ public class ModelWriter<M extends Model> {
 				w.print(referredModelGetter.getName().substring("get".length()));
 				referedModelMap.put(fieldName, ref.getReferredModelClass(referredModelGetter));
 			}else {
-				w.print(getter.getName().substring("get".length()));
+				w.print(StringUtil.camelize(fieldName));
 			}
     		if (fi.hasNext()){
     			w.print("\t");

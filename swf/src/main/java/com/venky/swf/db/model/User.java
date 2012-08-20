@@ -17,6 +17,7 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 
@@ -26,6 +27,7 @@ import com.venky.swf.sql.Expression;
  */
 @HAS_DESCRIPTION_COLUMN
 @CONFIGURATION
+@MENU("Admin")
 public interface User extends Model{
     public String getName();
     public void setName(String name);

@@ -48,7 +48,7 @@ public class Expression {
 		return chunks;
 	}
 	
-	public Expression(String columnName,Operator op, Object... values){
+	public <T> Expression(String columnName,Operator op, T... values){
 		this.columnName = columnName; 
 		this.op = op ;
 		for (int i = 0 ; i < values.length ; i ++ ){

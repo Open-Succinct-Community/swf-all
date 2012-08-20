@@ -8,9 +8,11 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 
 @CONFIGURATION
+@MENU("Admin")
 public interface RolePermission extends Model{
 	public Integer getRoleId();
 	public void setRoleId(Integer roleId);

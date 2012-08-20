@@ -202,6 +202,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 
 	public void clear() {
 		queryCache.clear();
+		cachedRecords.clear();
 	}
 	
 	public void merge(QueryCache completedTransactionCache) {

@@ -167,13 +167,13 @@ public class Controller {
         return new BytesView(getPath(), baos.toByteArray());
     }
     
-    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
+    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
 
-        if (fd.isNullable()){
+        if (isNullable){
         	createEntry(root, "-Not Selected-", " ");
         }
 

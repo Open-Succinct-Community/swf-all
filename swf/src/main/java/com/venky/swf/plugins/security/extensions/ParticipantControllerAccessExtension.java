@@ -2,7 +2,6 @@ package com.venky.swf.plugins.security.extensions;
 
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
