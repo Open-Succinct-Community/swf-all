@@ -23,8 +23,6 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
-import com.venky.swf.plugins.lucene.db.model.IndexFile;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.DDL;
 import com.venky.swf.sql.DDL.AlterTable;
@@ -324,15 +322,9 @@ public class Table<M extends Model> {
     public int truncate(){
     	Select sel = new Select().from(getModelClass());
     	int numRecords = 0;
-    	for (M m : sel.execute(getModelClass())){
+    	for (M m : sel.execute(getModelClass(),new Select.AccessibilityFilter<M>())){
     		m.destroy();
     		numRecords ++;
-    	}
-    	List<IndexDirectory> dir = new Select().from(IndexDirectory.class).where(new Expression("NAME",Operator.EQ,getReflector().getTableName())).execute(IndexDirectory.class);
-    	for (IndexDirectory d: dir){
-    		for (IndexFile f : d.getIndexFiles()){
-        		f.destroy();
-    		}
     	}
     	return numRecords;
     }
