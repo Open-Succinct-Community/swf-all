@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Logger;
 
+import com.venky.core.io.StringReader;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
@@ -48,7 +49,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 				StringWriter sw = new StringWriter();
 				PrintWriter w = new PrintWriter(sw);
 				ex.printStackTrace(w);
-				locked.setLastError(sw.toString());
+				locked.setLastError(new StringReader(sw.toString()));
 				locked.setNumAttempts(locked.getNumAttempts()+1);
 			}
 			if (success){

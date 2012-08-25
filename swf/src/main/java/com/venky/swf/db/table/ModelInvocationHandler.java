@@ -449,6 +449,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 		        			child.destroy();
 		        		}else {
 		        			childReflector.set(child,referenceField,null);
+		        			child.save();
 		        		}
 					}
 				} catch (Exception e) {

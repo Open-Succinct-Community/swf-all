@@ -16,6 +16,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector.FieldGetterMissingException;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -49,7 +50,11 @@ public class ModelReader<M extends Model> extends BeanReader<M>{
     	Method m = super.getGetter(heading);
     	if (m == null){
         	String field = StringUtil.underscorize(heading);
-        	m = ref.getFieldGetter(field); 
+        	try {
+        		m = ref.getFieldGetter(field);
+        	}catch (FieldGetterMissingException ex){
+        		m = null;
+        	}
     	}
     	return m;
     }

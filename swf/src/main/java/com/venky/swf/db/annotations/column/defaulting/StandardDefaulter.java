@@ -42,7 +42,7 @@ public class StandardDefaulter {
 					if (!ObjectUtil.isVoid(format)){
 						ret = DateUtils.getTimestampStr(date, TimeZone.getDefault(), new SimpleDateFormat(format));
 					}else {
-						ret = date;
+						ret = new Date(DateUtils.getStartOfDay(date).getTime());
 					}
 				}
 				break;
