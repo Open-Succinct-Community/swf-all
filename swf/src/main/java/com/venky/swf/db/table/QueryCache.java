@@ -17,6 +17,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
@@ -62,13 +63,20 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			if (result == null) {
 				synchronized (queryCache) {
 					result = queryCache.get(where);
-					if (result == null && maxRecords > 0 && cachedRecords.size() > maxRecords) {
+					boolean fullTableRecordAvailable = queryCache.containsKey(null);
+					if (result == null && (maxRecords > 0 && cachedRecords.size() > maxRecords) || (fullTableRecordAvailable && !locked)) {
 						Set<Record> tmpResult = new SequenceSet<Record>();
-						filter(where, tmpResult, maxRecords,locked);
+						filter(cachedRecords,where, tmpResult, maxRecords,locked);
 						if (tmpResult.size() >= maxRecords) {
 							result = tmpResult;
 						}
 					}
+				}
+			}else if (locked){
+				Set<Record> tmpResult = new SequenceSet<Record>();
+				filter(result, null, tmpResult, Select.MAX_RECORDS_ALL_RECORDS, locked);
+				if (tmpResult.size() < result.size()){
+					result = null;
 				}
 			}
 			return result;
@@ -77,8 +85,8 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 	}
 
-	private void filter(Expression where, Set<Record> target, int maxRecords,boolean locked) {
-		for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && target.size() < maxRecords;) {
+	private void filter( Set<Record> cachedRecords, Expression where, Set<Record> target, int maxRecords,boolean locked) {
+		for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || target.size() < maxRecords) ;) {
 			Record m = i.next();
 			if (where == null || where.isEmpty() || where.eval(m)) {
 				if (!locked || (locked == m.isLocked())){

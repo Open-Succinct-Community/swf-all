@@ -140,7 +140,7 @@ public class Select extends SqlStatement{
 	}
 	
 	private boolean isCacheable(ModelReflector<? extends Model> ref){
-		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null);
+		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null) && (orderBy == null || orderBy.length == 0);
 	}
 	
 	private String[] splitOrderByColumn(int i){

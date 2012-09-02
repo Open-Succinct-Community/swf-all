@@ -66,7 +66,15 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
-	}
+	},
+	APPLICATION_XLS() {
+		public String toString(){
+			return "application/excel";
+		}
+		public boolean isImage(){
+			return false;
+		}
+	},
 	;
 
 	public abstract boolean isImage();

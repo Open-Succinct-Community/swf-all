@@ -69,11 +69,11 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         }
         
     	String menuName= menu.value();
-    	Menu subMenu = appMenu.getSubmenu(menuName);
 
     	String controllerPathName = table.getTableName().toLowerCase();
         String target = "/" + controllerPathName  ;
         if (Path.canAccessControllerAction(user,controllerPathName,"index",null) ){
+        	Menu subMenu = appMenu.getSubmenu(menuName);
             String modelName = modelClass.getSimpleName();
         	subMenu.createMenuItem(modelName, target);
         }

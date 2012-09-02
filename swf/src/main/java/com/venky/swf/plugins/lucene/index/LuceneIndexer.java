@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -82,6 +83,10 @@ public class LuceneIndexer {
 		return !indexedColumns.isEmpty();
 	}
 	
+	public Set<String> getIndexedColumns(){
+		return indexedColumns;
+	}
+	
 	private Document getDocument(Record r) throws IOException {
 		if (!hasIndexedFields()){
 			return null;
@@ -100,19 +105,15 @@ public class LuceneIndexer {
 							doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
 						}else{
 							Class<? extends Model> referredModelClass = indexedReferenceColumns.get(fieldName);
+							String sValue = converter.toString(value);
 							if (ref.isNumeric() && referredModelClass != null){
 								ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 								Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
 								doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
 										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn())), 
 										Field.Store.YES,Field.Index.ANALYZED));
-								doc.add(new Field(fieldName,
-										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn())), 
-										Field.Store.YES,Field.Index.ANALYZED));
-							}else {
-								String sValue = converter.toString(value);
-								doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
 							}
+							doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
 						}
 					}
 				}
@@ -185,6 +186,9 @@ public class LuceneIndexer {
 			defaultField = descriptionField;
 		}else if (!indexedColumns.isEmpty()) {
 			defaultField = indexedColumns.first();
+			if (defaultField.endsWith("_ID")){
+				defaultField = defaultField.substring(0,defaultField.length() - "_ID".length());
+			}
 		}else {
 			defaultField = "ID";
 		}

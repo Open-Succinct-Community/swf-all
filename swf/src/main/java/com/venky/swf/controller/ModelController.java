@@ -4,9 +4,9 @@
  */
 package com.venky.swf.controller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class ModelController<M extends Model> extends Controller {
     protected ModelReflector<M> getReflector(){
     	return reflector;
     }
-    public View exportcsv(){
+    public View exportxls(){
 		List<String> fieldsIncluded = getReflector().getFields();
 		Iterator<String> fieldIterator = fieldsIncluded.iterator();
 		while (fieldIterator.hasNext()){
@@ -79,11 +79,18 @@ public class ModelController<M extends Model> extends Controller {
 			}
 		}
 		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new Select.AccessibilityFilter<M>());
-		StringWriter sw = new StringWriter();
-		new ModelWriter<M>(getModelClass()).write(list, new PrintWriter(sw),fieldsIncluded);
-		return new BytesView(getPath(), sw.toString().getBytes(),MimeType.TEXT_CSV,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".csv");
+		Workbook wb = new HSSFWorkbook();
+		new ModelWriter<M>(getModelClass()).write(list, wb,fieldsIncluded);
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		try {
+			wb.write(os);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xls");
     }
     
+    @Depends("save")
     public View importxls(){
         HttpServletRequest request = getPath().getRequest();
 
@@ -95,9 +102,8 @@ public class ModelController<M extends Model> extends Controller {
         		InputStream in = (InputStream)formFields.get("datafile");
         		try {
 	    			Workbook book = new HSSFWorkbook(in);
-	    			ModelReader<M> modelReader = new ModelReader<M>(book,StringUtil.pluralize(getModelClass().getSimpleName()), getModelClass());
-	    			M m = null ;
-	    			while ((m = modelReader.getNextRecord()) != null){
+	    			ModelReader<M> modelReader = new ModelReader<M>(getModelClass());
+	    			for (M m : modelReader.read(book.getSheet(StringUtil.pluralize(getModelClass().getSimpleName())))){
 	    				String descriptionColumn = getReflector().getDescriptionColumn();
 	    				Object descriptionValue = m.getRawRecord().get(descriptionColumn);
 	    				boolean createNewRecord = true;
@@ -180,7 +186,7 @@ public class ModelController<M extends Model> extends Controller {
 		return list(maxRecords);
     }
     
-    public static final int MAX_LIST_RECORDS = 50 ;
+    public static final int MAX_LIST_RECORDS = 10 ;
 	protected void rewriteQuery(Map<String,Object> formData){
 		
 	}
@@ -322,10 +328,12 @@ public class ModelController<M extends Model> extends Controller {
 		    			//last model is self.
 		    			break;
 		    		}
-		    		
+		    		if (mi.getId() == null){
+    	    			continue;
+    	    		}
 	        		if (mi.getReflector().reflects(referredModelClass)){
 	        	    	try {
-							Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
+	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
 	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
 	            	    		referredModelIdSetter.invoke(record, mi.getId());
 	            	    		break;
@@ -352,8 +360,12 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View truncate(){
-    	Database.getTable(modelClass).truncate();
-    	return redirectTo("index");
+        Select q = new Select().from(modelClass);
+        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass,new Select.AccessibilityFilter<M>());
+        for (M record: records){
+        	record.destroy();
+        }
+        return redirectTo("index");
     }
 
     @SingleRecordAction(icon="/resources/images/destroy.png")

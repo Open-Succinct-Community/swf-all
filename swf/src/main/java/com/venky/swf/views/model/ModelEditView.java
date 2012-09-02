@@ -12,6 +12,7 @@ import java.util.List;
 import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
@@ -221,7 +222,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
     	List<Class<? extends Model>> childModels = new ArrayList<Class<? extends Model>>();
     	for (Method childGetter: getReflector().getChildGetters()){
-        	if (!List.class.isAssignableFrom(childGetter.getReturnType())){
+        	if (!List.class.isAssignableFrom(childGetter.getReturnType()) || getReflector().isAnnotationPresent(childGetter, HIDDEN.class)){
         		continue;
         	}
         	Class<? extends Model> childModelClass = getReflector().getChildModelClass(childGetter);

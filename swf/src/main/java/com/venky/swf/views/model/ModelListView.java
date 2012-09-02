@@ -97,7 +97,18 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             create.addControl(new Image("/resources/images/blank.png"));
         	newLink.addControl(create);
     	}
-    	
+    	if (getPath().canAccessControllerAction("importxls") && getPath().canAccessControllerAction("save")){
+    		Link importxls = new Link();
+    		importxls.setUrl(getPath().controllerPath()+"/importxls");
+    		importxls.addControl(new Image("/resources/images/importxls.png"));
+    		newLink.addControl(importxls);
+    	}
+    	if (getPath().canAccessControllerAction("exportxls")){
+    		Link exportxls = new Link();
+    		exportxls.setUrl(getPath().controllerPath()+"/exportxls");
+    		exportxls.addControl(new Image("/resources/images/exportxls.png"));
+    		newLink.addControl(exportxls);
+    	}
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
         
     	Row rowContainingTable = container.createRow();
