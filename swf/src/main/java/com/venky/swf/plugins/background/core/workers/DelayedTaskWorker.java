@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.background.core.workers;
 
+import java.util.logging.Logger;
+
 import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 
@@ -14,12 +16,14 @@ public class DelayedTaskWorker extends Thread {
 	public void run(){
 		DelayedTask task = null ;
 		while ((task = manager.next()) != null ){
+			Logger.getLogger(getClass().getName()).info("Started Task:" + task.getId());
 			Database db = Database.getInstance();
 			try {
 				task.execute();
 				db.getCurrentTransaction().commit();
 			}finally{
 				db.close();
+				Logger.getLogger(getClass().getName()).info("Completed Task:" + task.getId());
 			}
 		}
 	}

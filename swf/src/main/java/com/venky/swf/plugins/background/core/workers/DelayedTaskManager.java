@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.PriorityQueue;
+import java.util.logging.Logger;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.swf.db.Database;
@@ -47,6 +48,7 @@ public class DelayedTaskManager {
 	public void wakeUp(){
 		synchronized (queue) {
 			queue.notifyAll();
+			Logger.getLogger(getClass().getName()).finest("Waking up Daemon.");
 		}
 	}
 	
@@ -96,9 +98,11 @@ public class DelayedTaskManager {
 		synchronized (queue) {
 			if (queue.isEmpty()){
 				try {
+					Logger.getLogger(getClass().getName()).finest("Daemon going to sleep to 1 minute.");
 					queue.wait(60*1000); //1 minute;
 				}catch (InterruptedException ex){
 					//
+					Logger.getLogger(getClass().getName()).finest("Daemon Woke up");
 				}
 			}
 			waitIfQueueIsNotEmpty();
@@ -111,8 +115,10 @@ public class DelayedTaskManager {
 		synchronized (queue) {
 			while (queue.isEmpty() && keepAlive()){
 				try {
+					Logger.getLogger(getClass().getName()).finest("Worker: going back to sleep as there is no work to be done.");
 					queue.wait();
 				}catch (InterruptedException ex){
+					Logger.getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
 					//
 				}
 			}
@@ -123,9 +129,10 @@ public class DelayedTaskManager {
 			int initialSize = queue.size();
 			while (!queue.isEmpty()){
 				try {
+					Logger.getLogger(getClass().getName()).finest("Daemon going back to sleep as there are pending tasks still to be completed.");
 					queue.wait();
 				}catch (InterruptedException ex){
-					//
+					Logger.getLogger(getClass().getName()).finest("Daemon woke up to check if all tasks are complete.");
 				}
 				int newSize = queue.size();
 				if (newSize == initialSize){
@@ -137,6 +144,7 @@ public class DelayedTaskManager {
 					initialSize = newSize;
 				}
 			}
+			Logger.getLogger(getClass().getName()).finest("Daemon waking up since all pending tasks are complete.");
 		}
 	}
 	

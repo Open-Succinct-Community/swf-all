@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.background.core.workers;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -41,6 +42,7 @@ public class DelayedTaskPollingThread extends Thread{
 		while (manager.needMoreTasks()){
 			Database db = null ;
 			try {
+				Logger.getLogger(getClass().getName()).info("Checking for Tasks...");
 				Expression where = new Expression(Conjunction.AND);
 				where.add(new Expression(ref.getColumnDescriptor("NUM_ATTEMPTS").getName(), Operator.LT , 10 ));
 				if (lastRecord != null){
@@ -53,6 +55,8 @@ public class DelayedTaskPollingThread extends Thread{
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
 				List<DelayedTask> jobs = select.execute(DelayedTask.class,100);
 				
+				Logger.getLogger(getClass().getName()).info("Number of tasks found:" + jobs.size());
+
 				manager.addDelayedTasks(jobs);
 				db.getCurrentTransaction().commit();
 				if (jobs.size() < 100){

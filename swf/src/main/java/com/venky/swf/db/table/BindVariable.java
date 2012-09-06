@@ -5,7 +5,6 @@
 package com.venky.swf.db.table;
 
 import java.sql.Types;
-import java.util.Objects;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
@@ -46,7 +45,7 @@ public class BindVariable {
     
     @Override
     public int hashCode(){
-    	return Objects.hashCode(value);
+        return value != null ? value.hashCode() : 0;
     }
 
     public int getJdbcType() {
