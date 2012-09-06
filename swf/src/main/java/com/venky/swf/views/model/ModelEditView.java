@@ -149,13 +149,13 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                     Row r = getRow(table,true);
                     Kind protectionKind = getFieldProtection(fieldName);
                     switch(protectionKind){
-                    	case DISABLED:
-                            fieldData.setEnabled(false);
-                            break;
                     	case NON_EDITABLE:
                     		fieldData.setEnabled(true);
                     		fieldData.setReadOnly(true);
                     		break;
+                    	default:
+                            fieldData.setEnabled(false);
+                            break;
                     }
                     r.createColumn().addControl(fieldLabel);
                     r.createColumn().addControl(fieldData);

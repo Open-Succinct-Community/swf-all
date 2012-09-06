@@ -268,6 +268,25 @@ public class ModelReflector<M extends Model> {
 		}
     }
     
+    private IgnoreCaseMap<Class<? extends Model>> indexedColumns = null;
+    public List<String> getIndexedColumns(){
+    	if (indexedColumns == null){
+    		indexedColumns = new IgnoreCaseMap<Class<? extends Model>>();
+        	for (Method indexedFieldGetter : getIndexedFieldGetters()){
+        		String indexColumnName = getColumnDescriptor(indexedFieldGetter).getName();
+        		indexedColumns.put(indexColumnName,null);
+        		if (getReferredModelGetters().size() > 0){
+					Method referredModelGetter = getReferredModelGetterFor(indexedFieldGetter) ; 
+					if (referredModelGetter != null){
+						Class<? extends Model> referredModelClass = getReferredModelClass(referredModelGetter);
+						indexedColumns.put(indexColumnName, referredModelClass);
+					}
+				}
+        	}
+    	}
+    	return new ArrayList<String>(indexedColumns.keySet());
+    }
+    
     public List<String> getRealFields(){
         return getFields(new RealFieldMatcher());
     }

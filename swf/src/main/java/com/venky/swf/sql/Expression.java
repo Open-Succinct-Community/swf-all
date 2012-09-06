@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -16,7 +17,7 @@ import com.venky.swf.db.table.Record;
 
 public class Expression {
 	String columnName = null;
-	List<BindVariable> values = new ArrayList<BindVariable>() ;
+	List<BindVariable> values = null ;
 	Operator op = null;
 	static final int CHUNK_SIZE = 30; 
 	
@@ -51,6 +52,8 @@ public class Expression {
 	public <T> Expression(String columnName,Operator op, T... values){
 		this.columnName = columnName; 
 		this.op = op ;
+		this.values = new SequenceSet<BindVariable>();
+		
 		for (int i = 0 ; i < values.length ; i ++ ){
 			if (values[i] instanceof BindVariable) {
 				this.values.add((BindVariable)values[i]);	
@@ -63,6 +66,7 @@ public class Expression {
 	Conjunction conjunction = null;
 	public Expression(Conjunction conjunction){
 		this.conjunction = conjunction;
+		this.values = new ArrayList<BindVariable>();
 	}
 
 	private boolean finalized = false;
@@ -269,10 +273,8 @@ public class Expression {
 				}
 			}
 			if (op == Operator.IN){
-				for (BindVariable v :values){
-					if (ObjectUtil.equals(value,v.getValue())){
-						return true;
-					}
+				if (values.contains(new BindVariable(value))){
+					return true;
 				}
 			}
 		}else if (conjunction == Conjunction.OR){

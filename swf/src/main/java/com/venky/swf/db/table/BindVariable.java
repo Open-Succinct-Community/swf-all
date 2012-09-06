@@ -5,9 +5,11 @@
 package com.venky.swf.db.table;
 
 import java.sql.Types;
+import java.util.Objects;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 
@@ -34,6 +36,18 @@ public class BindVariable {
     	}
     }
     
+    public boolean equals(Object o){
+    	if (o instanceof BindVariable) {
+    		return ObjectUtil.equals(((BindVariable)o).value, value);
+    	}else {
+    		return ObjectUtil.equals(o, value);
+    	}
+    }
+    
+    @Override
+    public int hashCode(){
+    	return Objects.hashCode(value);
+    }
 
     public int getJdbcType() {
         return ref.getJdbcType();

@@ -174,9 +174,11 @@ public class ModelController<M extends Model> extends Controller {
 			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
 			Query q = indexer.constructQuery(strQuery);
 			
-			List<Integer> ids = indexer.findIds(q, maxRecords);
+			List<Integer> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
 			if (!ids.isEmpty()) {
-				Select sel = new Select().from(getModelClass()).where(new Expression("ID",Operator.IN,ids.toArray()));
+				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
+					.add(new Expression("ID",Operator.IN,ids.toArray()))
+					.add(getPath().getWhereClause()));
 				List<M> records = sel.execute(getModelClass(),maxRecords,new Select.AccessibilityFilter<M>());
 				return list(records);
 			}else {

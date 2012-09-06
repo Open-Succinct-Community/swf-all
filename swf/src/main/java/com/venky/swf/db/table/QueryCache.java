@@ -22,9 +22,9 @@ import com.venky.swf.sql.Select;
 public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
 	private HashMap<Expression, Set<Record>> queryCache = new HashMap<Expression, Set<Record>>();
-	private Table table;
+	private Table<? extends Model> table;
 
-	public Table getTable() {
+	public Table<? extends Model> getTable() {
 		return table;
 	}
 	public boolean isEmpty(){
@@ -114,6 +114,20 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 		if (!queryCache.containsKey(where)){
 			queryCache.put(where, result);
+			if (where == null){
+				for (Record record:result){
+					for (String column: getTable().getReflector().getIndexedColumns()) {
+						Expression indexWhere = getIndexWhereClause(record,column);
+						Set<Record> records = queryCache.get(indexWhere); 
+						if (records == null){
+							records = new SequenceSet<Record>();
+							queryCache.put(indexWhere, records);
+						}
+						
+						records.add(record);
+					}
+				}
+			}
 		}
 	}
 
@@ -130,7 +144,14 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 		throw new NullPointerException("Record doesnot have ID !");
 	}
-
+	private Expression getIndexWhereClause(Record record, String column) {
+		Object value = record.get(column);
+		if (value != null){
+			return new Expression(column,Operator.EQ,value);
+		}else {
+			return new Expression(column,Operator.EQ);
+		}
+	}
 	public boolean add(Record record) {
 		boolean ret = cachedRecords.add(record);
 		if (ret){
