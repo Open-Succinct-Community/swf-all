@@ -12,7 +12,6 @@ import com.venky.swf.sql.Select;
 
 public class ConfigLoader implements Installer {
 
-	@Override
 	public void install() {
 		for (String tableName : Database.getTableNames()){
 			Table<? extends Model> currentTable = Database.getTable(tableName);

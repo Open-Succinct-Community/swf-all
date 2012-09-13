@@ -383,7 +383,6 @@ public class Path implements _IPath{
     	MultiException ex = null;
     	ControllerReflector<? extends Controller> ref = new ControllerReflector(getControllerClass(),Controller.class);
     	List<Method> methods = ref.getMethods(new MethodMatcher() {
-			@Override
 			public boolean matches(Method method) {
 				return method.getName().equals(action()) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
 			}
@@ -402,7 +401,6 @@ public class Path implements _IPath{
 		final Class targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
 		
     	Collections.sort(methods,new Comparator<Method>(){
-    		@Override
 			public int compare(Method o1, Method o2) {
 				int ret = 0 ;
 				int s1 = 0 ; int s2 = 0 ; 
