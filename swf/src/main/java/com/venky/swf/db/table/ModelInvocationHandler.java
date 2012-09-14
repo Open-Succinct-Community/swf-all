@@ -35,6 +35,7 @@ import com.venky.swf.db.annotations.column.validations.processors.FieldValidator
 import com.venky.swf.db.annotations.column.validations.processors.MandatoryValidator;
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
+import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -511,7 +512,11 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
         proxy.setLockId(newLockId);
         record.startTracking();
-        
+        if (!getReflector().isAnnotationPresent(CONFIGURATION.class)){
+        	record.setLocked(true);
+        	//Do only for transaction tables as config cache would need to be reset to false after commit. This is just to avoid that unwanted loop over config records cached.
+        }
+
 		Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
     }
 
@@ -556,8 +561,12 @@ public class ModelInvocationHandler implements InvocationHandler {
 
         record.setNewRecord(false);
         record.startTracking();
-
+        if (!getReflector().isAnnotationPresent(CONFIGURATION.class)){
+        	record.setLocked(true);
+        }
+        
     	Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
+    	
 	}
     @Override
     public boolean equals(Object o){

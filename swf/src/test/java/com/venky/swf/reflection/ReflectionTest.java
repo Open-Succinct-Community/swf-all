@@ -58,9 +58,9 @@ public class ReflectionTest {
     }
     
     public static class A<M> {
-        public Class getParameterizedClass(){
+        public Class<?> getParameterizedClass(){
             ParameterizedType pt = (ParameterizedType)(this.getClass().getGenericSuperclass());
-            return (Class)(pt.getActualTypeArguments()[0]);
+            return (Class<?>)(pt.getActualTypeArguments()[0]);
           }
 
     }

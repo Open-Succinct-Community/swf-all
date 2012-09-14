@@ -153,7 +153,7 @@ public class Select extends SqlStatement{
 		return new String[]{columnName,orderByType};
 	}
 	
-	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter filter) {
+	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter<M> filter) {
         PreparedStatement st = null;
         try {
         	ModelReflector<M> ref = ModelReflector.instance(modelInterface);

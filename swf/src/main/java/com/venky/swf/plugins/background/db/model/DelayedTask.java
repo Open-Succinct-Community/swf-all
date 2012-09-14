@@ -8,7 +8,7 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.background.core.Task;
 
-public interface DelayedTask extends Task, Model, Comparable{
+public interface DelayedTask extends Task, Model, Comparable<DelayedTask>{
 	public InputStream getData();
 	public void setData(InputStream stream);
 	

@@ -241,7 +241,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			Set<Record> recentRecords = completedTransactionCache.queryCache.get(exp);
 			
 			if (queryCache.containsKey(exp)){
-				Set<Record> oldRecords = new HashSet(queryCache.get(exp));
+				Set<Record> oldRecords = new HashSet<Record>(queryCache.get(exp));
 				for (Record old:oldRecords){ 
 					if (!recentRecords.contains(old)){
 						registerDestroy(old);

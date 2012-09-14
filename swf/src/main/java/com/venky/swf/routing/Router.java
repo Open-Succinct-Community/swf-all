@@ -98,7 +98,7 @@ public class Router extends AbstractHandler {
 
 	private _IPath createPath(String target){
     	try {
-			Class ipc = getPathClass();
+			Class<?> ipc = getPathClass();
 			_IPath path = (_IPath)(ipc.getConstructor(String.class).newInstance(target));
 			return path;
 		} catch (Exception e){
@@ -106,23 +106,23 @@ public class Router extends AbstractHandler {
 		}
     }
 	
-	private Class getClass(String className) throws ClassNotFoundException{
+	private Class<?> getClass(String className) throws ClassNotFoundException{
 		return Class.forName(className,true,getLoader());
 	}
 	
-	private Class getPathClass() throws ClassNotFoundException{
+	private Class<?> getPathClass() throws ClassNotFoundException{
 		return getClass("com.venky.swf.path.Path");
 	}
-	private Class getExceptionViewClass() throws ClassNotFoundException {
+	private Class<?> getExceptionViewClass() throws ClassNotFoundException {
 		return getClass("com.venky.swf.views.ExceptionView");
 	}
-	private Class getDatabaseClass() throws ClassNotFoundException{
+	private Class<?> getDatabaseClass() throws ClassNotFoundException{
 		return getClass("com.venky.swf.db.Database");
 	}
 	
 	private _IView createExceptionView(_IPath p, Throwable th){
 		try {
-			Class evc = getExceptionViewClass();
+			Class<?> evc = getExceptionViewClass();
 			_IView ev = (_IView) evc.getConstructor(_IPath.class,Throwable.class).newInstance(p,th);
 			return ev;
 		}catch (Exception e){
@@ -135,7 +135,7 @@ public class Router extends AbstractHandler {
 	private _IDatabase getDatabase(boolean migrate){
 		try {
 			//Database.getInstance()
-			Class<_IDatabase> c = getDatabaseClass();
+			Class<_IDatabase> c = (Class<_IDatabase>)getDatabaseClass();
 			_IDatabase idb = (_IDatabase)(c.getMethod("getInstance",boolean.class).invoke(c,migrate));
 			return idb;
 		}catch(Exception ex){

@@ -39,7 +39,7 @@ public class SWFClassLoader extends ClassLoader {
 		}
 	}
 
-	public Class loadClass(String name) throws ClassNotFoundException {
+	public Class<?> loadClass(String name) throws ClassNotFoundException {
 		if (name.startsWith("com.venky.swf.routing")) {
 			return super.loadClass(name);
 		}else if (name.startsWith("com.venky.swf")

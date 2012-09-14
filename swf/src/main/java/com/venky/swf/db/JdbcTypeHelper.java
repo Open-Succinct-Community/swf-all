@@ -122,7 +122,7 @@ public abstract class JdbcTypeHelper {
     	Arrays.sort(BLOBTYPES);
     }
 
-    private static Class[] NUMERICTYPES = new Class[] { int.class, short.class, long.class, float.class, double.class, Number.class };
+    private static Class<?>[] NUMERICTYPES = new Class[] { int.class, short.class, long.class, float.class, double.class, Number.class };
     public static boolean isNumeric(Class<?> clazz){
     	if (clazz == null){
     		throw new NullPointerException("Trying to find if null class is numeric!");
@@ -466,7 +466,7 @@ public abstract class JdbcTypeHelper {
 
     private final Map<Class<?>, TypeRef<?>> javaTypeRefMap = new HashMap<Class<?>, TypeRef<?>>();
     private final Map<Integer, List<TypeRef<?>>> jdbcTypeRefMap = new HashMap<Integer, List<TypeRef<?>>>(); 
-    protected void registerjdbcSQLType(Class clazz, TypeRef ref) {
+    protected void registerjdbcSQLType(Class<?> clazz, TypeRef<?> ref) {
     	ref.setJavaClass(clazz);
         javaTypeRefMap.put(clazz, ref);
         List<TypeRef<?>> colTypeRefs = jdbcTypeRefMap.get(ref.jdbcType);

@@ -398,7 +398,7 @@ public class Path implements _IPath{
 				// 
 			}
 		}
-		final Class targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
+		final Class<?> targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
 		
     	Collections.sort(methods,new Comparator<Method>(){
 			public int compare(Method o1, Method o2) {
@@ -483,11 +483,11 @@ public class Path implements _IPath{
     }
     
 
-    public Class getControllerClass() {
+    public Class<?> getControllerClass() {
         return getClass(getControllerClassName());
     }
 
-    private Class getClass(String name) {
+    private Class<?> getClass(String name) {
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException ex) {
