@@ -116,7 +116,7 @@ public class Database implements _IDatabase{
 		return transactionStack.peek();
 	}
 
-	public QueryCache getCache(ModelReflector ref) {
+	public <M extends Model> QueryCache getCache(ModelReflector<M> ref) {
     	String tableName = ref.getTableName();
     	if (ref.isAnnotationPresent(CONFIGURATION.class)){
     		QueryCache cacheEntry = configQueryCacheMap.get(tableName);
@@ -216,7 +216,7 @@ public class Database implements _IDatabase{
         	return getConnection().prepareStatement(sql, columnNames );
 		}
 
-		public QueryCache getCache(ModelReflector ref) {
+		public <M extends Model> QueryCache getCache(ModelReflector<M> ref) {
 			String tableName = ref.getTableName();
 			
 			QueryCache queryCache = (QueryCache)getAttribute(QueryCache.class.getName()+".for."+tableName);
@@ -296,6 +296,7 @@ public class Database implements _IDatabase{
 		loadTablesFromDB();
 	}
 
+	@SuppressWarnings("rawtypes")
 	private static void loadTablesFromDB() {
 		try { 
 			Connection conn =  getInstance().getConnection();
@@ -320,6 +321,7 @@ public class Database implements _IDatabase{
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static void loadTablesFromModel() {
 		List<String> modelClasses = Config.instance().getModelClasses();
 

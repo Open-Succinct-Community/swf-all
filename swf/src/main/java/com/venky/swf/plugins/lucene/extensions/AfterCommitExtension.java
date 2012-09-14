@@ -15,6 +15,7 @@ public class AfterCommitExtension implements Extension{
 	static {
 		Registry.instance().registerExtension("after.commit", instance);
 	}
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		_ITransaction completedTransaction = (_ITransaction)context[0];
 		addDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.added"));

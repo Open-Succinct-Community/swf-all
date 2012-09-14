@@ -31,7 +31,7 @@ public class DerbyHelper extends JdbcTypeHelper{
     }
 
     @Override
-	public String getDefaultKW(TypeRef ref, Object value) {
+	public String getDefaultKW(TypeRef<?> ref, Object value) {
     	if (value instanceof Boolean){
     		if ((Boolean)value){
     			return "1";

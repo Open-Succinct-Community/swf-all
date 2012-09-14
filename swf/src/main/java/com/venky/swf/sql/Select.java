@@ -36,10 +36,14 @@ public class Select extends SqlStatement{
 		this.columnNames = columnNames;
 	}
 	
-	public Select from(Class<? extends Model>... models){
+	@SuppressWarnings("unchecked")
+	public Select from(Class<?>... models){
 		String[] tables = new String[models.length];
 		for (int i = 0 ; i< models.length ; i++){
-			ModelReflector<? extends Model> ref = ModelReflector.instance(models[i]);
+			if (!Model.class.isAssignableFrom(models[i])){
+				continue;
+			}
+			ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
 			tables[i] = ref.getTableName();
 			if (lock && ref.isAnnotationPresent(CONFIGURATION.class)){
 				lock = false;
@@ -129,13 +133,13 @@ public class Select extends SqlStatement{
 	public <M extends Model> List<M> execute(Class<M> modelInterface){
 		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS,lock,null);
 	}
-	public <M extends Model> List<M> execute(Class<M> modelInterface,ResultFilter filter){
+	public <M extends Model> List<M> execute(Class<M> modelInterface,ResultFilter<M> filter){
 		return execute(modelInterface,MAX_RECORDS_ALL_RECORDS,lock,filter);
 	}
 	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords) {
 		return execute(modelInterface,maxRecords,lock,null);
 	}
-	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,ResultFilter filter){
+	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,ResultFilter<M> filter){
 		return execute(modelInterface,maxRecords,lock,filter);
 	}
 	
@@ -220,6 +224,7 @@ public class Select extends SqlStatement{
 	        	}
 	        	if (requireResultSorting && orderBy != null && orderBy.length > 0){
 	        		Collections.sort(ret,new Comparator<M>() {
+						@SuppressWarnings({ "unchecked", "rawtypes" })
 						public int compare(M o1, M o2) {
 							Record r1 = o1.getRawRecord();
 							Record r2 = o2.getRawRecord();

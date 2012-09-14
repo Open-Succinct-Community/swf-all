@@ -79,7 +79,8 @@ public class Path implements _IPath{
     
     private Map<String,Object> formFields = null;
     
-    public Map<String, Object> getFormFields(){
+    @SuppressWarnings("unchecked")
+	public Map<String, Object> getFormFields(){
     	if (formFields != null){
     		return formFields;
     	}
@@ -381,7 +382,7 @@ public class Path implements _IPath{
     
     public _IView invoke() throws AccessDeniedException{
     	MultiException ex = null;
-    	ControllerReflector<? extends Controller> ref = new ControllerReflector(getControllerClass(),Controller.class);
+    	ControllerReflector<? extends Controller> ref = ControllerReflector.instance(getControllerClass());
     	List<Method> methods = ref.getMethods(new MethodMatcher() {
 			public boolean matches(Method method) {
 				return method.getName().equals(action()) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
@@ -483,8 +484,9 @@ public class Path implements _IPath{
     }
     
 
-    public Class<?> getControllerClass() {
-        return getClass(getControllerClassName());
+    @SuppressWarnings("unchecked")
+	public <T extends Controller> Class<T> getControllerClass() {
+        return (Class<T>) getClass(getControllerClassName());
     }
 
     private Class<?> getClass(String name) {
@@ -534,6 +536,7 @@ public class Path implements _IPath{
 		ModelReflector<? extends Model> reflector = ModelReflector.instance(getModelClass());
 		
 		for (Method referredModelGetter : reflector.getReferredModelGetters()){
+			@SuppressWarnings("unchecked")
 			Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
 			
 			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);

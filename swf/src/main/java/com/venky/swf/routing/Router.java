@@ -132,6 +132,7 @@ public class Router extends AbstractHandler {
 	private _IDatabase getDatabase(){
 		return getDatabase(false);
 	}
+	@SuppressWarnings("unchecked")
 	private _IDatabase getDatabase(boolean migrate){
 		try {
 			//Database.getInstance()

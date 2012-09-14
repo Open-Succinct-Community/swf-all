@@ -48,7 +48,7 @@ public class UserImpl extends ModelImpl<User>{
 	private Cache<Class<? extends Model>, SequenceSet<String>> participantExtensionPointsCache = new Cache<Class<? extends Model>, SequenceSet<String>>() {
 		@Override
 		protected SequenceSet<String> getValue(Class<? extends Model> modelClass) {
-			SequenceSet extnPoints = new SequenceSet<String>();
+			SequenceSet<String> extnPoints = new SequenceSet<String>();
 			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 			for (Class<? extends Model> inHierarchy : ref.getClassHierarchies()){
 				String extnPoint = User.GET_PARTICIPATION_OPTION + "."+ inHierarchy.getSimpleName();
@@ -65,6 +65,7 @@ public class UserImpl extends ModelImpl<User>{
 		return getParticipationOptions(modelClass,Database.getTable(modelClass).newRecord()); // For Dummy record.
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Map<String,List<Integer>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
 		Timer timer = Timer.startTimer();
 		try {

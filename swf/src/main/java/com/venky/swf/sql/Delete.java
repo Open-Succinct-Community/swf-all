@@ -1,12 +1,13 @@
 package com.venky.swf.sql;
 
+import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 
 
 
 public class Delete extends DataManupulationStatement {
 	private String table ;
-	public Delete(ModelReflector ref){
+	public <M extends Model> Delete(ModelReflector<M> ref){
 		this(ref.getTableName());
 	}
 	

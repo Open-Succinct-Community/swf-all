@@ -63,7 +63,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             this.includedFields.retainAll(Arrays.asList(includedFields));
         }
         
-        controllerReflector = new ControllerReflector(path.getControllerClass(),Controller.class);
+        controllerReflector = ControllerReflector.instance(path.getControllerClass());
         singleRecordActions = controllerReflector.getMethods(new SingleRecordActionMatcher(controllerReflector));
     }
     

@@ -50,7 +50,7 @@ public class ReflectionTest {
     
     @Test
     public void test2() throws Exception{
-    	System.out.println(new B().getParameterizedClass().getName());
+    	System.out.println(new B<Object>().getParameterizedClass().getName());
     }
     
     public List<Integer> getList(){

@@ -12,11 +12,13 @@ public abstract class AfterModelDestroyExtension<M extends Model> implements Ext
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.destroy", instance);
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelDestroyExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		M model = (M)context[0];
 		afterDestroy(model);

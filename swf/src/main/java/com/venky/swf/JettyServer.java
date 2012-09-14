@@ -127,6 +127,7 @@ public class JettyServer {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
 		public void run() {
 			WatchKey key = null;
 			do {

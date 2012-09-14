@@ -18,6 +18,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 	}
 	
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public int compareTo(DelayedTask o2) {
 		int ret = 0 ;
 		Record r1 = getProxy().getRawRecord();

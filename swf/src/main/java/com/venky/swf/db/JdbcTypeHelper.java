@@ -210,7 +210,9 @@ public abstract class JdbcTypeHelper {
 			return "number";
 		}
     }
-    public abstract class NumericConverter<N extends Number> extends NumberConverter<N> {
+ 
+	@SuppressWarnings("unchecked")
+	public abstract class NumericConverter<N extends Number> extends NumberConverter<N> {
 		public String toString(Object o){
 			if (o == null){
 				return "";
@@ -529,7 +531,7 @@ public abstract class JdbcTypeHelper {
     		timer.stop();
     	}
     }
-    public String getDefaultKW(TypeRef ref, Object value){
+    public String getDefaultKW(TypeRef<?> ref, Object value){
     	if ( ref.isColumnDefaultQuoted() && !StringUtil.valueOf(value).startsWith("'")){
 			return "'" + value + "'";
     	}else {

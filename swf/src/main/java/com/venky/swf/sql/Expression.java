@@ -243,6 +243,7 @@ public class Expression {
 		return getRealSQL().equals(e.getRealSQL());
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public boolean eval(Record record){
 		if (conjunction == null){
 			Object value = record.get(columnName);

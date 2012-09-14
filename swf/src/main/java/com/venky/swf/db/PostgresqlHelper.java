@@ -35,7 +35,7 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     }
 
     @Override
-    public String getDefaultKW(TypeRef ref,Object value){
+    public String getDefaultKW(TypeRef<?> ref,Object value){
     	if (String.class.isAssignableFrom(ref.getJavaClass())){
     		return "'" + value + "'::character varying";
     	}

@@ -175,6 +175,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 		}
 	}
 	private transient ProxyCache proxyCache = new ProxyCache(this);
+	@SuppressWarnings("unchecked")
 	public <M extends Model> M getAsProxy(Class<M> modelClass){
 		return (M)proxyCache.get(modelClass);
 	}

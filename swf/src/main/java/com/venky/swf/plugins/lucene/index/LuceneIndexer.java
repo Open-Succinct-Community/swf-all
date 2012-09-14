@@ -96,8 +96,8 @@ public class LuceneIndexer {
 		for (String fieldName: indexedColumns){
 			Object value = r.get(fieldName);
 			if (!ObjectUtil.isVoid(value) ){
-				TypeRef ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
-				TypeConverter converter = ref.getTypeConverter();
+				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
+				TypeConverter<?> converter = ref.getTypeConverter();
 				if (!ObjectUtil.equals(value,converter.valueOf(null))){
 					if (!ref.isBLOB()){
 						addedFields = true;
@@ -127,6 +127,7 @@ public class LuceneIndexer {
 		return doc;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public List<Document> getDocuments(String luceneOperation){
 		Cache<String,List<Document>> documentsByTable = (Cache<String,List<Document>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
 		if (documentsByTable == null){

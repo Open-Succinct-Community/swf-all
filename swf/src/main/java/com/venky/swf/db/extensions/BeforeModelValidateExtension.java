@@ -11,11 +11,13 @@ public abstract class BeforeModelValidateExtension<M extends Model> implements E
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.validate", instance);
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelValidateExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
 
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		M model = (M)context[0];
 		beforeValidate(model);

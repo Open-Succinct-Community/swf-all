@@ -195,7 +195,8 @@ public class ModelInvocationHandler implements InvocationHandler {
         this.proxy = proxy;
     }
 
-    public <M extends Model> M getProxy() {
+    @SuppressWarnings("unchecked")
+	public <M extends Model> M getProxy() {
 		return (M)proxy;
 	}
     
@@ -213,7 +214,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	    		return true;
 	    	}	
 	    	for (String fieldName:fieldNameValues.keySet()){
-	    		List values = fieldNameValues.get(fieldName);
+	    		List<Integer> values = fieldNameValues.get(fieldName);
 	    		Object value = reflector.get(getProxy(), fieldName);
 	    		if (values.contains(value)) {
 	    			return true;
@@ -231,7 +232,6 @@ public class ModelInvocationHandler implements InvocationHandler {
 
 	private static Map<Class<? extends Model>,List<Class<?>>> modelImplsMap = new HashMap<Class<? extends Model>, List<Class<?>>>();
     
-	@SuppressWarnings("unchecked")
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
 		ModelReflector<M> ref = ModelReflector.instance(modelClass);
 		
@@ -258,10 +258,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 			throw new RuntimeException(e);
 		}
 	}
-	private static Object constructImpl(Class<?> implClass, Model m){
+	@SuppressWarnings("unchecked")
+	private static <M extends Model> Object constructImpl(Class<?> implClass, M m){
 		if (ModelImpl.class.isAssignableFrom(implClass)){
 			if (ModelImpl.class.equals(implClass)) {
-				return new ModelImpl(m);
+				return new ModelImpl<M>(m);
 			}else {
 				ParameterizedType pt = (ParameterizedType)implClass.getGenericSuperclass();
 				Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
@@ -444,6 +445,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         		Method referenceFieldGetter = childReflector.getFieldGetter(referenceField);
         		
 				try {
+					@SuppressWarnings("unchecked")
 					List<Model> children = (List<Model>)childrenGetter.invoke(getProxy());
 					for (Model child : children){
 		        		if (!childReflector.getColumnDescriptor(referenceFieldGetter).isNullable()){
@@ -595,8 +597,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return ret;
     }
     
-    public <M extends Model> M cloneProxy(){
-		return (M) getRawRecord().clone().getAsProxy(getReflector().getModelClass());
+    @SuppressWarnings("unchecked")
+	public <M extends Model> M cloneProxy(){
+		return (M)getRawRecord().clone().getAsProxy(getReflector().getModelClass());
     }
     
 }

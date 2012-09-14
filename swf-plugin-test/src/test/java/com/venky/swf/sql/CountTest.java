@@ -19,5 +19,5 @@ public class CountTest {
 	public void test() {
 		Assert.assertEquals(1,Database.getTable(User.class).recordCount());
 	}
-
+	
 }

@@ -29,7 +29,7 @@ public class MySqlHelper extends JdbcTypeHelper{
     	return null ;
     }
 	@Override
-	public String getDefaultKW(TypeRef ref,Object value) {
+	public String getDefaultKW(TypeRef<?> ref,Object value) {
     	if (Boolean.class.isAssignableFrom(ref.getJavaClass()) || boolean.class.isAssignableFrom(ref.getJavaClass())) {
     		if ((Boolean)value){
     			return "b'1'";

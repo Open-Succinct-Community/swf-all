@@ -50,7 +50,7 @@ public class AppInstaller implements Installer{
 		}
 		return created;
 	}
-	private void mkdir(Table currentTable){
+	private <M extends Model> void mkdir(Table<M> currentTable){
 		if (mkdir(currentTable.getTableName())){
 			List<Model> records = new Select().from(currentTable.getModelClass()).execute();
 			for (Model m:records){

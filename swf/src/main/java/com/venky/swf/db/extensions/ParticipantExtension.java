@@ -17,13 +17,13 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 	}
 	
 	private final Class<M> modelClass; 
-	private final ModelReflector ref ; 
+	private final ModelReflector<M> ref ; 
 	protected ParticipantExtension(Class<M> modelClass){
 		this.modelClass = modelClass; 
 		this.ref = ModelReflector.instance(modelClass);
 	}
 	
-	public ModelReflector getReflector(){
+	public ModelReflector<M> getReflector(){
 		return ref;
 	}
 	
@@ -31,6 +31,7 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		return modelClass;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		User user = (User)context[0];
 		M model = (M) context[1];

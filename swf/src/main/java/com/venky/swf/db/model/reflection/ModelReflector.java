@@ -43,9 +43,12 @@ import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 
 public class ModelReflector<M extends Model> {
-    private static final Map<Class<? extends Model> , ModelReflector>  modelReflectorByModelClass = new HashMap<Class<? extends Model>, ModelReflector>();
     
-    public static <M extends Model> ModelReflector<M> instance(Class<M> modelClass){
+	@SuppressWarnings("rawtypes")
+	private static final Map<Class<? extends Model> , ModelReflector>  modelReflectorByModelClass = new HashMap<Class<? extends Model>, ModelReflector>();
+    
+    @SuppressWarnings("unchecked")
+	public static <M extends Model> ModelReflector<M> instance(Class<M> modelClass){
     	ModelReflector<M> ref = modelReflectorByModelClass.get(modelClass);
     	if (ref == null){
     		synchronized (modelReflectorByModelClass) {
@@ -134,7 +137,8 @@ public class ModelReflector<M extends Model> {
         return "ID";
     }
     
-    public <T> T get(Model record, String fieldName){
+	@SuppressWarnings("unchecked")
+	public <T> T get(Model record, String fieldName){
     	Timer timer = Timer.startTimer();
         try {
             Method getter = getFieldGetter(fieldName);
@@ -610,7 +614,8 @@ public class ModelReflector<M extends Model> {
 		}
     	 
      };
-     public <A extends Annotation> A getAnnotation(Class<A> annotationClass){
+     @SuppressWarnings("unchecked")
+	public <A extends Annotation> A getAnnotation(Class<A> annotationClass){
 		return (A)classAnnotationCache.get(annotationClass);
      }
      
@@ -638,6 +643,7 @@ public class ModelReflector<M extends Model> {
 		}
     	 
      };
+     @SuppressWarnings("unchecked")
      public <A extends Annotation> A getAnnotation(Method method, Class<A> annotationClass){
 		return (A)methodAnnotationCache.get(method).get(annotationClass);
      }
@@ -657,7 +663,8 @@ public class ModelReflector<M extends Model> {
 	             }
 	             if (possibleChildClass != null && Model.class.isAssignableFrom(possibleChildClass)){
 	                 // Validate That child has a parentReferenceId. 
-	                 Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
+	                 @SuppressWarnings("unchecked")
+					Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
 	                 ModelReflector<? extends Model> childReflector = ModelReflector.instance(childClass);
 	                 if (!childReflector.getReferenceFields(getModelClass()).isEmpty()){
 	                	return childClass; 
@@ -683,6 +690,7 @@ public class ModelReflector<M extends Model> {
  		}
      }
      
+     @SuppressWarnings("unchecked")
      public List<Method> getReferredModelGetters(final Class<? extends Model> referredModelClass){
  		Timer timer = Timer.startTimer();
  		try {
@@ -700,6 +708,7 @@ public class ModelReflector<M extends Model> {
  		}
      }
 
+	@SuppressWarnings("unchecked")
 	public Class<? extends Model> getReferredModelClass(Method method) {
 		Timer timer = Timer.startTimer();
 		try {

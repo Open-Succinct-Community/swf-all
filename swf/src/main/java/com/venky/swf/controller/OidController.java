@@ -122,6 +122,7 @@ public class OidController extends Controller{
 	private static final String[] FIRSTNAME_TYPE_URI = { "http://schema.openid.net/namePerson/first", "http://axschema.org/namePerson/first"};
 	private static final String[] LASTNAME_TYPE_URI = { "http://schema.openid.net/namePerson/last", "http://axschema.org/namePerson/last"};
 	
+	@SuppressWarnings("rawtypes")
 	private List getEmails(FetchResponse response){
 		String alias = getAlias(response, EMAIL_TYPE_URI);
 		return response.getAttributeValues(alias);
@@ -160,6 +161,7 @@ public class OidController extends Controller{
 	
 	
 	
+	@SuppressWarnings("rawtypes")
 	protected View authenticate() {
 		String openId = getPath().getRequest().getParameter("OPEN_ID");
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
@@ -203,6 +205,7 @@ public class OidController extends Controller{
 	}
 	
 	
+	@SuppressWarnings("rawtypes")
 	@Unrestricted
 	public View verify(){
 		HttpServletRequest request = getPath().getRequest();

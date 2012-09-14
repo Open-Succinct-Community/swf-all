@@ -33,10 +33,11 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	public QueryCache(String tableName) {
 		this(Database.getTable(tableName));
 	}
-	private QueryCache(Table table){
+	private <M extends Model> QueryCache(Table<M> table){
 		this.table = table;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public QueryCache clone(){
 		try {
 			QueryCache clone = (QueryCache) super.clone();

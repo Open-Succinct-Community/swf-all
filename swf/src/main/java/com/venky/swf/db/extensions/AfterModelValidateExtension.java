@@ -11,11 +11,13 @@ public abstract class AfterModelValidateExtension<M extends Model> implements Ex
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.validate", instance);
 	}
 	
+	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelValidateExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
 
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		M model = (M)context[0];
 		afterValidate(model);

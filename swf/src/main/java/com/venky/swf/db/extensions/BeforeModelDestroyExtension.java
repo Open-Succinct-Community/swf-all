@@ -10,12 +10,15 @@ public abstract class BeforeModelDestroyExtension<M extends Model> implements Ex
 	protected static <M extends Model> void registerExtension(BeforeModelDestroyExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.destroy", instance);
 	}
+
+	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelDestroyExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		M model = (M)context[0];
 		beforeDestroy(model);

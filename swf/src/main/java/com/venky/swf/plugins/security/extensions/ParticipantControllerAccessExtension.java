@@ -34,6 +34,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		Registry.instance().registerExtension(Path.ALLOW_CONTROLLER_ACTION, new ParticipantControllerAccessExtension());
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void invoke(Object... context) {
 		User user = (User)context[0];
 		String controllerPathElementName = (String)context[1];

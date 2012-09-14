@@ -81,7 +81,8 @@ public class TableReflector {
     	return modelClassesInClasspathSequenceByName.get(modelClass.getSimpleName());
     }
     
-    public static <U extends Model> Class<U> getRealModelClass(Class<? extends Model> modelClass){
+    @SuppressWarnings("unchecked")
+	public static <U extends Model> Class<U> getRealModelClass(Class<? extends Model> modelClass){
     	MReflector<? extends Model> ref = MReflector.instance(modelClass);
     	Class<? extends Model> lastRealClass = null;
     	List<Class<? extends Model>> modelHierarchyClasses = ref.getClassHierarchy(); 
@@ -214,6 +215,7 @@ public class TableReflector {
     	
         private static final Map<Class<? extends Model>, MReflector<? extends Model>> mreflectors = new HashMap<Class<? extends Model>, MReflector<? extends Model>>();
         
+    	@SuppressWarnings("unchecked")
         public static <M extends Model> MReflector<M> instance(Class<M> modelClass){
         	MReflector<M> ref = (MReflector<M>)mreflectors.get(modelClass);
         	if (ref == null){

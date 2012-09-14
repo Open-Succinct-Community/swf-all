@@ -95,7 +95,7 @@ public class ModelController<M extends Model> extends Controller {
         HttpServletRequest request = getPath().getRequest();
 
         if (request.getMethod().equalsIgnoreCase("GET")) {
-        	return dashboard(new ModelLoadView(getPath(), getModelClass(), getIncludedFields()));
+        	return dashboard(new ModelLoadView<M>(getPath(), getModelClass(), getIncludedFields()));
         }else {
         	Map<String,Object> formFields = getFormFields();
         	if (!formFields.isEmpty()){
@@ -303,7 +303,8 @@ public class ModelController<M extends Model> extends Controller {
         List<ModelInfo> modelElements = getPath().getModelElements();
         
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
-	    	Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
+	    	@SuppressWarnings("unchecked")
+			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
 	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
 	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);

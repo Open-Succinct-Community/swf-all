@@ -99,7 +99,8 @@ public class Controller {
     	return new LoginView(getPath());
     }
     
-    public <U extends User> U getSessionUser(){
+	@SuppressWarnings("unchecked")
+	public <U extends User> U getSessionUser(){
     	return (U)getPath().getSessionUser();
     }
     
