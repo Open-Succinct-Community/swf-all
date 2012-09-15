@@ -491,7 +491,7 @@ public class ModelController<M extends Model> extends Controller {
     protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
     	StringBuilder hash = null;
         for (String field: reflector.getFields()){
-        	if (!formFields.containsKey(field)){
+        	if (!formFields.containsKey(field) || !reflector.isFieldSettable(field)){
         		continue;
         	}
     		Object currentValue = formFields.get(field);

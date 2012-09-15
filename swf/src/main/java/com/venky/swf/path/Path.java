@@ -37,6 +37,7 @@ import com.venky.extension.Registry;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
+import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
@@ -382,42 +383,7 @@ public class Path implements _IPath{
     
     public _IView invoke() throws AccessDeniedException{
     	MultiException ex = null;
-    	ControllerReflector<? extends Controller> ref = ControllerReflector.instance(getControllerClass());
-    	List<Method> methods = ref.getMethods(new MethodMatcher() {
-			public boolean matches(Method method) {
-				return method.getName().equals(action()) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
-			}
-		});
-    	final int targetParameterLength = ObjectUtil.isVoid(parameter())? 0 : 1;
-    	boolean parameterIsNumeric = false;
-
-		if (targetParameterLength == 1) {
-			try {
-				Double.parseDouble(parameter());
-				parameterIsNumeric = true;
-			}catch (NumberFormatException nfex){
-				// 
-			}
-		}
-		final Class<?> targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
-		
-    	Collections.sort(methods,new Comparator<Method>(){
-			public int compare(Method o1, Method o2) {
-				int ret = 0 ;
-				int s1 = 0 ; int s2 = 0 ; 
-				s1 = Math.abs(o1.getParameterTypes().length - targetParameterLength);
-				s2 = Math.abs(o2.getParameterTypes().length - targetParameterLength) ;
-				ret = s1 - s2; 
-				if (ret == 0 && o1.getParameterTypes().length == 1){
-					s1 = o1.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
-					s2 = o2.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
-					ret = s1 - s2;
-				}
-				return ret;
-			}
-    		
-    	});
-    	
+    	List<Method> methods = getActionMethods(action(), parameter());
     	for (Method m :methods){
         	Timer timer = Timer.startTimer(); 
         	try {
@@ -463,8 +429,76 @@ public class Path implements _IPath{
     public boolean canAccessControllerAction(String actionPathElement){
     	return canAccessControllerAction(actionPathElement,parameter());
     }
+    private ControllerReflector<? extends Controller> cref = null; 
+    public ControllerReflector<? extends Controller> getControllerReflector(){
+    	if (cref == null){
+    		cref = ControllerReflector.instance(getControllerClass());
+    	}
+    	return cref;
+    }
+    
+    public List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
+    	List<Method> methods = getControllerReflector().getMethods(new MethodMatcher() {
+			public boolean matches(Method method) {
+				return method.getName().equals(actionPathElement) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
+			}
+		});
+    	final int targetParameterLength = ObjectUtil.isVoid(parameterPathElement)? 0 : 1;
+    	boolean parameterIsNumeric = false;
+
+		if (targetParameterLength == 1) {
+			try {
+				Double.parseDouble(parameterPathElement);
+				parameterIsNumeric = true;
+			}catch (NumberFormatException nfex){
+				// 
+			}
+		}
+		final Class<?> targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
+		
+    	Collections.sort(methods,new Comparator<Method>(){
+			public int compare(Method o1, Method o2) {
+				int ret = 0 ;
+				int s1 = 0 ; int s2 = 0 ; 
+				s1 = Math.abs(o1.getParameterTypes().length - targetParameterLength);
+				s2 = Math.abs(o2.getParameterTypes().length - targetParameterLength) ;
+				ret = s1 - s2; 
+				if (ret == 0 && o1.getParameterTypes().length == 1){
+					s1 = o1.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
+					s2 = o2.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
+					ret = s1 - s2;
+				}
+				return ret;
+			}
+    		
+    	});
+    	
+    	return methods;
+    }
     public boolean canAccessControllerAction(String actionPathElement,String parameterPathElement){
-    	return canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement);
+    	boolean accessible =  canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement);
+    	if (!accessible) {
+    		return accessible;
+    	}
+    	
+    	List<Method> methods = getActionMethods(actionPathElement, parameterPathElement);
+		for (Method m: methods){
+	    	accessible = false;
+        	Depends depends = getControllerReflector().getAnnotation(m,Depends.class);
+        	if (depends != null ){
+        		accessible = true;
+        		StringTokenizer tok = new StringTokenizer(depends.value(),",") ;
+        		while (tok.hasMoreTokens() && accessible){
+        			accessible = accessible && canAccessControllerAction(tok.nextToken(),parameterPathElement);
+        		}
+        	}else {
+        		accessible = true ;
+        	}
+    		if (accessible){
+    			break ;
+    		}
+		}
+    	return accessible;
     }
 
     public static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement){

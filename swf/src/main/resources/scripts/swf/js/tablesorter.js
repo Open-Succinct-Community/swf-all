@@ -1,8 +1,14 @@
 $(function(){
 	$(".tablesorter").each(function(index){
-		var pagerId = $(this).attr("pagerid");
-		var pager = $("#"+pagerId);
+    var column= $(this).attr("sortby");
+    var order= $(this).attr("order");
+    if (!column) { 
+      column = 0;
+    }
+    if (!order) {
+      order = 0;
+    }
 		$(this)
-			.tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , sortList: [[0,0],[1,0],[2,0],[3,0],[4,0]] });
+			.tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , sortList: [[column,order]] });
     });
 });

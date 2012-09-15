@@ -9,4 +9,8 @@ public class ModelImpl<M extends Model> extends ModelInvocationHandler{
 		setProxy(proxy);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public M getProxy(){
+		return super.getProxy();
+	}
 }

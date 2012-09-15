@@ -41,7 +41,7 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
         	M m = createInstance();
-        	copyRowValuesToBean(m, row, heading);
+    		copyRowValuesToBean(m, row, heading);
         	records.add(m);
         }
         return records;
@@ -51,6 +51,40 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
         return sheet.getRow(0).getCell(0).getCellStyle();
     }
     
+	protected Object getCellValue(Cell cell, Class<?> hint){
+		Object value = null;
+		switch (cell.getCellType()) {
+			case Cell.CELL_TYPE_NUMERIC:
+				if (HSSFDateUtil.isCellDateFormatted(cell)) {
+					value = cell.getDateCellValue();
+				} else {
+					value = cell.getNumericCellValue();
+				}
+				break;
+			case Cell.CELL_TYPE_BOOLEAN:
+				value = cell.getBooleanCellValue();
+				break;
+			case Cell.CELL_TYPE_FORMULA:
+				try {
+					if (isDate(hint)) {
+						value = cell.getDateCellValue();
+					} else if (isBoolean(hint)) {
+						value = cell.getBooleanCellValue();
+					} else if (isNumeric(hint)) {
+						value = cell.getNumericCellValue();
+					} else {
+						value = cell.getStringCellValue();
+					}
+				}catch (IllegalStateException ex){
+					value = cell.getStringCellValue();
+				}
+				break;
+			default:
+				value = cell.getStringCellValue();
+				break;
+		}
+		return value;
+	}
 	protected void copyRowValuesToBean(M m, Row row,String[] heading) {
 		ModelReflector<M> ref = ModelReflector.instance(getBeanClass());
 
@@ -111,37 +145,10 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 					}
 				}
 			} else if (type == GetterType.FIELD_GETTER) {
-				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(
-						getter.getReturnType());
+				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 				TypeConverter<?> converter = tref.getTypeConverter();
-				switch (cell.getCellType()) {
-				case Cell.CELL_TYPE_NUMERIC:
-					if (HSSFDateUtil.isCellDateFormatted(cell)) {
-						value = cell.getDateCellValue();
-					} else {
-						value = cell.getNumericCellValue();
-					}
-					break;
-				case Cell.CELL_TYPE_BOOLEAN:
-					value = cell.getBooleanCellValue();
-					break;
-				case Cell.CELL_TYPE_FORMULA:
-					Class<?> returnType = getter.getReturnType();
-					if (isDate(returnType)) {
-						value = cell.getDateCellValue();
-					} else if (isBoolean(returnType)) {
-						value = cell.getBooleanCellValue();
-					} else if (isNumeric(returnType)) {
-						value = cell.getNumericCellValue();
-					} else {
-						value = cell.getStringCellValue();
-					}
-					break;
-				default:
-					value = cell.getStringCellValue();
-					break;
-				}
-
+				value = getCellValue(cell,getter.getReturnType());
+				
 				if (!ObjectUtil.isVoid(value)
 						|| !ref.getColumnDescriptor(getter).isNullable()) {
 					value = converter.valueOf(value);

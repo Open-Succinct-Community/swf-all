@@ -8,11 +8,9 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -94,19 +92,19 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	if (getPath().canAccessControllerAction("blank") && getPath().canAccessControllerAction("save")){
         	Link create = new Link();
             create.setUrl(getPath().controllerPath()+"/blank");
-            create.addControl(new Image("/resources/images/blank.png"));
+            create.addControl(new Image("/resources/images/blank.png","New"));
         	newLink.addControl(create);
     	}
     	if (getPath().canAccessControllerAction("importxls") && getPath().canAccessControllerAction("save")){
     		Link importxls = new Link();
     		importxls.setUrl(getPath().controllerPath()+"/importxls");
-    		importxls.addControl(new Image("/resources/images/importxls.png"));
+    		importxls.addControl(new Image("/resources/images/importxls.png","Import"));
     		newLink.addControl(importxls);
     	}
     	if (getPath().canAccessControllerAction("exportxls")){
     		Link exportxls = new Link();
     		exportxls.setUrl(getPath().controllerPath()+"/exportxls");
-    		exportxls.addControl(new Image("/resources/images/exportxls.png"));
+    		exportxls.addControl(new Image("/resources/images/exportxls.png","Export"));
     		newLink.addControl(exportxls);
     	}
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
@@ -122,16 +120,23 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         header = table.createHeader();
         Column action = null ;
         
+        int columnToSort = 0;
         for (Method m : getSingleRecordActions()){
             action = header.createColumn();
-            action.setText(m.getName().substring(0,1));
+            action.setText(m.getName().substring(0,1).toUpperCase());
             action.setProperty("width", "1%");
+            columnToSort ++;
         }
         
+        boolean hasAtleastOneVisbleColumn = false; 
         for (String fieldName : getIncludedFields()) {
             if (reflector.isFieldVisible(fieldName)) {
                 header.createColumn().setText(getFieldLiteral(fieldName));
+                hasAtleastOneVisbleColumn = true;
             }
+        }
+        if (hasAtleastOneVisbleColumn){
+        	table.setProperty("sortby", columnToSort);
         }
 
         for (M record : records) {
@@ -143,13 +148,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             for (Method m : getSingleRecordActions()){
             	String actionName = m.getName();
             	boolean canAccessAction = getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
-            	Depends depends = getControllerReflector().getAnnotation(m,Depends.class);
-            	if (canAccessAction && depends != null ){
-            		StringTokenizer tok = new StringTokenizer(depends.value(),",") ;
-            		while (tok.hasMoreTokens() && canAccessAction){
-            			canAccessAction = canAccessAction && getPath().canAccessControllerAction(tok.nextToken(),String.valueOf(record.getId()));
-            		}
-            	}
             	if (canAccessAction){
                 	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
                 	String icon = null ; 
@@ -167,7 +165,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
 	            	actionLink.setUrl(sAction.toString());
 
-	            	actionLink.addControl(new Image(icon));
+	            	actionLink.addControl(new Image(icon,actionName));
     	            row.createColumn().addControl(actionLink);
             	}else{
                 	row.createColumn();
