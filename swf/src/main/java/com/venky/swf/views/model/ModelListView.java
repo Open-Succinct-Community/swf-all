@@ -56,17 +56,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		row.createColumn().addControl(new Label("Search"));
 		row.createColumn().addControl(search);
 
-		/*
-		TextBox maxRecords = new TextBox();
-		maxRecords.setName("maxRecords");
-		if (ObjectUtil.isVoid(path.getFormFields().get("maxRecords"))){
-			maxRecords.setValue(ModelController.MAX_LIST_RECORDS);
-		}else {
-			maxRecords.setValue(path.getFormFields().get("maxRecords"));
-		}
-		row.createColumn().addControl(new Label("Maximum Records"));
-		row.createColumn().addControl(maxRecords);
-		*/
 		row.createColumn().addControl(new Submit("Search"));
 		
 		Form searchForm = new Form();
