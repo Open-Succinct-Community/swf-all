@@ -38,6 +38,7 @@ public class DbIndexOutput extends BufferedIndexOutput{
 			file = Database.getTable(IndexFile.class).newRecord();
 			file.setIndexDirectoryId(dir.getModelDirectory().getId());
 			file.setName(fileName);
+			file.save();
 		}
 		return file;
 	}

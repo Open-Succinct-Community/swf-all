@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
@@ -31,6 +32,8 @@ import com.venky.swf.views.controls.page.layout.Table.THead;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
+import com.venky.swf.views.controls.page.text.StatusBar;
+import com.venky.swf.views.controls.page.text.StatusBar.Type;
 import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
 
@@ -118,6 +121,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
     	Table table = new Table();
         form.addControl(table);
+        String errorMsg = record.removeTxnProperty("ui.error.msg");
+        if (!ObjectUtil.isVoid(errorMsg)){
+            Row statusRow = table.createRow() ;
+            Column column = statusRow.createColumn(getNumColumnsPerRow());
+            column.addControl(new StatusBar(Type.ERROR, errorMsg));
+        }
+        
+
         Iterator<String> field = getIncludedFields().iterator();
         List<Control> hiddenFields = new ArrayList<Control>();
         
@@ -198,6 +209,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         for (Control hiddenField: hiddenFields){
             c.addControl(hiddenField);
         }
+        
         Row buttonRow = table.createRow();
         
         if (getRecord().getRawRecord().isNewRecord()) {

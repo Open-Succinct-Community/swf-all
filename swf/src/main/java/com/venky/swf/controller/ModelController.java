@@ -21,6 +21,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.controller.annotations.Depends;
@@ -353,13 +354,17 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		record.setCreatorUserId(getSessionUser().getId());
 		record.setUpdaterUserId(getSessionUser().getId());
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), record);
+        return dashboard(createEditView(record));
+    }
+    
+    protected ModelEditView<M> createEditView(M record){
+		ModelEditView<M> mev = new ModelEditView<M>(getPath(), getModelClass(), getIncludedFields(), record);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
 		        mev.getIncludedFields().remove(field);
 			}
 		}
-        return dashboard(mev);
+    	return mev;
     }
     
     public View truncate(){
@@ -451,13 +456,25 @@ public class ModelController<M extends Model> extends Controller {
             	digest = (String)formFields.get("_FORM_DIGEST");
             }
         }
-        boolean isNew = false;
-        if (hasUserModifiedData(formFields,digest)){
-        	isNew = record.getRawRecord().isNewRecord();
-        	save(record);
+        boolean isNew = record.getRawRecord().isNewRecord();
+        boolean hasUserModifiedData = hasUserModifiedData(formFields,digest);
+        if (hasUserModifiedData || isNew){
+        	try {
+        		save(record);
+        	}catch (RuntimeException ex){
+        		Throwable th = ExceptionUtil.getRootCause(ex);
+        		String message = th.getMessage();
+        		if (message == null){
+        			message = th.toString();
+            		th.printStackTrace();
+        		}
+        		record.setTxnPropery("ui.error.msg", message);
+        		return dashboard(createEditView(record));
+        	}
     	}
         
-        if (isNew &&  buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
+        if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
+        	//Usability Logic: If user is not modifying data shown, then why be in data entry mode. 
         	return redirectTo("blank");
         }
         

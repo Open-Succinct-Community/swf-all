@@ -280,7 +280,7 @@ public class Database implements _IDatabase{
 				table.dropTable();
 				dbModified = true;
 			} else {
-				dbModified = table.sync();
+				dbModified = table.sync() || dbModified;
 			}
 		}
 		loadTables(dbModified);

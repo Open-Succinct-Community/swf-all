@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import com.venky.cache.Cache;
@@ -600,6 +601,17 @@ public class ModelInvocationHandler implements InvocationHandler {
     @SuppressWarnings("unchecked")
 	public <M extends Model> M cloneProxy(){
 		return (M)getRawRecord().clone().getAsProxy(getReflector().getModelClass());
+    }
+ 
+    private Properties txnProperties = new Properties();
+    public String getTxnProperty(String name) { 
+    	return txnProperties.getProperty(name);
+    }
+    public void setTxnPropery(String name,String value) {
+    	txnProperties.setProperty(name, value);
+    }
+    public String removeTxnProperty(String name) { 
+    	return (String)txnProperties.remove(name);
     }
     
 }
