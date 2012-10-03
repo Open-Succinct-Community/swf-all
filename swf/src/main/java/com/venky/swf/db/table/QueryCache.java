@@ -36,7 +36,14 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private <M extends Model> QueryCache(Table<M> table){
 		this.table = table;
 	}
-	
+	public void registerLockRelease(){
+		if (hasLockedRecords){
+			for (Record record: cachedRecords){
+				record.setLocked(false);
+			}
+			hasLockedRecords = false;
+		}
+	}
 	@SuppressWarnings("unchecked")
 	public QueryCache clone(){
 		try {
@@ -153,11 +160,13 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			return new Expression(column,Operator.EQ);
 		}
 	}
+	private boolean hasLockedRecords = false; 
 	public boolean add(Record record) {
 		boolean ret = cachedRecords.add(record);
 		if (ret){
 			setCachedResult(getIdWhereClause(record),new HashSet<Record>(Arrays.asList(record)));
 		}
+		hasLockedRecords = hasLockedRecords || record.isLocked();
 		return ret;
 	}
 

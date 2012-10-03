@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -45,6 +46,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
+import com.venky.swf.views.ForwardedView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
@@ -284,12 +286,7 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	}
     	newRaw.setNewRecord(true);
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), newrecord);
-		for (String field : reflector.getFields()){
-			if (reflector.isHouseKeepingField(field)){
-		        mev.getIncludedFields().remove(field);
-			}
-		}
+		ModelEditView<M> mev = createBlankView(newrecord); 
         return dashboard(mev);
     	
     }
@@ -354,10 +351,10 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		record.setCreatorUserId(getSessionUser().getId());
 		record.setUpdaterUserId(getSessionUser().getId());
-        return dashboard(createEditView(record));
+        return dashboard(createBlankView(record));
     }
     
-    protected ModelEditView<M> createEditView(M record){
+    protected ModelEditView<M> createBlankView(M record){
 		ModelEditView<M> mev = new ModelEditView<M>(getPath(), getModelClass(), getIncludedFields(), record);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
@@ -404,6 +401,9 @@ public class ModelController<M extends Model> extends Controller {
     private RedirectorView redirectTo(String action){
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
+    }
+    private View forwardTo(String action){
+		return new ForwardedView(getPath(), action);
     }
     
     protected Map<String,Object> getFormFields(){
@@ -469,7 +469,11 @@ public class ModelController<M extends Model> extends Controller {
             		th.printStackTrace();
         		}
         		record.setTxnPropery("ui.error.msg", message);
-        		return dashboard(createEditView(record));
+        		if (isNew){
+        			return forwardTo("blank");
+        		}else {
+        			return forwardTo("edit/"+record.getId());
+        		}
         	}
     	}
         

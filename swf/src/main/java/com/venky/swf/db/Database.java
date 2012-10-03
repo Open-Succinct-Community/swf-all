@@ -181,13 +181,18 @@ public class Database implements _IDatabase{
 				try {
 					Registry.instance().callExtensions("before.commit",this);
 					getConnection().commit();
+					registerLockRelease();
 					Registry.instance().callExtensions("after.commit",this);
 				} catch (SQLException e) {
 					throw new RuntimeException(e);
 				}
 			}
 		}
-
+		private void registerLockRelease(){
+			for (QueryCache cache: configQueryCacheMap.values()){
+				cache.registerLockRelease();
+			}
+		}
 		public void rollback() {
 			rollback(savepoint);
 			txnUserAttributes.rollback(checkpoint);

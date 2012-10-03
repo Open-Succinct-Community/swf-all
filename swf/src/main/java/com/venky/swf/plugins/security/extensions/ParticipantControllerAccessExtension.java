@@ -155,50 +155,81 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if (permissions.isEmpty()){
 			return ;
 		}
-		
-		Collections.sort(permissions, new Comparator<RolePermission>() {
-
-			public int compare(RolePermission o1, RolePermission o2) {
-				int ret =  0; 
-				if (ret == 0){
-					if (o1.getRoleId() == null && o2.getRoleId() != null){
-						ret = 1;
-					}else if (o2.getRoleId() == null && o1.getRoleId() != null){
-						ret = -1;
-					}else {
-						ret = 0;
-					}
-				}
-				if (ret == 0){
-					ret = StringUtil.valueOf(o2.getControllerPathElementName()).compareTo(StringUtil.valueOf(o1.getControllerPathElementName()));
-				}
-				if (ret == 0){
-					ret = StringUtil.valueOf(o2.getActionPathElementName()).compareTo(StringUtil.valueOf(o1.getActionPathElementName()));	
-				}
-				return ret;
-			}
-			
-		});
+		Collections.sort(permissions, rolepermissionComparator);
 		
 		RolePermission firstPermission = permissions.get(0);
+		RolePermission currentPermissionGroup = firstPermission;
+
 		Iterator<RolePermission> permissionIterator = permissions.iterator();
 		while (permissionIterator.hasNext()){
 			RolePermission effective = permissionIterator.next();
+			if (permissionGroupComparator.compare(currentPermissionGroup,effective) < 0){
+				if (currentPermissionGroup.getRoleId() != null ){
+					userRoleIds.remove(effective.getRoleId());
+				}else {
+					break;
+				}
+				currentPermissionGroup = effective;
+			}
+			if (effective.getRoleId() != null && !userRoleIds.contains(effective.getRoleId())){
+				//Disallowed at more granular level for this role. So Ignore this record.
+				continue;
+			}
+			
 			if (effective.isAllowed()){
 				if (effective.getRoleId() != null || firstPermission.getRoleId() == null){
 					return;
-				}else if (!userRoleIds.isEmpty()){
+				}else if (!userRoleIds.isEmpty() ){
 					//First role not null but effective.role is null.
 					//If User has atleast one more role that is not configured as disallowed then allowed.
 					return;
 				}else {
+					//Role level dissallowed will override.
 					break;
 				}
-			}else if (effective.getRoleId() != null ){
-				userRoleIds.remove(effective.getRoleId());
 			}
 		}
 		throw new AccessDeniedException();
 	}
+	Comparator<RolePermission> permissionGroupComparator = new Comparator<RolePermission>() {
+		@Override
+		public int compare(RolePermission o1, RolePermission o2) {
+			int ret = 0;
+			if (ret == 0){
+				ret = StringUtil.valueOf(o2.getControllerPathElementName()).compareTo(StringUtil.valueOf(o1.getControllerPathElementName()));
+			}
+			if (ret == 0){
+				ret = StringUtil.valueOf(o2.getActionPathElementName()).compareTo(StringUtil.valueOf(o1.getActionPathElementName()));	
+			}
+			if (ret == 0 && o1.getRoleId() != null && o2.getRoleId() != null){
+				ret = o1.getRoleId().compareTo(o2.getRoleId());
+			}
+			return ret;
+		}
+		
+	};
+	Comparator<RolePermission> rolepermissionComparator = new Comparator<RolePermission>() {
+
+		public int compare(RolePermission o1, RolePermission o2) {
+			int ret =  0; 
+			if (ret == 0){
+				if (o1.getRoleId() == null && o2.getRoleId() != null){
+					ret = 1;
+				}else if (o2.getRoleId() == null && o1.getRoleId() != null){
+					ret = -1;
+				}else {
+					ret = 0;
+				}
+			}
+			if (ret == 0){
+				ret = permissionGroupComparator.compare(o1, o2);
+			}
+			if (ret == 0) {
+				ret = StringUtil.valueOf(o2.getParticipation()).compareTo(StringUtil.valueOf(o1.getParticipation()));
+			}
+			return ret;
+		}
+		
+	};
 
 }

@@ -3,7 +3,7 @@ package com.venky.swf.plugins.collab.extensions.beforesave;
 import com.venky.core.string.StringUtil;
 import com.venky.extension.Registry;
 import com.venky.geo.GeoCoder;
-import com.venky.geo.GeoCoder.Location;
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
 
@@ -46,10 +46,10 @@ public class BeforeSaveFacility extends BeforeModelSaveExtension<Facility>{
 	@Override
 	public void beforeSave(Facility facility) {
 		for (StringBuilder address: getAddressQueries(facility)){
-			Location location = GeoCoder.getLocation(address.toString());
+			GeoLocation location = GeoCoder.getLocation(address.toString());
 			if (location != null){ 
-				facility.setLatitude(location.lat());
-				facility.setLongitude(location.lng());
+				facility.setLatitude(location.getLatitude());
+				facility.setLongitude(location.getLongitude());
 				break ;
 			}
 		}

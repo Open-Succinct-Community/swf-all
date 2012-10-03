@@ -19,7 +19,7 @@ public class Expression {
 	String columnName = null;
 	List<BindVariable> values = null ;
 	Operator op = null;
-	static final int CHUNK_SIZE = 30; 
+	public static final int CHUNK_SIZE = 30; 
 	
 	public static Expression createExpression(String columnName, Operator op, Object... values){
 		if (values.length < CHUNK_SIZE){

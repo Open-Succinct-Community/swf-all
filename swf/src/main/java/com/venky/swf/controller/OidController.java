@@ -27,6 +27,7 @@ import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -98,7 +99,9 @@ public class OidController extends Controller{
 	protected ConsumerManager getManager() {
 		if ( _manager == null ){
 			_manager = new ConsumerManager();
-			_manager.getRealmVerifier().setEnforceRpId(false);
+			if (Config.instance().isDevelopmentEnvironment()){
+				_manager.getRealmVerifier().setEnforceRpId(false);	
+			}
 		}
 		return _manager;
 	}

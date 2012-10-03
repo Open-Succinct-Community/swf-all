@@ -121,7 +121,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
     	Table table = new Table();
         form.addControl(table);
-        String errorMsg = record.removeTxnProperty("ui.error.msg");
+        String errorMsg = StringUtil.valueOf(record.removeTxnProperty("ui.error.msg"));
         if (!ObjectUtil.isVoid(errorMsg)){
             Row statusRow = table.createRow() ;
             Column column = statusRow.createColumn(getNumColumnsPerRow());

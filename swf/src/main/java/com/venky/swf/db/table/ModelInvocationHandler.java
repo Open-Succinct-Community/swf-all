@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import com.venky.cache.Cache;
@@ -603,15 +602,15 @@ public class ModelInvocationHandler implements InvocationHandler {
 		return (M)getRawRecord().clone().getAsProxy(getReflector().getModelClass());
     }
  
-    private Properties txnProperties = new Properties();
-    public String getTxnProperty(String name) { 
-    	return txnProperties.getProperty(name);
+    private Map<String,Object> txnProperties = new HashMap<String, Object>();
+    public Object getTxnProperty(String name) { 
+    	return txnProperties.get(name);
     }
-    public void setTxnPropery(String name,String value) {
-    	txnProperties.setProperty(name, value);
+    public void setTxnPropery(String name,Object value) {
+    	txnProperties.put(name, value);
     }
-    public String removeTxnProperty(String name) { 
-    	return (String)txnProperties.remove(name);
+    public Object removeTxnProperty(String name) { 
+    	return txnProperties.remove(name);
     }
     
 }
