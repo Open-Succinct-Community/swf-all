@@ -8,7 +8,6 @@ import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 
 public interface Address extends GeoLocation{
-	
 	public String getAddressLine1();
 	public void setAddressLine1(String line1);
 	
@@ -38,5 +37,10 @@ public interface Address extends GeoLocation{
 	public void setCountryId(int countryId);
 	public Country getCountry();
 	
+	public Float getLatitude(); 
+	public void setLatitude(Float latitude);
 	
+	public Float getLongitude();
+	public void setLongitude(Float longitude);
+
 }

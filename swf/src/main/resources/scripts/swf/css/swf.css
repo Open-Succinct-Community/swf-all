@@ -1,4 +1,7 @@
 /* Styling menus */
+img {
+   border-width: 0;
+}
 div.nav {
 	height: 1.5em;
 	background-image: url(/resources/images/menubg.png); 

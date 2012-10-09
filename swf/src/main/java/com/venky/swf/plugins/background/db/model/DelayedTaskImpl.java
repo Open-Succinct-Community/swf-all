@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import com.venky.core.io.StringReader;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.background.core.Task;
@@ -41,15 +42,20 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 		DelayedTask locked = Database.getTable(DelayedTask.class).lock(o.getId());
 		if (locked != null) {
 			boolean success = false;
+			Transaction txn  = null;
 			try {
 				ObjectInputStream is = new ObjectInputStream(locked.getData());
 				Task task = (Task)is.readObject();
+				txn = Database.getInstance().createTransaction();
 				task.execute();
+				txn.commit();
 				success = true;
 			}catch(Exception ex){
+				txn.rollback();
 				StringWriter sw = new StringWriter();
 				PrintWriter w = new PrintWriter(sw);
 				ex.printStackTrace(w);
+				Logger.getLogger(getClass().getName()).info(ex.getMessage());
 				locked.setLastError(new StringReader(sw.toString()));
 				locked.setNumAttempts(locked.getNumAttempts()+1);
 			}

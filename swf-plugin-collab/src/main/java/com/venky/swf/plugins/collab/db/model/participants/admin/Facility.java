@@ -8,7 +8,7 @@ import com.venky.swf.db.model.Model;
 public interface Facility extends Address, Model{
 	public String getName();
 	public void setName(String name);
-	
+
 	@PARTICIPANT
 	public int getCompanyId();
 	public void setCompanyId(int companyId);

@@ -7,6 +7,7 @@ package com.venky.swf.controller;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -14,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -353,9 +353,11 @@ public class ModelController<M extends Model> extends Controller {
 		record.setUpdaterUserId(getSessionUser().getId());
         return dashboard(createBlankView(record));
     }
-    
     protected ModelEditView<M> createBlankView(M record){
-		ModelEditView<M> mev = new ModelEditView<M>(getPath(), getModelClass(), getIncludedFields(), record);
+    	return createBlankView(getPath(), record);
+    }
+    protected ModelEditView<M> createBlankView(Path path , M record){
+		ModelEditView<M> mev = new ModelEditView<M>(path, getModelClass(), getIncludedFields(), record);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
 		        mev.getIncludedFields().remove(field);
@@ -398,11 +400,11 @@ public class ModelController<M extends Model> extends Controller {
     	return v;
     }
     
-    private RedirectorView redirectTo(String action){
+    protected RedirectorView redirectTo(String action){
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
     }
-    private View forwardTo(String action){
+    protected View forwardTo(String action){
 		return new ForwardedView(getPath(), action);
     }
     
@@ -447,8 +449,12 @@ public class ModelController<M extends Model> extends Controller {
         while (e.hasNext()) {
             String name = e.next();
             String fieldName = setableFields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
-            if (fieldName != null) {
-                Object value = formFields.get(fieldName);
+            if (fieldName != null){
+	            Object value = formFields.get(fieldName);
+	            Class<?> fieldClass = reflector.getFieldGetter(fieldName).getReturnType().getClass();
+	            if (value == null && (Reader.class.isAssignableFrom(fieldClass) || InputStream.class.isAssignableFrom(fieldClass))){
+	            	continue;
+	            }
                 reflector.set(record, fieldName, value);
             }else if ( name.startsWith("_SUBMIT")){
             	buttonName = name;
@@ -462,17 +468,20 @@ public class ModelController<M extends Model> extends Controller {
         	try {
         		save(record);
         	}catch (RuntimeException ex){
-        		Throwable th = ExceptionUtil.getRootCause(ex);
-        		String message = th.getMessage();
-        		if (message == null){
-        			message = th.toString();
-            		th.printStackTrace();
-        		}
-        		record.setTxnPropery("ui.error.msg", message);
-        		if (isNew){
-        			return forwardTo("blank");
-        		}else {
-        			return forwardTo("edit/"+record.getId());
+        		if (hasUserModifiedData){
+	        		Throwable th = ExceptionUtil.getRootCause(ex);
+	        		String message = th.getMessage();
+	        		if (message == null){
+	        			message = th.toString();
+	            		th.printStackTrace();
+	        		}
+	
+	    	    	record.setTxnPropery("ui.error.msg", message);
+	    	    	if (isNew){
+	        			return createBlankView(getPath().createRelativePath("blank"),record);
+	        		}else {
+	        			return new ModelEditView<M>(getPath().createRelativePath("edit/" + record.getId()), getModelClass(), getIncludedFields(), record);
+	        		}
         		}
         	}
     	}
@@ -516,18 +525,12 @@ public class ModelController<M extends Model> extends Controller {
         		continue;
         	}
     		Object currentValue = formFields.get(field);
-    		if (currentValue != null && currentValue instanceof InputStream){
-    			if (StringUtil.readBytes((InputStream)currentValue).length > 0){
-    				return true;
-    			}
-    			currentValue = "";
-    		}
 			if (hash != null){
 				hash.append(",");
 			}else {
 				hash = new StringBuilder();
 			}
-			hash.append(field).append("=").append((String)currentValue);
+			hash.append(field).append("=").append(StringUtil.valueOf(currentValue));
         }
         String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
         return !ObjectUtil.equals(newDigest, oldDigest);

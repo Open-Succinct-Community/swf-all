@@ -4,22 +4,22 @@
  */
 package com.venky.swf.db.annotations.column.validations.processors;
 
-import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.validations.Mandatory;
 
 /**
  *
  * @author venky
  */
-public class MandatoryValidator extends FieldValidator<IS_NULLABLE> {
+public class MandatoryValidator extends FieldValidator<Mandatory> {
 
     @Override
-    public Class<IS_NULLABLE> getAnnotationClass() {
-        return IS_NULLABLE.class;
+    public Class<Mandatory> getAnnotationClass() {
+        return Mandatory.class;
     }
 
     @Override
-    public boolean validate(IS_NULLABLE annotation, String value,StringBuilder message) {
-        if ( !annotation.value() && value.length() == 0 ){
+    public boolean validate(Mandatory annotation, String value,StringBuilder message) {
+        if (annotation.value() && value.trim().length() == 0 ){
             message.append("Mandatory field");
             return false;
         }

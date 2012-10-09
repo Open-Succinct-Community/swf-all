@@ -99,7 +99,11 @@ public class Path implements _IPath{
 							formFields.put(fi.getFieldName(), fi.getString());
 						}
 					}else {
-						formFields.put(fi.getFieldName(), new ByteArrayInputStream(StringUtil.readBytes(fi.getInputStream())));
+						byte[] content = StringUtil.readBytes(fi.getInputStream());
+						if (content == null || content.length == 0){
+							content = null;
+						}
+						formFields.put(fi.getFieldName(), content == null ? null : new ByteArrayInputStream(content));
 					}
 				}
 			} catch (FileUploadException e1) {
@@ -540,7 +544,7 @@ public class Path implements _IPath{
     
     public Path createRelativePath(String toUrl){
     	String relPath = null; 
-    	if (!action().equals("index")){
+    	if (parameter() != null){
     		relPath = getTarget();
     	}else {
     		relPath = controllerPath() ;

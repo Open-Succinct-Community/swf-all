@@ -22,6 +22,7 @@ public class DelayedTaskWorker extends Thread {
 				task.execute();
 				db.getCurrentTransaction().commit();
 			}finally{
+				db.getCurrentTransaction().rollback();
 				db.close();
 				Logger.getLogger(getClass().getName()).info("Completed Task:" + task.getId());
 			}

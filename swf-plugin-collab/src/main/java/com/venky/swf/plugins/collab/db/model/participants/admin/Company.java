@@ -11,6 +11,7 @@ import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.validations.Mandatory;
 import com.venky.swf.db.model.Model;
 
 public interface Company extends Model{
@@ -25,6 +26,7 @@ public interface Company extends Model{
 	@IS_VIRTUAL
 	public Company getSelfCompany();
 	
+	@Mandatory
 	public String getName();
 	public void setName(String name);
 
