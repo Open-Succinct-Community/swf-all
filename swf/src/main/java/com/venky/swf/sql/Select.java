@@ -3,6 +3,7 @@ package com.venky.swf.sql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -175,6 +176,9 @@ public class Select extends SqlStatement{
 		            if (maxRecords > 0){
 		            	st.setMaxRows(maxRecords+1); //Request one more so that you can know if the list is complete or not.
 		            }
+		            if (lock){
+		            	st.setQueryTimeout(10);
+		            }
 		            result = new SequenceSet<Record>();
 		            if (st.execute()){
 		                ResultSet rs = st.getResultSet();
@@ -204,6 +208,8 @@ public class Select extends SqlStatement{
 		            		cache.setCachedResult(getWhereExpression(), result);
 		            	}
 		            }
+	            }catch (SQLTimeoutException ex){
+	            	// Ignore.
 	            }finally{
 	            	queryTimer.stop();
 	            }
