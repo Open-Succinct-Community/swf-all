@@ -11,7 +11,9 @@ import java.sql.Date;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.annotations.model.MENU;
 
+@MENU
 public interface Sample extends Model {
 
 	/*

@@ -177,7 +177,8 @@ public class Select extends SqlStatement{
 		            	st.setMaxRows(maxRecords+1); //Request one more so that you can know if the list is complete or not.
 		            }
 		            if (lock){
-		            	st.setQueryTimeout(10);
+		            	//st.setQueryTimeout(10); // Not supported by all drivers. Need to find better option.
+		            	//TODO NOWAIT
 		            }
 		            result = new SequenceSet<Record>();
 		            if (st.execute()){

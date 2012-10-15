@@ -5,8 +5,6 @@
 package com.venky.swf.db;
 
 import java.io.Serializable;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -29,13 +27,13 @@ import com.venky.core.checkpoint.Checkpoint;
 import com.venky.core.checkpoint.Checkpointed;
 import com.venky.core.checkpoint.MergeableMap;
 import com.venky.core.collections.IgnoreCaseMap;
-import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.platform.Platform;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -370,34 +368,7 @@ public class Database implements _IDatabase{
 	private static BasicDataSource getDataSource() {
 		if (_ds == null){
 			synchronized (Database.class) {
-				Properties info = new Properties();
-				String dbURL = System.getenv("DATABASE_URL");
-		    	
-		    	if (!ObjectUtil.isVoid(dbURL)){
-		    		Logger.getLogger(Database.class.getName()).fine("DATABASE_URL:" + dbURL );
-		    		URI uri;
-					try {
-						uri = new URI(dbURL);
-					} catch (URISyntaxException e) {
-						throw new RuntimeException(e);
-					}
-					String jdbcurl = null; 
-		    		if (uri.getScheme().equals("postgres")){
-		    			jdbcurl = "jdbc:postgresql://";	
-		    		}else if (uri.getScheme().equals("mysql")){
-		    			jdbcurl = "jdbc:mysql://";
-		    		}else if (uri.getScheme().equals("derby")){
-		    			jdbcurl = "jdbc:derby://";
-		    		}
-		    		jdbcurl = jdbcurl + uri.getHost() + uri.getPath() ;
-					info.setProperty("url", jdbcurl);
-					info.setProperty("username", uri.getUserInfo().split(":")[0]);
-					info.setProperty("password", uri.getUserInfo().split(":")[1]);
-		    	}else { 
-					info.setProperty("url", Config.instance().getProperty("swf.jdbc.url"));
-					info.setProperty("username", Config.instance().getProperty("swf.jdbc.userid"));
-					info.setProperty("password",Config.instance().getProperty("swf.jdbc.password"));
-		    	}
+				Properties info = Platform.getConnectionProperties();
 				
 		    	String driver = Config.instance().getProperty("swf.jdbc.driver");
 				info.setProperty("driverClassName",driver);
