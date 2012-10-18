@@ -31,7 +31,7 @@ public class DelayedTaskManager {
 	}
 	
 	private DelayedTaskManager(){
-		this(Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 2));
+		this(Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1));
 	}
 	
 	private DelayedTaskManager(int numWorkerThreads){

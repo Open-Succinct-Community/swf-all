@@ -3,6 +3,11 @@ package com.venky.swf.db.platform;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 
@@ -10,29 +15,52 @@ public class CloudFoundryPlatform implements Extension{
 	@Override
 	public void invoke(Object... context) {
 		Properties info = (Properties)context[0];
+		String vcap_services = System.getenv("VCAP_SERVICES");
+		if (ObjectUtil.isVoid(vcap_services)){
+			return ;
+		}
+
 		String serviceName = System.getProperty("cf.db.service");
-		
 		if (ObjectUtil.isVoid(serviceName)){
 			return ;
 		}
 		
-		String db = System.getProperty("cloud.services."+serviceName + ".connection.name");
-		String host = System.getProperty("cloud.services."+serviceName + ".connection.host");
-		String port = System.getProperty("cloud.services."+serviceName + ".connection.port");
-		String user = System.getProperty("cloud.services."+serviceName + ".connection.user");
-		String password = System.getProperty("cloud.services."+serviceName + ".connection.password");
-		String type = System.getProperty("cloud.services."+serviceName + ".type");
+		parse(serviceName,vcap_services,info);
+	}
+	
+	public static void parse(String serviceName,String vcap_services,Properties info){
+		JSONObject service = null; 
 		
-		Logger.getLogger(CloudFoundryPlatform.class.getName()).info("type:" + type);
-		String jdbcurl = null; 
-		if (type.contains("postgres")){
-			jdbcurl = "jdbc:postgresql://";	
-		}else if (type.contains("mysql")){
-			jdbcurl = "jdbc:mysql://";
-		}else if (type.contains("derby")){
-			jdbcurl = "jdbc:derby://";
+		JSONParser parser = new JSONParser();
+		try {
+			JSONObject jsvcapservices =  (JSONObject)parser.parse(vcap_services);
+			if (jsvcapservices == null){
+				return ;
+			}
+			JSONArray arr = (JSONArray)jsvcapservices.get(serviceName);
+			if (arr == null || arr.isEmpty()){
+				return;
+			}
+			service = (JSONObject) arr.get(0);
+			if (service == null){
+				return;
+			}
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
 		}
-		jdbcurl = jdbcurl + host + ":" + port + "/" + db;
+		
+		JSONObject credentials = ((JSONObject)service.get("credentials"));
+		String db = (String)credentials.get("name");
+		String host = (String)credentials.get("host");
+		Number port = (Number)credentials.get("port");
+		String user = (String)credentials.get("user");
+		String password = (String)credentials.get("password");
+
+		
+		String jdbcurl = "jdbc:postgresql://" + host + ":" + port + "/" + db;
+		Logger.getLogger(CloudFoundryPlatform.class.getName()).info("jdbcurl:" + jdbcurl);
+		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("Systemproperties" + System.getProperties().toString());
+		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("SystemEnv" + System.getenv().toString());
 		
 		if (!info.containsKey("url")){
 			info.setProperty("url", jdbcurl);
@@ -43,5 +71,6 @@ public class CloudFoundryPlatform implements Extension{
 		if (!info.containsKey("password")){
 			info.setProperty("password", password);
 		}
+
 	}
 }

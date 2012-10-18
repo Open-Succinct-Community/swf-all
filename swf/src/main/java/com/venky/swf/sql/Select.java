@@ -3,7 +3,6 @@ package com.venky.swf.sql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,18 +21,24 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.exceptions.SWFTimeoutException;
 
 public class Select extends SqlStatement{
 	private String[] columnNames = null;
 	private String[] tableNames ;
 	private String[] orderBy;
 	private String[] groupBy;
+	protected boolean wait = true;
 	protected boolean lock = false;
 	public Select(String... columnNames){
 		this(false,columnNames);
 	}
 	public Select(boolean lock,String...columnNames){
+		this(lock,true,columnNames);
+	}
+	public Select(boolean lock,boolean wait,String...columnNames){
 		this.lock = lock;
+		this.wait = wait;
 		this.columnNames = columnNames;
 	}
 	
@@ -102,7 +107,13 @@ public class Select extends SqlStatement{
 		
 		if (lock){
 			builder.append(" FOR UPDATE ");
+
+			if (!wait && Database.getJdbcTypeHelper().isNoWaitSupported()){
+				builder.append(Database.getJdbcTypeHelper().getNoWaitLiteral());
+			}
+			
 		}
+		
 	}
 	private void addlist(StringBuilder builder,String...strings ){
 		if (strings == null){
@@ -177,8 +188,9 @@ public class Select extends SqlStatement{
 		            	st.setMaxRows(maxRecords+1); //Request one more so that you can know if the list is complete or not.
 		            }
 		            if (lock){
-		            	//st.setQueryTimeout(10); // Not supported by all drivers. Need to find better option.
-		            	//TODO NOWAIT
+		            	if (!wait && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
+		            		st.setQueryTimeout(10);
+		            	}
 		            }
 		            result = new SequenceSet<Record>();
 		            if (st.execute()){
@@ -209,8 +221,12 @@ public class Select extends SqlStatement{
 		            		cache.setCachedResult(getWhereExpression(), result);
 		            	}
 		            }
-	            }catch (SQLTimeoutException ex){
-	            	// Ignore.
+	            }catch (SQLException ex){
+	            	if (Database.getJdbcTypeHelper().isTimeoutException(ex)){
+	            		throw new SWFTimeoutException(ex);
+	            	}else {
+	            		throw ex;
+	            	}
 	            }finally{
 	            	queryTimer.stop();
 	            }

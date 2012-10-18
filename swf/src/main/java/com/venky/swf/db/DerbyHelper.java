@@ -30,6 +30,10 @@ public class DerbyHelper extends JdbcTypeHelper{
     	return "CURRENT_DATE";
     }
 
+    public boolean isQueryTimeoutSupported(){ 
+		return false;
+	}
+
     @Override
 	public String getDefaultKW(TypeRef<?> ref, Object value) {
     	if (value instanceof Boolean){

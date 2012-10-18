@@ -300,13 +300,17 @@ public class Table<M extends Model> {
     
     
     public M lock(int id){
-    	return get(id,true);
+    	return lock(id,true);
     }
+    public M lock(int id,boolean wait){
+    	return get(id,true,wait);
+    }
+    
     public M get(int id) {
-    	return get(id,false);
+    	return get(id,false,false);
     }
-    public M get(int id,boolean locked) {
-    	Select q = new Select(locked);
+    public M get(int id,boolean locked,boolean wait) {
+    	Select q = new Select(locked,wait);
     	q.from(getModelClass());
         
     	String idColumn = getReflector().getColumnDescriptor("id").getName();

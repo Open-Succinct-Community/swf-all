@@ -10,6 +10,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.exceptions.SWFTimeoutException;
 import com.venky.swf.plugins.background.core.Task;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparable<DelayedTask>{
@@ -39,33 +40,37 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 	
 	public void execute(){
 		DelayedTask o = getProxy();
-		DelayedTask locked = Database.getTable(DelayedTask.class).lock(o.getId());
-		if (locked != null) {
-			boolean success = false;
-			Transaction txn  = null;
-			try {
-				ObjectInputStream is = new ObjectInputStream(locked.getData());
-				Task task = (Task)is.readObject();
-				txn = Database.getInstance().createTransaction();
-				task.execute();
-				txn.commit();
-				success = true;
-			}catch(Exception ex){
-				txn.rollback();
-				StringWriter sw = new StringWriter();
-				PrintWriter w = new PrintWriter(sw);
-				ex.printStackTrace(w);
-				Logger.getLogger(getClass().getName()).info(ex.getMessage());
-				locked.setLastError(new StringReader(sw.toString()));
-				locked.setNumAttempts(locked.getNumAttempts()+1);
+		Transaction parentTxn = Database.getInstance().createTransaction();
+		try { 
+			DelayedTask locked = Database.getTable(DelayedTask.class).lock(o.getId(),false);
+			if (locked != null) {
+				boolean success = false;
+				Transaction txn  = null;
+				try {
+					ObjectInputStream is = new ObjectInputStream(locked.getData());
+					Task task = (Task)is.readObject();
+					txn = Database.getInstance().createTransaction();
+					task.execute();
+					txn.commit();
+					success = true;
+				}catch(Exception ex){
+					txn.rollback();
+					StringWriter sw = new StringWriter();
+					PrintWriter w = new PrintWriter(sw);
+					ex.printStackTrace(w);
+					Logger.getLogger(getClass().getName()).info(ex.getMessage());
+					locked.setLastError(new StringReader(sw.toString()));
+					locked.setNumAttempts(locked.getNumAttempts()+1);
+				}
+				if (success){
+					locked.destroy();
+				}else {
+					locked.save();
+				}
 			}
-			if (success){
-				locked.destroy();
-			}else {
-				locked.save();
-			}
-		}else {
-			Logger.getLogger(getClass().getName()).info("Task " + o.getId() + " already executed ");
+			parentTxn.commit();
+		}catch (SWFTimeoutException ex){
+			parentTxn.rollback();
 		}
 	}
 	

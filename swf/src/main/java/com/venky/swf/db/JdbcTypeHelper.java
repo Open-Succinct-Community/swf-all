@@ -12,6 +12,7 @@ import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -39,6 +40,24 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
  */
 public abstract class JdbcTypeHelper {
 	public boolean isColumnNameAutoLowerCasedInDB(){
+		return false;
+	}
+	
+	
+	public boolean isQueryTimeoutSupported(){ 
+		return true;
+	}
+
+	public boolean isNoWaitSupported(){
+		return false;
+	}
+	public String getNoWaitLiteral(){
+		return "";
+	}
+	public boolean isTimeoutException(SQLException ex){
+		if (ex instanceof SQLTimeoutException){
+			return true;
+		}
 		return false;
 	}
     public static class TypeRef<M> {

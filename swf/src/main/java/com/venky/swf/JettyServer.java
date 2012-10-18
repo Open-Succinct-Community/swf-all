@@ -42,9 +42,12 @@ public class JettyServer {
 		this();
 		this.port = port;
 	}
-
+	
 	public static void main(String[] args) throws Exception {
-		String port = System.getenv("PORT");
+		String port = System.getProperty("PORT");
+		if (ObjectUtil.isVoid(port)){
+			port = System.getenv("PORT");
+		}
 		if (ObjectUtil.isVoid(port)){
 			port = "8080";
 		}

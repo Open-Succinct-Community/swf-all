@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -28,6 +29,13 @@ public class MySqlHelper extends JdbcTypeHelper{
     public String getCurrentDateKW(){
     	return null ;
     }
+	public boolean isTimeoutException(SQLException ex){
+		if (!super.isTimeoutException(ex)){
+			return ex.getClass().getName().endsWith("TimeoutException");
+		}
+		return false;
+	}
+
 	@Override
 	public String getDefaultKW(TypeRef<?> ref,Object value) {
     	if (Boolean.class.isAssignableFrom(ref.getJavaClass()) || boolean.class.isAssignableFrom(ref.getJavaClass())) {

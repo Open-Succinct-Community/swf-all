@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 
@@ -20,7 +21,26 @@ public class PostgresqlHelper extends JdbcTypeHelper{
 	public boolean isColumnNameAutoLowerCasedInDB(){
 		return true;
 	}
-
+	@Override
+	public boolean isQueryTimeoutSupported(){ 
+		return false;
+	}
+	
+	public boolean isNoWaitSupported() {
+		return true;
+	}
+	
+	@Override
+	public String getNoWaitLiteral(){
+		return " NOWAIT ";
+	}
+	@Override
+	public boolean isTimeoutException(SQLException ex){
+		if (!super.isTimeoutException(ex)){
+			return ex.getSQLState().equals("55P03");
+		}
+		return false;
+	}
     @Override
     public String getAutoIncrementInstruction() {
             return (" SERIAL ");
