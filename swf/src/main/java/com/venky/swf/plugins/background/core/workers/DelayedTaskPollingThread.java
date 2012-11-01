@@ -39,8 +39,8 @@ public class DelayedTaskPollingThread extends Thread{
 	public void run(){
 		ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
 		DelayedTask lastRecord = null;
+		Database db = null ;
 		while (manager.needMoreTasks()){
-			Database db = null ;
 			try {
 				Logger.getLogger(getClass().getName()).finest("Checking for Tasks...");
 				Expression where = new Expression(Conjunction.AND);
@@ -64,9 +64,19 @@ public class DelayedTaskPollingThread extends Thread{
 				}else {
 					lastRecord = jobs.get(jobs.size()-1);
 				}
+			}catch (Exception e){
+				if (db != null){
+					Logger.getLogger(getClass().getName()).info("Polling thread Rolling back due to exception 1 " + e.toString());
+					try {
+						db.getCurrentTransaction().rollback(e);
+					}catch (Exception ex){
+						ex.printStackTrace();
+					}
+				}
 			}finally{
 				if (db != null){
 					db.close();
+					db = null;
 				}
 			}
 		}

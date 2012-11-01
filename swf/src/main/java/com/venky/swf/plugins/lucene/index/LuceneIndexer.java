@@ -33,6 +33,11 @@ import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 public class LuceneIndexer {
 	private static Cache<String, LuceneIndexer> indexerCache = new Cache<String, LuceneIndexer>() {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1207573047245047343L;
+
 		@Override
 		protected LuceneIndexer getValue(String tableName) {
 			return new LuceneIndexer(tableName);
@@ -98,25 +103,30 @@ public class LuceneIndexer {
 			if (!ObjectUtil.isVoid(value) ){
 				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
 				TypeConverter<?> converter = ref.getTypeConverter();
-				if (!ObjectUtil.equals(value,converter.valueOf(null))){
-					if (!ref.isBLOB()){
-						addedFields = true;
-						if (Reader.class.isAssignableFrom(ref.getJavaClass())){
-							doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
-						}else{
-							Class<? extends Model> referredModelClass = indexedReferenceColumns.get(fieldName);
-							String sValue = converter.toString(value);
-							if (ref.isNumeric() && referredModelClass != null){
-								ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
-								Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
-								doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
-										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn())), 
-										Field.Store.YES,Field.Index.ANALYZED));
-							}
-							doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
+				if (!ref.isBLOB()){
+					addedFields = true;
+					if (Reader.class.isAssignableFrom(ref.getJavaClass())){
+						doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
+					}else{
+						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(fieldName);
+						String sValue = converter.toString(value);
+						if (ref.isNumeric() && referredModelClass != null){
+							ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
+							Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
+							doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
+									StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())), 
+									Field.Store.YES,Field.Index.ANALYZED));
 						}
+						doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
 					}
 				}
+			}else {
+				addedFields = true;
+				if (indexedReferenceColumns.containsKey(fieldName)){
+					doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
+							"NULL", Field.Store.YES,Field.Index.ANALYZED));
+				}
+				doc.add(new Field(fieldName,"NULL",Field.Store.YES,Field.Index.ANALYZED));
 			}
 		}
 		if (addedFields){
@@ -181,7 +191,7 @@ public class LuceneIndexer {
 		return ids;
 	}
 	public Query constructQuery(String queryString){
-		String descriptionField = Database.getTable(tableName).getReflector().getDescriptionColumn();
+		String descriptionField = Database.getTable(tableName).getReflector().getDescriptionField();
 		String defaultField = null;
 		if (indexedColumns.contains(descriptionField)){
 			defaultField = descriptionField;

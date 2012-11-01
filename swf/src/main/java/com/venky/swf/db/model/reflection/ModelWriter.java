@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -65,13 +66,13 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
     	
     	HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
     	int rowNum = START_ROW; 
-    	int columnNum = START_COLUMN;
+    	Bucket columnNum = new Bucket(START_COLUMN);
     	Row header = sheet.createRow(rowNum);
     	while(fi.hasNext()){
     		String fieldName = fi.next();
     		Method getter = ref.getFieldGetter(fieldName);
 			Method referredModelGetter = ref.getReferredModelGetterFor(getter);
-			Cell headerCell = header.createCell(columnNum);
+			Cell headerCell = header.createCell(columnNum.intValue());
 			headerCell.setCellStyle(headerStyle);
 			if (referredModelGetter != null ){
 				headerCell.setCellValue(referredModelGetter.getName().substring("get".length()));
@@ -79,12 +80,12 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
 			}else {
 				headerCell.setCellValue(StringUtil.camelize(fieldName));
 			}
-			columnNum++;
+			columnNum.increment();
     	}
     	
     	for (M m: records){
     		rowNum++;
-    		columnNum = START_COLUMN;
+    		columnNum = new Bucket(START_COLUMN);
     		Row r = sheet.createRow(rowNum);
     		fi = fields.iterator();
     		while (fi.hasNext()){
@@ -95,37 +96,47 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
         			TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter();
         			if (referedModelMap.get(f) != null){
         				Class<? extends Model> referredModelClass = referedModelMap.get(f);
-        				ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
+        				ModelReflector<? extends Model> referredReflector = ModelReflector.instance(referredModelClass);
     					Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
-    					
-    					value = referred.getRawRecord().get(referredModelReflector.getDescriptionColumn());
-    					referredTableDescription = StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionColumn()));
+    					if (!ref.isFieldSettable(f)){
+    						String descField = referredReflector.getDescriptionField() ;
+    						referredTableDescription =  referredReflector.get(referred,descField);
+    					}else {
+    						referredTableDescription = referred.uniqueDescription();
+    					}
         			}
     			}
 
     			if (!ObjectUtil.isVoid(value)){
-    				Class<?> colClass = value.getClass();
-    				Cell cell = r.createCell(columnNum);
-    				if (isNumeric(colClass)){
-    					if (referredTableDescription != null){
-    						cell.setCellValue(referredTableDescription);
-						}else {
-	                        cell.setCellValue(Double.valueOf(String.valueOf(value)));
-	                        cell.setCellStyle(numberStyle);
-    					}
-                    }else if (isDate(colClass)) {
-                        cell.setCellValue((Date)value);
-                        cell.setCellStyle(dateStyle);
-                    }else if (isBoolean(colClass)) {
-                        cell.setCellValue((Boolean)value);
-                    }else{
-                        cell.setCellValue(String.valueOf(value));
-                    }
+    				if (referredTableDescription != null){
+    					writeNextColumn(r, columnNum, referredTableDescription, numberStyle, dateStyle);
+    				}else {
+    					writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
+    				}
     			}
-    			columnNum ++;
+    			columnNum.increment();
 			}
     	}
 
 	}
+	
+	private void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle numberStyle,CellStyle dateStyle){
+		if (!ObjectUtil.isVoid(value)){
+			Class<?> colClass = value.getClass();
+			Cell cell = r.createCell(columnNum.intValue());
+			if (isNumeric(colClass)){
+                cell.setCellValue(Double.valueOf(String.valueOf(value)));
+                cell.setCellStyle(numberStyle);
+            }else if (isDate(colClass)) {
+                cell.setCellValue((Date)value);
+                cell.setCellStyle(dateStyle);
+            }else if (isBoolean(colClass)) {
+                cell.setCellValue((Boolean)value);
+            }else{
+                cell.setCellValue(Database.getJdbcTypeHelper().getTypeRef(colClass).getTypeConverter().toString(value));
+            }
+		}
+	}
+	
 
 }

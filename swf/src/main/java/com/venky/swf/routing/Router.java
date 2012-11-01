@@ -6,7 +6,6 @@ package com.venky.swf.routing;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,8 +53,10 @@ public class Router extends AbstractHandler {
 			if (this.loader != loader) {
 				this.loader = loader;
 				if (loader != null){
-					loadExtensions();
+			    	clearExtensions();
 					_IDatabase db = getDatabase(true);
+					loadExtensions();
+					db.loadFactorySettings();
 					db.close();
 					setMenuBuilder();
 					try {
@@ -80,9 +81,10 @@ public class Router extends AbstractHandler {
 			throw new RuntimeException(ExceptionUtil.getRootCause(ex));
 		}
 	}
-	
+	public void clearExtensions(){
+		Registry.instance().clearExtensions();
+	}
     public void loadExtensions(){
-    	Registry.instance().clearExtensions();
 		for (String root : Config.instance().getExtensionPackageRoots()){
 			for (URL url:Config.instance().getResouceBaseUrls()){
 				for (String extnClassName : PackageUtil.getClasses(url, root.replace('.', '/'))){
@@ -172,8 +174,8 @@ public class Router extends AbstractHandler {
 	            db.getCurrentTransaction().commit();
 	        }catch(Exception e){
 	        	try { 
-	        		db.getCurrentTransaction().rollback();
-	        	}catch (SQLException ex){
+	        		db.getCurrentTransaction().rollback(e);
+	        	}catch (Exception ex){
 	        		ex.printStackTrace();
 	        	}
 	            ev = createExceptionView(p, e);

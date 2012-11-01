@@ -33,6 +33,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.Update;
+import com.venky.swf.sql.parser.SQLExpressionParser;
 
 
 
@@ -151,7 +152,10 @@ public class Table<M extends Model> {
         txn.commit();
     }
     private CreateTable createTableQuery(){
-        CreateTable q = new CreateTable(getRealTableName());
+    	return createTableQuery(getRealTableName());
+    }
+    private CreateTable createTableQuery(String tableName){
+    	CreateTable q = new CreateTable(tableName);
         createFields(q);
         if (getReflector().getRealFields().contains("id")){
             q.addPrimaryKeyColumn(getReflector().getColumnDescriptor("id").getName());
@@ -221,19 +225,24 @@ public class Table<M extends Model> {
             q.executeUpdate();
         }
 
+        boolean dropAndReCreateTable = false;
         for (String fieldName:addedFields){
             AlterTable q = new AlterTable(getRealTableName());
-            q.addColumn(reflector.getColumnDescriptor(fieldName).toString());
+        	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
+            q.addColumn(cd.toString());
             q.executeUpdate();
         }
         
-        boolean idTypeChanged = false;
         for (String fieldName:alteredFields){
         	if (fieldName.equalsIgnoreCase("ID")){
-        		idTypeChanged = true;
+        		dropAndReCreateTable = true;
         		continue;
         	}
         	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
+        	if (!cd.isNullable() && Database.getJdbcTypeHelper().isVoid(cd.getColumnDefault())){
+        		dropAndReCreateTable = true;
+        		continue;
+        	}
         	String columnName = cd.getName();
         	AlterTable q = new AlterTable(getRealTableName());
         	q.addColumn("NEW_"+cd.toString());
@@ -260,10 +269,29 @@ public class Table<M extends Model> {
             q.executeUpdate();
         }
 
-        if (idTypeChanged){
+        if (dropAndReCreateTable){
         	// Rare event. Drop and recreate table.
-        	CreateTable create = new CreateTable("temp_"+getRealTableName()).as("select * from "+ getRealTableName());
+        	String tmpTable = "temp_"+getRealTableName();
+        	CreateTable create = createTableQuery(tmpTable);
         	create.executeUpdate();
+        	
+        	SequenceSet<String> columns = new SequenceSet<String>(); 
+        	columns.addAll(reflector.getRealColumns());
+        	
+        	DataManupulationStatement insert = new DataManupulationStatement();
+            insert.add("insert into ").add(tmpTable).add("(");
+            Iterator<String> columnIterator = columns.iterator();
+            while (columnIterator.hasNext()){
+            	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+            }
+            insert.add(") select ");
+            columnIterator = columns.iterator();
+            while (columnIterator.hasNext()){
+            	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
+            }
+            insert.add(" from " + getRealTableName());
+            insert.executeUpdate();
+            
         	
             DropTable drop = new DropTable(getRealTableName());
             drop.executeUpdate();
@@ -271,14 +299,14 @@ public class Table<M extends Model> {
             create = createTableQuery();
             create.executeUpdate();
             
-            DataManupulationStatement insert = new DataManupulationStatement();
+            insert = new DataManupulationStatement();
             insert.add("insert into ").add(getRealTableName()).add("(");
-            Iterator<String> columnIterator = reflector.getRealColumns().iterator();
+            columnIterator = columns.iterator();
             while (columnIterator.hasNext()){
             	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
             }
             insert.add(") select ");
-            columnIterator = reflector.getRealColumns().iterator();
+            columnIterator = columns.iterator();
             while (columnIterator.hasNext()){
             	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
             }
@@ -305,7 +333,49 @@ public class Table<M extends Model> {
     public M lock(int id,boolean wait){
     	return get(id,true,wait);
     }
-    
+    public M get(String uniqueDescription){
+    	Expression where = new SQLExpressionParser(getModelClass()).parse(uniqueDescription);
+    	if (where == null){
+    		Set<String> uk = null;
+    		if (getReflector().getUniqueKeys().size() == 1){
+    			uk = getReflector().getUniqueKeys().values().iterator().next();
+    			if (uk.size() > 1){
+    				throw new RuntimeException ("Could not understand uniqueDescription :" + uniqueDescription + ". Multiple unique key columns found for " + getRealTableName() + " :" + uk.toString());
+    			}
+    		}else if (getReflector().getUniqueKeys().size() == 0){
+        		String descField = getReflector().getDescriptionField();
+    			ColumnDescriptor desccd = getReflector().getColumnDescriptor(descField);
+        		if (!desccd.isVirtual()){
+            		uk = new SequenceSet<String>(); 
+        			uk.add(descField);
+        		}else {
+        			throw new RuntimeException ("Description field is Virtual for  table:" + getRealTableName());
+        		}
+    		}else {
+    			Collection<SequenceSet<String>> scuks = getReflector().getSingleColumnUniqueKeys();
+    			
+    			if (scuks.size() == 1){
+    				uk = scuks.iterator().next();
+    			}
+    			
+    			if (uk == null) {
+    				throw new RuntimeException ("Could not understand uniqueDescription :" + uniqueDescription + ". Multiple unique keys found for " + getRealTableName() + " :" + getReflector().getUniqueKeys().toString());
+    			}
+    		}
+    		String field = uk.iterator().next();
+    		Class<?> fieldClass = getReflector().getFieldGetter(field).getReturnType();
+    		Object value = Database.getJdbcTypeHelper().getTypeRef(fieldClass).getTypeConverter().valueOf(uniqueDescription);
+    		where = new Expression(getReflector().getColumnDescriptor(field).getName(),Operator.EQ,value);
+    	}
+    	List<M> result = new Select().from(getModelClass()).where(where).execute(getModelClass());
+    	if (result.isEmpty()){
+            return null;
+        }else if (result.size() == 1){
+            return result.get(0);
+        }else {
+        	throw new RuntimeException("Multiple records found in " + getRealTableName()+ " for " + uniqueDescription);
+        }
+    }
     public M get(int id) {
     	return get(id,false,false);
     }

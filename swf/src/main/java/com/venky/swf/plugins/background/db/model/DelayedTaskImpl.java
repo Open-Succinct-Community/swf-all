@@ -10,7 +10,6 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
-import com.venky.swf.exceptions.SWFTimeoutException;
 import com.venky.swf.plugins.background.core.Task;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparable<DelayedTask>{
@@ -54,7 +53,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 					txn.commit();
 					success = true;
 				}catch(Exception ex){
-					txn.rollback();
+					txn.rollback(ex);
 					StringWriter sw = new StringWriter();
 					PrintWriter w = new PrintWriter(sw);
 					ex.printStackTrace(w);
@@ -69,8 +68,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 				}
 			}
 			parentTxn.commit();
-		}catch (SWFTimeoutException ex){
-			parentTxn.rollback();
+		}catch (Exception ex){
+			parentTxn.rollback(ex);
 		}
 	}
 	

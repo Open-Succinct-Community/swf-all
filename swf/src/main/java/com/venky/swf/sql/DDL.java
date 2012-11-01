@@ -41,8 +41,11 @@ public abstract class DDL extends DataManupulationStatement{
 
 		String asSelect = null;
 		public CreateTable as(String selectClause){
-			assert columnsSpec.isEmpty() && pk.isEmpty();
-			asSelect = selectClause;
+			if (columnsSpec.isEmpty() && pk.isEmpty()){
+				asSelect = selectClause;
+			}else {
+				throw new RuntimeException("Syntax Error for Create Table");
+			}
 			return this;
 		}
 		protected void finalizeParameterizedSQL(){
@@ -50,35 +53,34 @@ public abstract class DDL extends DataManupulationStatement{
 			query.append("create table ").append(table);
 			if (asSelect != null){
 				query.append(" AS ");
-			}
-			query.append("( ");
-			
-			if (asSelect != null){
 				query.append(asSelect);
-			}
-			
-			Iterator<String> colSpecIterator = columnsSpec.iterator();
-			while(colSpecIterator.hasNext()){
-				String colSpec = colSpecIterator.next();
-				query.append(colSpec);
-				if (colSpecIterator.hasNext()){
-					query.append(" , ");
-				}
-			}
-			
-			if (pk.size() > 0){
-				query.append(" , ").append(" primary key(");
-				Iterator<String> pkColumnIterator = pk.iterator();
-				while (pkColumnIterator.hasNext()){
-					String col = pkColumnIterator.next();
-					query.append(col);
-					if (pkColumnIterator.hasNext()){
-						query.append(",");
+			}else {
+				query.append("( ");
+				
+				Iterator<String> colSpecIterator = columnsSpec.iterator();
+				while(colSpecIterator.hasNext()){
+					String colSpec = colSpecIterator.next();
+					query.append(colSpec);
+					if (colSpecIterator.hasNext()){
+						query.append(" , ");
 					}
 				}
-				query.append(")");
+				
+				if (pk.size() > 0){
+					query.append(" , ").append(" primary key(");
+					Iterator<String> pkColumnIterator = pk.iterator();
+					while (pkColumnIterator.hasNext()){
+						String col = pkColumnIterator.next();
+						query.append(col);
+						if (pkColumnIterator.hasNext()){
+							query.append(",");
+						}
+					}
+					query.append(")");
+				}
+				
+				query.append(" )");
 			}
-			query.append(" )");
 		}
 		public void addColumn(String columnSpec){
 			assert asSelect == null;

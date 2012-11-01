@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface HAS_DESCRIPTION_COLUMN {
+public @interface HAS_DESCRIPTION_FIELD {
 	public String value() default "NAME";
 }

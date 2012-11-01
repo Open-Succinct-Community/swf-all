@@ -32,7 +32,7 @@ public class SelectTest {
 	
 	@After
 	public void tearDown(){
-		Database.getInstance().getCurrentTransaction().rollback();
+		Database.getInstance().getCurrentTransaction().rollback(null);
 		Database.getInstance().close();
 	}
 	@Test
@@ -54,14 +54,14 @@ public class SelectTest {
 		assertEquals(1,Database.getInstance().getCurrentTransaction().getCache(ref).getCachedResult(null, 0, true).size());
 		assertEquals(1,Database.getInstance().getCurrentTransaction().getCache(ref).getCachedResult(null, 0, false).size());
 
-		t3.rollback();
+		t3.rollback(null);
 		assertEquals(t2,Database.getInstance().getCurrentTransaction());
 
 		assertNull(Database.getInstance().getCurrentTransaction().getCache(ref).getCachedResult(null, 0, false));
 		assertEquals(0,sel.execute().size());
 		assertEquals(0,Database.getInstance().getCurrentTransaction().getCache(ref).getCachedResult(null, 0, false).size());
 		
-		t2.rollback();
+		t2.rollback(null);
 	}
 	@Test
 	public void testCacheCommit() {

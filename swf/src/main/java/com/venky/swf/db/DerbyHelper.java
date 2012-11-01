@@ -30,10 +30,12 @@ public class DerbyHelper extends JdbcTypeHelper{
     	return "CURRENT_DATE";
     }
 
+    public String getForUpdateLiteral(){
+    	return " FOR UPDATE WITH RS ";
+    }
     public boolean isQueryTimeoutSupported(){ 
-		return false;
+		return true;
 	}
-
     @Override
 	public String getDefaultKW(TypeRef<?> ref, Object value) {
     	if (value instanceof Boolean){

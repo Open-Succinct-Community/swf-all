@@ -6,12 +6,13 @@ import java.sql.Date;
 import java.util.List;
 
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
-import com.venky.swf.db.annotations.column.validations.Mandatory;
+import com.venky.swf.db.annotations.model.UNIQUE_KEY;
 import com.venky.swf.db.model.Model;
 
 public interface Company extends Model{
@@ -26,7 +27,8 @@ public interface Company extends Model{
 	@IS_VIRTUAL
 	public Company getSelfCompany();
 	
-	@Mandatory
+	@IS_NULLABLE(false)
+	@UNIQUE_KEY
 	public String getName();
 	public void setName(String name);
 

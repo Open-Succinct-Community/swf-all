@@ -29,8 +29,8 @@ public class MySqlHelper extends JdbcTypeHelper{
     public String getCurrentDateKW(){
     	return null ;
     }
-	public boolean isTimeoutException(SQLException ex){
-		if (!super.isTimeoutException(ex)){
+	public boolean isQueryTimeoutException(SQLException ex){
+		if (!super.isQueryTimeoutException(ex)){
 			return ex.getClass().getName().endsWith("TimeoutException");
 		}
 		return false;

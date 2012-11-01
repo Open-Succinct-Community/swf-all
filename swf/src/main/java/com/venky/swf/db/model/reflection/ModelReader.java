@@ -16,9 +16,6 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
 
 public class ModelReader<M extends Model> extends ModelIO<M> {
 
@@ -95,17 +92,21 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 			}
 
 			GetterType type = GetterType.UNKNOWN_GETTER;
+			String fieldName = null;
+
 			if (ref.getFieldGetterMatcher().matches(getter)) {
 				type = GetterType.FIELD_GETTER;
+				fieldName = ref.getFieldName(getter);
 			} else if (ref.getReferredModelGetterMatcher().matches(getter)) {
 				type = GetterType.REFERENCE_MODEL_GETTER;
+				fieldName = ref.getReferenceField(getter);
 			}
-
+			if (fieldName == null){
+				continue;
+			}
 			Method setter = null;
-			if (type == GetterType.REFERENCE_MODEL_GETTER) {
-				setter = ref.getFieldSetter(ref.getReferenceField(getter));
-			} else if (type == GetterType.FIELD_GETTER) {
-				setter = ref.getFieldSetter(ref.getFieldName(getter));
+			if (ref.isFieldSettable(fieldName)){
+				setter = ref.getFieldSetter(fieldName);
 			}
 			if (setter == null) {
 				continue;
@@ -119,40 +120,23 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 			if (type == GetterType.REFERENCE_MODEL_GETTER) {
 				String descriptionValue = cell.getStringCellValue();
 				if (!ObjectUtil.isVoid(descriptionValue)) {
-					Class<? extends Model> referredModelClass = ref
-							.getReferredModelClass(getter);
-					ModelReflector<? extends Model> referredModelReflector = ModelReflector
-							.instance(referredModelClass);
-					Select referredModelIdFinder = new Select().from(
-							referredModelClass).where(
-							new Expression(referredModelReflector
-									.getDescriptionColumn(), Operator.EQ,
-									descriptionValue));
-					List<? extends Model> referredModelRecords = referredModelIdFinder
-							.execute(referredModelClass);
-					if (referredModelRecords.isEmpty()) {
+					Class<? extends Model> referredModelClass = ref.getReferredModelClass(getter);
+					
+					Model referredModel = Database.getTable(referredModelClass).get(descriptionValue);
+					if (referredModel == null) {
 						throw new RuntimeException(
 								referredModelClass.getSimpleName() + ":"
 										+ descriptionValue + " not setup ");
-					} else if (referredModelRecords.size() > 1) {
-						throw new RuntimeException(
-								referredModelClass.getSimpleName() + ":"
-										+ descriptionValue
-										+ " not setup uniquely");
-					} else {
-						Model referredModel = referredModelRecords.get(0);
-						value = referredModel.getId();
 					}
+					value = referredModel.getId();
 				}
 			} else if (type == GetterType.FIELD_GETTER) {
 				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 				TypeConverter<?> converter = tref.getTypeConverter();
 				value = getCellValue(cell,getter.getReturnType());
-				
-				if (!ObjectUtil.isVoid(value)
-						|| !ref.getColumnDescriptor(getter).isNullable()) {
+				if (!ObjectUtil.isVoid(value) || ref.isFieldMandatory(fieldName)) {
 					value = converter.valueOf(value);
-				} else if (ref.getColumnDescriptor(getter).isNullable()) {
+				} else {
 					value = null;
 				}
 			}

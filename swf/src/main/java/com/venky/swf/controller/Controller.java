@@ -8,18 +8,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.lucene.search.Query;
+
 import com.venky.core.date.DateUtils;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.Unrestricted;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.path.Path;
+import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -141,12 +148,12 @@ public class Controller {
     @Unrestricted
     public View resources(String name) throws IOException{
     	Path p = getPath();
-    	if (name.equals("config")){
+    	if (name.startsWith("/config/")){
     		return new BytesView(p, "Access Denied!".getBytes());
     	}
     	
-        String url = "/" + path.getTarget().substring(path.getTarget().indexOf(name));
-        InputStream is = getClass().getResourceAsStream(url);
+        
+        InputStream is = getClass().getResourceAsStream(name);
         
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -178,16 +185,33 @@ public class Controller {
         	createEntry(root, "-Not Selected-", " ");
         }
 
-        Select q = new Select().from(modelClass);
         String columnName = fd.getName();
+
         Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);
-        where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+        
+        if (reflector.getIndexedColumns().contains(columnName) && !ObjectUtil.isVoid(value)){
+        	LuceneIndexer indexer = LuceneIndexer.instance(reflector);
+        	Query q = indexer.constructQuery(columnName +":" + value +"*");
+        	List<Integer> top10Records = indexer.findIds(q, 20);
+        	if (!top10Records.isEmpty()){
+            	Expression idExpression = Expression.createExpression("ID", Operator.IN, top10Records.toArray());
+            	where.add(idExpression);
+        	}else {
+        		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+        	}
+        }else{
+	        where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+        }
+        Select q = new Select().from(modelClass);
         q.where(where);
         List<M> records = q.execute(modelClass);
+        Method fieldGetter = reflector.getFieldGetter(fieldName);
+        TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
+        
         for (M record:records){
             try {
-            	createEntry(root,reflector.getFieldGetter(fieldName).invoke(record),record.getId());
+            	createEntry(root,converter.toString(fieldGetter.invoke(record)),record.getId());
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             } catch (IllegalArgumentException ex) {

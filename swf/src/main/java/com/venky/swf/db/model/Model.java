@@ -78,6 +78,9 @@ public interface Model extends _Identifiable {
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     public Record getRawRecord();
     public <M extends Model> M cloneProxy();
+
+    public String uniqueDescription();
+    
     
     public Object getTxnProperty(String name);
     public void setTxnPropery(String name,Object value);

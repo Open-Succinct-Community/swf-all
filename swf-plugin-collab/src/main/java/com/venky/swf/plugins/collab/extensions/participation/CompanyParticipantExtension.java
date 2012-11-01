@@ -12,9 +12,6 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		registerExtension(new CompanyParticipantExtension());
 	}
 
-	protected CompanyParticipantExtension() {
-		super(Company.class);
-	}
 
 	
 	@Override

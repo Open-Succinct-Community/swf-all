@@ -165,6 +165,10 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     
 	
 	private static class ProxyCache extends Cache<Class<? extends Model>,Model> {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1436596145516567205L;
 		Record record;
 		ProxyCache(Record record){
 			this.record = record;

@@ -46,6 +46,11 @@ public class UserImpl extends ModelImpl<User>{
 	
 	
 	private Cache<Class<? extends Model>, SequenceSet<String>> participantExtensionPointsCache = new Cache<Class<? extends Model>, SequenceSet<String>>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1863284571543640448L;
+
 		@Override
 		protected SequenceSet<String> getValue(Class<? extends Model> modelClass) {
 			SequenceSet<String> extnPoints = new SequenceSet<String>();
@@ -120,10 +125,6 @@ public class UserImpl extends ModelImpl<User>{
 						for (Model referable:referables){
 							ids.add(referable.getId());
 						}
-						/* VENKY TODO  Check why this at all.!! 
-						if (referredModelReflector.reflects(User.class)){
-							ids.add(user.getId());
-						}*/
 						mapParticipatingOptions.put(referredModelIdFieldName,ids);
 					}
 				}

@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -26,14 +27,15 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.validations.processors.DateFormatValidator;
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
-import com.venky.swf.db.annotations.column.validations.processors.MandatoryValidator;
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
+import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
@@ -83,7 +85,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
 
-        if (getReflector().getFieldGetters().contains(method)) {
+        if (getReflector().getFieldGetterSignatures().contains(getReflector().getSignature(method))) {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
                 ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
@@ -99,8 +101,11 @@ public class ModelInvocationHandler implements InvocationHandler {
                 	if (colDef != null){
                 		defaultValue = StandardDefaulter.getDefaultValue(colDef.value(),colDef.args());
                 	}
-
-                	return cd.isNullable() ? defaultValue : converter.valueOf(defaultValue);
+                	if (retType.isPrimitive()){
+                		return converter.valueOf(defaultValue);
+                	}else {
+                		return defaultValue;
+                	}
                 } else if (retType.isInstance(value) && !ref.isLOB()) {
                     return value;
                 } else {
@@ -114,13 +119,17 @@ public class ModelInvocationHandler implements InvocationHandler {
                 return record.put(columnName, args[0]);
             }
         } else if (getReflector().getReferredModelGetters().contains(method)) {
-            return getParent(method);
+        	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
+                return getParent(method);
+        	}
         } else if (getReflector().getChildGetters().contains(method)) {
-        	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
-        	if (join != null){
-        		return getChildren(getReflector().getChildModelClass(method),join.value());
-        	}else {
-        		return getChildren(getReflector().getChildModelClass(method));
+        	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
+	        	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
+	        	if (join != null){
+	        		return getChildren(getReflector().getChildModelClass(method),join.value());
+	        	}else {
+	        		return getChildren(getReflector().getChildModelClass(method));
+	        	}
         	}
         }
         for (Object impl: modelImplObjects){
@@ -281,6 +290,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
 	
 	private static Cache<Class<? extends Model>,List<Class<?>>> modelImplClassesCache = new Cache<Class<? extends Model>, List<Class<?>>>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7544606584634901930L;
+
 		@Override
 		protected List<Class<?>> getValue(Class<? extends Model> modelClass) {
 			SequenceSet<Class<? extends Model>> modelClasses = ModelReflector.instance(modelClass).getClassHierarchies();
@@ -332,7 +346,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     static {
         validators.add(new ExactLengthValidator());
         validators.add(new MaxLengthValidator());
-        validators.add(new MandatoryValidator());
+        validators.add(new NotNullValidator());
         validators.add(new RegExValidator());
         validators.add(new EnumerationValidator());
         validators.add(new DateFormatValidator());
@@ -442,13 +456,11 @@ public class ModelInvocationHandler implements InvocationHandler {
         	List<String> referenceFields = childReflector.getReferenceFields(ref.getModelClass());
         	
         	for (String referenceField: referenceFields){
-        		Method referenceFieldGetter = childReflector.getFieldGetter(referenceField);
-        		
 				try {
 					@SuppressWarnings("unchecked")
 					List<Model> children = (List<Model>)childrenGetter.invoke(getProxy());
 					for (Model child : children){
-		        		if (!childReflector.getColumnDescriptor(referenceFieldGetter).isNullable()){
+		        		if (childReflector.isFieldMandatory(referenceField)){
 		        			child.destroy();
 		        		}else {
 		        			childReflector.set(child,referenceField,null);
@@ -585,6 +597,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     	}
     }
     
+    public int hashCode(){
+    	return (getModelName() + ":" + getProxy().getId()).hashCode() ;
+    }
     protected boolean equalImpl(ModelInvocationHandler anotherImpl){
     	return (getProxy().getId() == anotherImpl.getProxy().getId()) && getReflector().getTableName().equals(anotherImpl.getReflector().getTableName()); 
     }
@@ -612,5 +627,38 @@ public class ModelInvocationHandler implements InvocationHandler {
     public Object removeTxnProperty(String name) { 
     	return txnProperties.remove(name);
     }
+ 
+    public String uniqueDescription(){
+    	Collection<SequenceSet<String>> uniqueKeys = getReflector().getUniqueKeys().values();
+    	
+    	Expression where = new Expression(Conjunction.AND);
+    	if (uniqueKeys.isEmpty()){
+    		where.add(new Expression("ID",Operator.EQ,getProxy().getId()));
+    	}else {
+	    	Set<String> firstKey = uniqueKeys.iterator().next();
+	    	if (getReflector().getSingleColumnUniqueKeys().size() == 1){
+	    		firstKey = getReflector().getSingleColumnUniqueKeys().iterator().next();
+	    	}
+	    	if (firstKey.size() == 1){
+	    		return StringUtil.valueOf(getReflector().get(getProxy(), firstKey.iterator().next()));
+	    	}
+	    	
+	    	for (Iterator<String> i = firstKey.iterator() ; i.hasNext(); ){
+	    		String field = i.next();
+	    		String column = getReflector().getColumnDescriptor(field).getName();
+	    		
+	    		Object value = getReflector().get(getProxy(), field);
+	    		if ( value != null) {
+	        		where.add(new Expression(column,Operator.EQ,value));
+	    		}else {
+	    			where.add(new Expression(column,Operator.EQ));
+	    		}
+	    	}
+    	}
+    	return where.getRealSQL();
+    }
+    
+    
+    
     
 }

@@ -31,6 +31,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -73,15 +74,26 @@ public class ModelController<M extends Model> extends Controller {
     protected ModelReflector<M> getReflector(){
     	return reflector;
     }
+    
+    private class DefaultModelFilter implements Select.ResultFilter<M> {
+    	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
+		@Override
+		public boolean pass(M record) {
+			return defaultFilter.pass(record) && getPath().canAccessControllerAction("index", StringUtil.valueOf(record.getId()));
+		}
+    }
     public View exportxls(){
 		List<String> fieldsIncluded = getReflector().getFields();
 		Iterator<String> fieldIterator = fieldsIncluded.iterator();
 		while (fieldIterator.hasNext()){
-			if (getReflector().isHouseKeepingField(fieldIterator.next())){
-				fieldIterator.remove();
+			String field = fieldIterator.next();
+			if (getReflector().isHouseKeepingField(field)){
+				if (!field.equals("ID")){
+					fieldIterator.remove();
+				}
 			}
 		}
-		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new Select.AccessibilityFilter<M>());
+		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new DefaultModelFilter());
 		Workbook wb = new HSSFWorkbook();
 		new ModelWriter<M>(getModelClass()).write(list, wb,fieldsIncluded);
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -107,20 +119,27 @@ public class ModelController<M extends Model> extends Controller {
 	    			Workbook book = new HSSFWorkbook(in);
 	    			ModelReader<M> modelReader = new ModelReader<M>(getModelClass());
 	    			for (M m : modelReader.read(book.getSheet(StringUtil.pluralize(getModelClass().getSimpleName())))){
-	    				String descriptionColumn = getReflector().getDescriptionColumn();
-	    				Object descriptionValue = m.getRawRecord().get(descriptionColumn);
-	    				boolean createNewRecord = true;
-	    				if ( !ObjectUtil.isVoid(descriptionColumn) && !ObjectUtil.isVoid(descriptionValue) ){
-	    					for (M preExistingRecord:new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue))
-	    							.execute(getModelClass())){
-	    						for (String fieldName : m.getRawRecord().getDirtyFields()){
-		    						preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
-	    						}
-	    						preExistingRecord.save();
-	    						createNewRecord = false;
-	    					}
+	    				M preExistingRecord  = null;
+	    				if (m.getId() > 0){
+	    					preExistingRecord = Database.getTable(getModelClass()).get(m.getId());
+	    				}else {
+		    				String descriptionField = getReflector().getDescriptionField();
+		    				Object descriptionValue = getReflector().get(m, descriptionField);
+		    				if ( !ObjectUtil.isVoid(descriptionField) && !ObjectUtil.isVoid(descriptionValue) ){
+		    					String descriptionColumn = getReflector().getColumnDescriptor(descriptionField).getName();
+		    					List<M> recordsWithMatchingDescription = new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue)).execute(getModelClass());
+		    					if (recordsWithMatchingDescription.size() > 1){
+		    						throw new RuntimeException("Found multiple records for description, Please use the id column");
+		    					}
+		    					preExistingRecord = recordsWithMatchingDescription.get(0);
+		    				}
 	    				}
-	    				if(createNewRecord){
+	    				if (preExistingRecord != null){
+							for (String fieldName : m.getRawRecord().getDirtyFields()){
+								preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
+							}
+							save(preExistingRecord);
+	    				}else {
 	    					save(m);
 	    				}
 	    			}
@@ -181,14 +200,22 @@ public class ModelController<M extends Model> extends Controller {
 			if (!ids.isEmpty()) {
 				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
 					.add(new Expression("ID",Operator.IN,ids.toArray()))
-					.add(getPath().getWhereClause()));
-				List<M> records = sel.execute(getModelClass(),maxRecords,new Select.AccessibilityFilter<M>());
+					.add(getPath().getWhereClause())).orderBy(getOrderBy());
+				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter());
 				return list(records);
 			}else {
 				return list(new ArrayList<M>());
 			}
 		}
 		return list(maxRecords);
+    }
+    protected String getOrderBy(){
+        ORDER_BY order = getReflector().getAnnotation(ORDER_BY.class);
+        String orderBy = ORDER_BY.DEFAULT;
+        if (order != null){
+        	orderBy = order.value();
+        }
+        return orderBy;
     }
     
     public static final int MAX_LIST_RECORDS = 10 ;
@@ -202,7 +229,7 @@ public class ModelController<M extends Model> extends Controller {
 	
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).orderBy("ID DESC").execute(modelClass, maxRecords ,new Select.AccessibilityFilter<M>());
+        List<M> records = q.where(getPath().getWhereClause()).orderBy(getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter());
         return list(records);
     }
     
@@ -222,6 +249,7 @@ public class ModelController<M extends Model> extends Controller {
 	}
 
     @SingleRecordAction(icon="/resources/images/show.png")
+    @Depends("index")
     public View show(int id) {
 		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
@@ -231,6 +259,7 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
     
+    @Depends("index")
     public View view(int id){
 		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
@@ -260,7 +289,7 @@ public class ModelController<M extends Model> extends Controller {
     
 
     @SingleRecordAction(icon="/resources/images/edit.png")
-    @Depends("save")
+    @Depends("save,index")
     public View edit(int id) {
         M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
@@ -271,7 +300,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     @SingleRecordAction(icon="/resources/images/clone.png")
-    @Depends("save")
+    @Depends("save,index")
     public View clone(int id){
 		Table<M> table = Database.getTable(modelClass);
     	M record = table.get(id);
@@ -291,7 +320,7 @@ public class ModelController<M extends Model> extends Controller {
     	
     }
     
-    @Depends("save")
+    @Depends("save,index")
     public View blank(){
 		M record = Database.getTable(modelClass).newRecord();
 		return blank(record);
@@ -304,6 +333,9 @@ public class ModelController<M extends Model> extends Controller {
 	    	@SuppressWarnings("unchecked")
 			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
 	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
+	    	if (!reflector.isFieldSettable(referredModelIdFieldName)){
+	    		continue;
+	    	}
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
 	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
 	    	try {
@@ -311,7 +343,7 @@ public class ModelController<M extends Model> extends Controller {
 				List<Integer> idoptions = getSessionUser().getParticipationOptions(modelClass).get(referredModelIdFieldName);
 				Integer id = null; 
 						
-				if (oldValue == null){
+				if (Database.getJdbcTypeHelper().isVoid(oldValue)){
 					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
 						id = idoptions.get(0);
 						if (id != null){
@@ -370,12 +402,17 @@ public class ModelController<M extends Model> extends Controller {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getPath().getWhereClause()).execute(modelClass,new Select.AccessibilityFilter<M>());
         for (M record: records){
-        	record.destroy();
+        	if (getPath().canAccessControllerAction("destroy", String.valueOf(record.getId()))){
+            	record.destroy();
+        	}else {
+        		throw new AccessDeniedException("Don't have permission to destroy record " + record.getId());
+        	}
         }
         return redirectTo("index");
     }
 
     @SingleRecordAction(icon="/resources/images/destroy.png")
+    @Depends("index")
     public View destroy(int id){ 
 		M record = Database.getTable(modelClass).get(id);
         destroy(record);
@@ -536,6 +573,8 @@ public class ModelController<M extends Model> extends Controller {
         return !ObjectUtil.equals(newDigest, oldDigest);
     }
     
+    
+    @Depends("index")
     public View save() {
     	return persistInDB();
     }
@@ -554,8 +593,10 @@ public class ModelController<M extends Model> extends Controller {
 		String value = "";
 		for (String fieldName : formData.keySet()){
 			if (fields.contains(fieldName)){
-				Object ov = formData.get(fieldName); 
-				reflector.set(model,fieldName, ov);
+				Object ov = formData.get(fieldName);
+				if (reflector.isFieldSettable(fieldName)){
+					reflector.set(model,fieldName, ov);
+				}
 			}else if (fieldName.startsWith("_AUTO_COMPLETE_")){
 				autoCompleteFieldName = fieldName.split("_AUTO_COMPLETE_")[1];
 				value = StringUtil.valueOf(formData.get(fieldName));
@@ -564,22 +605,29 @@ public class ModelController<M extends Model> extends Controller {
 		model.getRawRecord().remove(autoCompleteFieldName);
 		
     	Expression where = new Expression(Conjunction.AND);
-		if (reflector.isAnnotationPresent(reflector.getFieldGetter(autoCompleteFieldName),PARTICIPANT.class)){
+    	
+    	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
+		if (reflector.isAnnotationPresent(autoCompleteFieldGetter,PARTICIPANT.class)){
     		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
     		if (pOptions.containsKey(autoCompleteFieldName)){
     			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
     				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
     				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
+    			}else {
+    				where.add(new Expression("ID",Operator.EQ));
     			}
     		}
 		}
 		
-		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(autoCompleteFieldName)));
+		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
 		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
 		Path autoCompletePath = getPath().createRelativePath(autoCompleteModelReflector.getTableName().toLowerCase());
 		where.add(autoCompletePath.getWhereClause());
-        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionColumn(), value,reflector.getColumnDescriptor(autoCompleteFieldName).isNullable());
+		
+		boolean isNullable = !reflector.isFieldMandatory(autoCompleteFieldName); 
+		
+        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value,isNullable);
     }
     
     

@@ -13,6 +13,7 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
+import java.sql.SQLTransactionRollbackException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -43,6 +44,9 @@ public abstract class JdbcTypeHelper {
 		return false;
 	}
 	
+	public boolean hasTransactionRolledBack(Throwable ex){
+		return getEmbeddedException(ex, SQLTransactionRollbackException.class) != null ;
+	}
 	
 	public boolean isQueryTimeoutSupported(){ 
 		return true;
@@ -54,7 +58,12 @@ public abstract class JdbcTypeHelper {
 	public String getNoWaitLiteral(){
 		return "";
 	}
-	public boolean isTimeoutException(SQLException ex){
+	
+	public String getForUpdateLiteral(){
+		return " FOR UPDATE ";
+	}
+	
+	public boolean isQueryTimeoutException(SQLException ex){
 		if (ex instanceof SQLTimeoutException){
 			return true;
 		}
@@ -557,5 +566,22 @@ public abstract class JdbcTypeHelper {
     		return StringUtil.valueOf(value);
     	}
     }
-	
+
+  //TODO Moved to Core. Needs Refactoring.
+  	public Throwable getEmbeddedException(Throwable in, Class<?> instanceOfThisClass){
+          Throwable ret = null ;
+          Throwable ex = in;
+          while (ex != null ){
+          	if (instanceOfThisClass.isInstance(ex)){
+          		ret = ex;
+          	}
+          	ex = ex.getCause();
+          }
+          return ret;
+      	
+  	}
+  	
+  	public boolean isVoid (Object o){
+  		return o == null || ObjectUtil.equals(getTypeRef(o.getClass()).getTypeConverter().valueOf(null),o);
+  	}
 }

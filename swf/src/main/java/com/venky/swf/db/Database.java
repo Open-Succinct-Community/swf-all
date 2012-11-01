@@ -155,7 +155,7 @@ public class Database implements _IDatabase{
 			}
 		}
 		
-		private void rollback(Savepoint sp){
+		private void rollbackToSavePoint(Savepoint sp){
 			try {
 				getConnection().rollback(sp);
 			} catch (SQLException e) {
@@ -191,8 +191,11 @@ public class Database implements _IDatabase{
 				cache.registerLockRelease();
 			}
 		}
-		public void rollback() {
-			rollback(savepoint);
+		public void rollback(Throwable th) {
+			boolean entireTransactionIsRolledBack = getJdbcTypeHelper().hasTransactionRolledBack(th); 
+			if (!entireTransactionIsRolledBack){
+				rollbackToSavePoint(savepoint);
+			}
 			txnUserAttributes.rollback(checkpoint);
 			updateTransactionStack();
 			if (transactionStack.isEmpty()){
@@ -201,8 +204,20 @@ public class Database implements _IDatabase{
 				} catch (SQLException e) {
 					throw new RuntimeException(e);
 				}
+			}else{
+				if (entireTransactionIsRolledBack){
+					if (RuntimeException.class.isInstance(th)){
+						throw (RuntimeException)th;
+					}else {
+						throw new RuntimeException(th);
+					}
+				}
 			}
 		}
+		/*
+		public void rollback() {
+			rollback(null);
+		}*/
 
 		private void updateTransactionStack() {
 			Transaction completedTransaction = transactionStack.peek();
@@ -345,7 +360,7 @@ public class Database implements _IDatabase{
 		}
 	}
 
-	private static void ensureFactorySettings() {
+	public void loadFactorySettings() {
     	List<String> installerNames = Config.instance().getInstallers();
 		try {
 			for (String installerName : installerNames){
@@ -397,7 +412,6 @@ public class Database implements _IDatabase{
 		}
 		if (migrate) {
 			migrateTables();
-			ensureFactorySettings();
 		} else {
 			loadTables(false);
 		}
@@ -428,6 +442,9 @@ public class Database implements _IDatabase{
 			}
 			stmt.executeUpdate();
 			conn.commit();
+		}
+		if (conn.getMetaData().supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED)) {
+			conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 		}
 
 		return conn;

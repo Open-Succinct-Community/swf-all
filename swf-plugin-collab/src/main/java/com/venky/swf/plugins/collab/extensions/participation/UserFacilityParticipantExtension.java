@@ -19,9 +19,6 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 	static {
 		registerExtension(new UserFacilityParticipantExtension());
 	}
-	protected UserFacilityParticipantExtension() {
-		super(UserFacility.class);
-	}
 
 	@Override
 	protected List<Integer> getAllowedFieldValues(User user, UserFacility model, String fieldName) {

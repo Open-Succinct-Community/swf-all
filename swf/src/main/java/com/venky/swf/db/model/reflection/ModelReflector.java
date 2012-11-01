@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,8 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
-import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_COLUMN;
+import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
+import com.venky.swf.db.annotations.model.UNIQUE_KEY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
@@ -66,6 +68,11 @@ public class ModelReflector<M extends Model> {
     }
     
 	private Cache<String, SequenceSet<String>> extensionPointsCache = new Cache<String, SequenceSet<String>>() {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3938846263913578958L;
 
 		@Override
 		protected SequenceSet<String> getValue(String k) {
@@ -122,8 +129,8 @@ public class ModelReflector<M extends Model> {
 		return reflector.canReflect(o);
 	}
 
-    public String getDescriptionColumn(){
-    	HAS_DESCRIPTION_COLUMN descColumn = getAnnotation(HAS_DESCRIPTION_COLUMN.class);
+    public String getDescriptionField(){
+    	HAS_DESCRIPTION_FIELD descColumn = getAnnotation(HAS_DESCRIPTION_FIELD.class);
     	
         if (descColumn != null){
         	String column = descColumn.value();
@@ -158,10 +165,10 @@ public class ModelReflector<M extends Model> {
             Method setter = getFieldSetter(fieldName);
     		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 
-        	if (ObjectUtil.isVoid(value) && getColumnDescriptor(getter).isNullable()){
-                setter.invoke(record, getter.getReturnType().cast(null));
-    		}else {
+        	if (!ObjectUtil.isVoid(value) || getter.getReturnType().isPrimitive()){
                 setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
+        	}else {
+                setter.invoke(record, getter.getReturnType().cast(null));
         	}
         } catch (Exception e1) {
             throw new RuntimeException(e1);
@@ -184,6 +191,16 @@ public class ModelReflector<M extends Model> {
     public List<Method> getFieldGetters(){
     	loadMethods(fieldGetters, getFieldGetterMatcher());
     	return fieldGetters;
+    }
+    
+    private SequenceSet<String> fieldGetterSignatures = new SequenceSet<String>();
+    public List<String> getFieldGetterSignatures(){
+    	if (fieldGetterSignatures.isEmpty()){
+    		for (Method m : getFieldGetters()){
+    			fieldGetterSignatures.add(getSignature(m));
+    		}
+    	}
+    	return fieldGetterSignatures;
     }
     
     private SequenceSet<Method> indexedFieldGetters = new SequenceSet<Method>();
@@ -291,6 +308,45 @@ public class ModelReflector<M extends Model> {
     	return new ArrayList<String>(indexedColumns.keySet());
     }
     
+    private Cache<String,SequenceSet<String>> uniqueKeys = null; 
+    public Cache<String,SequenceSet<String>> getUniqueKeys(){
+    	if (uniqueKeys == null){
+        	uniqueKeys = new Cache<String, SequenceSet<String>>(0,0) {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				protected SequenceSet<String> getValue(String k) {
+					return new SequenceSet<String>();
+				} 
+        		
+        	};
+    		for (Method fieldGetter : getFieldGetters()){
+    			UNIQUE_KEY key = this.getAnnotation(fieldGetter, UNIQUE_KEY.class);
+    			if (key != null){
+        			String fieldName = getFieldName(fieldGetter);
+        			StringTokenizer keys = new StringTokenizer(key.value(),",");
+        			while (keys.hasMoreTokens()){
+            			uniqueKeys.get(keys.nextToken()).add(fieldName);
+        			}
+    			}
+    		}
+    	}
+    	return uniqueKeys;
+    }
+    private SequenceSet<SequenceSet<String>> singleColumnUniqueKeys = null;
+    public Collection<SequenceSet<String>> getSingleColumnUniqueKeys(){
+    	if (singleColumnUniqueKeys == null){
+    		singleColumnUniqueKeys = new SequenceSet<SequenceSet<String>>();
+    		for (SequenceSet<String> uk : getUniqueKeys().values()){
+    			if (uk.size() == 1){
+    				singleColumnUniqueKeys.add(uk);
+    			}
+    		}
+    	}
+    	return singleColumnUniqueKeys;
+    }
+    
+    
     public List<String> getRealFields(){
         return getFields(new RealFieldMatcher());
     }
@@ -325,7 +381,10 @@ public class ModelReflector<M extends Model> {
 		}
     }
 
-
+    public boolean isFieldMandatory(String fieldName){
+    	Method fieldGetter = getFieldGetter(fieldName);
+    	return !getColumnDescriptor(fieldGetter).isNullable();
+    }
     public boolean isFieldEditable(String fieldName){
         return isFieldVisible(fieldName) && isFieldSettable(fieldName) && !isFieldProtected(fieldName) ;
     }
@@ -403,6 +462,11 @@ public class ModelReflector<M extends Model> {
     }
 
     private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4626497380273214264L;
+
 		@Override
 		protected String getValue(Method method) {
 			String fieldName = null;
@@ -607,6 +671,11 @@ public class ModelReflector<M extends Model> {
 
      
      private Cache<Class<? extends Annotation>,Annotation> classAnnotationCache = new Cache<Class<? extends Annotation>, Annotation>(){
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -4698644911072168124L;
+
 		@Override
 		protected Annotation getValue(Class<? extends Annotation> annotationClass) {
 			Annotation a = reflector.getAnnotation(getModelClass(), annotationClass);
@@ -620,11 +689,21 @@ public class ModelReflector<M extends Model> {
      }
      
      private Cache<Method,Cache<Class<? extends Annotation>,Annotation>> methodAnnotationCache = new Cache<Method, Cache<Class<? extends Annotation>,Annotation>>(){
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4256698883995018084L;
+
 		@Override
 		protected Cache<Class<? extends Annotation>, Annotation> getValue(final Method k) {
 			Timer timer = Timer.startTimer();
 			try {
 				return new Cache<Class<? extends Annotation>, Annotation>() {
+					/**
+					 * 
+					 */
+					private static final long serialVersionUID = 4851400562811398820L;
+
 					@Override
 					protected Annotation getValue(
 							Class<? extends Annotation> annotationClass) {

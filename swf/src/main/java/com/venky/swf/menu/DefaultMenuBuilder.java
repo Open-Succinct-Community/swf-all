@@ -39,9 +39,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
 		Set<String> tableNames = Database.getTableNames();
         for (String tableName : tableNames){
 			Table<?> table = Database.getTable(tableName);
-			if (!table.isVirtual()){
-				addMenuItem(user,appmenu, table);
-			}
+			addMenuItem(user,appmenu, table);
         }
         return ;
     }

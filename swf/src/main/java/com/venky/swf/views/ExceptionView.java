@@ -9,6 +9,7 @@ import java.io.StringWriter;
 
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.path._IPath;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.text.Label;
 
@@ -27,7 +28,11 @@ public class ExceptionView extends HtmlView{
     protected void createBody(Body b) {
         StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
-        th.printStackTrace(w);
+        if (Config.instance().isDevelopmentEnvironment()){
+            th.printStackTrace(w);
+        }else {
+        	w.write(th.toString());
+        }
     	
         Label lbl = new Label();
         lbl.setText(sw.toString());

@@ -35,11 +35,11 @@ public class PostgresqlHelper extends JdbcTypeHelper{
 		return " NOWAIT ";
 	}
 	@Override
-	public boolean isTimeoutException(SQLException ex){
-		if (!super.isTimeoutException(ex)){
+	public boolean isQueryTimeoutException(SQLException ex){
+		if (!hasTransactionRolledBack(ex)){
 			return ex.getSQLState().equals("55P03");
 		}
-		return false;
+		return super.isQueryTimeoutException(ex);
 	}
     @Override
     public String getAutoIncrementInstruction() {

@@ -10,9 +10,6 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 	static {
 		registerExtension(new UserParticipantExtension());
 	}
-	protected UserParticipantExtension() {
-		super(User.class);
-	}
 	
 	@Override
 	protected List<Integer> getAllowedFieldValues(User user, User partial, String fieldName) {

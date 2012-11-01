@@ -1,6 +1,6 @@
 package com.venky.swf.plugins.security.extensions;
 
-import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +37,9 @@ public class ParticipantControllerAccessExtension implements Extension{
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void invoke(Object... context) {
 		User user = (User)context[0];
+		if (user.isAdmin()){
+			return;
+		}
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
@@ -137,7 +140,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if (selectedModel != null){ 
 			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
 				RolePermission permission = permissionIterator.next();
-				InputStream condition = permission.getConditionBlob();
+				Reader condition = permission.getCondition();
 				String sCondition = (condition == null ? null : StringUtil.read(condition));
 				if (!ObjectUtil.isVoid(sCondition)){
 					Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);

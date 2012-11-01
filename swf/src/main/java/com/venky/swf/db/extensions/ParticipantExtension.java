@@ -1,5 +1,6 @@
 package com.venky.swf.db.extensions;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,14 +14,24 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 public abstract class ParticipantExtension<M extends Model> implements Extension{
 
 	protected static <M extends Model> void registerExtension(ParticipantExtension<M> instance){
-		Registry.instance().registerExtension(User.GET_PARTICIPATION_OPTION + "." + instance.getModelClass().getSimpleName(), instance);
+		Class<M> modelClass = getModelClass(instance);
+		instance.modelClass = modelClass;
+		instance.ref = ModelReflector.instance(modelClass);
+		Registry.instance().registerExtension(User.GET_PARTICIPATION_OPTION + "." + modelClass.getSimpleName() , instance);
 	}
 	
-	private final Class<M> modelClass; 
-	private final ModelReflector<M> ref ; 
-	protected ParticipantExtension(Class<M> modelClass){
-		this.modelClass = modelClass; 
-		this.ref = ModelReflector.instance(modelClass);
+	
+	@SuppressWarnings("unchecked")
+	protected static <M extends Model> Class<M> getModelClass(ParticipantExtension<M> instance){
+		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
+		return (Class<M>) pt.getActualTypeArguments()[0];
+	}
+
+	
+	private Class<M> modelClass; 
+	private ModelReflector<M> ref ; 
+	protected ParticipantExtension(){
+		
 	}
 	
 	public ModelReflector<M> getReflector(){

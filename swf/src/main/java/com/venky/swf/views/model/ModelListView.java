@@ -96,6 +96,12 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		exportxls.addControl(new Image("/resources/images/exportxls.png","Export"));
     		newLink.addControl(exportxls);
     	}
+    	if (getPath().canAccessControllerAction("truncate") && getPath().canAccessControllerAction("destroy")){
+    		Link truncate = new Link();
+    		truncate.setUrl(getPath().controllerPath()+"/truncate");
+    		truncate.addControl(new Image("/resources/images/destroy.png","Truncate"));
+    		newLink.addControl(truncate);
+    	}
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
         
     	Row rowContainingTable = container.createRow();
@@ -130,6 +136,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
         for (M record : records) {
         	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
+        		continue;
+        	}
+        	if (!getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
         		continue;
         	}
             Row row = table.createRow();

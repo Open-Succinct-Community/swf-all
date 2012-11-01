@@ -176,13 +176,30 @@ public class Path implements _IPath{
     
     public Path(String target) {
         this.target = target;
+
         StringTokenizer stok = new StringTokenizer(target, "/");
+        boolean isResource = false;
         while (stok.hasMoreTokens()) {
-            pathelements.add(stok.nextToken());
+        	String token = stok.nextToken();
+        	if (pathelements.isEmpty()){
+            	pathelements.add(token);
+            	if (token.equals("resources")){
+            		isResource = true;
+            	}
+        	}else if (isResource){
+        		if (pathelements.size() == 1){
+        			pathelements.add("/"+token);
+        		}else {
+            		String sofar = pathelements.remove(1);
+            		pathelements.add(sofar+"/"+token);
+        		}
+        	}else {
+        		pathelements.add(token);
+        	}
         }
         
         int pathElementSize = pathelements.size();
-        for (int i = 0 ; i < pathElementSize ; i++){
+        for (int i = 0 ; !isResource && i < pathElementSize ; i++){
         	String token = pathelements.get(i);
         	Class<? extends Model> modelClass = getModelClass(token);
         	if (modelClass != null){
@@ -608,25 +625,28 @@ public class Path implements _IPath{
     		}
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
-	    	ModelReflector<?> referredModelReflector = mi.getReflector();
+    		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
+
+    		ModelReflector<?> referredModelReflector = mi.getReflector();
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
 	    		if (reflector.reflects(childModelClass)){
 	            	CONNECTED_VIA join = referredModelReflector.getAnnotation(childGetter,CONNECTED_VIA.class);
 	            	if (join == null){
-	            		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
 	            		for (Method referredModelGetter: referredModelGetters){ 
     	        	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
     	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
 
     	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
 	            		}
-	            		referredModelWhere.add(referredModelWhereChoices);
 	            	}else {
 	            		String referredModelIdColumnName = join.value();
-	            		referredModelWhere.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            		referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
 	            	}
 	    		}
+	    	}
+	    	if (!referredModelWhereChoices.isEmpty()){
+	    		referredModelWhere.add(referredModelWhereChoices);
 	    	}
     		if (referredModelWhere.getParameterizedSQL().length() > 0){
     			where.add(referredModelWhere);

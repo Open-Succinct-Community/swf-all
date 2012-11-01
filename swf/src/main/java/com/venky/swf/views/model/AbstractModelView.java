@@ -169,9 +169,10 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
                 @SuppressWarnings("unchecked")
 				Class<? extends Model> parentModelClass = (Class<? extends Model>)parentModelGetter.getReturnType();
                 ModelReflector<? extends Model> parentModelReflector = ModelReflector.instance(parentModelClass);
-                String descriptionColumn = parentModelReflector.getDescriptionColumn();
-                Object descValue = parentModelReflector.getFieldGetter(descriptionColumn).invoke(parentModel);
-                return StringUtil.valueOf(descValue);
+                String descriptionColumn = parentModelReflector.getDescriptionField();
+                Method descGetter = parentModelReflector.getFieldGetter(descriptionColumn);
+                Object descValue = descGetter.invoke(parentModel);
+                return Database.getJdbcTypeHelper().getTypeRef(descGetter.getReturnType()).getTypeConverter().toString(descValue);
             }
         }
         return null;

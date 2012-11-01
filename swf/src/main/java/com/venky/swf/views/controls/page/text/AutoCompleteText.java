@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views.controls.page.text;
 
+import java.io.Reader;
 import java.lang.reflect.Method;
 
 import com.venky.core.util.ObjectUtil;
@@ -24,15 +25,19 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 	 */
 	private static final long serialVersionUID = 1L;
 	private Class<M> modelClass; 
-    private String descriptionColumn = null ;
+    private String descriptionField = null ;
     private TextBox description = null; 
     public AutoCompleteText(Class<M> modelClass){
     	this(modelClass,"");
     }
     public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
-        this.descriptionColumn = ModelReflector.instance(modelClass).getDescriptionColumn();
-        this.description = new TextBox();
+        ModelReflector<M> ref = ModelReflector.instance(modelClass);
+        this.descriptionField = ref.getDescriptionField();
+    	this.description = new TextBox();
+        if (Reader.class.isAssignableFrom(ref.getFieldGetter(descriptionField).getReturnType())){
+        	this.description.addClass("reader");
+        }
         this.description.setAutocompleteServiceURL(url);
         setVisible(true);
     }
@@ -58,7 +63,11 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         super.setName(name);
         description.setName("_AUTO_COMPLETE_"+getName());
     }
-    
+    @Override
+    public void setReadOnly(final boolean readonly){
+    	super.setReadOnly(readonly);
+    	description.setReadOnly(readonly);
+    }
     @Override
     public void setValue(Object value){
         super.setValue(value);
@@ -66,10 +75,11 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 			M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
                 ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-                Method descriptionGetter = reflector.getFieldGetter(descriptionColumn);
+                Method descriptionGetter = reflector.getFieldGetter(descriptionField);
                 Object dvalue = null;
                 try {
                     dvalue = descriptionGetter.invoke(model);
+                    dvalue = Database.getJdbcTypeHelper().getTypeRef(descriptionGetter.getReturnType()).getTypeConverter().toString(dvalue);
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

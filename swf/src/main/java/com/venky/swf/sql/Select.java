@@ -29,7 +29,7 @@ public class Select extends SqlStatement{
 	private String[] orderBy;
 	private String[] groupBy;
 	protected boolean wait = true;
-	protected boolean lock = false;
+	protected boolean lock = true;
 	public Select(String... columnNames){
 		this(false,columnNames);
 	}
@@ -106,7 +106,7 @@ public class Select extends SqlStatement{
 		}
 		
 		if (lock){
-			builder.append(" FOR UPDATE ");
+			builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
 
 			if (!wait && Database.getJdbcTypeHelper().isNoWaitSupported()){
 				builder.append(Database.getJdbcTypeHelper().getNoWaitLiteral());
@@ -187,11 +187,10 @@ public class Select extends SqlStatement{
 		            if (maxRecords > 0){
 		            	st.setMaxRows(maxRecords+1); //Request one more so that you can know if the list is complete or not.
 		            }
-		            if (lock){
-		            	if (!wait && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
-		            		st.setQueryTimeout(10);
-		            	}
-		            }
+	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper().isNoWaitSupported())) && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
+	            		Logger.getLogger(getClass().getName()).fine("Setting Statement Time out");
+	            		st.setQueryTimeout(10);
+	            	}
 		            result = new SequenceSet<Record>();
 		            if (st.execute()){
 		                ResultSet rs = st.getResultSet();
@@ -222,7 +221,7 @@ public class Select extends SqlStatement{
 		            	}
 		            }
 	            }catch (SQLException ex){
-	            	if (Database.getJdbcTypeHelper().isTimeoutException(ex)){
+	            	if (Database.getJdbcTypeHelper().isQueryTimeoutException(ex)){
 	            		throw new SWFTimeoutException(ex);
 	            	}else {
 	            		throw ex;

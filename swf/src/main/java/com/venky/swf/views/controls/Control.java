@@ -132,7 +132,7 @@ public class Control extends Properties implements _IControl{
         }
     }
     
-    public final void setReadOnly(final boolean readonly){
+    public void setReadOnly(final boolean readonly){
     	if (readonly){
     		setProperty("readonly","readonly");
     	}else{

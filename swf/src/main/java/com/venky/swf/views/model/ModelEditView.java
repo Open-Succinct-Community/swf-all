@@ -156,6 +156,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                 	}else {
                 		r.createColumn().addControl(fieldData);
                 	}
+                	r.getLastColumn().addClass("data");
                 }else {
                     Row r = getRow(table,true);
                     Kind protectionKind = getFieldProtection(fieldName);
@@ -170,7 +171,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                     }
                     r.createColumn().addControl(fieldLabel);
                     r.createColumn().addControl(fieldData);
-                }	
+                    r.getLastColumn().addClass("data");
+                }
             }else {
                 fieldData.setVisible(false);
                 hiddenFields.add(fieldData);

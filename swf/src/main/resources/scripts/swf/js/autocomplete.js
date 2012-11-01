@@ -44,6 +44,6 @@ $(function(){
 });
 
 $(function() {
-    $('form:first *:input[type!=hidden]:not([disabled]):first').focus();
+    $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):first').focus();
 });
 
