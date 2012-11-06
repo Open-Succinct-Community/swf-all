@@ -17,11 +17,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
 
 public class ModelWriter<M extends Model> extends ModelIO<M>{
@@ -53,7 +53,7 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
 		Sheet sheet = wb.createSheet(StringUtil.pluralize(ref.getModelClass().getSimpleName()));
 		
 		CellStyle numberStyle = wb.createCellStyle();
-		numberStyle.setDataFormat(createHelper.createDataFormat().getFormat("#"));
+		numberStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.###"));
 		
 		CellStyle dateStyle = wb.createCellStyle();
 		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
@@ -65,6 +65,8 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
 		Iterator<String> fi = fields.iterator();
     	
     	HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
+    	HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
+    	
     	int rowNum = START_ROW; 
     	Bucket columnNum = new Bucket(START_COLUMN);
     	Row header = sheet.createRow(rowNum);
@@ -72,15 +74,34 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
     		String fieldName = fi.next();
     		Method getter = ref.getFieldGetter(fieldName);
 			Method referredModelGetter = ref.getReferredModelGetterFor(getter);
-			Cell headerCell = header.createCell(columnNum.intValue());
-			headerCell.setCellStyle(headerStyle);
+			
 			if (referredModelGetter != null ){
-				headerCell.setCellValue(referredModelGetter.getName().substring("get".length()));
-				referedModelMap.put(fieldName, ref.getReferredModelClass(referredModelGetter));
-			}else {
-				headerCell.setCellValue(StringUtil.camelize(fieldName));
+				Class<? extends Model> referredModelClass = ref.getReferredModelClass(referredModelGetter);
+				ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+				String baseFieldHeading = referredModelGetter.getName().substring("get".length());
+				SequenceSet<String> fieldsToExport = new SequenceSet<String>();
+				referedModelMap.put(fieldName,referredModelClass);
+				if (!ref.isFieldSettable(fieldName)){
+					fieldsToExport.add(baseFieldHeading + "." + StringUtil.camelize(referredModelReflector.getDescriptionField()));
+				}else {
+					loadFieldsToExport(fieldsToExport, baseFieldHeading, referredModelReflector);
+				}
+				referredModelFieldsToExport.put(fieldName,fieldsToExport);
 			}
-			columnNum.increment();
+			
+			if (referedModelMap.get(fieldName) == null){
+				Cell headerCell = header.createCell(columnNum.intValue());
+				headerCell.setCellStyle(headerStyle);
+				headerCell.setCellValue(StringUtil.camelize(fieldName));
+				columnNum.increment();
+			}else {
+				for (String headerField : referredModelFieldsToExport.get(fieldName)){
+					Cell headerCell = header.createCell(columnNum.intValue());
+					headerCell.setCellStyle(headerStyle);
+					headerCell.setCellValue(headerField);
+					columnNum.increment();
+				}
+			}
     	}
     	
     	for (M m: records){
@@ -91,31 +112,20 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
     		while (fi.hasNext()){
     			String f = fi.next();
     			Object value = ref.get(m, f);
-    			String referredTableDescription = null ;
-    			if (value != null ){
-        			TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter();
-        			if (referedModelMap.get(f) != null){
-        				Class<? extends Model> referredModelClass = referedModelMap.get(f);
-        				ModelReflector<? extends Model> referredReflector = ModelReflector.instance(referredModelClass);
-    					Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
-    					if (!ref.isFieldSettable(f)){
-    						String descField = referredReflector.getDescriptionField() ;
-    						referredTableDescription =  referredReflector.get(referred,descField);
-    					}else {
-    						referredTableDescription = referred.uniqueDescription();
-    					}
-        			}
-    			}
-
-    			if (!ObjectUtil.isVoid(value)){
-    				if (referredTableDescription != null){
-    					writeNextColumn(r, columnNum, referredTableDescription, numberStyle, dateStyle);
-    				}else {
-    					writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
+    			if (referedModelMap.get(f) != null){
+    				for (String cf: referredModelFieldsToExport.get(f) ){
+    					writeNextColumn(r, columnNum, getValue(m,cf), numberStyle, dateStyle);
+    					columnNum.increment();
     				}
+    			}else {
+    				writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
+    				columnNum.increment();
     			}
-    			columnNum.increment();
 			}
+    	}
+    	
+    	for (int i = 0 ; i < columnNum.intValue() ; i ++ ){
+    		sheet.autoSizeColumn(i);
     	}
 
 	}

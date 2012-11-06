@@ -99,7 +99,15 @@ public class LuceneIndexer {
 		Document doc = new Document();
 		boolean addedFields = false;
 		for (String fieldName: indexedColumns){
-			Object value = r.get(fieldName);
+			ModelReflector<?> reflector = Database.getTable(tableName).getReflector();
+			
+			Object value = null; 
+			if (reflector.isFieldVirtual(fieldName)){
+				value = reflector.get(r.getAsProxy(reflector.getModelClass()), fieldName);
+			}else {
+				value = r.get(fieldName);
+			}
+			
 			if (!ObjectUtil.isVoid(value) ){
 				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
 				TypeConverter<?> converter = ref.getTypeConverter();

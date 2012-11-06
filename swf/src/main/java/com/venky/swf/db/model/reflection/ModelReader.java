@@ -2,8 +2,10 @@ package com.venky.swf.db.model.reflection;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
@@ -11,11 +13,18 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class ModelReader<M extends Model> extends ModelIO<M> {
 
@@ -32,13 +41,18 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
         }
         
         String[] heading = new String[header.getLastCellNum()]; // as cell indexes start at zero,LastCellNum can be seen as Size of row  
+        Map<String,Integer> headingIndexMap = new HashMap<String, Integer>();
         for (int i = 0 ; i < heading.length ; i ++ ){
             heading[i] = header.getCell(i).getStringCellValue();
+            headingIndexMap.put(heading[i], i);
         }
+        
+        
+        
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
         	M m = createInstance();
-    		copyRowValuesToBean(m, row, heading);
+    		copyRowValuesToBean(m, row, heading,headingIndexMap);
         	records.add(m);
         }
         return records;
@@ -82,9 +96,10 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 		}
 		return value;
 	}
-	protected void copyRowValuesToBean(M m, Row row,String[] heading) {
-		ModelReflector<M> ref = ModelReflector.instance(getBeanClass());
-
+	protected void copyRowValuesToBean(M m, Row row,String[] heading,Map<String, Integer> headingIndexMap) {
+		ModelReflector<M> ref = getReflector();
+		SequenceSet<String> handledReferenceFields = new SequenceSet<String>();
+		
 		for (int i = 0; i < heading.length; i++) {
 			Method getter = getGetter(heading[i]);
 			if (getter == null) {
@@ -117,19 +132,29 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 			if (cell == null) {
 				continue;
 			}
-			if (type == GetterType.REFERENCE_MODEL_GETTER) {
-				String descriptionValue = cell.getStringCellValue();
-				if (!ObjectUtil.isVoid(descriptionValue)) {
-					Class<? extends Model> referredModelClass = ref.getReferredModelClass(getter);
-					
-					Model referredModel = Database.getTable(referredModelClass).get(descriptionValue);
-					if (referredModel == null) {
-						throw new RuntimeException(
-								referredModelClass.getSimpleName() + ":"
-										+ descriptionValue + " not setup ");
-					}
-					value = referredModel.getId();
+			if (type == GetterType.REFERENCE_MODEL_GETTER ) {
+				if (handledReferenceFields.contains(fieldName)){
+					continue;
 				}
+				handledReferenceFields.add(fieldName);
+				String baseFieldHeading = getter.getName().substring("get".length());
+
+				Class<? extends Model> referredModelClass = ref.getReferredModelClass(getter);
+				ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+				
+				SequenceSet<String> refModelFields = new SequenceSet<String>();
+				loadFieldsToExport(refModelFields, baseFieldHeading, referredModelReflector);
+				
+				Map<String,Cell> fieldValues = new HashMap<String, Cell>();
+				for (String field:refModelFields){
+					fieldValues.put(field.substring(field.indexOf('.')+1), row.getCell(headingIndexMap.get(field)));
+				}
+
+				Model referredModel = getModel(referredModelReflector,fieldValues);
+				if (referredModel == null) {
+					throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information ");
+				}
+				value = referredModel.getId();
 			} else if (type == GetterType.FIELD_GETTER) {
 				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 				TypeConverter<?> converter = tref.getTypeConverter();
@@ -151,4 +176,53 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 		}
 
 	}
+
+	private Model getModel(ModelReflector<? extends Model> reflector, Map<String, Cell> headingValues) {
+		Expression where = new Expression(Conjunction.AND);
+
+		Cache<String,Map<String,Cell>> newHeadingValues = new Cache<String, Map<String,Cell>>(){
+
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = -1497598693844155855L;
+
+			@Override
+			protected Map<String, Cell> getValue(String k) {
+				return new HashMap<String, Cell>();
+			}
+			
+		};
+		
+		Iterator<String> headingIterator = headingValues.keySet().iterator();
+		while (headingIterator.hasNext()){
+			String heading = headingIterator.next();
+			int indexOfDot = heading.indexOf('.');
+			
+			if (indexOfDot >= 0){
+				String referredFieldName = StringUtil.underscorize(heading.substring(0, indexOfDot) + "Id"); 
+				newHeadingValues.get(referredFieldName).put(heading.substring(indexOfDot+1), headingValues.get(heading));
+			}else {
+				String fieldName = StringUtil.underscorize(heading);
+				Object value = getCellValue(headingValues.get(heading),reflector.getFieldGetter(fieldName).getReturnType());
+				where.add(new Expression(StringUtil.underscorize(heading),Operator.EQ,value));
+			}
+		}
+		for (String referenceFieldName: newHeadingValues.keySet()){
+			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(referenceFieldName)));
+			Model referred = getModel(ModelReflector.instance(referredModelClass), newHeadingValues.get(referenceFieldName));
+			where.add(new Expression(referenceFieldName,Operator.EQ,referred.getId()));
+		}
+		
+		List<? extends Model> m = new Select().from(reflector.getModelClass()).where(where).execute();
+		if (m.size() == 1){
+			return m.get(0);
+		}else if (m.size() == 0){
+			return null;
+		}else {
+			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL());
+		}
+	}
+
+
 }

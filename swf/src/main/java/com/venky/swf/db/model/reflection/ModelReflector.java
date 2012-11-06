@@ -42,6 +42,7 @@ import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.UNIQUE_KEY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 
 public class ModelReflector<M extends Model> {
@@ -308,38 +309,41 @@ public class ModelReflector<M extends Model> {
     	return new ArrayList<String>(indexedColumns.keySet());
     }
     
-    private Cache<String,SequenceSet<String>> uniqueKeys = null; 
-    public Cache<String,SequenceSet<String>> getUniqueKeys(){
+    private Cache<String,UniqueKey<M>> uniqueKeys = null; 
+    public Collection<UniqueKey<M>> getUniqueKeys(){
     	if (uniqueKeys == null){
-        	uniqueKeys = new Cache<String, SequenceSet<String>>(0,0) {
-				private static final long serialVersionUID = 1L;
+        	uniqueKeys = new Cache<String, UniqueKey<M>>() {
+				private static final long serialVersionUID = 1892299842617679145L;
 
 				@Override
-				protected SequenceSet<String> getValue(String k) {
-					return new SequenceSet<String>();
-				} 
-        		
-        	};
+				protected UniqueKey<M> getValue(String keyName) {
+					return new UniqueKey<M>(getModelClass(), keyName);
+				}
+			};
     		for (Method fieldGetter : getFieldGetters()){
     			UNIQUE_KEY key = this.getAnnotation(fieldGetter, UNIQUE_KEY.class);
     			if (key != null){
         			String fieldName = getFieldName(fieldGetter);
         			StringTokenizer keys = new StringTokenizer(key.value(),",");
         			while (keys.hasMoreTokens()){
-            			uniqueKeys.get(keys.nextToken()).add(fieldName);
+        				String keyName = keys.nextToken();
+            			uniqueKeys.get(keyName).addField(fieldName);
         			}
     			}
     		}
     	}
-    	return uniqueKeys;
+    	return uniqueKeys.values();
     }
-    private SequenceSet<SequenceSet<String>> singleColumnUniqueKeys = null;
-    public Collection<SequenceSet<String>> getSingleColumnUniqueKeys(){
+    
+    
+    private List<UniqueKey<M>> singleColumnUniqueKeys = null; 
+    public Collection<UniqueKey<M>> getSingleColumnUniqueKeys(){
     	if (singleColumnUniqueKeys == null){
-    		singleColumnUniqueKeys = new SequenceSet<SequenceSet<String>>();
-    		for (SequenceSet<String> uk : getUniqueKeys().values()){
-    			if (uk.size() == 1){
-    				singleColumnUniqueKeys.add(uk);
+    		singleColumnUniqueKeys = new ArrayList<UniqueKey<M>>();
+			
+    		for (UniqueKey<M> key: getUniqueKeys()){
+    			if (key.size() == 1){
+    				singleColumnUniqueKeys.add(key);
     			}
     		}
     	}
@@ -788,17 +792,17 @@ public class ModelReflector<M extends Model> {
      }
 
 	@SuppressWarnings("unchecked")
-	public Class<? extends Model> getReferredModelClass(Method method) {
+	public Class<? extends Model> getReferredModelClass(Method referredModelGetter) {
 		Timer timer = Timer.startTimer();
 		try {
-			if (!getClassForests().contains(method.getDeclaringClass())) {
+			if (!getClassForests().contains(referredModelGetter.getDeclaringClass())) {
 				return null;
 			}
 			Class<? extends Model> referredModelClass = null;
-			Class<?> possibleReferredModelClass = method.getReturnType();
+			Class<?> possibleReferredModelClass = referredModelGetter.getReturnType();
 			if (Model.class.isAssignableFrom(possibleReferredModelClass)
-					&& getGetterMatcher().matches(method)) {
-				String referredIdFieldName = getReferenceField(method);
+					&& getGetterMatcher().matches(referredModelGetter)) {
+				String referredIdFieldName = getReferenceField(referredModelGetter);
 				if (getFields().contains(referredIdFieldName)) {
 					referredModelClass = (Class<? extends Model>) possibleReferredModelClass;
 				}

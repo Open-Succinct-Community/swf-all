@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -628,37 +627,5 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return txnProperties.remove(name);
     }
  
-    public String uniqueDescription(){
-    	Collection<SequenceSet<String>> uniqueKeys = getReflector().getUniqueKeys().values();
-    	
-    	Expression where = new Expression(Conjunction.AND);
-    	if (uniqueKeys.isEmpty()){
-    		where.add(new Expression("ID",Operator.EQ,getProxy().getId()));
-    	}else {
-	    	Set<String> firstKey = uniqueKeys.iterator().next();
-	    	if (getReflector().getSingleColumnUniqueKeys().size() == 1){
-	    		firstKey = getReflector().getSingleColumnUniqueKeys().iterator().next();
-	    	}
-	    	if (firstKey.size() == 1){
-	    		return StringUtil.valueOf(getReflector().get(getProxy(), firstKey.iterator().next()));
-	    	}
-	    	
-	    	for (Iterator<String> i = firstKey.iterator() ; i.hasNext(); ){
-	    		String field = i.next();
-	    		String column = getReflector().getColumnDescriptor(field).getName();
-	    		
-	    		Object value = getReflector().get(getProxy(), field);
-	    		if ( value != null) {
-	        		where.add(new Expression(column,Operator.EQ,value));
-	    		}else {
-	    			where.add(new Expression(column,Operator.EQ));
-	    		}
-	    	}
-    	}
-    	return where.getRealSQL();
-    }
-    
-    
-    
     
 }

@@ -7,6 +7,8 @@ package com.venky.swf.db.table;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,7 +18,9 @@ import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
+import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 
 /**
  *
@@ -89,14 +93,29 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 		//and not the one on passed record.
     }
     public void load(ResultSet rs) throws SQLException{
+    	load(rs,null);
+    }
+    public void load(ResultSet rs,ModelReflector<? extends Model> reflector) throws SQLException{
         ResultSetMetaData meta = rs.getMetaData(); 
         for (int i = 1 ; i <= meta.getColumnCount() ; i ++ ){
         	Object columnValue = rs.getObject(i);
+        	String columnName = meta.getColumnName(i);
+        	
+        	
         	int type = meta.getColumnType(i);
         	if (JdbcTypeHelper.isLOB(type)){
 				columnValue = Database.getJdbcTypeHelper().getTypeRef(type).getTypeConverter().valueOf(columnValue);
+        	}else if (columnValue != null && reflector != null && type != Types.VARCHAR){ //SQLParser has similar code.
+        		List<TypeRef<?>> refs = Database.getJdbcTypeHelper().getTypeRefs(type);
+        		TypeRef<?> ref = null;
+        		if (refs.size() == 1){
+        			ref = refs.get(0);
+        		}else  {
+        			ref = Database.getJdbcTypeHelper().getTypeRef(reflector.getFieldGetter(reflector.getFieldName(columnName)).getReturnType());
+        		}
+        		columnValue = ref.getTypeConverter().valueOf(columnValue);
         	}
-            put(meta.getColumnName(i),columnValue);
+            put(columnName,columnValue);
         }
     }
     

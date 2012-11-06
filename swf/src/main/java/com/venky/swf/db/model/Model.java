@@ -79,8 +79,6 @@ public interface Model extends _Identifiable {
     public Record getRawRecord();
     public <M extends Model> M cloneProxy();
 
-    public String uniqueDescription();
-    
     
     public Object getTxnProperty(String name);
     public void setTxnPropery(String name,Object value);

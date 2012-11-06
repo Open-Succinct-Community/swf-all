@@ -17,6 +17,9 @@ public class DateFormatValidator extends FieldValidator<COLUMN_DEF> {
 	@Override
 	public boolean validate(COLUMN_DEF annotation, String value,
 			StringBuilder message) {
+		if (ObjectUtil.isVoid(value)){
+			return true;
+		}
 		if (annotation.value() == StandardDefault.CURRENT_DATE || annotation.value() == StandardDefault.CURRENT_TIMESTAMP){
 			String format = annotation.args();
 			if (!ObjectUtil.isVoid(format)){

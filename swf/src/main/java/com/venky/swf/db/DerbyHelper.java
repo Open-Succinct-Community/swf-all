@@ -56,16 +56,16 @@ public class DerbyHelper extends JdbcTypeHelper{
              * them during table creation
              */
             registerjdbcSQLType(Boolean.class, new TypeRef<Boolean>(
-                            java.sql.Types.BOOLEAN, "SMALLINT", 0, 0, false,false,
+                            java.sql.Types.SMALLINT, "SMALLINT", 0, 0, false,false,
                             new BooleanConverter()));
             registerjdbcSQLType(boolean.class, new TypeRef<Boolean>(
-                            java.sql.Types.BOOLEAN, "SMALLINT", 0, 0, false,false,
+                            java.sql.Types.SMALLINT, "SMALLINT", 0, 0, false,false,
                             new BooleanConverter()));
 
-            registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.TINYINT,
+            registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.SMALLINT,
                             "SMALLINT", 0, 0, false,false,new ByteConverter()));
 
-            registerjdbcSQLType(byte.class, new TypeRef<Byte>(java.sql.Types.TINYINT,
+            registerjdbcSQLType(byte.class, new TypeRef<Byte>(java.sql.Types.SMALLINT,
                             "SMALLINT", 0, 0, false,false,new ByteConverter()));
 
             registerjdbcSQLType(Short.class,

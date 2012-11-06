@@ -1,6 +1,6 @@
 /* Styling menus */
 img {
-   border-width: 0;
+   border:none
 }
 div.nav {
 	height: 1.5em;

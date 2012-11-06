@@ -196,7 +196,7 @@ public class Select extends SqlStatement{
 		                ResultSet rs = st.getResultSet();
 		                while (rs.next()){
 		                    Record r = new Record();
-		                    r.load(rs);
+		                    r.load(rs,ref);
 		                    r.setLocked(locked);
 		                    if (cache != null){
 			                    Record cachedRecord = cache.getCachedRecord(r);

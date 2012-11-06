@@ -19,6 +19,7 @@ import com.venky.parse.composite.OneOrMore;
 import com.venky.parse.composite.Sequence;
 import com.venky.parse.composite.ZeroOrMore;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
@@ -112,7 +113,15 @@ public class SQLExpressionParser {
 			if (cd != null){
 				int jdbcType = cd.getJDBCType();
 				if (jdbcType != Types.VARCHAR){
-					value = Database.getJdbcTypeHelper().getTypeRef(jdbcType).getTypeConverter().valueOf(sValue);
+					List<TypeRef<?>> refs = Database.getJdbcTypeHelper().getTypeRefs(jdbcType);
+					TypeRef<?> ref = null;
+					if (refs.size() == 1){
+						ref = refs.get(0);
+					}else {
+						String field = this.table.getReflector().getFieldName(cd.getName());
+						ref = Database.getJdbcTypeHelper().getTypeRef(this.table.getReflector().getFieldGetter(field).getReturnType());
+					}
+					value = ref.getTypeConverter().valueOf(sValue);
 				}
 			}
 			values.add(new BindVariable(value));

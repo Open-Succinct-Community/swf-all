@@ -33,7 +33,6 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.Update;
-import com.venky.swf.sql.parser.SQLExpressionParser;
 
 
 
@@ -332,49 +331,6 @@ public class Table<M extends Model> {
     }
     public M lock(int id,boolean wait){
     	return get(id,true,wait);
-    }
-    public M get(String uniqueDescription){
-    	Expression where = new SQLExpressionParser(getModelClass()).parse(uniqueDescription);
-    	if (where == null){
-    		Set<String> uk = null;
-    		if (getReflector().getUniqueKeys().size() == 1){
-    			uk = getReflector().getUniqueKeys().values().iterator().next();
-    			if (uk.size() > 1){
-    				throw new RuntimeException ("Could not understand uniqueDescription :" + uniqueDescription + ". Multiple unique key columns found for " + getRealTableName() + " :" + uk.toString());
-    			}
-    		}else if (getReflector().getUniqueKeys().size() == 0){
-        		String descField = getReflector().getDescriptionField();
-    			ColumnDescriptor desccd = getReflector().getColumnDescriptor(descField);
-        		if (!desccd.isVirtual()){
-            		uk = new SequenceSet<String>(); 
-        			uk.add(descField);
-        		}else {
-        			throw new RuntimeException ("Description field is Virtual for  table:" + getRealTableName());
-        		}
-    		}else {
-    			Collection<SequenceSet<String>> scuks = getReflector().getSingleColumnUniqueKeys();
-    			
-    			if (scuks.size() == 1){
-    				uk = scuks.iterator().next();
-    			}
-    			
-    			if (uk == null) {
-    				throw new RuntimeException ("Could not understand uniqueDescription :" + uniqueDescription + ". Multiple unique keys found for " + getRealTableName() + " :" + getReflector().getUniqueKeys().toString());
-    			}
-    		}
-    		String field = uk.iterator().next();
-    		Class<?> fieldClass = getReflector().getFieldGetter(field).getReturnType();
-    		Object value = Database.getJdbcTypeHelper().getTypeRef(fieldClass).getTypeConverter().valueOf(uniqueDescription);
-    		where = new Expression(getReflector().getColumnDescriptor(field).getName(),Operator.EQ,value);
-    	}
-    	List<M> result = new Select().from(getModelClass()).where(where).execute(getModelClass());
-    	if (result.isEmpty()){
-            return null;
-        }else if (result.size() == 1){
-            return result.get(0);
-        }else {
-        	throw new RuntimeException("Multiple records found in " + getRealTableName()+ " for " + uniqueDescription);
-        }
     }
     public M get(int id) {
     	return get(id,false,false);

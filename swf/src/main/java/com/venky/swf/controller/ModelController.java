@@ -85,10 +85,11 @@ public class ModelController<M extends Model> extends Controller {
     public View exportxls(){
 		List<String> fieldsIncluded = getReflector().getFields();
 		Iterator<String> fieldIterator = fieldsIncluded.iterator();
+		int numUniqueKeys = getReflector().getUniqueKeys().size();
 		while (fieldIterator.hasNext()){
 			String field = fieldIterator.next();
 			if (getReflector().isHouseKeepingField(field)){
-				if (!field.equals("ID")){
+				if (!field.equals("ID") || numUniqueKeys > 0){
 					fieldIterator.remove();
 				}
 			}
@@ -130,8 +131,9 @@ public class ModelController<M extends Model> extends Controller {
 		    					List<M> recordsWithMatchingDescription = new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue)).execute(getModelClass());
 		    					if (recordsWithMatchingDescription.size() > 1){
 		    						throw new RuntimeException("Found multiple records for description, Please use the id column");
+		    					}else if (recordsWithMatchingDescription.size() == 1){
+		    						preExistingRecord = recordsWithMatchingDescription.get(0);
 		    					}
-		    					preExistingRecord = recordsWithMatchingDescription.get(0);
 		    				}
 	    				}
 	    				if (preExistingRecord != null){
