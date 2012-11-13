@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.github.venkatramanm.swf-all</groupId>
     <artifactId>swf-all</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <version>1.7</version>
   </parent>
   <artifactId>swf-plugin-collab</artifactId>
   <name>swf-plugin-collab</name>
@@ -43,7 +43,7 @@
   	<dependency>
   		<groupId>com.github.venkatramanm.swf-all</groupId>
   		<artifactId>swf</artifactId>
-  		<version>1.7-SNAPSHOT</version>
+  		<version>1.7</version>
   	</dependency>
   </dependencies>
 </project>
