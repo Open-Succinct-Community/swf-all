@@ -141,7 +141,6 @@ public class SQLExpressionParser {
 				}
 			}
 		}
-		//TODO Exception if nothing found at recurssion top.
 		return ret;
 	}
 	

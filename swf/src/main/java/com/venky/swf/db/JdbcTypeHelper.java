@@ -30,6 +30,7 @@ import com.venky.core.io.StringReader;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.DoubleUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
@@ -567,18 +568,8 @@ public abstract class JdbcTypeHelper {
     	}
     }
 
-  //TODO Moved to Core. Needs Refactoring.
   	public Throwable getEmbeddedException(Throwable in, Class<?> instanceOfThisClass){
-          Throwable ret = null ;
-          Throwable ex = in;
-          while (ex != null ){
-          	if (instanceOfThisClass.isInstance(ex)){
-          		ret = ex;
-          	}
-          	ex = ex.getCause();
-          }
-          return ret;
-      	
+  		return ExceptionUtil.getEmbeddedException(in, instanceOfThisClass);
   	}
   	
   	public boolean isVoid (Object o){
