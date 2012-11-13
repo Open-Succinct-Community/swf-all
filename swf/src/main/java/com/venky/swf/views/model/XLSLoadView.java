@@ -1,7 +1,7 @@
 package com.venky.swf.views.model;
 
-import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
+import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
@@ -11,10 +11,10 @@ import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 
-public class ModelLoadView<M extends Model> extends AbstractModelView<M>{
+public class XLSLoadView extends HtmlView{
 
-	public ModelLoadView(Path path, Class<M> modelClass, String[] includedFields) {
-		super(path, modelClass, includedFields);
+	public XLSLoadView(Path path) {
+		super(path);
 	}
 	
     protected Control createLoadForm(){

@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.core.string.StringUtil;
@@ -33,14 +34,12 @@ import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.reflection.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.model.reflection.ModelWriter;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
-import com.venky.swf.path.Path.ModelInfo;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -53,7 +52,6 @@ import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
-import com.venky.swf.views.model.ModelLoadView;
 import com.venky.swf.views.model.ModelShowView;
 
 /**
@@ -108,58 +106,17 @@ public class ModelController<M extends Model> extends Controller {
     
     @Depends("save")
     public View importxls(){
-        HttpServletRequest request = getPath().getRequest();
-
-        if (request.getMethod().equalsIgnoreCase("GET")) {
-        	return dashboard(new ModelLoadView<M>(getPath(), getModelClass(), getIncludedFields()));
-        }else {
-        	Map<String,Object> formFields = getFormFields();
-        	if (!formFields.isEmpty()){
-        		InputStream in = (InputStream)formFields.get("datafile");
-        		try {
-	    			Workbook book = new HSSFWorkbook(in);
-	    			ModelReader<M> modelReader = new ModelReader<M>(getModelClass());
-	    			for (M m : modelReader.read(book.getSheet(StringUtil.pluralize(getModelClass().getSimpleName())))){
-	    				M preExistingRecord  = null;
-	    				if (m.getId() > 0){
-	    					preExistingRecord = Database.getTable(getModelClass()).get(m.getId());
-	    				}else {
-		    				String descriptionField = getReflector().getDescriptionField();
-		    				Object descriptionValue = getReflector().get(m, descriptionField);
-		    				if ( !ObjectUtil.isVoid(descriptionField) && !ObjectUtil.isVoid(descriptionValue) ){
-		    					String descriptionColumn = getReflector().getColumnDescriptor(descriptionField).getName();
-		    					List<M> recordsWithMatchingDescription = new Select().from(getModelClass()).where(new Expression(descriptionColumn,Operator.EQ, descriptionValue)).execute(getModelClass());
-		    					if (recordsWithMatchingDescription.size() > 1){
-		    						throw new RuntimeException("Found multiple records for description, Please use the id column");
-		    					}else if (recordsWithMatchingDescription.size() == 1){
-		    						preExistingRecord = recordsWithMatchingDescription.get(0);
-		    					}
-		    				}
-	    				}
-	    				if (preExistingRecord != null){
-							for (String fieldName : m.getRawRecord().getDirtyFields()){
-								preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
-							}
-							save(preExistingRecord);
-	    				}else {
-	    					save(m);
-	    				}
-	    			}
-				} catch (Exception e) {
-					Database.getInstance().getCache(getReflector()).clear();
-					if (!(e instanceof RuntimeException)){
-						throw new RuntimeException(e);
-					}else {
-						throw (RuntimeException)e;
-					}
-				}
-    			
-        	}
-        	return redirectTo("index");
-        }
-        
+    	return super.importxls();
     }
     
+    protected List<Sheet> getSheetsToImport(Workbook book){
+    	List<Sheet> sheets = new ArrayList<Sheet>();
+    	Sheet sheet = book.getSheet(StringUtil.pluralize(getModelClass().getSimpleName())); 
+    	if (sheet != null){
+    		sheets.add(sheet);
+    	}
+    	return sheets;
+    }
     
     @Override
     public View index() {
@@ -322,69 +279,14 @@ public class ModelController<M extends Model> extends Controller {
     	
     }
     
-    @Depends("save,index")
+    @Depends("save")
     public View blank(){
 		M record = Database.getTable(modelClass).newRecord();
 		return blank(record);
     }
     
     protected View blank(M record) {
-        List<ModelInfo> modelElements = getPath().getModelElements();
-        
-		for (Method referredModelGetter: reflector.getReferredModelGetters()){
-	    	@SuppressWarnings("unchecked")
-			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
-	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-	    	if (!reflector.isFieldSettable(referredModelIdFieldName)){
-	    		continue;
-	    	}
-	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
-	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
-	    	try {
-				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
-				List<Integer> idoptions = getSessionUser().getParticipationOptions(modelClass).get(referredModelIdFieldName);
-				Integer id = null; 
-						
-				if (Database.getJdbcTypeHelper().isVoid(oldValue)){
-					if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
-						id = idoptions.get(0);
-						if (id != null){
-							Model referredModel = Database.getTable(referredModelClass).get(id);
-	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-	            	    		referredModelIdSetter.invoke(record,id);
-	            	    		continue;
-	            	    	}
-						}
-					}
-				}
-				for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
-		    		ModelInfo mi = miIter.next();
-		    		if(!miIter.hasNext()){
-		    			//last model is self.
-		    			break;
-		    		}
-		    		if (mi.getId() == null){
-    	    			continue;
-    	    		}
-	        		if (mi.getReflector().reflects(referredModelClass)){
-	        	    	try {
-	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
-	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-	            	    		referredModelIdSetter.invoke(record, mi.getId());
-	            	    		break;
-	            	    	}
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-	        		}
-	        		
-				}
-			} catch (Exception e1) {
-				throw new RuntimeException(e1);
-			}
-		}
-		record.setCreatorUserId(getSessionUser().getId());
-		record.setUpdaterUserId(getSessionUser().getId());
+    	fillDefaultsForReferenceFields(record,getModelClass());
         return dashboard(createBlankView(record));
     }
     protected ModelEditView<M> createBlankView(M record){
@@ -433,24 +335,15 @@ public class ModelController<M extends Model> extends Controller {
     	return back();
     }
     
-    public RedirectorView back(){
-    	RedirectorView v = new RedirectorView(getPath());
-    	v.setRedirectUrl(getPath().getBackTarget());
-    	return v;
-    }
-    
     protected RedirectorView redirectTo(String action){
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
     }
+
     protected View forwardTo(String action){
 		return new ForwardedView(getPath(), action);
     }
     
-    protected Map<String,Object> getFormFields(){
-    	return getPath().getFormFields();
-    }
-      
     private View  persistInDB(){
         HttpServletRequest request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
@@ -505,7 +398,7 @@ public class ModelController<M extends Model> extends Controller {
         boolean hasUserModifiedData = hasUserModifiedData(formFields,digest);
         if (hasUserModifiedData || isNew){
         	try {
-        		save(record);
+        		save(record,getModelClass());
         	}catch (RuntimeException ex){
         		if (hasUserModifiedData){
 	        		Throwable th = ExceptionUtil.getRootCause(ex);
@@ -533,26 +426,6 @@ public class ModelController<M extends Model> extends Controller {
         return afterPersistDBView(record);
     }
     
-    private void save(M record){
-        if (record.getRawRecord().isNewRecord()){
-        	record.setCreatorUserId(getSessionUser().getId());
-        	record.setCreatedAt(null);
-    	}
-        record.setUpdaterUserId(getSessionUser().getId());
-        record.setUpdatedAt(null);
-
-    	if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            record.save();
-        	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
-				Database.getInstance().getCache(reflector).clear();
-        		throw new AccessDeniedException();	
-        	}
-        }else {
-        	throw new AccessDeniedException();
-        }
-    	
-    }
-
     protected View afterPersistDBView(M record){
         return back();
     }
@@ -576,7 +449,6 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     
-    @Depends("index")
     public View save() {
     	return persistInDB();
     }
@@ -632,6 +504,12 @@ public class ModelController<M extends Model> extends Controller {
         return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value,isNullable);
     }
     
-    
+    protected <K extends Model> void save(K record, Class<K> modelClass){
+    	super.save(record, modelClass);
+    	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
+    		Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
+    		throw new AccessDeniedException();	
+		}
+    }
     
 }

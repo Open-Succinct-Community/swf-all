@@ -94,6 +94,9 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 				value = cell.getStringCellValue();
 				break;
 		}
+		if (value != null && value instanceof String){
+			value = ((String)value).trim();
+		}
 		return value;
 	}
 	protected void copyRowValuesToBean(M m, Row row,String[] heading,Map<String, Integer> headingIndexMap) {
@@ -146,15 +149,23 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 				loadFieldsToExport(refModelFields, baseFieldHeading, referredModelReflector);
 				
 				Map<String,Cell> fieldValues = new HashMap<String, Cell>();
+				boolean referenceFieldsPassed = false;
 				for (String field:refModelFields){
-					fieldValues.put(field.substring(field.indexOf('.')+1), row.getCell(headingIndexMap.get(field)));
+					Cell cell1 = row.getCell(headingIndexMap.get(field));
+					if (cell1.getCellType() != Cell.CELL_TYPE_BLANK) {
+						referenceFieldsPassed = true;
+					}
+					fieldValues.put(field.substring(field.indexOf('.')+1), cell1);
 				}
 
 				Model referredModel = getModel(referredModelReflector,fieldValues);
-				if (referredModel == null) {
-					throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information ");
+				if (referredModel == null && referenceFieldsPassed){
+					throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information " + fieldValues.toString());
+				}else if (referredModel != null){
+					value = referredModel.getId();
+				}else {
+					value = null;
 				}
-				value = referredModel.getId();
 			} else if (type == GetterType.FIELD_GETTER) {
 				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 				TypeConverter<?> converter = tref.getTypeConverter();
@@ -211,7 +222,9 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 		for (String referenceFieldName: newHeadingValues.keySet()){
 			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(referenceFieldName)));
 			Model referred = getModel(ModelReflector.instance(referredModelClass), newHeadingValues.get(referenceFieldName));
-			where.add(new Expression(referenceFieldName,Operator.EQ,referred.getId()));
+			if (referred != null){
+				where.add(new Expression(referenceFieldName,Operator.EQ,referred.getId()));
+			}
 		}
 		
 		List<? extends Model> m = new Select().from(reflector.getModelClass()).where(where).execute();

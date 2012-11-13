@@ -9,23 +9,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.lucene.search.Query;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.reflection.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.Table;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
+import com.venky.swf.path.Path.ModelInfo;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -38,6 +52,7 @@ import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.login.LoginView;
+import com.venky.swf.views.model.XLSLoadView;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
 
@@ -227,5 +242,196 @@ public class Controller {
         elem.setAttribute("name", name);
         elem.setAttribute("id", id);
     }
+
+    protected Map<String,Object> getFormFields(){
+    	return getPath().getFormFields();
+    }
     
+    protected List<Sheet> getSheetsToImport(Workbook book){
+    	List<Sheet> sheets = new ArrayList<Sheet>();
+    	for (int i =  0; i < book.getNumberOfSheets() ; i ++ ){
+			Sheet sheet = book.getSheetAt(i);
+    		Table<? extends Model> table = getTable(sheet);
+			if (table != null){
+				sheets.add(sheet);
+			}
+    	}
+    	return sheets;
+    }
+
+    public View importxls(){
+        HttpServletRequest request = getPath().getRequest();
+
+        if (request.getMethod().equalsIgnoreCase("GET")) {
+        	return dashboard(new XLSLoadView(getPath()));
+        }else {
+        	Map<String,Object> formFields = getFormFields();
+        	if (!formFields.isEmpty()){
+        		InputStream in = (InputStream)formFields.get("datafile");
+        		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
+        		try {
+	    			Workbook book = new HSSFWorkbook(in);
+	    			for (Sheet sheet : getSheetsToImport(book)){ 
+	    				Table<? extends Model> table = getTable(sheet);
+	    				if (table == null){
+	    					continue;
+	    				}
+	    				try {
+	    					modelReflectorsOfImportedTables.add(table.getReflector());
+	    					importxls(sheet, table.getModelClass());
+	    				} catch (Exception e) {
+	    					for (ModelReflector<? extends Model> ref : modelReflectorsOfImportedTables){
+		    					Database.getInstance().getCache(ref).clear();
+	    					}
+	    					if (!(e instanceof RuntimeException)){
+	    						throw new RuntimeException(e);
+	    					}else {
+	    						throw (RuntimeException)e;
+	    					}
+	    				}
+					}
+        		}catch (IOException ex){
+        			throw new RuntimeException(ex);
+        		}
+        	}
+        	return back();
+        }
+        
+    }
+
+    @Unrestricted
+    public RedirectorView back(){
+    	RedirectorView v = new RedirectorView(getPath());
+    	v.setRedirectUrl(getPath().getBackTarget());
+    	return v;
+    }
+
+    protected <M extends Model> Table<M> getTable(Sheet sheet){
+		String tableName = StringUtil.underscorize(sheet.getSheetName()); 
+		Table<M> table = Database.getTable(tableName);
+		return table;
+    }
+    
+    protected <M extends Model> void importxls(Sheet sheet, Class<M> modelClass){
+		ModelReader<M> modelReader = new ModelReader<M>(modelClass);
+		ModelReflector<M> modelReflector = ModelReflector.instance(modelClass);
+		for (M m : modelReader.read(sheet)){
+			M preExistingRecord  = null;
+			if (m.getId() > 0){
+				preExistingRecord = Database.getTable(modelClass).get(m.getId());
+			}else {
+				for (UniqueKey<M> key : modelReflector.getUniqueKeys()){
+					Expression where =  new Expression(Conjunction.AND);
+					for (UniqueKeyFieldDescriptor<M> fieldDescriptor : key.getFields()){
+						Object value = modelReflector.get(m,fieldDescriptor.getFieldName());
+						
+						if (value != null){
+							where.add(new Expression(fieldDescriptor.getFieldName(),Operator.EQ, value));
+						}else {
+							where.add(new Expression(fieldDescriptor.getFieldName(),Operator.EQ));
+						}
+					}
+					List<M> recordsWithMatchingUK = new Select().from(modelClass).where(where).execute(modelClass);
+					if (recordsWithMatchingUK.size() > 1){
+						throw new RuntimeException("Found multiple records for key attributes passed, Please use the id column");
+					}else if (recordsWithMatchingUK.size() == 1){
+						preExistingRecord = recordsWithMatchingUK.get(0);
+					}
+				}
+			}
+			if (preExistingRecord != null){
+				for (String fieldName : m.getRawRecord().getDirtyFields()){
+					preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
+				}
+				importRecord(preExistingRecord, modelClass);
+			}else {
+				importRecord(m,modelClass);
+			}
+		}
+    	
+    }
+
+    
+    protected <M extends Model> void importRecord(M record, Class<M> modelClass){
+    	fillDefaultsForReferenceFields(record,modelClass);
+    	save(record,modelClass);
+    }
+    
+    protected <M extends Model> void save(M record, Class<M> modelClass){
+        if (record.getRawRecord().isNewRecord()){
+        	record.setCreatorUserId(getSessionUser().getId());
+        	record.setCreatedAt(null);
+    	}
+        record.setUpdaterUserId(getSessionUser().getId());
+        record.setUpdatedAt(null);
+
+    	if (record.isAccessibleBy(getSessionUser(),modelClass)){
+            record.save();
+        }else {
+        	throw new AccessDeniedException();
+        }
+    	
+    }
+
+    protected <M extends Model> void fillDefaultsForReferenceFields(M record,Class<M> modelClass){
+        List<ModelInfo> modelElements = getPath().getModelElements();
+        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+		for (Method referredModelGetter: reflector.getReferredModelGetters()){
+	    	@SuppressWarnings("unchecked")
+			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
+	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
+	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName)){
+	    		continue;
+	    	}
+	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
+	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
+	    	try {
+				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
+				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
+					continue;
+				}
+				List<Integer> idoptions = getSessionUser().getParticipationOptions(modelClass).get(referredModelIdFieldName);
+				Integer id = null; 
+						
+				if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
+					id = idoptions.get(0);
+					if (id != null){
+						Model referredModel = Database.getTable(referredModelClass).get(id);
+            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+            	    		referredModelIdSetter.invoke(record,id);
+            	    		continue;
+            	    	}
+					}
+				}
+
+				for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
+		    		ModelInfo mi = miIter.next();
+		    		if(!miIter.hasNext()){
+		    			//last model is self.
+		    			break;
+		    		}
+		    		if (mi.getId() == null){
+    	    			continue;
+    	    		}
+	        		if (mi.getReflector().reflects(referredModelClass)){
+	        	    	try {
+	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
+	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+	            	    		referredModelIdSetter.invoke(record, mi.getId());
+	            	    		break;
+	            	    	}
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+	        		}
+	        		
+				}
+			} catch (Exception e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+		record.setCreatorUserId(getSessionUser().getId());
+		record.setUpdaterUserId(getSessionUser().getId());
+    }
+
 }
