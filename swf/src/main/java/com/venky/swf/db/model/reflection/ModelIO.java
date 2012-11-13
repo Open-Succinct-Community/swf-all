@@ -84,7 +84,7 @@ public class ModelIO<M extends Model> extends BeanIntrospector<M>{
 				current = table.get(value);
 				ref = table.getReflector();
 			}else {
-				return ref.get(current, nextToken);
+				return ref.get(current, StringUtil.underscorize(nextToken));
 			}
 		}
 		return null;
