@@ -145,15 +145,16 @@ public class ModelGeneratorMojo extends AbstractMojo {
     				}
     			}
     		}
-			if (columnsPresentInFrameworkModel.contains(cd.getName())){
+    		String columnName = cd.getName();
+			if (columnsPresentInFrameworkModel.contains(columnName)){
 				continue; //Framework definition must stay.
 			}
     		
-			String camelfieldName = StringUtil.camelize(cd.getName());
+			String camelfieldName = StringUtil.camelize(columnName);
 			
     		if (ref == null){
     			code.add("\tpublic Unknown get"+camelfieldName+"();" );
-    			code.add("\tpublic void set"+camelfieldName+"(Unknown " + StringUtil.camelize(cd.getName(),false) + ");" );
+    			code.add("\tpublic void set"+camelfieldName+"(Unknown " + StringUtil.camelize(columnName,false) + ");" );
     		}else {
     			String getterPrefix = "get";
     			if (boolean.class.isAssignableFrom(ref.getJavaClass()) || Boolean.class.isAssignableFrom(ref.getJavaClass()) ){
@@ -177,11 +178,9 @@ public class ModelGeneratorMojo extends AbstractMojo {
     			}
     			
                 if (!cd.isNullable() && !ObjectUtil.isVoid(cd.getColumnDefault())){
-                	if (!cd.getColumnDefault().equals(helper.getDefaultKW(ref,ref.getTypeConverter().valueOf(null)))){
-        				imports.add(COLUMN_DEF.class.getName());
-        				imports.add(StandardDefault.class.getName());
-        				code.add("\t"+toAppDefaultStr(helper, ref, cd.getColumnDefault()));	
-                	}
+    				imports.add(COLUMN_DEF.class.getName());
+    				imports.add(StandardDefault.class.getName());
+    				code.add("\t"+toAppDefaultStr(helper, ref, cd.getColumnDefault()));	
                 }
                 /*
     			imports.add(COLUMN_NAME.class.getName());
@@ -189,7 +188,16 @@ public class ModelGeneratorMojo extends AbstractMojo {
     			Column name not required as name derived from getter we are putting is going to be the same any way.
     			*/
     			code.add("\tpublic "+ ref.getJavaClass().getSimpleName() + " " + getterPrefix +  camelfieldName + "();");
-    			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(cd.getName(),false) + ");");
+    			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(columnName,false) + ");");
+    			if (camelfieldName.endsWith("Id")) {
+    				String possibleReferredModelName = camelfieldName.substring(0, camelfieldName.length() - "Id".length());
+    				String possibleReferredTableName = StringUtil.underscorize(StringUtil.pluralize(possibleReferredModelName));
+    				Table<? extends Model> referredTable = Database.getTable(possibleReferredTableName);
+    				if (referredTable != null){
+    					code.add("\tpublic " + possibleReferredModelName + " get" + possibleReferredModelName + "();");
+    				}
+    			}
+    			
     		}
     	}
     	code.add("}");
