@@ -501,6 +501,9 @@ public class Table<M extends Model> {
             StringBuilder buff = new StringBuilder();
             JdbcTypeHelper helper = Database.getJdbcTypeHelper();
 			TypeRef<?> ref = helper.getTypeRef(getJDBCType());
+			if (ref == null){
+				throw new RuntimeException("Unknown JDBCType" + getJDBCType());
+			}
             if (helper.isColumnNameAutoLowerCasedInDB()){
             	buff.append(getName().toLowerCase());
             }else {
@@ -554,4 +557,27 @@ public class Table<M extends Model> {
         }
     }
 	
+	public M getRefreshed(M partiallyFilledModel){
+		M fullModel = null;
+
+		Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
+		for (Expression where : getReflector().getUniqueKeyConditions(partiallyFilledModel)){
+			List<M> recordsMatchingUK = new Select().from(getModelClass()).where(where).execute();
+			if (recordsMatchingUK.size() == 1){
+				fullModel = recordsMatchingUK.get(0);
+				break;
+			}
+		}
+
+		if (fullModel == null){
+			fullModel = partiallyFilledModel;
+		}else {
+			Record rawFullRecord = fullModel.getRawRecord();
+			for (String field: rawPartiallyFilledRecord.getDirtyFields()){
+				rawFullRecord.put(field, partiallyFilledModel.getRawRecord().get(field));
+			}
+		}
+		return fullModel;
+	}
+
 }

@@ -150,6 +150,11 @@ public class LuceneIndexer {
 		Cache<String,List<Document>> documentsByTable = (Cache<String,List<Document>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
 		if (documentsByTable == null){
 			documentsByTable = new Cache<String, List<Document>>() {
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 3445427618501574899L;
+
 				@Override
 				protected List<Document> getValue(String k) {
 					return new ArrayList<Document>();

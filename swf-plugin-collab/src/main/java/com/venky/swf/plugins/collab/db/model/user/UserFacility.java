@@ -1,7 +1,7 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
-import com.venky.swf.db.annotations.model.UNIQUE_KEY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
 public interface UserFacility extends Model {

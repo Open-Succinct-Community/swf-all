@@ -90,9 +90,9 @@ public class MySqlHelper extends JdbcTypeHelper{
                             new BigDecimalConverter()));// also NUMERIC
 
             registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.REAL,
-                            "REAL", 0, 0,false,false, new FloatConverter()));
+                            "FLOAT", 10, 7,false,false, new FloatConverter()));
             registerjdbcSQLType(float.class, new TypeRef<Float>(java.sql.Types.REAL,
-                            "REAL", 0, 0, false,false,new FloatConverter()));
+                            "FLOAT", 10, 7, false,false,new FloatConverter()));
 
             registerjdbcSQLType(Double.class, new TypeRef<Double>(
                             java.sql.Types.DOUBLE, "DOUBLE", 0, 0, false,false,new DoubleConverter())); // ALSO

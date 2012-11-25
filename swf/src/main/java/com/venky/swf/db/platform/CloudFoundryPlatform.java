@@ -12,15 +12,18 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 
 public class CloudFoundryPlatform implements Extension{
-	@Override
+	
 	public void invoke(Object... context) {
 		Properties info = (Properties)context[0];
 		String vcap_services = System.getenv("VCAP_SERVICES");
+		String serviceName = System.getProperty("cf.db.service");
+
+		Logger.getLogger(CloudFoundryPlatform.class.getName()).fine("vcap_services:" + vcap_services);
+		Logger.getLogger(CloudFoundryPlatform.class.getName()).fine("cf.db.service:" +serviceName);
 		if (ObjectUtil.isVoid(vcap_services)){
 			return ;
 		}
 
-		String serviceName = System.getProperty("cf.db.service");
 		if (ObjectUtil.isVoid(serviceName)){
 			return ;
 		}
@@ -57,7 +60,12 @@ public class CloudFoundryPlatform implements Extension{
 		String password = (String)credentials.get("password");
 
 		
-		String jdbcurl = "jdbc:postgresql://" + host + ":" + port + "/" + db;
+		String jdbcurl = null ; 
+		if (serviceName.startsWith("postgres")){
+			jdbcurl = "jdbc:postgresql://" + host + ":" + port + "/" + db;
+		}else if (serviceName.startsWith("mysql")){
+			jdbcurl = "jdbc:mysql://" + host + ":" + port + "/" + db + "?zeroDateTimeBehavior=convertToNull" ;
+		}
 		Logger.getLogger(CloudFoundryPlatform.class.getName()).info("jdbcurl:" + jdbcurl);
 		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("Systemproperties" + System.getProperties().toString());
 		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("SystemEnv" + System.getenv().toString());

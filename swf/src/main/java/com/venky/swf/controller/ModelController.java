@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.venky.swf.controller;
+package com.venky.swf.controller; 
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,7 +18,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
@@ -32,13 +31,14 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.model.reflection.ModelWriter;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.sql.Conjunction;
@@ -63,11 +63,15 @@ public class ModelController<M extends Model> extends Controller {
     private Class<M> modelClass;
     private ModelReflector<M> reflector ;
     private boolean indexedModel = false; 
+    private IntegrationAdaptor<M, ?> integrationAdaptor = null;
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
     	reflector = ModelReflector.instance(modelClass);
         indexedModel = !reflector.getIndexedFieldGetters().isEmpty();
+        if (path.getProtocol() != MimeType.TEXT_HTML){
+        	integrationAdaptor = IntegrationAdaptor.instance(modelClass, FormatHelper.getFormatClass(path.getProtocol()));
+        }
     }
     protected ModelReflector<M> getReflector(){
     	return reflector;
@@ -81,6 +85,9 @@ public class ModelController<M extends Model> extends Controller {
 		}
     }
     public View exportxls(){
+    	if (integrationAdaptor != null) {
+    		throw new RuntimeException("xls export is only available from UI"); 
+    	}
 		List<String> fieldsIncluded = getReflector().getFields();
 		Iterator<String> fieldIterator = fieldsIncluded.iterator();
 		int numUniqueKeys = getReflector().getUniqueKeys().size();
@@ -93,11 +100,12 @@ public class ModelController<M extends Model> extends Controller {
 			}
 		}
 		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new DefaultModelFilter());
-		Workbook wb = new HSSFWorkbook();
-		new ModelWriter<M>(getModelClass()).write(list, wb,fieldsIncluded);
+		return exportxls(list,fieldsIncluded);
+    }
+    private View exportxls(List<M> list, List<String>fieldsIncluded){
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
-			wb.write(os);
+			new XLSModelWriter<M>(getModelClass()).write(list, os,fieldsIncluded);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -106,6 +114,9 @@ public class ModelController<M extends Model> extends Controller {
     
     @Depends("save")
     public View importxls(){
+    	if (integrationAdaptor != null) {
+    		throw new RuntimeException("xls import is only available from UI"); 
+    	}
     	return super.importxls();
     }
     
@@ -159,7 +170,7 @@ public class ModelController<M extends Model> extends Controller {
 			if (!ids.isEmpty()) {
 				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
 					.add(new Expression("ID",Operator.IN,ids.toArray()))
-					.add(getPath().getWhereClause())).orderBy(getOrderBy());
+					.add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
 				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter());
 				return list(records);
 			}else {
@@ -168,14 +179,7 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		return list(maxRecords);
     }
-    protected String getOrderBy(){
-        ORDER_BY order = getReflector().getAnnotation(ORDER_BY.class);
-        String orderBy = ORDER_BY.DEFAULT;
-        if (order != null){
-        	orderBy = order.value();
-        }
-        return orderBy;
-    }
+    
     
     public static final int MAX_LIST_RECORDS = 10 ;
 	protected void rewriteQuery(Map<String,Object> formData){
@@ -188,12 +192,18 @@ public class ModelController<M extends Model> extends Controller {
 	
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).orderBy(getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter());
+        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter());
         return list(records);
     }
     
     protected View list(List<M> records){
-    	return dashboard(createListView(records));
+    	View v = null;
+    	if (integrationAdaptor != null){
+    		v = integrationAdaptor.createResponse(getPath(),records);
+    	}else {
+    		v = dashboard(createListView(records)); 
+    	}
+    	return v;
     }
     
     protected HtmlView createListView(List<M> records){
@@ -210,14 +220,19 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/show.png")
     @Depends("index")
     public View show(int id) {
-		M record = Database.getTable(modelClass).get(id);
-        if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            return dashboard(new ModelShowView<M>(getPath(), modelClass, getIncludedFields(), record));
-        }else {
-        	throw new AccessDeniedException();
-        }
+    	M record = Database.getTable(modelClass).get(id);
+		if (!record.isAccessibleBy(getSessionUser(),modelClass)){
+			throw new AccessDeniedException();
+		}
+		View view = null ;
+		if (integrationAdaptor != null){
+			view = integrationAdaptor.createResponse(getPath(),record);
+		}else {
+			view = dashboard(new ModelShowView<M>(getPath(), modelClass, getIncludedFields(), record));
+		}
+    	return view;
     }
-    
+
     @Depends("index")
     public View view(int id){
 		M record = Database.getTable(modelClass).get(id);
@@ -243,13 +258,15 @@ public class ModelController<M extends Model> extends Controller {
         }else {
         	throw new AccessDeniedException();
         }
-        return back();
+    	return getSuccessView();
     }
     
-
     @SingleRecordAction(icon="/resources/images/edit.png")
     @Depends("save,index")
     public View edit(int id) {
+    	if (integrationAdaptor != null) {
+    		throw new AccessDeniedException("Action is available only from ui");
+    	}
         M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             return dashboard(new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), record));
@@ -274,9 +291,7 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	}
     	newRaw.setNewRecord(true);
-		ModelEditView<M> mev = createBlankView(newrecord); 
-        return dashboard(mev);
-    	
+    	return blank(newrecord);
     }
     
     @Depends("save")
@@ -287,11 +302,17 @@ public class ModelController<M extends Model> extends Controller {
     
     protected View blank(M record) {
     	fillDefaultsForReferenceFields(record,getModelClass());
-        return dashboard(createBlankView(record));
+    	if (integrationAdaptor != null){
+    		return integrationAdaptor.createResponse(getPath(),record);
+    	}else {
+    		return dashboard(createBlankView(record));
+    	}
     }
+
     protected ModelEditView<M> createBlankView(M record){
     	return createBlankView(getPath(), record);
     }
+    
     protected ModelEditView<M> createBlankView(Path path , M record){
 		ModelEditView<M> mev = new ModelEditView<M>(path, getModelClass(), getIncludedFields(), record);
 		for (String field : reflector.getFields()){
@@ -320,7 +341,7 @@ public class ModelController<M extends Model> extends Controller {
     public View destroy(int id){ 
 		M record = Database.getTable(modelClass).get(id);
         destroy(record);
-        return afterDestroyView();
+        return getSuccessView();
     }
     private void destroy(M record){
         if (record != null){
@@ -331,10 +352,17 @@ public class ModelController<M extends Model> extends Controller {
             }
         }
     }
-    protected View afterDestroyView(){
-    	return back();
-    }
     
+	protected View getSuccessView(){
+    	View ret = null ;
+    	if (integrationAdaptor != null){
+    		ret = integrationAdaptor.createStatusResponse(getPath(),null);
+    	}else {
+			ret = back();
+		}
+    	return ret;
+    }
+	
     protected RedirectorView redirectTo(String action){
     	RedirectorView v = new RedirectorView(getPath(),action);
     	return v;
@@ -344,12 +372,7 @@ public class ModelController<M extends Model> extends Controller {
 		return new ForwardedView(getPath(), action);
     }
     
-    private View  persistInDB(){
-        HttpServletRequest request = getPath().getRequest();
-        if (!request.getMethod().equalsIgnoreCase("POST")) {
-            throw new RuntimeException("Cannot call save in any other method other than POST");
-        }
-        
+    private View  saveModelFromForm(){
         Map<String,Object> formFields = getFormFields();
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
@@ -427,7 +450,13 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     protected View afterPersistDBView(M record){
-        return back();
+    	View v = null; 
+    	if (integrationAdaptor != null){
+    		v = integrationAdaptor.createResponse(getPath(),record);
+    	}else{
+    		v = back();
+    	}
+        return v;
     }
     
     protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
@@ -450,9 +479,37 @@ public class ModelController<M extends Model> extends Controller {
     
     
     public View save() {
-    	return persistInDB();
+        HttpServletRequest request = getPath().getRequest();
+        if (!request.getMethod().equalsIgnoreCase("POST")) {
+            throw new RuntimeException("Cannot call save in any other method other than POST");
+        }
+        if (integrationAdaptor != null){
+        	return saveModelsFromRequest();
+        }else {
+        	return saveModelFromForm();
+        }
     }
+    private <T> View saveModelsFromRequest(){
+    	List<M> models = integrationAdaptor.readRequest(getPath());
+    	for (M m: models){
+    		try {
+    			save(m, getModelClass());
+    		}catch(Exception ex){
+    			Database.getInstance().getCache(getReflector()).clear();
+    			if (ex instanceof RuntimeException){
+    				throw (RuntimeException)ex;
+    			}else {
+    				throw new RuntimeException(ex);
+    			}
+    		}
+    	}
+    	return integrationAdaptor.createResponse(getPath(),models);
+    }
+    
     public View autocomplete() {
+    	if (integrationAdaptor != null){
+    		throw new AccessDeniedException("Action available only from ui");
+    	}
 		List<String> fields = reflector.getFields();
 		Map<String,Object> formData = getFormFields();
 		M model = null;

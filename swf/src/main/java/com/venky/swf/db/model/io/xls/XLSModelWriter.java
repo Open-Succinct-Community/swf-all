@@ -1,4 +1,4 @@
-package com.venky.swf.db.model.reflection;
+package com.venky.swf.db.model.io.xls;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,53 +23,18 @@ import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.io.ModelWriter;
+import com.venky.swf.db.model.reflection.ModelReflector;
 
-public class ModelWriter<M extends Model> extends ModelIO<M>{
+public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
 	
-	Class<M> modelClass = null;
-	ModelReflector<M> ref = null; 
-	public ModelWriter(Class<M> modelClass){
+	private final HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
+	private final HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
+	public XLSModelWriter(Class<M> modelClass){
 		super(modelClass);
-		this.modelClass = modelClass;
-		this.ref = ModelReflector.instance(modelClass); 
-	}
-	
-	public ModelReflector<M> getReflector(){
-		return ref;
-	}
-	public void write (List<M> records,OutputStream os) throws IOException{
-		Workbook wb = new HSSFWorkbook();
-		write(records,wb);
-		wb.write(os);
-	}
-	public void write (List<M> records,Workbook wb){
-		write(records,wb,ref.getFields());
-	}
-	private static final int START_ROW = 0; 
-	private static final int START_COLUMN = 0;
-	
-	public void write (List<M> records,Workbook wb, List<String> fields){
-		CreationHelper createHelper = wb.getCreationHelper();
-		Sheet sheet = wb.createSheet(StringUtil.pluralize(ref.getModelClass().getSimpleName()));
-		
-		CellStyle numberStyle = wb.createCellStyle();
-		numberStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.###"));
-		
-		CellStyle dateStyle = wb.createCellStyle();
-		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
-	
-		CellStyle headerStyle = wb.createCellStyle();
-		headerStyle.setFillForegroundColor(IndexedColors.BRIGHT_GREEN.getIndex());
-		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
-		
-		Iterator<String> fi = fields.iterator();
+    	ModelReflector<M> ref = getReflector();
     	
-    	HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
-    	HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
-    	
-    	int rowNum = START_ROW; 
-    	Bucket columnNum = new Bucket(START_COLUMN);
-    	Row header = sheet.createRow(rowNum);
+    	Iterator<String> fi = ref.getFields().iterator();
     	while(fi.hasNext()){
     		String fieldName = fi.next();
     		Method getter = ref.getFieldGetter(fieldName);
@@ -89,6 +54,33 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
 				referredModelFieldsToExport.put(fieldName,fieldsToExport);
 			}
 			
+    	}
+	}
+	
+	private static final int START_ROW = 0; 
+	private static final int START_COLUMN = 0;
+	
+	public void write(List<M> records, OutputStream os, List<String> fields) throws IOException {
+		Workbook wb = new HSSFWorkbook();
+		write(records,wb,fields);
+		wb.write(os);
+	}
+	public void write(List<M> records, Workbook wb, List<String> fields) {
+		CellStyle headerStyle = wb.createCellStyle();
+		headerStyle.setFillForegroundColor(IndexedColors.BRIGHT_GREEN.getIndex());
+		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+		
+		String sheetName = StringUtil.pluralize(getBeanClass().getSimpleName());
+		Sheet sheet = wb.createSheet(sheetName);
+
+    	Bucket rowNum = new Bucket(START_ROW); 
+    	Bucket columnNum = new Bucket(START_COLUMN);
+    	Row header = sheet.createRow(rowNum.intValue());
+
+    	Iterator<String> fi = fields.iterator();
+		while (fi.hasNext()){
+			String fieldName = fi.next();
 			if (referedModelMap.get(fieldName) == null){
 				Cell headerCell = header.createCell(columnNum.intValue());
 				headerCell.setCellStyle(headerStyle);
@@ -102,26 +94,13 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
 					columnNum.increment();
 				}
 			}
-    	}
+		}
+    	
     	
     	for (M m: records){
-    		rowNum++;
-    		columnNum = new Bucket(START_COLUMN);
-    		Row r = sheet.createRow(rowNum);
-    		fi = fields.iterator();
-    		while (fi.hasNext()){
-    			String f = fi.next();
-    			Object value = ref.get(m, f);
-    			if (referedModelMap.get(f) != null){
-    				for (String cf: referredModelFieldsToExport.get(f) ){
-    					writeNextColumn(r, columnNum, getValue(m,cf), numberStyle, dateStyle);
-    					columnNum.increment();
-    				}
-    			}else {
-    				writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
-    				columnNum.increment();
-    			}
-			}
+    		rowNum.increment();
+    		Row r = sheet.createRow(rowNum.intValue());
+    		write(m,r,fields);
     	}
     	
     	for (int i = 0 ; i < columnNum.intValue() ; i ++ ){
@@ -129,6 +108,37 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
     	}
 
 	}
+
+	@Override
+	public void write(M m, Row r, List<String> fields) {
+		Workbook wb = r.getSheet().getWorkbook();
+		
+		CreationHelper createHelper = wb.getCreationHelper();
+		CellStyle numberStyle = wb.createCellStyle();
+		numberStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.###"));
+		
+		CellStyle dateStyle = wb.createCellStyle();
+		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
+	
+		Iterator<String> fi = fields.iterator();
+		ModelReflector<M> ref = getReflector();
+		Bucket columnNum = new Bucket(START_COLUMN);
+		while (fi.hasNext()){
+			String f = fi.next();
+			Object value = ref.get(m, f);
+			if (referedModelMap.get(f) != null){
+				for (String cf: referredModelFieldsToExport.get(f) ){
+					writeNextColumn(r, columnNum, getValue(m,cf), numberStyle, dateStyle);
+					columnNum.increment();
+				}
+			}else {
+				writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
+				columnNum.increment();
+			}
+		}
+	}
+	
+
 	
 	private void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle numberStyle,CellStyle dateStyle){
 		if (!ObjectUtil.isVoid(value)){
@@ -147,6 +157,5 @@ public class ModelWriter<M extends Model> extends ModelIO<M>{
             }
 		}
 	}
-	
 
 }

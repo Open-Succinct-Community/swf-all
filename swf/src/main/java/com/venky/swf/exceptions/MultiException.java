@@ -18,6 +18,9 @@ public class MultiException extends RuntimeException{
 	public MultiException(){
 		super();
 	}
+	public MultiException(String message){
+		super(message);
+	}
 	
 	public void add(Throwable t){
 		throwables.add(ExceptionUtil.getRootCause(t));

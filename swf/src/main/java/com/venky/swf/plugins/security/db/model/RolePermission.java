@@ -38,8 +38,8 @@ public interface RolePermission extends Model{
 	@CONTENT_TYPE(MimeType.TEXT_PLAIN)
 	@IS_NULLABLE
 	@Index
-	public Reader getCondition();
-	public void setCondition(Reader blob);
+	public Reader getConditionText();
+	public void setConditionText(Reader text);
 	
 	@COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)
 	public boolean isAllowed();

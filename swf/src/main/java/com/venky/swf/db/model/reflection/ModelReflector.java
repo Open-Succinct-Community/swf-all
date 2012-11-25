@@ -27,11 +27,12 @@ import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DATA_TYPE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
+import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
-import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
@@ -39,11 +40,15 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
-import com.venky.swf.db.annotations.model.UNIQUE_KEY;
+import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
 
 public class ModelReflector<M extends Model> {
     
@@ -335,7 +340,46 @@ public class ModelReflector<M extends Model> {
     	return uniqueKeys.values();
     }
     
+    public Collection<Expression> getUniqueKeyConditions(M m){
+    	List<Expression> col = new ArrayList<Expression>();
+    	for (UniqueKey<M> key : getUniqueKeys() ){
+			Expression where = new Expression(Conjunction.AND);
+			boolean nullFieldFound = false;
+			for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
+				String fieldName = fd.getFieldName(); 
+				Object value = get(m, fieldName);
+				if (value != null){
+					where.add(new Expression(fd.getFieldName(),Operator.EQ, value));
+				}else {
+					nullFieldFound = true;
+					break; 
+				}
+			}
+			if (!nullFieldFound){
+				col.add(where);
+			}
+		}
+    	return col;
+    }
     
+    public List<String> getUniqueFields(){
+    	return getUniqueFields(null);
+    }
+	public List<String> getUniqueFields(String keyName){
+		SequenceSet<String> uniqueFields = new SequenceSet<String>();
+		for (UniqueKey<M> key : getUniqueKeys()) {
+			if (keyName == null || key.getKeyName().equalsIgnoreCase(keyName)){
+				for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
+					uniqueFields.add(fd.getFieldName());
+				}
+				if (keyName != null) {
+					break;
+				}
+			}
+		}
+		return uniqueFields;
+	}
+
     private List<UniqueKey<M>> singleColumnUniqueKeys = null; 
     public Collection<UniqueKey<M>> getSingleColumnUniqueKeys(){
     	if (singleColumnUniqueKeys == null){
@@ -1037,5 +1081,12 @@ public class ModelReflector<M extends Model> {
         }
     }
 
-    
+    public String getOrderBy(){
+        ORDER_BY order = getAnnotation(ORDER_BY.class);
+        String orderBy = ORDER_BY.DEFAULT;
+        if (order != null){
+        	orderBy = order.value();
+        }
+        return orderBy;
+    }    
 }

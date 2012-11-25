@@ -218,7 +218,7 @@ public class ModelGeneratorMojo extends AbstractMojo {
 		}else if (ObjectUtil.equals(dbDefault, helper.getCurrentDateKW())){
 			return "@COLUMN_DEF(StandardDefault.CURRENT_DATE)";
 		}else if (dbDefault != null ){
-			Class refClass = ref.getJavaClass();
+			Class<?> refClass = ref.getJavaClass();
 			if (refClass == boolean.class || refClass == Boolean.class){
 				if (helper.getDefaultKW(ref,Boolean.valueOf(true)).equals(dbDefault)){
 					return "@COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)";

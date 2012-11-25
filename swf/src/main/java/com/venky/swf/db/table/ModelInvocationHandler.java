@@ -37,10 +37,13 @@ import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValid
 import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
+import com.venky.swf.db.annotations.model.validations.ModelValidator;
+import com.venky.swf.db.annotations.model.validations.UniqueKeyValidator;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
@@ -61,8 +64,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     private List<String> virtualFields = new IgnoreCaseList();
     private String modelName = null;
 
-	public ModelReflector<? extends Model> getReflector() {
-		return reflector;
+	@SuppressWarnings("unchecked")
+	public <M extends Model> ModelReflector<M> getReflector() {
+		return (ModelReflector<M>) reflector;
 	}
 	
 	public String getModelName(){
@@ -340,40 +344,44 @@ public class ModelInvocationHandler implements InvocationHandler {
     public void init(){
     	
     }
-    private final static List<FieldValidator<? extends Annotation>> validators = new ArrayList<FieldValidator<? extends Annotation>>();
+    private final static List<FieldValidator<? extends Annotation>> fieldValidators = new ArrayList<FieldValidator<? extends Annotation>>();
 
+    private final static List<ModelValidator> modelValidators = new ArrayList<ModelValidator>();
     static {
-        validators.add(new ExactLengthValidator());
-        validators.add(new MaxLengthValidator());
-        validators.add(new NotNullValidator());
-        validators.add(new RegExValidator());
-        validators.add(new EnumerationValidator());
-        validators.add(new DateFormatValidator());
+        fieldValidators.add(new ExactLengthValidator());
+        fieldValidators.add(new MaxLengthValidator());
+        fieldValidators.add(new NotNullValidator());
+        fieldValidators.add(new RegExValidator());
+        fieldValidators.add(new EnumerationValidator());
+        fieldValidators.add(new DateFormatValidator());
+        
+        modelValidators.add(new UniqueKeyValidator());
     }
 
-    protected boolean isModelValid(StringBuilder totalMessage) {
+    protected boolean isModelValid(MultiException ex) {
         List<String> fields = reflector.getFields();
-        totalMessage.append(getModelName()).append(":<br/>");
         boolean ret = true;
         for (String field : fields) {
-            StringBuilder message = new StringBuilder();
-            Object value = record.get(field);
-            Method getter = reflector.getFieldGetter(field);
-            
-            if (!reflector.isHouseKeepingField(field) && !isFieldValid(getter, value, message)) {
-                totalMessage.append("<br/>").append(field).append("=").append(value).append(":").append(message);
+        	MultiException fieldException = new MultiException("Field:" + field);
+            if (!reflector.isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
+                ex.add(fieldException);
                 ret = false;
             }
+        }
+        if (ret){
+        	for (ModelValidator v : modelValidators){
+        		ret = v.isValid(getProxy(),ex) && ret;
+        	}
         }
         return ret;
     }
 
-    protected boolean isFieldValid(Method getter, Object value, StringBuilder message) {
+    protected boolean isFieldValid(String field, MultiException fieldException) {
         boolean ret = true;
-        Iterator<FieldValidator<? extends Annotation>> i = validators.iterator();
+        Iterator<FieldValidator<? extends Annotation>> i = fieldValidators.iterator();
         while (i.hasNext()) {
             FieldValidator<? extends Annotation> v = i.next();
-            ret = v.isValid(getReflector().getAnnotation(getter,v.getAnnotationClass()), value, message) && ret;
+            ret = v.isValid(getProxy(), field, fieldException) && ret;
         }
         return ret;
 
@@ -381,9 +389,9 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     protected void validate(){
     	beforeValidate();
-    	StringBuilder errmsg = new StringBuilder();
-        if (!isModelValid(errmsg)) {
-            throw new RuntimeException(errmsg.toString());
+    	MultiException me = new MultiException(getModelName());
+        if (!isModelValid(me)) {
+            throw me;
         }
         afterValidate();
     }
@@ -627,5 +635,4 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return txnProperties.remove(name);
     }
  
-    
 }

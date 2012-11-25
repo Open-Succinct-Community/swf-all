@@ -42,6 +42,7 @@ import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.CONTROLLER;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
@@ -56,6 +57,7 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
@@ -65,9 +67,14 @@ import com.venky.swf.views._IView;
  * @author venky
  */
 public class Path implements _IPath{
+	private static Logger logger; 
+	
+	
 	static {
-		Logger.getLogger("Path").info("Loaded by " + Path.class.getClassLoader());
+		logger = Logger.getLogger(Path.class.getName());
+		logger.info("Loaded by " + Path.class.getClassLoader());
 	}
+
     private List<String> pathelements = new ArrayList<String>();
     private String controllerClassName = null;
     private int controllerPathIndex = 0;
@@ -164,6 +171,16 @@ public class Path implements _IPath{
 
     public void setRequest(HttpServletRequest request) {
         this.request = request;
+    }
+    protected void logHeaders(){
+    	if (request != null){
+	        List<String> headers = new ArrayList<String>();
+	        Enumeration<String> names = request.getHeaderNames();
+	        while(names.hasMoreElements()){
+	        	headers.add(names.nextElement());
+	        }
+	        logger.info("Request Headers:" + headers.toString());
+    	}
     }
 
     public HttpServletResponse getResponse() {
@@ -274,24 +291,26 @@ public class Path implements _IPath{
                     controllerClassName = clazzName;
                     controllerPathIndex = i ;
                     controllerFound = true;
-                }else {
-                    Class<? extends Model> modelClass = getModelClass(pe);
-                    if (modelClass != null){
-                    	ModelReflector<?> ref = ModelReflector.instance(modelClass);
-                    	CONTROLLER controller = ref.getAnnotation(CONTROLLER.class);
-                    	if (controller != null){
-                    		controllerClassName = controller.value();
-                    	}
-                    	if (ObjectUtil.isVoid(controllerClassName)){
-                            controllerClassName = ModelController.class.getName();
-                    	}
-                        controllerPathIndex = i ;
-                        controllerFound = true;
-                    }
+                    break;
                 }
-                if (controllerFound){
-                	break;
-                }
+            }
+            if (!controllerFound){
+	            Class<? extends Model> modelClass = getModelClass(pe);
+	            if (modelClass != null){
+	            	ModelReflector<?> ref = ModelReflector.instance(modelClass);
+	            	CONTROLLER controller = ref.getAnnotation(CONTROLLER.class);
+	            	if (controller != null){
+	            		controllerClassName = controller.value();
+	            	}
+	            	if (ObjectUtil.isVoid(controllerClassName)){
+	                    controllerClassName = ModelController.class.getName();
+	            	}
+	                controllerPathIndex = i ;
+	                controllerFound = true;
+	            }
+            }
+            if (controllerFound){
+            	break;
             }
         }
         if (controllerClassName == null) {
@@ -394,14 +413,76 @@ public class Path implements _IPath{
     public static final String ALLOW_CONTROLLER_ACTION = "allow.controller.action" ; 
     
     public boolean isUserLoggedOn(){
-    	return getSessionUser() != null; 
+    	return getSessionUser() != null ; 
     }
     
     public boolean isSecuredAction(Method m){
     	return !m.isAnnotationPresent(Unrestricted.class);
     }
     
+    private void createUserSession(User user,boolean autoInvalidate){
+    	HttpSession session = getRequest().getSession(true);
+    	session.setAttribute("user", user);
+    	session.setAttribute("autoInvalidate", autoInvalidate);
+    	setSession(session);
+    }
+    public boolean isRequestAuthenticated(){
+    	if (isUserLoggedOn()){
+    		return true;
+    	}
+    	User user = null;
+    	String apiKey = getRequest().getHeader("ApiKey");
+    	if (!ObjectUtil.isVoid(apiKey)){
+	        user = getUser("api_key",apiKey);
+        }
+
+        if (user == null){
+        	if (getRequest().getMethod().equalsIgnoreCase("POST")){
+	        	String username = getRequest().getParameter("name");
+	            if (!ObjectUtil.isVoid(username)){
+	            	user = getUser("name",username);
+	                String password = getRequest().getParameter("password");
+	            	if (user != null && user.authenticate(password)){
+	            		createUserSession(user,false);
+	            	}
+	            }
+        	}
+        }else {
+        	createUserSession(user,true);
+        }
+        
+        return isUserLoggedOn();
+    }
     
+    public MimeType getProtocol(){
+    	String apiprotocol = getRequest().getHeader("ApiProtocol");
+    	if (ObjectUtil.isVoid(apiprotocol)){
+    		return MimeType.TEXT_HTML;
+    	}
+    	MimeType protocol = MimeType.TEXT_HTML;
+    	for (MimeType mt : MimeType.values()){
+    		if (mt.toString().equals(apiprotocol)){
+    			protocol = mt; 
+    			break;
+    		}
+    	}
+    	return protocol;
+    }
+    
+    //Can be cast to any user model class as the proxy implements all the user classes.
+    protected User getUser(String fieldName, String fieldValue){
+        Select q = new Select().from(User.class);
+        String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor(fieldName).getName();
+        q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(fieldValue)));
+        
+		List<? extends User> users  = q.execute(User.class);
+        if (users.size() == 1){
+        	return users.get(0);
+        }
+        return null;
+    }
+    
+
     public _IView invoke() throws AccessDeniedException{
     	MultiException ex = null;
     	List<Method> methods = getActionMethods(action(), parameter());
@@ -410,11 +491,10 @@ public class Path implements _IPath{
         	try {
             	boolean securedAction = isSecuredAction(m) ;
             	if (securedAction){
-            		if (!isUserLoggedOn()){
-                		return new RedirectorView(this,"","login");
-            		}else {
-            			ensureControllerActionAccess();	
+            		if (!isRequestAuthenticated()){
+        				return new RedirectorView(this,"","login");
             		}
+            		ensureControllerActionAccess();
             	}
             	Controller controller = createController();
             	try {
@@ -669,4 +749,19 @@ public class Path implements _IPath{
     	return where;
 
     }
+	@Override
+	public void invalidateSession() {
+		if (session != null){
+			session.invalidate();
+			session = null;
+		}
+	}
+	
+	public void autoInvalidateSession(){
+		if (session != null){
+			if (ObjectUtil.equals(session.getAttribute("autoInvalidate"),true)){
+				invalidateSession();
+    		}
+		}
+	}
 }

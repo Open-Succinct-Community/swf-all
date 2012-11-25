@@ -9,7 +9,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 
 public class HerokuPlatform implements Extension{
-	@Override
+	
 	public void invoke(Object... context) {
 		Properties info = (Properties)context[0];
 		String dbURL = System.getenv("DATABASE_URL");

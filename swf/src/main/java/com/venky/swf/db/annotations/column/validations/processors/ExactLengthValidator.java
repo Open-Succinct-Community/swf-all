@@ -6,6 +6,7 @@ package com.venky.swf.db.annotations.column.validations.processors;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -13,17 +14,13 @@ import com.venky.swf.db.annotations.column.validations.ExactLength;
  */
 public class ExactLengthValidator extends FieldValidator<ExactLength>{
 
-    @Override
-    public Class<ExactLength> getAnnotationClass() {
-        return ExactLength.class;
-    }
 
     @Override
-    public boolean validate(ExactLength annotation, String value,StringBuilder message) {
+    public boolean validate(ExactLength annotation, String value, MultiException ex){
         if (ObjectUtil.isVoid(value) || annotation.value() == value.length()){
             return true;
         }
-        message.append("Does not match length ").append("Expected :").append(annotation.value()).append( " Actual :").append(value.length());
+        ex.add(new FieldValidationException("Expected data length :" + annotation.value() + " Actual data length :" + value.length()));
         return false;
         
     }

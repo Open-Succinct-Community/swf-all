@@ -5,8 +5,10 @@
 package com.venky.swf.routing;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
@@ -54,6 +56,16 @@ public class Router extends AbstractHandler {
 				this.loader = loader;
 				if (loader != null){
 			    	clearExtensions();
+			    	try {
+			    		InputStream is = this.loader.getResourceAsStream("config/logger.properties");
+			    		if (is != null){
+			    			LogManager.getLogManager().readConfiguration(is);
+			    		}else {
+			    			Logger.getLogger(Router.class.getName()).info("Logging not configured! using defaults");
+			    		}
+					} catch (Exception e1) {
+						Logger.getLogger(Router.class.getName()).info("Logging not configured! using defaults");
+					}
 					_IDatabase db = getDatabase(true);
 					loadExtensions();
 					db.loadFactorySettings();
@@ -184,6 +196,7 @@ public class Router extends AbstractHandler {
 	        	if (db != null ){
 	        		db.close();
 	        	}
+	        	p.autoInvalidateSession();
 	        }
     	}finally{
     		timer.stop();

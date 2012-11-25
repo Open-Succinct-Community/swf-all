@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -30,10 +29,8 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
-import com.venky.swf.db.model.reflection.ModelReader;
+import com.venky.swf.db.model.io.xls.XLSModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
-import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
@@ -85,19 +82,15 @@ public class Controller {
         }
     }
 
+    
     protected View authenticate(){
-        String username = getPath().getRequest().getParameter("name");
-        String password = getPath().getRequest().getParameter("password");
-        User user = getUser(username);
-        if (user != null && user.authenticate(password)){
-            HttpSession newSession = getPath().getRequest().getSession(true);
-            newSession.setAttribute("user", user);
+    	if (getPath().isRequestAuthenticated()){
             return new RedirectorView(getPath(), "dashboard");
-        }else {
+    	}else {
         	HtmlView lView = createLoginView();
         	lView.setStatus(StatusType.ERROR, "Login incorrect");
             return lView;
-        }
+    	}
     }
 	protected final HtmlView createLoginView(StatusType statusType, String text){
 		invalidateSession();
@@ -107,14 +100,7 @@ public class Controller {
 	}
 
 	protected void invalidateSession(){
-		try {
-			if (path.getSession() != null) {
-				path.getSession().invalidate();
-				path.setSession(null);
-			}
-		}catch (Exception ex){
-			//ensure session is invalid.
-		}
+		path.invalidateSession();
 	}
     protected HtmlView createLoginView(){
     	invalidateSession();
@@ -124,19 +110,6 @@ public class Controller {
 	@SuppressWarnings("unchecked")
 	public <U extends User> U getSessionUser(){
     	return (U)getPath().getSessionUser();
-    }
-    
-    //Can be cast to any user model class as the proxy implements all the user classes.
-    protected User getUser(String username){
-        Select q = new Select().from(User.class);
-        String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor("name").getName();
-        q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(username)));
-        
-		List<? extends User> users  = q.execute(User.class);
-        if (users.size() == 1){
-        	return users.get(0);
-        }
-        return null;
     }
     
     @Unrestricted
@@ -219,7 +192,7 @@ public class Controller {
 	        where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
         }
         Select q = new Select().from(modelClass);
-        q.where(where);
+        q.where(where).orderBy(reflector.getOrderBy());
         List<M> records = q.execute(modelClass);
         Method fieldGetter = reflector.getFieldGetter(fieldName);
         TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
@@ -313,24 +286,14 @@ public class Controller {
     }
     
     protected <M extends Model> void importxls(Sheet sheet, Class<M> modelClass){
-		ModelReader<M> modelReader = new ModelReader<M>(modelClass);
+		XLSModelReader<M> modelReader = new XLSModelReader<M>(modelClass);
 		ModelReflector<M> modelReflector = ModelReflector.instance(modelClass);
 		for (M m : modelReader.read(sheet)){
 			M preExistingRecord  = null;
 			if (m.getId() > 0){
 				preExistingRecord = Database.getTable(modelClass).get(m.getId());
 			}else {
-				for (UniqueKey<M> key : modelReflector.getUniqueKeys()){
-					Expression where =  new Expression(Conjunction.AND);
-					for (UniqueKeyFieldDescriptor<M> fieldDescriptor : key.getFields()){
-						Object value = modelReflector.get(m,fieldDescriptor.getFieldName());
-						
-						if (value != null){
-							where.add(new Expression(fieldDescriptor.getFieldName(),Operator.EQ, value));
-						}else {
-							where.add(new Expression(fieldDescriptor.getFieldName(),Operator.EQ));
-						}
-					}
+				for (Expression where : modelReflector.getUniqueKeyConditions(m)){
 					List<M> recordsWithMatchingUK = new Select().from(modelClass).where(where).execute(modelClass);
 					if (recordsWithMatchingUK.size() > 1){
 						throw new RuntimeException("Found multiple records for key attributes passed, Please use the id column");

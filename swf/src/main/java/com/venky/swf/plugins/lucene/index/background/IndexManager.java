@@ -31,6 +31,11 @@ public class IndexManager {
 	}
 
 	private Cache<String, Directory> directoryCache = new Cache<String, Directory>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7199535528835102853L;
+
 		@Override
 		protected Directory getValue(String k) {
 			try {
@@ -43,6 +48,11 @@ public class IndexManager {
 	};
 	
 	private Cache<String, WriterDaemon> writerDelegate = new Cache<String, WriterDaemon>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 104781460079060790L;
+
 		@Override
 		protected WriterDaemon getValue(String k) {
 			WriterDaemon daemon = new WriterDaemon(directoryCache.get(k));
@@ -65,6 +75,11 @@ public class IndexManager {
 
 	private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7984161420681471139L;
+
 		@Override
 		protected IndexSearcher getValue(String k) {
 			try {
@@ -77,6 +92,11 @@ public class IndexManager {
 	};
 
 	private Cache<IndexSearcher, Bucket> searcherReferenceCount = new Cache<IndexSearcher, Bucket>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3704220332108717190L;
+
 		@Override
 		protected Bucket getValue(IndexSearcher k) {
 			return new Bucket();

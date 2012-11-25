@@ -11,6 +11,7 @@ import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
+import com.venky.digest.Encryptor;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -28,7 +29,13 @@ public class UserImpl extends ModelImpl<User>{
 	public UserImpl(User user) {
 		super(user);
 	}
-
+	public void generateApiKey(){
+		StringBuilder key = new StringBuilder();
+		key.append(getProxy().getId()).append(":").append(getProxy().getName()).append(":").append(getProxy().getPassword()).append(":").append(System.currentTimeMillis());
+		String encryptedKey = Encryptor.encrypt(key.toString());
+		getProxy().setApiKey(encryptedKey);
+		getProxy().save();
+	}
 	
 	public boolean authenticate(String password){
 		try {

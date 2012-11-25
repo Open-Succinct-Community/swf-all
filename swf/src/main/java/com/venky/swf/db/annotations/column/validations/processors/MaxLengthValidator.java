@@ -5,6 +5,7 @@
 package com.venky.swf.db.annotations.column.validations.processors;
 
 import com.venky.swf.db.annotations.column.validations.MaxLength;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -13,16 +14,11 @@ import com.venky.swf.db.annotations.column.validations.MaxLength;
 public class MaxLengthValidator extends FieldValidator<MaxLength>{
 
     @Override
-    public Class<MaxLength> getAnnotationClass() {
-        return MaxLength.class;
-    }
-
-    @Override
-    public  boolean validate(MaxLength rule, String value,StringBuilder message) {
+    public boolean validate(MaxLength rule, String value, MultiException ex){
         if (rule.value() >= value.length() ){
             return true;
         }
-        message.append("Length cannot exceed ").append(rule.value());
+        ex.add(new FieldValidationException("Field length cannot exceed "+ rule.value()));
         return false;
     }
 

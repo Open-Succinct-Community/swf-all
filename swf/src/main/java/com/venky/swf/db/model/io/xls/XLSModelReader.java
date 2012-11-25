@@ -1,5 +1,7 @@
-package com.venky.swf.db.model.reflection;
+package com.venky.swf.db.model.io.xls;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,10 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
@@ -21,38 +25,43 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.io.ModelReader;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.SequenceMap;
 
-public class ModelReader<M extends Model> extends ModelIO<M> {
+public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements ModelReader<M,Row>{
 
-	public ModelReader(Class<M> modelClass) {
+	public XLSModelReader(Class<M> modelClass) {
 		super(modelClass);
+	} 
+	
+	@Override
+	public List<M> read(InputStream source) throws IOException{
+		Workbook book = new HSSFWorkbook(source);
+		Sheet sheet = book.getSheet(StringUtil.pluralize(getBeanClass().getSimpleName()));
+		return read(sheet);
 	}
 	
 	public List<M> read(Sheet sheet){
+        List<M> records = new ArrayList<M>();
+        if (sheet == null){
+        	return records;
+        }
+        
 		Iterator<Row> rowIterator = sheet.iterator();
         Row header = rowIterator.hasNext() ? rowIterator.next() : null;
-        List<M> records = new ArrayList<M>();
         if (header == null){
         	return records;
         }
         
-        String[] heading = new String[header.getLastCellNum()]; // as cell indexes start at zero,LastCellNum can be seen as Size of row  
-        Map<String,Integer> headingIndexMap = new HashMap<String, Integer>();
-        for (int i = 0 ; i < heading.length ; i ++ ){
-            heading[i] = header.getCell(i).getStringCellValue();
-            headingIndexMap.put(heading[i], i);
-        }
-        
-        
-        
+        Map<String,Integer> headingIndexMap = headingIndexMap(sheet);
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
-        	M m = createInstance();
-    		copyRowValuesToBean(m, row, heading,headingIndexMap);
+        	M m = read(row,headingIndexMap);
         	records.add(m);
         }
         return records;
@@ -99,7 +108,37 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 		}
 		return value;
 	}
-	protected void copyRowValuesToBean(M m, Row row,String[] heading,Map<String, Integer> headingIndexMap) {
+	
+	private Map<String,Integer> headingIndexMap(Sheet sheet){
+        Map<String,Integer> headingIndexMap = new SequenceMap<String, Integer>();
+		if (sheet == null || sheet.getLastRowNum() < 0){
+			return headingIndexMap; 
+		}
+		Row header = sheet.getRow(0);
+        for (int i = 0 ; i < header.getLastCellNum() ; i ++ ){
+            headingIndexMap.put(header.getCell(i).getStringCellValue(), i);
+        }
+        return headingIndexMap;
+	}
+	
+
+	
+	@Override
+	public M read(Row source) {
+    	Map<String,Integer> headingIndexMap = headingIndexMap(source.getSheet());
+		return read(source , headingIndexMap);
+	}
+
+	private M read(Row source,Map<String, Integer> headingIndexMap){
+		M m = createInstance();
+		copyRowValuesToBean(m, source, headingIndexMap);
+		return Database.getTable(getBeanClass()).getRefreshed(m);
+	}
+
+
+	protected void copyRowValuesToBean(M m, Row row, Map<String, Integer> headingIndexMap) {
+		String[] heading = headingIndexMap.keySet().toArray(new String[]{});
+
 		ModelReflector<M> ref = getReflector();
 		SequenceSet<String> handledReferenceFields = new SequenceSet<String>();
 		
@@ -151,7 +190,11 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 				Map<String,Cell> fieldValues = new HashMap<String, Cell>();
 				boolean referenceFieldsPassed = false;
 				for (String field:refModelFields){
-					Cell cell1 = row.getCell(headingIndexMap.get(field));
+					Integer headingIndex = headingIndexMap.get(field);
+					if (headingIndex == null){
+						continue;
+					}
+					Cell cell1 = row.getCell(headingIndex);
 					if (cell1.getCellType() != Cell.CELL_TYPE_BLANK) {
 						referenceFieldsPassed = true;
 					}
@@ -236,6 +279,4 @@ public class ModelReader<M extends Model> extends ModelIO<M> {
 			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL());
 		}
 	}
-
-
 }

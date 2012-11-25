@@ -88,8 +88,10 @@ public class Database implements _IDatabase{
 				}
 				txnUserAttributes.rollback(); //All check points are clear.
 				txnUserAttributes.getCurrentValue().clear(); // Now restore the initial value to a clear map.
-				connection.rollback();
-				connection.close();
+				if (!connection.isClosed()){
+					connection.rollback();
+					connection.close();
+				}
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
 			} finally {

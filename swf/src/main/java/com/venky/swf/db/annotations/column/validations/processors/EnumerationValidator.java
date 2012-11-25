@@ -4,10 +4,11 @@
  */
 package com.venky.swf.db.annotations.column.validations.processors;
 
+import java.util.StringTokenizer;
+
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
-
-import java.util.StringTokenizer;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -16,12 +17,7 @@ import java.util.StringTokenizer;
 public class EnumerationValidator extends FieldValidator<Enumeration> {
 
     @Override
-    public Class<Enumeration> getAnnotationClass() {
-        return Enumeration.class;
-    }
-
-    @Override
-    public boolean validate(Enumeration annotation, String value, StringBuilder message) {
+    public boolean validate(Enumeration annotation, String value, MultiException ex){
         StringTokenizer tokens = new StringTokenizer(annotation.value(),",");
         while (tokens.hasMoreElements()){
             String token = tokens.nextToken();
@@ -29,9 +25,9 @@ public class EnumerationValidator extends FieldValidator<Enumeration> {
                 return true;
             }
         }
-        message.append(value).append(" not in (").append(annotation.value()).append( ")");
+        ex.add(new FieldValidationException( value + " not in (" + annotation.value() +  ")"));
         return false;
 
     }
-    
+
 }

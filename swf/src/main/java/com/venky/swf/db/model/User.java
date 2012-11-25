@@ -7,11 +7,14 @@ package com.venky.swf.db.model;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
-import com.venky.swf.db.annotations.column.defaulting.HOUSEKEEPING;
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
@@ -19,7 +22,6 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
-import com.venky.swf.db.annotations.model.UNIQUE_KEY;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 
@@ -31,10 +33,18 @@ import com.venky.swf.sql.Expression;
 @CONFIGURATION
 @MENU("Admin")
 public interface User extends Model{
+	
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY
     public String getName();
     public void setName(String name);
+    
+    @IS_NULLABLE
+    @UNIQUE_KEY("API")
+    @HIDDEN
+    @COLUMN_DEF(StandardDefault.NULL)
+    public String getApiKey();
+    public void setApiKey(String key);
     
     @PASSWORD
     public String getPassword();
@@ -66,4 +76,6 @@ public interface User extends Model{
 
 	@CONNECTED_VIA("USER_ID")
 	public List<UserEmail> getUserEmails();
+	
+	public void generateApiKey();
 }

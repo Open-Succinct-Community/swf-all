@@ -5,6 +5,7 @@
 package com.venky.swf.db.annotations.column.validations.processors;
 
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -13,14 +14,9 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 public class NotNullValidator extends FieldValidator<IS_NULLABLE> {
 
     @Override
-    public Class<IS_NULLABLE> getAnnotationClass() {
-        return IS_NULLABLE.class;
-    }
-
-    @Override
-    public boolean validate(IS_NULLABLE annotation, String value,StringBuilder message) {
+    public boolean validate(IS_NULLABLE annotation, String value,MultiException ex) {
         if (!annotation.value() && value.trim().length() == 0 ){
-            message.append("Mandatory field");
+            ex.add(new FieldValidationException("Mandatory field"));
             return false;
         }
         return true;

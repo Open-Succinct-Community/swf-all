@@ -7,7 +7,6 @@ import com.venky.swf.routing.Config;
 
 public class SWFLocalPlatform implements Extension{
 
-	@Override
 	public void invoke(Object... context) {
 		Properties info = (Properties)context[0];
 		if (!info.containsKey("url")) info.setProperty("url", Config.instance().getProperty("swf.jdbc.url"));
