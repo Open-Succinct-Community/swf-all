@@ -7,6 +7,8 @@ package com.venky.swf.views.model;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 
 import com.venky.core.log.TimerStatistics.Timer;
@@ -44,6 +46,15 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         super(path, modelClass, includeFields);
         this.records = records;
         this.indexedModel = !getReflector().getIndexedFieldGetters().isEmpty();
+        if (includeFields == null){
+        	Iterator<String> fi = getIncludedFields().iterator(); 
+        	while (fi.hasNext()){
+        		String field = fi.next();
+        		if (getReflector().isHouseKeepingField(field) || !getReflector().isFieldVisible(field)) {
+	        		fi.remove();
+	        	}
+	        }
+        }
     }
     
     public static Control createSearchForm(_IPath path){
@@ -115,12 +126,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         header = table.createHeader();
         Column action = null ;
         
-        int columnToSort = 0;
-        for (Method m : getSingleRecordActions()){
-            action = header.createColumn();
-            action.setText(m.getName().substring(0,1).toUpperCase());
+        BitSet showAction = new BitSet();
+        int numActions = getSingleRecordActions().size(); 
+        
+        for (int i = 0 ; i < numActions ; i ++ ){
+        	action = header.createColumn();
+            //action.setText(StringUtil.camelize(m.getName()));
             action.setProperty("width", "1%");
-            columnToSort ++;
+            showAction.clear(i);
         }
         
         boolean hasAtleastOneVisbleColumn = false; 
@@ -130,30 +143,32 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                 hasAtleastOneVisbleColumn = true;
             }
         }
-        if (hasAtleastOneVisbleColumn){
-        	table.setProperty("sortby", columnToSort);
-        }
 
         for (M record : records) {
         	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
         		continue;
         	}
-        	if (!getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
+        	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
         		continue;
         	}
             Row row = table.createRow();
         	Timer timer = Timer.startTimer("paintAllActions");
-            for (Method m : getSingleRecordActions()){
+        	List<Method> singleRecordActions = getSingleRecordActions();
+            for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
+            	Method m = singleRecordActions.get(actionIndex);
             	String actionName = m.getName();
-            	boolean canAccessAction = getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
+            	boolean canAccessAction = record.getId() > 0  && getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
             	if (canAccessAction){
                 	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
-                	String icon = null ; 
+                	String icon = "/resources/images/show.png" ; 
+                	String tooltip = actionName;
                 	if (sra != null) {
-                		icon = sra.icon();
-                	}
-                	if (ObjectUtil.isVoid(icon)){
-                		icon = "/resources/images/show.png"; // Default icon.
+                		if (!ObjectUtil.isVoid(sra.icon())){
+                    		icon = sra.icon(); 
+                		}
+                		if (!ObjectUtil.isVoid(sra.tooltip())){
+                    		tooltip = sra.tooltip(); 
+                		}
                 	}
     	            Link actionLink = new Link();
     	            StringBuilder sAction = new StringBuilder();
@@ -163,8 +178,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
 	            	actionLink.setUrl(sAction.toString());
 
-	            	actionLink.addControl(new Image(icon,actionName));
+	            	actionLink.addControl(new Image(icon,tooltip));
     	            row.createColumn().addControl(actionLink);
+    	            showAction.set(actionIndex);
             	}else{
                 	row.createColumn();
                 }
@@ -221,6 +237,20 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                 	timer.stop();
                 }
             }
+        }
+        
+        int numActionsRemoved = 0 ;
+        
+        for (int i = 0 ; i < numActions ; i ++ ){
+        	if (!showAction.get(i)){
+        		table.removeColumn(i-numActionsRemoved);
+        		numActionsRemoved ++; // Once a column is removed the indexes are shifted left. 
+        	}
+        }
+
+        numActions -= numActionsRemoved;
+        if (hasAtleastOneVisbleColumn){
+        	table.setProperty("sortby", numActions);
         }
     }
 }

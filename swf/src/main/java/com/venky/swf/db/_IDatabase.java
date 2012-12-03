@@ -11,6 +11,6 @@ public interface _IDatabase extends  _ICloseable{
 	public interface _ITransaction {
 		public void commit() ;
 		public void rollback(Throwable th) ;
-		public Object getAttribute(String string); 
+		public <A> A getAttribute(String string); 
 	}
 }

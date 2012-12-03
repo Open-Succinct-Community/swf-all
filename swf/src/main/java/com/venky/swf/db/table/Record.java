@@ -44,7 +44,9 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	
     	return r;
     }
-    
+    public String toString(){
+    	return fieldValues.toString();
+    }
     public Set<String> getFieldNames(){
         return fieldValues.keySet();
     }

@@ -51,9 +51,18 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         this.record = record;
     }
     
+    private String formAction = "save";
+    
+    
     
 
-    public M getRecord() {
+    public void setFormAction(String formAction) {
+		this.formAction = formAction;
+	}
+
+
+
+	public M getRecord() {
 		return record;
 	}
 
@@ -99,8 +108,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     }
 
     protected String getFormAction(){ 
-    	if (getPath().canAccessControllerAction("save") || (getRecord().getRawRecord().isNewRecord() && getPath().canAccessControllerAction("save", null))){
-    		return "save";
+    	if (getPath().canAccessControllerAction(formAction) || (getRecord().getRawRecord().isNewRecord() && getPath().canAccessControllerAction(formAction, null))){
+    		return formAction;
     	}else {
     		return "back";
     	}

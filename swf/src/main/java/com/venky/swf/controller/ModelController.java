@@ -5,7 +5,6 @@
 package com.venky.swf.controller; 
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
@@ -18,9 +17,11 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
@@ -32,7 +33,6 @@ import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
@@ -73,43 +73,23 @@ public class ModelController<M extends Model> extends Controller {
         	integrationAdaptor = IntegrationAdaptor.instance(modelClass, FormatHelper.getFormatClass(path.getProtocol()));
         }
     }
-    protected ModelReflector<M> getReflector(){
+    
+    public IntegrationAdaptor<M, ?> getIntegrationAdaptor() {
+		return this.integrationAdaptor;
+	}
+
+	protected ModelReflector<M> getReflector(){
     	return reflector;
     }
     
-    private class DefaultModelFilter implements Select.ResultFilter<M> {
-    	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
-		@Override
-		public boolean pass(M record) {
-			return defaultFilter.pass(record) && getPath().canAccessControllerAction("index", StringUtil.valueOf(record.getId()));
-		}
-    }
     public View exportxls(){
     	if (integrationAdaptor != null) {
     		throw new RuntimeException("xls export is only available from UI"); 
     	}
-		List<String> fieldsIncluded = getReflector().getFields();
-		Iterator<String> fieldIterator = fieldsIncluded.iterator();
-		int numUniqueKeys = getReflector().getUniqueKeys().size();
-		while (fieldIterator.hasNext()){
-			String field = fieldIterator.next();
-			if (getReflector().isHouseKeepingField(field)){
-				if (!field.equals("ID") || numUniqueKeys > 0){
-					fieldIterator.remove();
-				}
-			}
-		}
-		List<M> list = new Select().from(getModelClass()).where(getPath().getWhereClause()).execute(getModelClass(), new DefaultModelFilter());
-		return exportxls(list,fieldsIncluded);
-    }
-    private View exportxls(List<M> list, List<String>fieldsIncluded){
+		Workbook wb = new HSSFWorkbook();
+    	super.exportxls(getModelClass(), wb);
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		try {
-			new XLSModelWriter<M>(getModelClass()).write(list, os,fieldsIncluded);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xls");
+    	return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xls");
     }
     
     @Depends("save")
@@ -171,7 +151,7 @@ public class ModelController<M extends Model> extends Controller {
 				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
 					.add(new Expression("ID",Operator.IN,ids.toArray()))
 					.add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
-				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter());
+				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter<M>());
 				return list(records);
 			}else {
 				return list(new ArrayList<M>());
@@ -181,7 +161,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     
-    public static final int MAX_LIST_RECORDS = 10 ;
+    public static final int MAX_LIST_RECORDS = 30 ;
 	protected void rewriteQuery(Map<String,Object> formData){
 		
 	}
@@ -192,7 +172,7 @@ public class ModelController<M extends Model> extends Controller {
 	
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter());
+        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>());
         return list(records);
     }
     
@@ -267,12 +247,24 @@ public class ModelController<M extends Model> extends Controller {
     	if (integrationAdaptor != null) {
     		throw new AccessDeniedException("Action is available only from ui");
     	}
-        M record = Database.getTable(modelClass).get(id);
+        return createModelEditView(id, "save");
+    }
+    protected View createModelEditView(int id, String formAction){
+    	M record = Database.getTable(modelClass).get(id);
+    	return createModelEditView(record, formAction);
+    }
+    protected View createModelEditView(M record, String formAction){
+    	return createModelEditView(getPath(), record, formAction);
+    }
+    protected View createModelEditView(Path path, M record, String formAction){
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            return dashboard(new ModelEditView<M>(getPath(), modelClass, getIncludedFields(), record));
+        	ModelEditView<M> mev = new ModelEditView<M>(path, modelClass, getIncludedFields(), record);
+        	mev.setFormAction(formAction);
+            return dashboard(mev);
         }else {
         	throw new AccessDeniedException();
         }
+    	
     }
 
     @SingleRecordAction(icon="/resources/images/clone.png")
@@ -372,7 +364,35 @@ public class ModelController<M extends Model> extends Controller {
 		return new ForwardedView(getPath(), action);
     }
     
+    public static interface Action<M> {
+    	public void act(M m);
+    	public View error(M m);
+    }
+    
+    public class SaveAction implements Action<M>{
+		@Override
+		public void act(M m) {
+			save(m, getModelClass());
+		}
+
+		@Override
+		public View error(M m) {
+			ModelEditView<M> errorView = null;
+			if (m.getRawRecord().isNewRecord()){
+    			errorView = createBlankView(getPath().createRelativePath("blank"),m);
+    		}else {
+    			errorView = new ModelEditView<M>(getPath().createRelativePath("edit/" + m.getId()), getModelClass(), getIncludedFields(), m);
+    		}
+	    	errorView.setFormAction("save");
+	    	return errorView;
+    	} 
+    	
+    }
     private View  saveModelFromForm(){
+    	return performPostAction(new SaveAction());
+    }
+
+    protected View performPostAction(Action<M> action){
         Map<String,Object> formFields = getFormFields();
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
@@ -421,7 +441,7 @@ public class ModelController<M extends Model> extends Controller {
         boolean hasUserModifiedData = hasUserModifiedData(formFields,digest);
         if (hasUserModifiedData || isNew){
         	try {
-        		save(record,getModelClass());
+        		action.act(record);
         	}catch (RuntimeException ex){
         		if (hasUserModifiedData){
 	        		Throwable th = ExceptionUtil.getRootCause(ex);
@@ -432,18 +452,14 @@ public class ModelController<M extends Model> extends Controller {
 	        		}
 	
 	    	    	record.setTxnPropery("ui.error.msg", message);
-	    	    	if (isNew){
-	        			return createBlankView(getPath().createRelativePath("blank"),record);
-	        		}else {
-	        			return new ModelEditView<M>(getPath().createRelativePath("edit/" + record.getId()), getModelClass(), getIncludedFields(), record);
-	        		}
+	    	    	return action.error(record);
         		}
         	}
     	}
         
         if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
-        	//Usability Logic: If user is not modifying data shown, then why be in data entry mode. 
-        	return redirectTo("blank");
+        	//Usability Logic: If user is not modifying data shown, then why be in data entry mode.
+        	return clone(record.getId());
         }
         
         return afterPersistDBView(record);
@@ -539,9 +555,10 @@ public class ModelController<M extends Model> extends Controller {
     	
     	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
 		if (reflector.isAnnotationPresent(autoCompleteFieldGetter,PARTICIPANT.class)){
-    		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
-    		if (pOptions.containsKey(autoCompleteFieldName)){
-    			List<Integer> autoCompleteFieldValues = pOptions.get(autoCompleteFieldName);
+    		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
+    		PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
+    		if (pOptions.get(participant.value()).containsKey(autoCompleteFieldName)){
+    			List<Integer> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
     				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
     				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));

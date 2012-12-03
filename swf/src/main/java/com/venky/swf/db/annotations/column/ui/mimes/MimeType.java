@@ -92,6 +92,14 @@ public enum MimeType {
 			return false;
 		}
 	},
+	APPLICATION_ZIP() {
+		public String toString(){
+			return "application/zip";
+		}
+		public boolean isImage(){
+			return false;
+		}
+	},
 	;
 
 	public abstract boolean isImage();

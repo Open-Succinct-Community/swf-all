@@ -1,7 +1,10 @@
 package com.venky.swf.db.model.io.xls;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.apache.poi.ss.usermodel.Row;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
@@ -61,12 +64,19 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 		
 	}
 	
-	protected Method getGetter(String heading) {
+	protected Method getGetter(Row row, String heading, Map<String, Integer> headingIndexMap) {
+		return getGetter(heading);
+	}
+	
+	protected Method getGetter(Row row, String heading) {
+		return getGetter(heading);
+	}
+	
+	protected Method getGetter(String heading){
 		StringTokenizer tok = new StringTokenizer(heading, ".");
 		String firstPart =  tok.nextToken();
 		return super.getGetter(firstPart);
 	}
-
 
 
 }

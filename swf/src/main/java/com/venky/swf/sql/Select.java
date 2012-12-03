@@ -24,6 +24,9 @@ import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.SWFTimeoutException;
 
 public class Select extends SqlStatement{
+	
+	private static Logger logger = Logger.getLogger(Select.class.getName());
+	
 	private String[] columnNames = null;
 	private String[] tableNames ;
 	private String[] orderBy;
@@ -54,7 +57,7 @@ public class Select extends SqlStatement{
 			if (lock && ref.isAnnotationPresent(CONFIGURATION.class)){
 				lock = false;
 				//Because Config cache stays even after commit and is shared by all threads.
-				Logger.getLogger(getClass().getName()).warning("Select for update downgraded to select for config table " + ref.getTableName());
+				logger.warning("Select for update downgraded to select for config table " + ref.getTableName());
 			}
 		}
 		return from(tables);
@@ -179,9 +182,12 @@ public class Select extends SqlStatement{
 	        	cache = Database.getInstance().getCache(ref);
 	        	result = cache.getCachedResult(getWhereExpression(),maxRecords,locked);
         	}
+        	
+        	//TODO Venky max Records filtered later may cause to return less than max.
         	boolean requireResultSorting = false;
         	if (result == null){
 	            Timer queryTimer = Timer.startTimer(getRealSQL());
+	            logger.fine(getRealSQL());
 	            try {
 		            st = prepare();
 		            if (maxRecords > 0){

@@ -221,18 +221,28 @@ public class ModelInvocationHandler implements InvocationHandler {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;
 	    	}
-	    	Map<String,List<Integer>> fieldNameValues = user.getParticipationOptions(asModel);
-	    	if (fieldNameValues.isEmpty()){
-	    		return true;
-	    	}	
-	    	for (String fieldName:fieldNameValues.keySet()){
-	    		List<Integer> values = fieldNameValues.get(fieldName);
-	    		Object value = reflector.get(getProxy(), fieldName);
-	    		if (values.contains(value)) {
-	    			return true;
+	    	Cache<String,Map<String,List<Integer>>> participantRoleGroupfieldNameValues = user.getParticipationOptions(asModel);
+	    	boolean ret = true;
+	    	for (String participantRoleGroup: participantRoleGroupfieldNameValues.keySet()){
+	    		Map<String,List<Integer>> fieldNameValues = participantRoleGroupfieldNameValues.get(participantRoleGroup);
+	    		if (fieldNameValues.isEmpty()){
+	    			continue;
 	    		}
+	    		ret = false;
+	    		for (String fieldName:fieldNameValues.keySet()){
+		    		List<Integer> values = fieldNameValues.get(fieldName);
+		    		Object value = reflector.get(getProxy(), fieldName);
+		    		if (values.contains(value)) {
+		    			ret = true ; 
+		    			break; 
+		    		}
+		    	}
+
+		    	if (!ret){
+		    		break;
+		    	}
 	    	}
-	    	return false;
+	    	return ret;
     	}finally{
     		timer.stop();
     	}
@@ -499,6 +509,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        }
 	        
 			Database.getInstance().getCache(getReflector()).registerDestroy(getProxy());
+			Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
 	        afterDestroy();
 		}finally{
 			beingDestroyed = false;
@@ -539,6 +550,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
 
 		Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
+		Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
     }
 
     private void create() {
@@ -587,8 +599,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
         
     	Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
-    	
+    	Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
 	}
+    
     @Override
     public boolean equals(Object o){
     	if (o == null){

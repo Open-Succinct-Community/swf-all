@@ -1,4 +1,4 @@
-package com.venky.swf.db.annotations.column.pm;
+package com.venky.swf.db.annotations.column.ui;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface PARTICIPANT {
-	public String value() default "DEFAULT";
+
+public @interface TOOLTIP {
+	public String value() default "Enter your text here." ;
 }

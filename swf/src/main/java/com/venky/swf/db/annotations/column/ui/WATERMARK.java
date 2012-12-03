@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 
-public @interface SUBMITABLE {
-	public boolean value() default true;
+public @interface WATERMARK {
+	public String value() default "Enter your text here." ;
 }

@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.cache.Cache;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -47,8 +49,13 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		User user = (User)context[0];
 		M model = (M) context[1];
 		String fieldName =  (String)context[2];
-		Map<String,List<Integer>> participatingOptions = (Map<String, List<Integer>>)context[3];
+		Cache<String,Map<String,List<Integer>>> participatingGroupOptions = (Cache<String,Map<String, List<Integer>>>)context[3];
+
+		PARTICIPANT participant = getReflector().getAnnotation(getReflector().getFieldGetter(fieldName), PARTICIPANT.class);
+		
+		Map<String,List<Integer>> participatingOptions = participatingGroupOptions.get(participant.value());
 		List<Integer> allowedValues = getAllowedFieldValues(user,model,fieldName);
+
 		if (allowedValues != null){ 
 			List<Integer> existing = participatingOptions.get(fieldName);
 			if (existing == null){

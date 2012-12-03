@@ -4,7 +4,6 @@
  */
 package com.venky.swf.views.controls.page;
 
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.views.controls.Control;
 
 /**
@@ -19,11 +18,9 @@ public class Image extends Control{
 	public Image(String imageUrl){
 		this(imageUrl,"");
 	}
-	public Image(String imageUrl,String title){
+	public Image(String imageUrl,String tooltip){
         this(imageUrl,imageUrl.endsWith("svg"));
-        if (!ObjectUtil.isVoid(title)){
-        	this.setProperty("title", title);
-        }
+    	this.setToolTip(tooltip);
 	}
 	
 	private Image(String imageUrl, boolean isSvg){

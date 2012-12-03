@@ -14,7 +14,10 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.menu._IMenuBuilder;
 
@@ -165,7 +168,7 @@ public class Config {
     }
     
     public boolean isTimerEnabled(){
-    	return Boolean.valueOf(getProperty("swf.timer.enabled","false"));
+    	return Logger.getLogger(TimerStatistics.class.getName()).isLoggable(Level.FINE);
     }
     
 	public boolean isDevelopmentEnvironment(){

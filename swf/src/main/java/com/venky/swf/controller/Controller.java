@@ -9,10 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,9 +31,13 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.Unrestricted;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.io.xls.XLSModelReader;
+import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
@@ -49,7 +57,7 @@ import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.login.LoginView;
-import com.venky.swf.views.model.XLSLoadView;
+import com.venky.swf.views.model.FileUploadView;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
 
@@ -231,41 +239,44 @@ public class Controller {
     	}
     	return sheets;
     }
-
+    
+    protected void importxls(InputStream in){
+		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
+		try {
+			Workbook book = new HSSFWorkbook(in);
+			for (Sheet sheet : getSheetsToImport(book)){ 
+				Table<? extends Model> table = getTable(sheet);
+				if (table == null){
+					continue;
+				}
+				try {
+					modelReflectorsOfImportedTables.add(table.getReflector());
+					importxls(sheet, table.getModelClass());
+				} catch (Exception e) {
+					for (ModelReflector<? extends Model> ref : modelReflectorsOfImportedTables){
+    					Database.getInstance().getCache(ref).clear();
+					}
+					if (!(e instanceof RuntimeException)){
+						throw new RuntimeException(e);
+					}else {
+						throw (RuntimeException)e;
+					}
+				}
+			}
+		}catch (IOException ex){
+			throw new RuntimeException(ex);
+		}
+    }
     public View importxls(){
         HttpServletRequest request = getPath().getRequest();
 
         if (request.getMethod().equalsIgnoreCase("GET")) {
-        	return dashboard(new XLSLoadView(getPath()));
+        	return dashboard(new FileUploadView(getPath()));
         }else {
         	Map<String,Object> formFields = getFormFields();
         	if (!formFields.isEmpty()){
         		InputStream in = (InputStream)formFields.get("datafile");
-        		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
-        		try {
-	    			Workbook book = new HSSFWorkbook(in);
-	    			for (Sheet sheet : getSheetsToImport(book)){ 
-	    				Table<? extends Model> table = getTable(sheet);
-	    				if (table == null){
-	    					continue;
-	    				}
-	    				try {
-	    					modelReflectorsOfImportedTables.add(table.getReflector());
-	    					importxls(sheet, table.getModelClass());
-	    				} catch (Exception e) {
-	    					for (ModelReflector<? extends Model> ref : modelReflectorsOfImportedTables){
-		    					Database.getInstance().getCache(ref).clear();
-	    					}
-	    					if (!(e instanceof RuntimeException)){
-	    						throw new RuntimeException(e);
-	    					}else {
-	    						throw (RuntimeException)e;
-	    					}
-	    				}
-					}
-        		}catch (IOException ex){
-        			throw new RuntimeException(ex);
-        		}
+        		importxls(in);
         	}
         	return back();
         }
@@ -284,34 +295,15 @@ public class Controller {
 		Table<M> table = Database.getTable(tableName);
 		return table;
     }
-    
+    protected <M extends Model> XLSModelReader<M> getXLSModelReader(Class<M> modelClass){
+    	return new XLSModelReader<M>(modelClass);
+    }
+
     protected <M extends Model> void importxls(Sheet sheet, Class<M> modelClass){
-		XLSModelReader<M> modelReader = new XLSModelReader<M>(modelClass);
-		ModelReflector<M> modelReflector = ModelReflector.instance(modelClass);
+		XLSModelReader<M> modelReader = getXLSModelReader(modelClass);
 		for (M m : modelReader.read(sheet)){
-			M preExistingRecord  = null;
-			if (m.getId() > 0){
-				preExistingRecord = Database.getTable(modelClass).get(m.getId());
-			}else {
-				for (Expression where : modelReflector.getUniqueKeyConditions(m)){
-					List<M> recordsWithMatchingUK = new Select().from(modelClass).where(where).execute(modelClass);
-					if (recordsWithMatchingUK.size() > 1){
-						throw new RuntimeException("Found multiple records for key attributes passed, Please use the id column");
-					}else if (recordsWithMatchingUK.size() == 1){
-						preExistingRecord = recordsWithMatchingUK.get(0);
-					}
-				}
-			}
-			if (preExistingRecord != null){
-				for (String fieldName : m.getRawRecord().getDirtyFields()){
-					preExistingRecord.getRawRecord().put(fieldName, m.getRawRecord().get(fieldName));
-				}
-				importRecord(preExistingRecord, modelClass);
-			}else {
-				importRecord(m,modelClass);
-			}
+			importRecord(m,modelClass);
 		}
-    	
     }
 
     
@@ -331,7 +323,7 @@ public class Controller {
     	if (record.isAccessibleBy(getSessionUser(),modelClass)){
             record.save();
         }else {
-        	throw new AccessDeniedException();
+        	throw new AccessDeniedException(modelClass.getSimpleName());
         }
     	
     }
@@ -353,8 +345,13 @@ public class Controller {
 				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
 					continue;
 				}
-				List<Integer> idoptions = getSessionUser().getParticipationOptions(modelClass).get(referredModelIdFieldName);
+				List<Integer> idoptions = null ;
 				Integer id = null; 
+
+				PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
+				if (participant != null){
+					idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
+				}
 						
 				if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
 					id = idoptions.get(0);
@@ -397,4 +394,59 @@ public class Controller {
 		record.setUpdaterUserId(getSessionUser().getId());
     }
 
+    public View exportxls(){
+    	Map<String,Table<? extends Model>> tables = Database.getTables();
+    	Workbook wb = new HSSFWorkbook();
+    	for (String tableName: tables.keySet()){
+    		Table<? extends Model> table = tables.get(tableName); 
+    		EXPORTABLE exportable = table.getReflector().getAnnotation(EXPORTABLE.class);
+    		if (table.isReal() && (exportable == null || exportable.value())) {
+    			Logger.getLogger(getClass().getName()).info("Exporting:" + table.getTableName());
+    			exportxls(table.getModelClass(), wb);
+    		}
+    	}
+    	try {
+    		String baseFileName =  "db"+ new SimpleDateFormat("yyyyMMddHHmm").format(new java.util.Date(System.currentTimeMillis())) ;
+
+    		ByteArrayOutputStream os = new ByteArrayOutputStream();
+    		
+    		ZipOutputStream zos = new ZipOutputStream(os);
+    		zos.putNextEntry(new ZipEntry(baseFileName + ".xls"));
+    		wb.write(zos);
+    		zos.closeEntry();
+    		zos.close();
+
+    		return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_ZIP,"content-disposition", "attachment; filename=" + baseFileName + ".zip");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    }
+    
+    protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {
+    	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
+		@Override
+		public boolean pass(M record) {
+			return defaultFilter.pass(record) && getPath().canAccessControllerAction("index", StringUtil.valueOf(record.getId()));
+		}
+    }
+
+    protected <M extends Model> void exportxls(Class<M> modelClass,Workbook wb){
+    	ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+    	List<String> fieldsIncluded = reflector.getFields();
+		Iterator<String> fieldIterator = fieldsIncluded.iterator();
+		int numUniqueKeys = reflector.getUniqueKeys().size(); 
+		while (fieldIterator.hasNext()){
+			String field = fieldIterator.next();
+			if (reflector.isHouseKeepingField(field)){
+				if (!field.equals("ID") || numUniqueKeys > 0){
+					fieldIterator.remove();
+				}
+			}
+		}
+		List<M> list = new Select().from(modelClass).execute(modelClass,new DefaultModelFilter<M>());
+		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded);
+	}
+    protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){
+    	return new XLSModelWriter<M>(modelClass); 
+    }
 }

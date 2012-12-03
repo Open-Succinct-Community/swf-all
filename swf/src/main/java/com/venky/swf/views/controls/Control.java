@@ -25,6 +25,22 @@ public class Control extends Properties implements _IControl{
     private long nextId(){
     	return new Object().hashCode();
     }
+    
+    public void setWaterMark(String watermark){
+    	if (!ObjectUtil.isVoid(watermark)){
+        	setProperty("placeholder", watermark);
+    	}else {
+    		remove("placeholder");
+    	}
+    }
+
+    public void setToolTip(String tip){
+    	if (!ObjectUtil.isVoid(tip)){
+        	setProperty("title", tip);
+    	}else {
+    		remove("title");
+    	}
+    }
 
     public Control(String tag, String... pairs) {
         this.tag = tag;
@@ -76,6 +92,10 @@ public class Control extends Properties implements _IControl{
 
     public List<_IControl> getContainedControls() {
         return Collections.unmodifiableList(containedControls);
+    }
+    
+    public void removeContainedControlAt(int index){
+    	containedControls.remove(index);
     }
 
     @Override

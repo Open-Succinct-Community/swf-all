@@ -26,6 +26,8 @@ import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
+import com.venky.swf.db.annotations.column.ui.TOOLTIP;
+import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -156,6 +158,15 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
             	control.setValue(converter.toString(value));
             }
         }
+        WATERMARK watermark = getReflector().getAnnotation(getter, WATERMARK.class);
+        if (watermark != null){
+        	control.setWaterMark(watermark.value());
+        }
+        TOOLTIP tooltip = getReflector().getAnnotation(getter, TOOLTIP.class);
+        if (tooltip != null){
+        	control.setToolTip(tooltip.value());
+        }
+        
         control.setName(fieldName);
         return control;
     }

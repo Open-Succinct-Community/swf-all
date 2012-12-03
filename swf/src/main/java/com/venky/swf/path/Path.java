@@ -13,9 +13,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
@@ -29,6 +31,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
+import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -733,9 +736,13 @@ public class Path implements _IPath{
     		}
     	}
 		
-		Map<String,List<Integer>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass());
-		if (!pOptions.isEmpty()){
-			boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(pOptions.keySet(), reflector);
+		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass());
+		if (pOptions.size() >  0){
+			Set<String> fields = new HashSet<String>();
+			for (String g: pOptions.keySet()){
+				fields.addAll(pOptions.get(g).keySet());
+			}
+			boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(fields, reflector);
 			
 			if (canFilterInSQL){
 				Expression dsw = getSessionUser().getDataSecurityWhereClause(reflector,pOptions);

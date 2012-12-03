@@ -18,12 +18,35 @@ public class MultiException extends RuntimeException{
 	public MultiException(){
 		super();
 	}
+	
+	public Throwable getContainedException(Class<?> instanceOfThisClass){
+		if (instanceOfThisClass.isInstance(this)){
+			return this;
+		}
+		for (Throwable th: throwables){
+			Throwable ret = null;
+			if (MultiException.class.isInstance(th)){
+				ret = ((MultiException)th).getContainedException(instanceOfThisClass);
+			}else {
+				ret = ExceptionUtil.getEmbeddedException(th, instanceOfThisClass);
+			}
+			if (ret != null){
+				return ret;
+			}
+		}
+		return null;
+	}
+	
 	public MultiException(String message){
 		super(message);
 	}
 	
 	public void add(Throwable t){
 		throwables.add(ExceptionUtil.getRootCause(t));
+	}
+	
+	public boolean isEmpty(){
+		return throwables.isEmpty();
 	}
 	
 	private String newLine(){

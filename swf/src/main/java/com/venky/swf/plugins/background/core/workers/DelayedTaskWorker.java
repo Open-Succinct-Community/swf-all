@@ -2,10 +2,12 @@ package com.venky.swf.plugins.background.core.workers;
 
 import java.util.logging.Logger;
 
+import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
+import com.venky.swf.routing.Config;
 
 public class DelayedTaskWorker extends Thread {
 	private final DelayedTaskManager manager ; 
@@ -18,6 +20,7 @@ public class DelayedTaskWorker extends Thread {
 	public void run(){
 		DelayedTask task = null ;
 		while ((task = manager.next()) != null ){
+			TimerStatistics.setEnabled(Config.instance().isTimerEnabled());
 			Logger.getLogger(getClass().getName()).info("Started Task:" + task.getId());
 			Database db = Database.getInstance();
 			db.open(task.getCreatorUser());
@@ -35,6 +38,7 @@ public class DelayedTaskWorker extends Thread {
 			}finally{
 				Logger.getLogger(getClass().getName()).info("Completed Task:" + task.getId());
 				db.close();
+				TimerStatistics.dumpStatistics();
 			}
 		}
 	}

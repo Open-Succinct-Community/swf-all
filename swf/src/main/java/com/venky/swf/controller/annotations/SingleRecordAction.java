@@ -10,4 +10,5 @@ import java.lang.annotation.Target;
 
 public @interface SingleRecordAction {
 	String icon() default "" ; 
+	String tooltip() default "" ;
 }

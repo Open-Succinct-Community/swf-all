@@ -1,9 +1,11 @@
 package com.venky.swf.pm;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
@@ -21,10 +23,14 @@ public class DataSecurityFilter {
 		return false;
 	}
 	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by){
-		Map<String,List<Integer>> pOptions = by.getParticipationOptions(modelClass);
+		Cache<String,Map<String,List<Integer>>> pOptions = by.getParticipationOptions(modelClass);
 		Select s = new Select().from(modelClass);
 		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
-		if (!anyFieldIsVirtual(pOptions.keySet(),ref)){
+		Set<String> fields = new HashSet<String>();
+		for (String g : pOptions.keySet()){
+			fields.addAll(pOptions.get(g).keySet());
+		}
+		if (!anyFieldIsVirtual(fields,ref)){
 			s.where(by.getDataSecurityWhereClause(modelClass));
 		}
 		return s.execute(modelClass,new Select.AccessibilityFilter<M>(by));

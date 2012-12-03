@@ -5,10 +5,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
@@ -52,20 +55,27 @@ public class ParticipantControllerAccessExtension implements Extension{
 			modelClass = possibleTable.getModelClass();
 		}
 		if (modelClass != null ){
-			Map<String,List<Integer>> pOptions = user.getParticipationOptions(modelClass);
+			Cache<String,Map<String,List<Integer>>> pGroupOptions = user.getParticipationOptions(modelClass);
 			if (parameterValue != null){
 				try {
 					int id = Integer.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
-					ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
-					for (String referencedModelIdFieldName :pOptions.keySet()){
-						Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
-						if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-							participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));//Remove "_ID" from the end.
-						}
+					if (selectedModel == null){
+						throw new AccessDeniedException();
 					}
-					if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
-						throw new AccessDeniedException(); // User is not a participant on the model.
+					ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
+					for (String participantRoleGroup : pGroupOptions.keySet()){
+						Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
+						for (String referencedModelIdFieldName :pOptions.keySet()){
+							Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
+							String participatingRole = referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3) ; //Remove "_ID" from the end.
+							if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+								participantingRoles.add(participatingRole);
+							}
+						}
+						if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+							throw new AccessDeniedException(); // User is not a participant on the model.
+						}
 					}
 				}catch (NumberFormatException ex){
 					//
@@ -77,7 +87,11 @@ public class ParticipantControllerAccessExtension implements Extension{
 					throw new RuntimeException(ex);
 				}
 			}else {
-				for (String referencedModelIdFieldName :pOptions.keySet()){
+				Set<String> fields = new HashSet<String>();
+				for (String g: pGroupOptions.keySet()){
+					fields.addAll(pGroupOptions.get(g).keySet());
+				}
+				for (String referencedModelIdFieldName :fields){
 					participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));
 				}
 			}

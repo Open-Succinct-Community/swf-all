@@ -559,19 +559,22 @@ public class Table<M extends Model> {
 	
 	public M getRefreshed(M partiallyFilledModel){
 		M fullModel = null;
-
-		Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
-		for (Expression where : getReflector().getUniqueKeyConditions(partiallyFilledModel)){
-			List<M> recordsMatchingUK = new Select().from(getModelClass()).where(where).execute();
-			if (recordsMatchingUK.size() == 1){
-				fullModel = recordsMatchingUK.get(0);
-				break;
+		if (partiallyFilledModel.getId() > 0) {
+			fullModel = Database.getTable(getModelClass()).get(partiallyFilledModel.getId());
+		}else {
+			for (Expression where : getReflector().getUniqueKeyConditions(partiallyFilledModel)){
+				List<M> recordsMatchingUK = new Select().from(getModelClass()).where(where).execute();
+				if (recordsMatchingUK.size() == 1){
+					fullModel = recordsMatchingUK.get(0);
+					break;
+				}
 			}
 		}
 
 		if (fullModel == null){
 			fullModel = partiallyFilledModel;
 		}else {
+			Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
 			Record rawFullRecord = fullModel.getRawRecord();
 			for (String field: rawPartiallyFilledRecord.getDirtyFields()){
 				rawFullRecord.put(field, partiallyFilledModel.getRawRecord().get(field));

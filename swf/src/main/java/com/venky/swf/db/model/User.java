@@ -7,6 +7,7 @@ package com.venky.swf.db.model;
 import java.util.List;
 import java.util.Map;
 
+import com.venky.cache.Cache;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.HOUSEKEEPING;
@@ -53,13 +54,13 @@ public interface User extends Model{
     public boolean authenticate(String password);
     public static final String USER_AUTHENTICATE = "user.authenticate" ;
    
-    public <M extends Model> Map<String,List<Integer>> getParticipationOptions(Class<M> modelClass);
-    public Map<String,List<Integer>> getParticipationOptions(Class<? extends Model> modelClass,Model model);
+    public <M extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<M> modelClass);
+    public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass,Model model);
     public static final String GET_PARTICIPATION_OPTION = "get.participation.option";//++ModelClass.SimpleName
     
     public <M extends Model> Expression getDataSecurityWhereClause(Class<M> modelClass);
     public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass,Model model);
-    public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Map<String,List<Integer>> participatingOptions);
+    public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Integer>>> participatingRoleGroupOptions);
     
     @IS_VIRTUAL
     public boolean isAdmin();

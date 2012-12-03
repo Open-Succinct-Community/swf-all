@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views.controls.page.layout;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.venky.swf.views.controls.Control;
@@ -144,6 +145,24 @@ public class Table extends Control{
 			super("tbody");
 		}
     }
+	public void removeColumn(int index) {
+		List<Row> rows = new ArrayList<Row>();
+		hunt(this,Row.class,rows);
+		for (Row row: rows){
+			row.removeContainedControlAt(index);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T extends _IControl> void hunt(_IControl control, Class<T> controlClass,List<T> hunted){
+		if (controlClass.isInstance(control)){
+			hunted.add((T)control);
+		}else {
+			for (_IControl c :control.getContainedControls()){
+				hunt(c,controlClass,hunted);
+			}
+		}
+	}
     
 
 }

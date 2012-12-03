@@ -2,6 +2,7 @@ package com.venky.swf.db.model.io.xls;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,10 +21,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -143,7 +141,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 		SequenceSet<String> handledReferenceFields = new SequenceSet<String>();
 		
 		for (int i = 0; i < heading.length; i++) {
-			Method getter = getGetter(heading[i]);
+			Method getter = getGetter(row,heading[i],headingIndexMap);
 			if (getter == null) {
 				continue;
 			}
@@ -203,25 +201,18 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 
 				Model referredModel = getModel(referredModelReflector,fieldValues);
 				if (referredModel == null && referenceFieldsPassed){
-					throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information " + fieldValues.toString());
+					handleInvalidReference(m,row,fieldName, referredModelClass, fieldValues);
 				}else if (referredModel != null){
 					value = referredModel.getId();
 				}else {
 					value = null;
 				}
 			} else if (type == GetterType.FIELD_GETTER) {
-				TypeRef<?> tref = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
-				TypeConverter<?> converter = tref.getTypeConverter();
 				value = getCellValue(cell,getter.getReturnType());
-				if (!ObjectUtil.isVoid(value) || ref.isFieldMandatory(fieldName)) {
-					value = converter.valueOf(value);
-				} else {
-					value = null;
-				}
 			}
 
 			try {
-				setter.invoke(m, value);
+				set(m,fieldName,value);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException("Cannot set " + heading[i] + " as "
@@ -229,6 +220,16 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 
+	}
+	
+	
+
+	protected void handleInvalidReference(M model, Row xlsRow, String fieldName, Class<? extends Model> referredModelClass, Map<String,Cell> fieldValues){
+		throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information " + fieldValues.toString());
+	}
+	
+	protected void set(M m , String fieldName, Object value) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+		getReflector().set(m, fieldName,value);
 	}
 
 	private Model getModel(ModelReflector<? extends Model> reflector, Map<String, Cell> headingValues) {

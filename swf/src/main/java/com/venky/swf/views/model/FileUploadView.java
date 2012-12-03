@@ -11,9 +11,9 @@ import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 
-public class XLSLoadView extends HtmlView{
+public class FileUploadView extends HtmlView{
 
-	public XLSLoadView(Path path) {
+	public FileUploadView(Path path) {
 		super(path);
 	}
 	

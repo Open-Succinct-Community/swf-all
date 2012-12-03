@@ -7,6 +7,7 @@ import org.junit.Test;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.validations.UniqueKeyValidator.UniqueConstraintViolatedException;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Router;
 import com.venky.swf.test.db.model.CommonCode;
 
@@ -34,9 +35,12 @@ public class UniqueKeyValidatorTest {
 		cc1.save();
 		try {
 			cc2.save();
-		}catch (RuntimeException ex){
-			Throwable th = ExceptionUtil.getEmbeddedException(ex, UniqueConstraintViolatedException.class);
+		}catch (Throwable ex){
+			MultiException th = (MultiException)ExceptionUtil.getEmbeddedException(ex, MultiException.class);
 			Assert.assertTrue(th != null);
+			if (th != null){
+				Assert.assertTrue(th.getContainedException(UniqueConstraintViolatedException.class) != null);
+			}
 		}
 		
 	}

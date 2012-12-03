@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -256,8 +257,21 @@ public class Database implements _IDatabase{
 			}
 		}
 		
-		public Object getAttribute(String name){ 
-			return checkpoint.getValue().get(name);
+		@SuppressWarnings("unchecked")
+		public <A> A getAttribute(String name){ 
+			return (A)checkpoint.getValue().get(name);
+		}
+		
+		public void registerTableDataChanged(String tableName){
+			getTablesChanged().add(tableName);
+		}
+		public Set<String> getTablesChanged(){
+			Set<String> models = Database.getInstance().getCurrentTransaction().getAttribute("tables.modified");
+	    	if (models == null){
+	    		models = new HashSet<String>();
+	    		Database.getInstance().getCurrentTransaction().setAttribute("tables.modified", models);
+	    	}
+	    	return models;
 		}
 	}
 
