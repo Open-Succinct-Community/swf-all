@@ -30,7 +30,6 @@ import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
-import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -220,12 +219,15 @@ public class ModelController<M extends Model> extends Controller {
             try {
             	for (Method getter : reflector.getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
-            			CONTENT_TYPE ct = reflector.getAnnotation(getter,CONTENT_TYPE.class);
-            			MimeType mimeType = MimeType.TEXT_PLAIN; 
-            			if (ct  != null){
-            				mimeType = ct.value();
+            			String fieldName = reflector.getFieldName(getter);
+            			String mimeType = reflector.getContentType(record, fieldName);
+            			String fileName = reflector.getContentName(record,fieldName);
+            			if (fileName != null){
+                			return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType,
+                					"content-disposition","attachment; filename=" + fileName);
+            			}else {
+            				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType);
             			}
-        				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType);
             		}
             	}
 			} catch (IllegalAccessException e) {
@@ -426,7 +428,7 @@ public class ModelController<M extends Model> extends Controller {
             String fieldName = setableFields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
             if (fieldName != null){
 	            Object value = formFields.get(fieldName);
-	            Class<?> fieldClass = reflector.getFieldGetter(fieldName).getReturnType().getClass();
+	            Class<?> fieldClass = reflector.getFieldGetter(fieldName).getReturnType();
 	            if (value == null && (Reader.class.isAssignableFrom(fieldClass) || InputStream.class.isAssignableFrom(fieldClass))){
 	            	continue;
 	            }

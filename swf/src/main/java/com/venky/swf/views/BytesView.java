@@ -19,15 +19,21 @@ import com.venky.swf.path.Path;
  */
 public class BytesView extends View{
     private byte[] bytes;
-    private MimeType contentType ; 
+    private String contentType;
     Map<String,String> addnlResponseHeaders = new HashMap<String, String>();
     public BytesView(Path path,byte[] bytes){
-        this(path,bytes,null);
+        this(path,bytes,MimeType.TEXT_PLAIN);
     }
     public BytesView(Path path,byte[] bytes,MimeType contentType,String... responseHeaderAttributes){
+    	this(path,bytes,contentType.toString(),responseHeaderAttributes);
+    }
+    public BytesView(Path path,byte[] bytes,String contentType,String... responseHeaderAttributes){
     	super(path);
         this.bytes = bytes;
-        this.contentType = contentType;
+        this.contentType = MimeType.TEXT_PLAIN.toString(); 
+        if (contentType != null){ 
+        	this.contentType = contentType;
+        }
         if ( responseHeaderAttributes != null && responseHeaderAttributes.length % 2 == 0 ){
         	for (int i = 0 ; i < responseHeaderAttributes.length ; i ++ ) {
         		addnlResponseHeaders.put(responseHeaderAttributes[i], responseHeaderAttributes[i+1]);
@@ -37,9 +43,7 @@ public class BytesView extends View{
     }
     public void write() throws IOException {
         HttpServletResponse response = getPath().getResponse();
-        if (contentType != null ) {
-            response.setContentType(contentType.toString());
-        }
+        response.setContentType(contentType);
         if (addnlResponseHeaders != null){
         	for (String key:addnlResponseHeaders.keySet()){
         		response.addHeader(key, addnlResponseHeaders.get(key));

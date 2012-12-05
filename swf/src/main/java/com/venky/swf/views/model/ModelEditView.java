@@ -157,17 +157,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	if (fieldData instanceof TextArea || fieldData instanceof FileTextBox){
             		rpadLastRow(table);
             	}
-            	if (isFieldEditable(fieldName)){
-                    Row r = getRow(table,true);
-                    r.createColumn().addControl(fieldLabel);
-                	if (fieldData instanceof TextArea){
-                        r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
-                	}else {
-                		r.createColumn().addControl(fieldData);
-                	}
-                	r.getLastColumn().addClass("data");
-                }else {
-                    Row r = getRow(table,true);
+            	
+                Row r = getRow(table,true);
+                r.createColumn().addControl(fieldLabel);
+            	if (!isFieldEditable(fieldName)){
                     Kind protectionKind = getFieldProtection(fieldName);
                     switch(protectionKind){
                     	case NON_EDITABLE:
@@ -178,10 +171,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                             fieldData.setEnabled(false);
                             break;
                     }
-                    r.createColumn().addControl(fieldLabel);
-                    r.createColumn().addControl(fieldData);
-                    r.getLastColumn().addClass("data");
                 }
+
+            	if (fieldData instanceof TextArea){
+                    r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
+            	}else {
+            		r.createColumn().addControl(fieldData);
+            	}
+            	r.getLastColumn().addClass("data");
             }else {
                 fieldData.setVisible(false);
                 hiddenFields.add(fieldData);
@@ -191,10 +188,12 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	rpadLastRow(table);
             	form.setProperty("enctype","multipart/form-data");
             	FileTextBox ftb = (FileTextBox)fieldData;
-            	ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId());
-                Row streamRow = table.createRow();
-                Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
-                streamColumn.addControl(ftb.getStreamLink());
+            	if (getReflector().getContentSize(record, fieldName) != 0){
+            		ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId(),getReflector().getContentName(record, fieldName));
+                    Row streamRow = table.createRow();
+                    Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
+                    streamColumn.addControl(ftb.getStreamLink());
+            	}
             }
             
             
@@ -205,6 +204,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	String fieldValue = fieldData.getValue();
 	            if (fieldData instanceof CheckBox){
 	            	fieldValue = StringUtil.valueOf(((CheckBox)fieldData).isChecked());
+	            }else if  (fieldData instanceof TextArea){
+	            	fieldValue = fieldData.getText();
 	            }
 	            
             	hashFieldValue.append(fieldName);

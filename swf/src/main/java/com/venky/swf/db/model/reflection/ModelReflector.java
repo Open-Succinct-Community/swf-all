@@ -1,5 +1,7 @@
 package com.venky.swf.db.model.reflection;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -35,9 +37,11 @@ import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
@@ -248,7 +252,7 @@ public class ModelReflector<M extends Model> {
     	return childModelGetters;
     }
 
-    private List<String> allfields = new IgnoreCaseList();
+    private List<String> allfields = new IgnoreCaseList(false);
     private Map<String,List<String>> columnFields = new IgnoreCaseMap<List<String>>();
     private Map<String,String> fieldColumn = new IgnoreCaseMap<String>();
 
@@ -289,7 +293,7 @@ public class ModelReflector<M extends Model> {
 		Timer timer = Timer.startTimer();
 		try {
 	    	loadAllFields();
-	    	return new IgnoreCaseList(allfields);
+	    	return new IgnoreCaseList(false,allfields);
 		}finally{
 			timer.stop();
 		}
@@ -403,7 +407,7 @@ public class ModelReflector<M extends Model> {
     }
     public List<String> getFields(FieldMatcher matcher){
 		loadAllFields();
-        List<String> fields = new IgnoreCaseList();
+        List<String> fields = new IgnoreCaseList(false);
         for (String field: allfields){
             if (matcher == null || matcher.matches(getColumnDescriptor(field))){
                 fields.add(field);
@@ -419,7 +423,7 @@ public class ModelReflector<M extends Model> {
 		Timer timer = Timer.startTimer();
 		try {
 	    	List<String> fields = getFields(matcher);
-	    	List<String> columns = new IgnoreCaseList();
+	    	List<String> columns = new IgnoreCaseList(false);
 	    	for (String field:fields){
 	    		columns.add(getColumnDescriptor(field).getName());
 	    	}
@@ -542,7 +546,68 @@ public class ModelReflector<M extends Model> {
 		}
     }
 
+    public String getContentType(Model record, String fieldName){
+    	String mimeType = null ;
+    	
+    	List<String> fields = getFields();
+    	if (fields.contains(fieldName)){
+        	Method getter = getFieldGetter(fieldName);
+        	if (InputStream.class.isAssignableFrom(getter.getReturnType())){
+    			CONTENT_TYPE ct = getAnnotation(getter,CONTENT_TYPE.class);
+    			if (ct  != null){
+    				mimeType = ct.value().toString();
+    			}else {
+    				String contentTypeFieldName = fieldName + "_CONTENT_TYPE";
+    				if (getFields().contains(contentTypeFieldName)){
+    					mimeType = get(record,contentTypeFieldName);
+    				}
+    			}
+    		}
+    	}
+    	if (mimeType == null){
+			mimeType = MimeType.APPLICATION_OCTET_STREAM.toString();
+		}
+    	return mimeType; 
+    }
+    
+    public String getContentName(Model record, String fieldName){
+    	List<String> fields = getFields();
+    	if (fields.contains(fieldName)){
+        	Method getter = getFieldGetter(fieldName);
+        	if (InputStream.class.isAssignableFrom(getter.getReturnType())){
+	    		String fileName = fieldName + "_CONTENT_NAME";
+	    		if (fields.contains(fileName)){
+	    			return get(record,fileName);
+	    		}
+        	}
+    	}
+    	return null;
+    }
 
+    public int getContentSize(Model record, String fieldName){
+    	List<String> fields = getFields();
+    	if (fields.contains(fieldName)){
+        	Method getter = getFieldGetter(fieldName);
+        	if (InputStream.class.isAssignableFrom(getter.getReturnType())){
+	    		String sizeFieldName = fieldName + "_CONTENT_SIZE";
+	    		if (fields.contains(sizeFieldName)){
+	    			return get(record,sizeFieldName);
+	    		}else {
+	    			InputStream is = get(record,fieldName);
+	    			try {
+	    				if (is != null){
+	    					return is.available();
+	    				}else {
+	    					return 0;
+	    				}
+					} catch (IOException e) {
+						//
+					}
+	    		}
+        	}
+    	}
+    	return -1;
+    }
     private static final String[] getterPrefixes = new String[]{"get" , "is"};
     
     private Map<String,Method> fieldGetterMap = new IgnoreCaseMap<Method>();

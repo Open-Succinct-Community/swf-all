@@ -25,7 +25,6 @@ import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.TOOLTIP;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -53,7 +52,7 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     ModelReflector<M> reflector;
     ControllerReflector<? extends Controller> controllerReflector;
     
-	List<String> includedFields = new IgnoreCaseList();
+	List<String> includedFields = new IgnoreCaseList(false);
 
     public AbstractModelView(Path path, Class<M> modelClass, final String[] includedFields) {
         super(path);
@@ -128,10 +127,10 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         	control = txtArea;
         }else if (InputStream.class.isAssignableFrom(returnType)){
         	FileTextBox ftb = new FileTextBox();
-        	CONTENT_TYPE type = reflector.getAnnotation(getter,CONTENT_TYPE.class);
-        	if (type != null){
-        		ftb.setContentType(type.value());
-        	}
+        	String contentType = reflector.getContentType(record, fieldName);
+			if (!ObjectUtil.isVoid(contentType)){
+				ftb.setContentType(contentType);
+			}
         	control = ftb;
         }else {
             Method parentModelGetter = getReflector().getReferredModelGetterFor(getter);

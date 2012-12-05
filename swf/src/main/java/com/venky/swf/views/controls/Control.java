@@ -144,7 +144,7 @@ public class Control extends Properties implements _IControl{
     public String getValue(){
         return getProperty("value");
     }
-    public final void setEnabled(final boolean enabled){
+    public void setEnabled(final boolean enabled){
         if (enabled){
             remove("disabled");
         }else {

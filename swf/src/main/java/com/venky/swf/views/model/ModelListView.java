@@ -10,8 +10,10 @@ import java.lang.reflect.Method;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
@@ -55,6 +57,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	        	}
 	        }
         }
+        this.orderBy = new OrderBy();
+        getIncludedFields().add(0, orderBy.field);
     }
     
     public static Control createSearchForm(_IPath path){
@@ -76,17 +80,27 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		searchForm.addControl(table);
 		return searchForm;
     }
-
-    @Override
-    protected void createBody(Body b) {
-    	if (indexedModel){
-    		b.addControl(createSearchForm(getPath()));
+    
+    private class OrderBy {
+    	int sortDirection(){
+    		if (StringUtil.equals(ascOrDesc, "ASC")){
+    			return 0;
+    		}else {
+    			return 1;
+    		}
     	}
-    	
-    	Table container = new Table();
-    	container.addClass("hfill");
-    	b.addControl(container);
-    	Row header = container.createHeader();
+    	String field = null;
+    	String ascOrDesc = "ASC";
+    	public OrderBy(){
+    		String orderBy = new StringTokenizer(reflector.getOrderBy(), ",").nextToken();
+    		StringTokenizer tok = new StringTokenizer(orderBy);
+    		this.field = tok.nextToken();
+    		if (tok.hasMoreTokens()){
+        		this.ascOrDesc = tok.nextToken().toUpperCase(); 
+    		}
+    	}
+    }
+    protected void addHeaderLevelActions(Row header){
     	Column newLink = header.createColumn();
 
     	if (getPath().canAccessControllerAction("blank") && getPath().canAccessControllerAction("save")){
@@ -114,133 +128,160 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		newLink.addControl(truncate);
     	}
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
-        
+    }
+    
+    protected void addHeadings(Row headerRow){
+        for (String fieldName : getIncludedFields()) {
+        	headerRow.createColumn().setText(getFieldLiteral(fieldName));
+        }
+    }
+	protected BitSet addHeadingsForLineLevelActions(Row header) {
+		BitSet showAction = new BitSet();
+        int numActions = getSingleRecordActions().size(); 
+        for (int i = 0 ; i < numActions ; i ++ ){
+        	Control action = header.createColumn();
+            action.setProperty("width", "1%");
+            showAction.clear(i);
+        }
+        return showAction;
+	}
+
+	protected void addLineLevelActions(Row row, M record, BitSet showAction) {
+    	Timer timer = Timer.startTimer("paintAllActions");
+    	List<Method> singleRecordActions = getSingleRecordActions();
+        for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
+        	Method m = singleRecordActions.get(actionIndex);
+        	String actionName = m.getName();
+        	boolean canAccessAction = record.getId() > 0  && getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
+        	if (canAccessAction){
+            	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
+            	String icon = "/resources/images/show.png" ; 
+            	String tooltip = actionName;
+            	if (sra != null) {
+            		if (!ObjectUtil.isVoid(sra.icon())){
+                		icon = sra.icon(); 
+            		}
+            		if (!ObjectUtil.isVoid(sra.tooltip())){
+                		tooltip = sra.tooltip(); 
+            		}
+            	}
+	            Link actionLink = new Link();
+	            StringBuilder sAction = new StringBuilder();
+	            if ("search".equals(getPath().action())){
+	            	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
+	            }
+            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
+            	actionLink.setUrl(sAction.toString());
+
+            	actionLink.addControl(new Image(icon,tooltip));
+	            row.createColumn().addControl(actionLink);
+	            showAction.set(actionIndex);
+        	}else{
+            	row.createColumn();
+            }
+        }
+        timer.stop();
+
+	}
+	protected void addFields(Row row, M record){
+        for (String fieldName : getIncludedFields()) {
+            Timer timer = Timer.startTimer("paintField." + fieldName);
+            try {
+                Column column = row.createColumn(); 
+
+            	Method getter = getFieldGetter(fieldName);
+				TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
+                Control control = null;
+                
+                if (InputStream.class.isAssignableFrom(getter.getReturnType())){
+                	FileTextBox ftb = (FileTextBox)getInputControl(fieldName, record);
+                	String contentName = getReflector().getContentName(record, fieldName);
+        			if (getReflector().getContentSize(record, fieldName) != 0){
+        				ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId(),contentName);
+                    	control = ftb.getStreamLink();
+        			}else {
+        				control = new Label("No Attachment");
+        			}
+                }else {
+                    Object value = getter.invoke(record);
+                    String sValue = converter.toString(value);
+                    if (reflector.isFieldPassword(fieldName)){
+                    	sValue = sValue.replaceAll(".", "\\*");
+                    }
+                    String parentDescription = getParentDescription(getter, record) ;
+                    if (!ObjectUtil.isVoid(parentDescription)){
+                    	Object parentId = getter.invoke(record);
+                    	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
+						String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
+                    	sValue = parentDescription;
+                    	
+                    	_IPath parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
+                    	if (parentTarget.canAccessControllerAction()){
+                        	control = new Link(parentTarget.getTarget());
+                        	control.setText(sValue);
+                    	}else {
+                    		control = new Label(sValue);
+                    	}
+                    }else {
+                        column.addClass(converter.getDisplayClassName());
+                    	control = new Label(sValue);
+                    }
+                }
+                column.addControl(control);
+            } catch (IllegalAccessException ex) {
+                throw new RuntimeException(ex);
+            } catch (IllegalArgumentException ex) {
+                throw new RuntimeException(ex);
+            } catch (InvocationTargetException ex) {
+                throw new RuntimeException(ex);
+            }finally {
+            	timer.stop();
+            }
+        }    	
+		
+	}
+    protected void addRecordToTable(M record, BitSet showAction, Table table){
+    	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
+    		return;
+    	}
+    	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
+    		return;
+    	}
+        Row row = table.createRow();
+        addLineLevelActions(row, record, showAction);
+        addFields(row, record);
+    }
+    private OrderBy orderBy = null; 
+    @Override
+    protected void createBody(Body b) {
+    	if (indexedModel){
+    		b.addControl(createSearchForm(getPath()));
+    	}
+    	
+    	Table container = new Table();
+    	container.addClass("hfill");
+    	b.addControl(container);
+    	Row header = container.createHeader();
+    	addHeaderLevelActions(header);
+
     	Row rowContainingTable = container.createRow();
     	Column columnContainingTable = rowContainingTable.createColumn();
     	
     	
         Table table = new Table();
         columnContainingTable.addControl(table);
-        
         table.setProperty("class", "tablesorter");
+        
         header = table.createHeader();
-        Column action = null ;
+        BitSet showAction = addHeadingsForLineLevelActions(header);
         
-        BitSet showAction = new BitSet();
-        int numActions = getSingleRecordActions().size(); 
-        
-        for (int i = 0 ; i < numActions ; i ++ ){
-        	action = header.createColumn();
-            //action.setText(StringUtil.camelize(m.getName()));
-            action.setProperty("width", "1%");
-            showAction.clear(i);
-        }
-        
-        boolean hasAtleastOneVisbleColumn = false; 
-        for (String fieldName : getIncludedFields()) {
-            if (reflector.isFieldVisible(fieldName)) {
-                header.createColumn().setText(getFieldLiteral(fieldName));
-                hasAtleastOneVisbleColumn = true;
-            }
-        }
+        addHeadings(header);
 
         for (M record : records) {
-        	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
-        		continue;
-        	}
-        	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
-        		continue;
-        	}
-            Row row = table.createRow();
-        	Timer timer = Timer.startTimer("paintAllActions");
-        	List<Method> singleRecordActions = getSingleRecordActions();
-            for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
-            	Method m = singleRecordActions.get(actionIndex);
-            	String actionName = m.getName();
-            	boolean canAccessAction = record.getId() > 0  && getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
-            	if (canAccessAction){
-                	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
-                	String icon = "/resources/images/show.png" ; 
-                	String tooltip = actionName;
-                	if (sra != null) {
-                		if (!ObjectUtil.isVoid(sra.icon())){
-                    		icon = sra.icon(); 
-                		}
-                		if (!ObjectUtil.isVoid(sra.tooltip())){
-                    		tooltip = sra.tooltip(); 
-                		}
-                	}
-    	            Link actionLink = new Link();
-    	            StringBuilder sAction = new StringBuilder();
-    	            if ("search".equals(getPath().action())){
-    	            	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
-    	            }
-	            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
-	            	actionLink.setUrl(sAction.toString());
-
-	            	actionLink.addControl(new Image(icon,tooltip));
-    	            row.createColumn().addControl(actionLink);
-    	            showAction.set(actionIndex);
-            	}else{
-                	row.createColumn();
-                }
-            }
-            timer.stop();
-            for (String fieldName : getIncludedFields()) {
-                timer = Timer.startTimer("paintField." + fieldName);
-                try {
-                    if (reflector.isFieldVisible(fieldName)) {
-                        Column column = row.createColumn(); 
-
-                    	Method getter = getFieldGetter(fieldName);
-						TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
-                        Control control = null;
-                        
-                        if (InputStream.class.isAssignableFrom(getter.getReturnType())){
-                        	FileTextBox ftb = (FileTextBox)getInputControl(fieldName, record);
-                        	ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId());
-                        	control = ftb.getStreamLink();
-                        }else {
-                            Object value = getter.invoke(record);
-                            String sValue = converter.toString(value);
-                            if (reflector.isFieldPassword(fieldName)){
-                            	sValue = sValue.replaceAll(".", "\\*");
-                            }
-                            String parentDescription = getParentDescription(getter, record) ;
-                            if (!ObjectUtil.isVoid(parentDescription)){
-                            	Object parentId = getter.invoke(record);
-                            	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
-								String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
-                            	sValue = parentDescription;
-                            	
-                            	_IPath parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
-                            	if (parentTarget.canAccessControllerAction()){
-                                	control = new Link(parentTarget.getTarget());
-                                	control.setText(sValue);
-                            	}else {
-                            		control = new Label(sValue);
-                            	}
-                            }else {
-                                column.addClass(converter.getDisplayClassName());
-                            	control = new Label(sValue);
-                            }
-                        }
-                        column.addControl(control);
-                    }
-                } catch (IllegalAccessException ex) {
-                    throw new RuntimeException(ex);
-                } catch (IllegalArgumentException ex) {
-                    throw new RuntimeException(ex);
-                } catch (InvocationTargetException ex) {
-                    throw new RuntimeException(ex);
-                }finally {
-                	timer.stop();
-                }
-            }
-        }
+        	addRecordToTable(record,showAction,table);        }
         
         int numActionsRemoved = 0 ;
-        
+        int numActions = getSingleRecordActions().size();
         for (int i = 0 ; i < numActions ; i ++ ){
         	if (!showAction.get(i)){
         		table.removeColumn(i-numActionsRemoved);
@@ -249,8 +290,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         numActions -= numActionsRemoved;
-        if (hasAtleastOneVisbleColumn){
-        	table.setProperty("sortby", numActions);
-        }
+    	table.setProperty("sortby", numActions);
+    	table.setProperty("order", orderBy.sortDirection());
     }
+
 }

@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -112,6 +113,10 @@ public class Path implements _IPath{
 						byte[] content = StringUtil.readBytes(fi.getInputStream());
 						if (content == null || content.length == 0){
 							content = null;
+						}else {
+							formFields.put(fi.getFieldName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fi.getName()));
+							formFields.put(fi.getFieldName() + "_CONTENT_NAME", fi.getName());
+							formFields.put(fi.getFieldName() + "_CONTENT_SIZE", fi.getSize());
 						}
 						formFields.put(fi.getFieldName(), content == null ? null : new ByteArrayInputStream(content));
 					}

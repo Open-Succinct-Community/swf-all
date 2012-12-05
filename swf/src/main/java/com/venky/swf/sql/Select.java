@@ -70,7 +70,14 @@ public class Select extends SqlStatement{
 	
 	
 	public Select orderBy(String... columnNames){
-		this.orderBy = columnNames;
+		List<String> orderbyColumns = new ArrayList<String>();
+		for (String columnName: columnNames){
+			StringTokenizer tok = new StringTokenizer(columnName,",");
+			while (tok.hasMoreTokens()){
+				orderbyColumns.add(tok.nextToken());
+			}
+		}
+		this.orderBy = orderbyColumns.toArray(new String[]{});
 		return this;
 	}
 	

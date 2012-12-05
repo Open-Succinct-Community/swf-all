@@ -27,7 +27,11 @@ public class SqlStatement {
             BindVariable value = parameters.get(i);
             if (value.getJdbcType() == Types.BLOB || value.getJdbcType() == Types.LONGVARBINARY || value.getJdbcType() == Types.BINARY){
             	ByteArrayInputStream in = value.getBinaryInputStream();
-            	st.setBinaryStream(i+1,  in , in.available());
+            	if (in != null){
+            		st.setBinaryStream(i+1,  in , in.available());
+            	}else {
+            		st.setNull(i+1, value.getJdbcType());
+            	}
             }else if (value.getJdbcType() == Types.CLOB || value.getJdbcType() == Types.LONGVARCHAR){
             	StringReader reader = value.getCharacterInputStream();
             	st.setCharacterStream(i+1, reader);

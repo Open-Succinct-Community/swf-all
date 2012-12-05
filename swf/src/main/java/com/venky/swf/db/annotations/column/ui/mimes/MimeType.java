@@ -86,7 +86,7 @@ public enum MimeType {
 	},
 	APPLICATION_XLS() {
 		public String toString(){
-			return "application/excel";
+			return "application/vnd.ms-excel";
 		}
 		public boolean isImage(){
 			return false;
@@ -95,6 +95,14 @@ public enum MimeType {
 	APPLICATION_ZIP() {
 		public String toString(){
 			return "application/zip";
+		}
+		public boolean isImage(){
+			return false;
+		}
+	},
+	APPLICATION_OCTET_STREAM() {
+		public String toString(){
+			return "application/octet-stream";
 		}
 		public boolean isImage(){
 			return false;

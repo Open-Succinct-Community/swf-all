@@ -61,7 +61,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     private Record record = null;
     private Model proxy = null;
     private ModelReflector<? extends Model> reflector = null;
-    private List<String> virtualFields = new IgnoreCaseList();
+    private List<String> virtualFields = new IgnoreCaseList(false);
     private String modelName = null;
 
 	@SuppressWarnings("unchecked")

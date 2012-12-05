@@ -40,21 +40,23 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         }
         this.description.setAutocompleteServiceURL(url);
         setVisible(true);
+        setEnabled(true);
     }
     
     public void setVisible(boolean visible){
     	super.setVisible(false);
-    	if (description != null){
+    	if (description != null){//Prevent NPE from super's constructor.
     		description.setVisible(visible);
     	}
     }
+    
     public Class<M> getModelClass(){
         return modelClass;
     }
     @Override
     public void setParent(_IControl parent){
         super.setParent(parent);
-        description.setEnabled(isEnabled());
+        // SHOULD NOT BE NEEDED. description.setEnabled(isEnabled());
         parent.addControl(description);
     }    
     
@@ -68,6 +70,14 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     	super.setReadOnly(readonly);
     	description.setReadOnly(readonly);
     }
+    
+    public void setEnabled(final boolean enabled){
+    	super.setEnabled(enabled);
+    	if (description != null){ //Prevent NPE from super's constructor.
+    		description.setEnabled(enabled);
+    	}
+    }
+    
     @Override
     public void setValue(Object value){
         super.setValue(value);

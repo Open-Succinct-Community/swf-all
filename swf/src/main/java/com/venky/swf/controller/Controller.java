@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -166,9 +167,11 @@ public class Controller {
         }catch (IOException ex){
             //
         }
+        
+        
 
         p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
-        return new BytesView(getPath(), baos.toByteArray());
+        return new BytesView(getPath(), baos.toByteArray(),MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
     
     public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
