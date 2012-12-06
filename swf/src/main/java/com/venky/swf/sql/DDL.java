@@ -3,7 +3,6 @@ package com.venky.swf.sql;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 
 import com.venky.swf.db.table.BindVariable;
 
@@ -14,7 +13,6 @@ public abstract class DDL extends DataManupulationStatement{
 
 	protected DDL(String table){
 		this.table = table;
-		setLevel(Level.INFO);
 	}
 
 	protected void finalizeParameterizedSQL(){

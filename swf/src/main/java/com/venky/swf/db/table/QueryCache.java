@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.SequenceSet;
@@ -23,6 +25,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
 	private HashMap<Expression, Set<Record>> queryCache = new HashMap<Expression, Set<Record>>();
 	private Table<? extends Model> table;
+	private static Logger logger = Logger.getLogger(QueryCache.class.getName());
 
 	public Table<? extends Model> getTable() {
 		return table;
@@ -59,46 +62,93 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 		
 	}
+	private static final Level defaultLevel = Level.FINE;
+	
 	public Set<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
 		Timer timer = Timer.startTimer();
-		
+		StringBuilder debug = new StringBuilder();
 		try {
 			if (where != null && where.isEmpty()) {
 				where = null;
 			}
-	
+			boolean requireFilteringForLockedRecords = true; 
+			String queryCriteria = (where == null ? "null" : where.getRealSQL());
+
 			Set<Record> result = queryCache.get(where);
+			
+			if (logger.isLoggable(defaultLevel) && result != null ){
+				debug.append("Cache for " + getTable().getRealTableName() + " has criteria:" + queryCriteria);
+			}
+			
+			
 			if (result == null) {
 				synchronized (queryCache) {
 					result = queryCache.get(where);
-					boolean fullTableRecordAvailable = queryCache.containsKey(null);
-					if (result == null && (maxRecords > 0 && cachedRecords.size() > maxRecords) || (fullTableRecordAvailable && !locked)) {
-						Set<Record> tmpResult = new SequenceSet<Record>();
-						filter(cachedRecords,where, tmpResult, maxRecords,locked);
-						if (tmpResult.size() >= maxRecords) {
-							result = tmpResult;
+					if (logger.isLoggable(defaultLevel) && result != null ){
+						debug.append("Cache for " + getTable().getRealTableName() + " has criteria:" + queryCriteria);
+					}
+
+					boolean fullTableScanPerformed = queryCache.containsKey(null);
+					if (result == null){
+						if (logger.isLoggable(Level.FINER)){
+							debug.append("Cache for " + getTable().getRealTableName() + " does not have criteria:" + queryCriteria);
+							debug.append("\nChecking against available cachedRecords if there are enough records satifying the criteria");
+							debug.append("\nWas full table scanned ever?:" + fullTableScanPerformed);
+						}
+						if (fullTableScanPerformed) {
+							result = new SequenceSet<Record>();
+							filter(cachedRecords,where, result, Select.MAX_RECORDS_ALL_RECORDS,false);
+							setCachedResult(where, result);
+						}else if (maxRecords > 0 ){
+							Set<Record> tmpResult = new SequenceSet<Record>();
+							filter(cachedRecords,where, tmpResult, maxRecords,locked);
+							if (tmpResult.size() >= maxRecords){
+								result = tmpResult; 
+								requireFilteringForLockedRecords = false;
+							}
 						}
 					}
 				}
-			}else if (locked){
+			}
+			
+			if (result != null && locked &&  requireFilteringForLockedRecords){
+				debug.append(" Checking for locked records from cache!");
 				Set<Record> tmpResult = new SequenceSet<Record>();
-				filter(result, null, tmpResult, Select.MAX_RECORDS_ALL_RECORDS, locked);
+				filter(result, null, tmpResult, maxRecords, locked);
 				if (tmpResult.size() < result.size()){
 					result = null;
+					if (maxRecords > 0 && tmpResult.size() >= maxRecords){
+						result = tmpResult;
+					}
 				}
 			}
+			
+			if (logger.isLoggable(defaultLevel)){
+				if (result == null) {
+					debug.append("NOT ");
+				}
+				debug.append("Enough " + (locked ? "locked" : "" ) + "records found in cache.");
+				logger.log(defaultLevel,debug.toString());
+			}
+			
+			
+			
 			return result;
 		}finally{
 			timer.stop();
 		}
 	}
-
+	
 	private void filter( Set<Record> cachedRecords, Expression where, Set<Record> target, int maxRecords,boolean locked) {
 		for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || target.size() < maxRecords) ;) {
 			Record m = i.next();
 			if (where == null || where.isEmpty() || where.eval(m)) {
 				if (!locked || (locked == m.isLocked())){
 					target.add(m);
+				}else if (locked && maxRecords == Select.MAX_RECORDS_ALL_RECORDS){
+					// m is not locked. 
+					target.clear();
+					return;
 				}
 			}
 		}

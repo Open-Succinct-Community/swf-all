@@ -58,7 +58,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	        }
         }
         this.orderBy = new OrderBy();
-        getIncludedFields().add(0, orderBy.field);
+        if (getIncludedFields().contains(orderBy.field)){
+            getIncludedFields().add(0, orderBy.field);//Since Included fields is backedby sequence Set, the field will be moved to first index. 
+        }
     }
     
     public static Control createSearchForm(_IPath path){
@@ -290,8 +292,10 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         numActions -= numActionsRemoved;
-    	table.setProperty("sortby", numActions);
-    	table.setProperty("order", orderBy.sortDirection());
+        if (getIncludedFields().contains(orderBy.field)){
+        	table.setProperty("sortby", numActions);
+        	table.setProperty("order", orderBy.sortDirection());
+        }
     }
 
 }

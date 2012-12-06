@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -14,6 +15,7 @@ import java.util.logging.Logger;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
@@ -78,12 +80,31 @@ public class Select extends SqlStatement{
 			}
 		}
 		this.orderBy = orderbyColumns.toArray(new String[]{});
+		if (orderBy.length == 0){
+			orderBy = null;
+		}
 		return this;
 	}
 	
 	public Select groupBy(String... columnNames){
 		this.groupBy = columnNames;
 		return this;
+	}
+	
+	private <M extends Model> boolean allOrderByColumnsAreReal(Class<M> modelClass){
+		if (orderBy == null){
+			return false;
+		}
+		ModelReflector<M> ref = ModelReflector.instance(modelClass);
+		
+		for (int i = 0 ; i < orderBy.length ; i ++ ){
+			String[] split = splitOrderByColumn(orderBy[i]);
+			String column = split[0];
+			if (ref.getColumnDescriptor(ref.getFieldName(column)).isVirtual()){
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	protected void finalizeParameterizedSQL(){
@@ -166,11 +187,11 @@ public class Select extends SqlStatement{
 	}
 	
 	private boolean isCacheable(ModelReflector<? extends Model> ref){
-		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null) && (orderBy == null || orderBy.length == 0);
+		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null) ;
 	}
 	
-	private String[] splitOrderByColumn(int i){
-		StringTokenizer tok = new StringTokenizer(orderBy[i]);
+	private String[] splitOrderByColumn(String orderBy){
+		StringTokenizer tok = new StringTokenizer(orderBy);
 		String columnName = tok.nextToken();
 		String orderByType = "ASC";
 		if (tok.hasMoreTokens()){
@@ -180,58 +201,67 @@ public class Select extends SqlStatement{
 	}
 	
 	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter<M> filter) {
+		final String[] orderByPassed = this.orderBy;
+		
+		boolean sortResults = true; 
+		if (this.orderBy != null && !allOrderByColumnsAreReal(modelInterface)){
+			this.orderBy = null;
+		}
+		
         PreparedStatement st = null;
         try {
-        	ModelReflector<M> ref = ModelReflector.instance(modelInterface);
+        	final ModelReflector<M> ref = ModelReflector.instance(modelInterface);
         	Set<Record> result = null;
-        	QueryCache cache = null;
-        	if (isCacheable(ref)){
-	        	cache = Database.getInstance().getCache(ref);
-	        	result = cache.getCachedResult(getWhereExpression(),maxRecords,locked);
-        	}
+        	List<M> ret = null;
+        	QueryCache cache = Database.getInstance().getCache(ref);
+        	result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
         	
-        	//TODO Venky max Records filtered later may cause to return less than max.
-        	boolean requireResultSorting = false;
         	if (result == null){
 	            Timer queryTimer = Timer.startTimer(getRealSQL());
 	            logger.fine(getRealSQL());
 	            try {
 		            st = prepare();
-		            if (maxRecords > 0){
-		            	st.setMaxRows(maxRecords+1); //Request one more so that you can know if the list is complete or not.
+		            if (this.orderBy != null){
+		            	sortResults = false;
 		            }
 	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper().isNoWaitSupported())) && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
 	            		Logger.getLogger(getClass().getName()).fine("Setting Statement Time out");
 	            		st.setQueryTimeout(10);
 	            	}
 		            result = new SequenceSet<Record>();
+		        	ret = new ArrayList<M>();
 		            if (st.execute()){
 		                ResultSet rs = st.getResultSet();
-		                while (rs.next()){
+		                while (rs.next() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords + 1)){
 		                    Record r = new Record();
 		                    r.load(rs,ref);
 		                    r.setLocked(locked);
-		                    if (cache != null){
-			                    Record cachedRecord = cache.getCachedRecord(r);
-			                    if (cachedRecord != null ){
-			                    	if (!locked || locked == cachedRecord.isLocked()){
-			                    		r = cachedRecord;
-			                    	}else {
-			                    		cache.registerUpdate(r);
-			                    	}
-			                    }else {
-			                    	cache.add(r);
-			                    }
+
+		                    Record cachedRecord = cache.getCachedRecord(r);
+		                    if (cachedRecord != null ){
+		                    	if (!locked || locked == cachedRecord.isLocked()){
+		                    		r = cachedRecord;
+		                    	}else {
+		                    		cache.registerUpdate(r);
+		                    	}
+		                    }else {
+		                    	cache.add(r);
 		                    }
+		                    
 		                    result.add(r);
+		                    M m = r.getAsProxy(modelInterface);
+		                    if (filter == null || filter.pass(m)){
+		                    	ret.add(m);
+		                    }
 		                }
 		                rs.close();
 		            }
-		            if (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || result.size() <= maxRecords){ // We are requesting maxRecords + 1;!
-		            	//We have fetched every thing. Hence cache the whereClause.
-		            	if (cache != null){
+		            if (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() <= maxRecords){ // We are requesting maxRecords + 1;!
+		            	if (isCacheable(ref)){
 		            		cache.setCachedResult(getWhereExpression(), result);
 		            	}
+		            }else {
+		            	ret.remove(ret.size()-1); // Remove the last extra one.!!
 		            }
 	            }catch (SQLException ex){
 	            	if (Database.getJdbcTypeHelper().isQueryTimeoutException(ex)){
@@ -243,45 +273,43 @@ public class Select extends SqlStatement{
 	            	queryTimer.stop();
 	            }
         	}else {
-            	requireResultSorting = true;
+        		ret = new ArrayList<M>();
+        		for (Iterator<Record> recordIterator  = result.iterator(); 
+        				(maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords ) && recordIterator.hasNext() ; ){
+        			Record r = recordIterator.next();
+        			M m = r.getAsProxy(modelInterface);
+        			if (filter == null || filter.pass(m)){
+        				ret.add(m);
+        			}
+        		}
         	}
-        	Timer creatingProxies = Timer.startTimer("creatingProxies");
-        	try {
-	        	List<M> ret = new ArrayList<M>();
-	        	for (Record record: result){
-	                M m = record.getAsProxy(modelInterface);
-	                if (filter == null || filter.pass(m)){
-	                	ret.add(m);
-	                }
-	                if (maxRecords > 0 && ret.size() >= maxRecords){
-	                	break;
-	                }
-	        	}
-	        	if (requireResultSorting && orderBy != null && orderBy.length > 0){
-	        		Collections.sort(ret,new Comparator<M>() {
-						@SuppressWarnings({ "unchecked", "rawtypes" })
-						public int compare(M o1, M o2) {
-							Record r1 = o1.getRawRecord();
-							Record r2 = o2.getRawRecord();
-							int ret = 0;
-							for (int i = 0 ; ret == 0 && i < orderBy.length ;  i ++ ){
-								String[] orderByColumnSplit = splitOrderByColumn(i);
-								
-								Comparable v1  = (Comparable)r1.get(orderByColumnSplit[0]);
-								Comparable v2  = (Comparable)r2.get(orderByColumnSplit[0]);
-								ret = v1.compareTo(v2);
-								if (ret != 0 && orderByColumnSplit[1].equalsIgnoreCase("DESC")){
-									ret *= -1 ;
-								}
+    		if (sortResults && orderByPassed != null && orderByPassed.length > 0){
+        		Collections.sort(ret,new Comparator<M>() {
+					@SuppressWarnings({ "unchecked", "rawtypes" })
+					public int compare(M o1, M o2) {
+						Record r1 = o1.getRawRecord();
+						Record r2 = o2.getRawRecord();
+						int ret = 0;
+						for (int i = 0 ; ret == 0 && i < orderByPassed.length ;  i ++ ){
+							String[] orderByColumnSplit = splitOrderByColumn(orderByPassed[i]);
+							String fieldName = orderByColumnSplit[0];
+							Class<?> fieldType = ref.getFieldGetter(fieldName).getReturnType();
+							TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldType).getTypeConverter();
+							
+							Comparable v1  = (Comparable)(converter.valueOf(r1.get(orderByColumnSplit[0])));
+							Comparable v2  = (Comparable)(converter.valueOf(r2.get(orderByColumnSplit[0])));
+							ret = v1.compareTo(v2);
+							if (ret != 0 && orderByColumnSplit[1].equalsIgnoreCase("DESC")){
+								ret *= -1 ;
 							}
-							return ret;
 						}
-					});
-	        	}
-	        	return ret;
-        	}finally {
-        		creatingProxies.stop();
-        	}
+						return ret;
+					}
+        		});
+    		}
+    	
+    		logger.fine("Returning " + ret.size() + " when maxRecords Requested =" + maxRecords );
+        	return ret;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         } finally {
