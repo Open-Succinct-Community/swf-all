@@ -249,20 +249,20 @@ public class ModelController<M extends Model> extends Controller {
     	if (integrationAdaptor != null) {
     		throw new AccessDeniedException("Action is available only from ui");
     	}
-        return createModelEditView(id, "save");
+        return dashboard(createModelEditView(id, "save"));
     }
-    protected View createModelEditView(int id, String formAction){
+    protected ModelEditView<M> createModelEditView(int id, String formAction){
     	M record = Database.getTable(modelClass).get(id);
     	return createModelEditView(record, formAction);
     }
-    protected View createModelEditView(M record, String formAction){
+    protected ModelEditView<M> createModelEditView(M record, String formAction){
     	return createModelEditView(getPath(), record, formAction);
     }
-    protected View createModelEditView(Path path, M record, String formAction){
+    protected ModelEditView<M> createModelEditView(Path path, M record, String formAction){
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
         	ModelEditView<M> mev = new ModelEditView<M>(path, modelClass, getIncludedFields(), record);
         	mev.setFormAction(formAction);
-            return dashboard(mev);
+            return mev;
         }else {
         	throw new AccessDeniedException();
         }

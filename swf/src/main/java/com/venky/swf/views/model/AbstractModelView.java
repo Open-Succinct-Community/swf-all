@@ -59,9 +59,9 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         this.modelClass = modelClass;
         this.reflector = ModelReflector.instance(modelClass);
 
-        this.includedFields.addAll(reflector.getFields());
-        if (includedFields != null && includedFields.length > 0) {
-            this.includedFields.retainAll(Arrays.asList(includedFields));
+    	this.includedFields.addAll(reflector.getFields());
+        if (includedFields != null && includedFields.length > 0){
+        	this.includedFields.retainAll(Arrays.asList(includedFields));
         }
         
         controllerReflector = ControllerReflector.instance(path.getControllerClass());

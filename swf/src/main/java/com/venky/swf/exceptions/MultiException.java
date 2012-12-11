@@ -52,9 +52,19 @@ public class MultiException extends RuntimeException{
 	private String newLine(){
 		return (System.getProperty("line.separator"));
 	}
+	public String getMessage() {
+		StringBuilder b = new StringBuilder();
+		b.append(super.getMessage());
+		for (Throwable th: throwables){
+			b.append(th.getMessage());
+			b.append(newLine());
+		}
+		return b.toString();
+	}
 	@Override
 	public String toString(){
 		StringBuilder b = new StringBuilder();
+		b.append(super.toString());
 		for (Throwable th: throwables){
 			b.append(th);
 			b.append(newLine());

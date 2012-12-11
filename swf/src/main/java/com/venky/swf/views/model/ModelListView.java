@@ -7,13 +7,17 @@ package com.venky.swf.views.model;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
@@ -44,9 +48,20 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
     private List<M> records;
     private boolean indexedModel;
-    public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records) {
-        super(path, modelClass, includeFields);
-        this.records = records;
+	private Map<String,Integer> suggestedFieldWidth = null ;
+	private Map<String,Integer> maxFieldWidth = new HashMap<String,Integer>() ;
+	
+	public ModelListView(Path path, Class<M> modelClass,  List<M> records, Map<String,Integer> suggestedFieldWidth) {
+		this(path,modelClass,suggestedFieldWidth == null ? null : suggestedFieldWidth.keySet().toArray(new String[]{}), records);
+		if (suggestedFieldWidth != null){
+			this.suggestedFieldWidth = new HashMap<String,Integer>();
+			this.suggestedFieldWidth.putAll(suggestedFieldWidth);
+		}
+	}
+	
+	public ModelListView(Path path, Class<M> modelClass, String[] includeFields, List<M> records) {
+		super(path, modelClass, includeFields);
+		this.records = records;
         this.indexedModel = !getReflector().getIndexedFieldGetters().isEmpty();
         if (includeFields == null){
         	Iterator<String> fi = getIncludedFields().iterator(); 
@@ -57,10 +72,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	        	}
 	        }
         }
+        
         this.orderBy = new OrderBy();
-        if (getIncludedFields().contains(orderBy.field)){
-            getIncludedFields().add(0, orderBy.field);//Since Included fields is backedby sequence Set, the field will be moved to first index. 
-        }
     }
     
     public static Control createSearchForm(_IPath path){
@@ -134,8 +147,37 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     
     protected void addHeadings(Row headerRow){
         for (String fieldName : getIncludedFields()) {
-        	headerRow.createColumn().setText(getFieldLiteral(fieldName));
+        	String literal = getFieldLiteral(fieldName);
+        	headerRow.createColumn().setText(literal);
+        	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
+        	if (currentMaxFieldWidth == null || currentMaxFieldWidth < literal.length()){
+        		maxFieldWidth.put(fieldName,literal.length());
+        	}
         }
+    }
+    protected void setWidths(Row header,int numActions){
+    	Map<String,Integer> fieldWidthMap = suggestedFieldWidth; 
+    	
+    	if (fieldWidthMap == null){
+    		fieldWidthMap = maxFieldWidth;
+    	}
+    	
+    	List<Column> columns = new ArrayList<Column>();
+    	Bucket total = new Bucket();
+    	Control.hunt(header,Column.class,columns);
+
+    	int i = numActions;
+    	for (String field: fieldWidthMap.keySet()){
+    		total.increment(fieldWidthMap.get(field));
+    	}
+    	int pctLeft = 100 - numActions;
+    	
+    	for (String field: getIncludedFields()){
+    		Column column = columns.get(i);
+    		column.setProperty("width", (int)((fieldWidthMap.get(field) * pctLeft)/total.doubleValue()) +"%");
+    		i++;
+    	}
+    	
     }
 	protected BitSet addHeadingsForLineLevelActions(Row header) {
 		BitSet showAction = new BitSet();
@@ -185,6 +227,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         timer.stop();
 
 	}
+	
 	protected void addFields(Row row, M record){
         for (String fieldName : getIncludedFields()) {
             Timer timer = Timer.startTimer("paintField." + fieldName);
@@ -230,6 +273,11 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                     }
                 }
                 column.addControl(control);
+            	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
+            	Integer currentFieldWidth = Math.min(50,control.getText().length());
+            	if (currentMaxFieldWidth == null || currentMaxFieldWidth < currentFieldWidth){
+            		maxFieldWidth.put(fieldName,currentFieldWidth);
+            	}
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             } catch (IllegalArgumentException ex) {
@@ -278,9 +326,10 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         BitSet showAction = addHeadingsForLineLevelActions(header);
         
         addHeadings(header);
-
+        
         for (M record : records) {
-        	addRecordToTable(record,showAction,table);        }
+        	addRecordToTable(record,showAction,table);        
+    	}
         
         int numActionsRemoved = 0 ;
         int numActions = getSingleRecordActions().size();
@@ -292,10 +341,13 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
 
         numActions -= numActionsRemoved;
-        if (getIncludedFields().contains(orderBy.field)){
-        	table.setProperty("sortby", numActions);
+    	int orderByFieldIndex = getIncludedFields().indexOf(orderBy.field);
+        if (orderByFieldIndex >= 0 ){
+        	table.setProperty("sortby", numActions + orderByFieldIndex);
         	table.setProperty("order", orderBy.sortDirection());
         }
+        
+        setWidths(header,numActions);
     }
 
 }

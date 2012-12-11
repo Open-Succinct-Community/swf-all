@@ -173,5 +173,15 @@ public class Control extends Properties implements _IControl{
     public boolean isVisible(){ 
         return !getProperty("class").contains(" hidden ");
     }
-
+    
+    @SuppressWarnings("unchecked")
+	public static <T extends _IControl> void hunt(_IControl control, Class<T> controlClass,List<T> hunted){
+		if (controlClass.isInstance(control)){
+			hunted.add((T)control);
+		}else {
+			for (_IControl c :control.getContainedControls()){
+				hunt(c,controlClass,hunted);
+			}
+		}
+	}
 }

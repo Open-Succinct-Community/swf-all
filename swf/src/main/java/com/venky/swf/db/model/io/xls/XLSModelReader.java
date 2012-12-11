@@ -19,6 +19,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
@@ -29,7 +30,6 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import com.venky.swf.util.SequenceMap;
 
 public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements ModelReader<M,Row>{
 
