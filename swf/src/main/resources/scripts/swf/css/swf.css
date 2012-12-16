@@ -93,4 +93,6 @@ div.nav li ul ul {
 	text-align: right; 
 }
 
-
+label.error { 
+  color: RED; 
+}

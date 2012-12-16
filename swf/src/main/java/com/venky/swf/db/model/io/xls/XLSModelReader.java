@@ -39,9 +39,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	
 	@Override
 	public List<M> read(InputStream source) throws IOException{
-		Workbook book = new HSSFWorkbook(source);
-		Sheet sheet = book.getSheet(StringUtil.pluralize(getBeanClass().getSimpleName()));
-		return read(sheet);
+		return read(source,getBeanClass().getSimpleName());
 	}
 	
 	public List<M> read(Sheet sheet){
@@ -279,5 +277,14 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 		}else {
 			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL());
 		}
+	}
+
+	@Override
+	public List<M> read(InputStream in, String rootElementName)
+			throws IOException {
+
+		Workbook book = new HSSFWorkbook(in);
+		Sheet sheet = book.getSheet(StringUtil.pluralize(rootElementName));
+		return read(sheet);
 	}
 }

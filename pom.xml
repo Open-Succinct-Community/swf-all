@@ -82,5 +82,6 @@
 		<module>swf-maven-plugin</module>
     <module>swf-plugin-collab</module>
     <module>swf-plugin-bugs</module>
+    <module>swf-plugin-mail</module>
   </modules>
 </project>

@@ -231,23 +231,22 @@ public class Controller {
     	return getPath().getFormFields();
     }
     
-    protected List<Sheet> getSheetsToImport(Workbook book){
+    private List<Sheet> getSheetsToImport(Workbook book, ImportSheetFilter filter){
     	List<Sheet> sheets = new ArrayList<Sheet>();
     	for (int i =  0; i < book.getNumberOfSheets() ; i ++ ){
 			Sheet sheet = book.getSheetAt(i);
-    		Table<? extends Model> table = getTable(sheet);
-			if (table != null){
+			if (filter.filter(sheet)){
 				sheets.add(sheet);
 			}
     	}
     	return sheets;
     }
     
-    protected void importxls(InputStream in){
+    protected void importxls(InputStream in,ImportSheetFilter filter){
 		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
 		try {
 			Workbook book = new HSSFWorkbook(in);
-			for (Sheet sheet : getSheetsToImport(book)){ 
+			for (Sheet sheet : getSheetsToImport(book,filter)){ 
 				Table<? extends Model> table = getTable(sheet);
 				if (table == null){
 					continue;
@@ -271,6 +270,9 @@ public class Controller {
 		}
     }
     public View importxls(){
+    	return importxls(getDefaultImportSheetFilter());
+    }
+    public final View importxls(ImportSheetFilter filter){
         HttpServletRequest request = getPath().getRequest();
 
         if (request.getMethod().equalsIgnoreCase("GET")) {
@@ -279,7 +281,7 @@ public class Controller {
         	Map<String,Object> formFields = getFormFields();
         	if (!formFields.isEmpty()){
         		InputStream in = (InputStream)formFields.get("datafile");
-        		importxls(in);
+        		importxls(in,filter);
         	}
         	return back();
         }
@@ -293,7 +295,7 @@ public class Controller {
     	return v;
     }
 
-    protected <M extends Model> Table<M> getTable(Sheet sheet){
+    protected static <M extends Model> Table<M> getTable(Sheet sheet){
 		String tableName = StringUtil.underscorize(sheet.getSheetName()); 
 		Table<M> table = Database.getTable(tableName);
 		return table;
@@ -304,11 +306,14 @@ public class Controller {
 
     protected <M extends Model> void importxls(Sheet sheet, Class<M> modelClass){
 		XLSModelReader<M> modelReader = getXLSModelReader(modelClass);
-		for (M m : modelReader.read(sheet)){
-			importRecord(m,modelClass);
-		}
+		importRecords(modelReader.read(sheet), modelClass);
     }
 
+    protected <M extends Model> void importRecords(List<M> records,Class<M> modelClass){
+    	for (M m :records){
+    		importRecord(m, modelClass);
+    	}
+    }
     
     protected <M extends Model> void importRecord(M record, Class<M> modelClass){
     	fillDefaultsForReferenceFields(record,modelClass);
@@ -452,4 +457,24 @@ public class Controller {
     protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){
     	return new XLSModelWriter<M>(modelClass); 
     }
+
+    public static interface ImportSheetFilter {
+    	public boolean filter(Sheet sheet);
+    }
+    
+    protected ImportSheetFilter getDefaultImportSheetFilter(){
+    	return new ImportSheetFilter(){
+
+    		@Override
+    		public boolean filter(Sheet sheet) {
+        		Table<? extends Model> table = getTable(sheet);
+    			if (table != null){
+    				return true;
+    			}
+    			return false;
+    		} 
+        	
+        };
+    }
+    
 }

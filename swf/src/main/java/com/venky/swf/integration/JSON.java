@@ -42,10 +42,8 @@ public class JSON extends FormatHelper<JSONObject>{
 			root.put(pluralName, children);
 		}
 		
-		JSONObject childHolder = new JSONObject();
 		JSONObject child = new JSONObject();
-		childHolder.put(name,child);
-		children.add(childHolder);
+		children.add(child);
 		return child;
 	}
 	

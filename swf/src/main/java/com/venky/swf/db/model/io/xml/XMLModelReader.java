@@ -17,20 +17,34 @@ public class XMLModelReader<M extends Model> extends AbstractModelReader<M,XMLEl
 	}
 	@Override 
 	public List<M> read(InputStream in) {
+		return read(in,getBeanClass().getSimpleName());
+	}
+	@Override
+	public List<M> read(InputStream in,String rootElementName) {
 		List<M> ret = new ArrayList<M>();
 		XMLDocument doc = XMLDocument.getDocumentFor(in);
 		XMLElement root = doc.getDocumentRoot();
-		if (root.getNodeName().equals(StringUtil.pluralize(root.getNodeName()))){
-			for (Iterator<XMLElement> elemIterator = doc.getDocumentRoot().getChildElements() ; elemIterator.hasNext() ; ){
+		if (root.getNodeName().equals(rootElementName)){
+			ret.add(read(root));
+		}else {
+			Iterator<XMLElement> pluralRootElementIterator = root.getChildElements(StringUtil.pluralize(rootElementName));
+		
+			if (pluralRootElementIterator.hasNext()){
+				root = pluralRootElementIterator.next();
+			}
+
+			if (pluralRootElementIterator.hasNext()){
+				throw new RuntimeException("Don't know how to read document with multiple pluralized elements" + StringUtil.pluralize(rootElementName) );
+			}
+			
+			for (Iterator<XMLElement> elemIterator = root.getChildElements(rootElementName) ; elemIterator.hasNext() ; ){
 				XMLElement e = elemIterator.next();
-				if (e.getNodeName().equals(getBeanClass().getSimpleName())) {
+				if (e.getNodeName().equals(rootElementName)) {
 					ret.add(read(e));
 				}
 			}
-		}else {
-			ret.add(read(doc.getDocumentRoot()));
 		}
+		
 		return ret;
 	}
-	
 }

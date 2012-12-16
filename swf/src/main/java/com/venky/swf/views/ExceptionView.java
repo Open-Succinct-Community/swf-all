@@ -31,7 +31,7 @@ public class ExceptionView extends HtmlView{
         if (Config.instance().isDevelopmentEnvironment()){
             th.printStackTrace(w);
         }else {
-        	w.write(th.toString());
+        	w.write(th.getMessage());
         }
     	
         Label lbl = new Label();

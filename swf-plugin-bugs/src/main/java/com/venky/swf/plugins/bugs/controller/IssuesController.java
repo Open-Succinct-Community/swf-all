@@ -20,7 +20,7 @@ public class IssuesController extends ModelController<Issue>{
 		super(path);
 	}
 	protected HtmlView createListView(List<Issue> records){
-    	return new ModelListView<Issue>(getPath(), Issue.class, new String[]{"TITLE","PRIORITY","STATUS","ASSIGNED_TO_ID","RESOLUTION"}, records);
+		return new ModelListView<Issue>(getPath(), Issue.class, new String[]{"TITLE","PRIORITY","STATUS","ASSIGNED_TO_ID","RESOLUTION"}, records);
     }
 	
 	protected ModelEditView<Issue> createBlankView(Path path , Issue record){

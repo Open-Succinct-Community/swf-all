@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.venky.core.util.ExceptionUtil;
+import com.venky.core.util.ObjectUtil;
 
 public class MultiException extends RuntimeException{
 
@@ -54,19 +55,13 @@ public class MultiException extends RuntimeException{
 	}
 	public String getMessage() {
 		StringBuilder b = new StringBuilder();
-		b.append(super.getMessage());
-		for (Throwable th: throwables){
-			b.append(th.getMessage());
-			b.append(newLine());
+		if (!ObjectUtil.isVoid(super.getMessage())){
+			b.append(super.getMessage());
 		}
-		return b.toString();
-	}
-	@Override
-	public String toString(){
-		StringBuilder b = new StringBuilder();
-		b.append(super.toString());
 		for (Throwable th: throwables){
-			b.append(th);
+			if (!ObjectUtil.isVoid(th.getMessage())){
+				b.append(th.getMessage());
+			}
 			b.append(newLine());
 		}
 		return b.toString();

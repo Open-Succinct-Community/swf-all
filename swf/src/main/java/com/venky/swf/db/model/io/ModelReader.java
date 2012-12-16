@@ -8,5 +8,6 @@ import com.venky.swf.db.model.Model;
 
 public interface ModelReader<M extends Model,T> {
 	public List<M> read(InputStream in) throws IOException;
+	public List<M> read(InputStream in, String rootElementName) throws IOException;
 	public M read(T source);
 }

@@ -5,6 +5,7 @@
 package com.venky.swf.controller; 
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
@@ -82,30 +83,29 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View exportxls(){
-    	if (integrationAdaptor != null) {
-    		throw new RuntimeException("xls export is only available from UI"); 
-    	}
+    	ensureUI();
 		Workbook wb = new HSSFWorkbook();
     	super.exportxls(getModelClass(), wb);
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		try {
+			wb.write(os);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
     	return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xls");
     }
     
     @Depends("save")
+    @Override
     public View importxls(){
-    	if (integrationAdaptor != null) {
-    		throw new RuntimeException("xls import is only available from UI"); 
-    	}
+    	ensureUI();
     	return super.importxls();
     }
     
-    protected List<Sheet> getSheetsToImport(Workbook book){
-    	List<Sheet> sheets = new ArrayList<Sheet>();
-    	Sheet sheet = book.getSheet(StringUtil.pluralize(getModelClass().getSimpleName())); 
-    	if (sheet != null){
-    		sheets.add(sheet);
+    protected void ensureUI(){
+    	if (integrationAdaptor != null) {
+    		throw new RuntimeException("Action is only available from UI"); 
     	}
-    	return sheets;
     }
     
     @Override
@@ -246,9 +246,7 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/edit.png")
     @Depends("save,index")
     public View edit(int id) {
-    	if (integrationAdaptor != null) {
-    		throw new AccessDeniedException("Action is available only from ui");
-    	}
+    	ensureUI();
         return dashboard(createModelEditView(id, "save"));
     }
     protected ModelEditView<M> createModelEditView(int id, String formAction){
@@ -327,7 +325,7 @@ public class ModelController<M extends Model> extends Controller {
         		throw new AccessDeniedException("Don't have permission to destroy record " + record.getId());
         	}
         }
-        return redirectTo("index");
+        return back();
     }
 
     @SingleRecordAction(icon="/resources/images/destroy.png")
@@ -525,9 +523,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View autocomplete() {
-    	if (integrationAdaptor != null){
-    		throw new AccessDeniedException("Action available only from ui");
-    	}
+    	ensureUI();
 		List<String> fields = reflector.getFields();
 		Map<String,Object> formData = getFormFields();
 		M model = null;
@@ -582,10 +578,24 @@ public class ModelController<M extends Model> extends Controller {
     
     protected <K extends Model> void save(K record, Class<K> modelClass){
     	super.save(record, modelClass);
-    	if (!getPath().canAccessControllerAction("save",String.valueOf(record.getId()))){
+    	if (!Path.canAccessControllerAction(getPath().getSessionUser(),getControllerPathElementName(modelClass),"save",String.valueOf(record.getId()))){
     		Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
     		throw new AccessDeniedException();	
 		}
+    }
+    protected String getControllerPathElementName(Class<? extends Model> modelClass){
+    	return Database.getTable(modelClass).getTableName().toLowerCase();
+    }
+    
+    @Override
+    protected ImportSheetFilter getDefaultImportSheetFilter(){
+    	return new ImportSheetFilter() {
+    		
+    		@Override
+    		public boolean filter(Sheet sheet) {
+    			return sheet.getSheetName().equals(StringUtil.pluralize(getModelClass().getSimpleName()));
+    		}
+    	};
     }
     
 }
