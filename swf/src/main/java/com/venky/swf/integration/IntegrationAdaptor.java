@@ -3,6 +3,7 @@ package com.venky.swf.integration;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -89,6 +90,17 @@ public class IntegrationAdaptor<M extends Model,T> {
 			return new BytesView(path, baos.toByteArray());
 		}catch (IOException ex){ 
 			throw new RuntimeException(ex);
+		}
+	}
+	
+	public void writeResponse(List<M> m, OutputStream os){
+		writeResponse(m, os,null);
+	}
+	public void writeResponse(List<M> m, OutputStream os,List<String> includeFields){
+		try {
+			writer.write(m, os, getFields(includeFields));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 	
