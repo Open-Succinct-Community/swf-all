@@ -1,5 +1,9 @@
 package com.venky.swf.integration;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.venky.core.string.StringUtil;
@@ -8,7 +12,9 @@ import com.venky.xml.XMLElement;
 
 public class XML extends FormatHelper<XMLElement>{
 	XMLElement root = null;
-
+	public XML(InputStream in){
+		this(XMLDocument.getDocumentFor(in).getDocumentRoot());
+	}
 	
 	public XML(XMLElement root){
 		this.root = root;
@@ -39,7 +45,26 @@ public class XML extends FormatHelper<XMLElement>{
 		}		
 		return pluralElement.createChildElement(name);
 	}
-
+	
+	@Override
+	public List<XMLElement> getChildElements(String name){
+		String plural = StringUtil.pluralize(name);
+		XMLElement pluralElement = null;
+		if (root.getNodeName().equals(plural)){
+			pluralElement = root;
+		}else {
+			pluralElement = root.getChildElement(plural);
+			if (pluralElement == null){
+				pluralElement = root.createChildElement(plural);
+			}
+		}
+		List<XMLElement> ret = new ArrayList<XMLElement>();
+		Iterator<XMLElement> ei = pluralElement.getChildElements(name);
+		while (ei.hasNext()){
+			ret.add(ei.next());
+		}
+		return ret;
+	}
 	@Override
 	public void setAttribute(String name, String value) {
 		if (value != null){

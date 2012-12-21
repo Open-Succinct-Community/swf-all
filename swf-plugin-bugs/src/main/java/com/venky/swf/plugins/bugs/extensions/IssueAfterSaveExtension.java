@@ -8,6 +8,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.extensions.AfterModelSaveExtension;
 import com.venky.swf.plugins.bugs.db.model.Issue;
 import com.venky.swf.plugins.bugs.db.model.Note;
+import com.venky.swf.plugins.mail.db.model.User;
 
 public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 	static {
@@ -18,9 +19,13 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 		Note note = Database.getTable(Note.class).newRecord();
 		note.setIssueId(model.getId());
 		boolean persist = false;
-		if (!ObjectUtil.isVoid(model.getDescription()) && !ObjectUtil.isVoid(StringUtil.read(model.getDescription()))){
-			note.setNotes(model.getDescription());
-			persist = true; 
+		String description = null;
+		if (!ObjectUtil.isVoid(model.getDescription())){
+			description = StringUtil.read(model.getDescription());
+			if (!ObjectUtil.isVoid(description)){
+				note.setNotes(model.getDescription());
+				persist = true; 
+			}
 		}
 		try {
 			if (!ObjectUtil.isVoid(model.getAttachment()) && model.getAttachment().available() > 0 ){
@@ -34,6 +39,10 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 		}
 		if (persist){
 			note.save();
+			User admin = Database.getTable(User.class).get(1);
+			if (admin != null && !admin.getUserEmails().isEmpty()){
+				admin.sendMail("Issue: " + model.getId() + " " + model.getTitle() , description == null ? "" : description);
+			}
 		}
 	}
 

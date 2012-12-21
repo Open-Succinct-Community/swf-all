@@ -84,17 +84,24 @@ public class Controller {
         	if ( getSessionUser() == null ) {
         		return  createLoginView();
         	}else {
-        		return new RedirectorView(getPath(), "dashboard");
+        		return new RedirectorView(getPath(), loginSuccessful());
         	}
 		}else{ 
 			return authenticate();
         }
     }
+    protected String loginSuccessful(){
+		String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
+		if (ObjectUtil.isVoid(redirectedTo)){
+			redirectedTo="dashboard";
+		}
+		return redirectedTo;
+    }
 
     
     protected View authenticate(){
     	if (getPath().isRequestAuthenticated()){
-            return new RedirectorView(getPath(), "dashboard");
+    		return new RedirectorView(getPath(), loginSuccessful());
     	}else {
         	HtmlView lView = createLoginView();
         	lView.setStatus(StatusType.ERROR, "Login incorrect");

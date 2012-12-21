@@ -1,6 +1,8 @@
 package com.venky.swf.integration;
 
+import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
 import java.util.Set;
 
 import org.json.simple.JSONObject;
@@ -75,7 +77,24 @@ public abstract class FormatHelper<T> {
 	public static final <T>  FormatHelper<T> instance(T element){
 		return instance(getMimeType(element.getClass()),element);
 	}
-
+	@SuppressWarnings("unchecked")
+	public static final <T> FormatHelper<T> instance(MimeType mimeType, InputStream in){
+		FormatHelper<?> helper = null;
+		switch (mimeType){
+		case APPLICATION_XML:
+			helper = new XML(in);
+			break;
+		case APPLICATION_JSON:
+			helper = new JSON(in);
+			break;
+		default:
+			break;
+		}
+		if (helper == null){
+			throw new UnsupportedMimeTypeException(mimeType.toString());
+		}
+		return (FormatHelper<T>) helper;
+	}
 	@SuppressWarnings("unchecked")
 	public static final <T> FormatHelper<T> instance(MimeType mimeType,T element){
 		FormatHelper<?> helper = null;
@@ -97,6 +116,7 @@ public abstract class FormatHelper<T> {
 	
 	public abstract T getRoot();
 	public abstract T createChildElement(String name);
+	public abstract List<T> getChildElements(String name) ;
 	
 	public abstract T createElementAttribute(String name);
 	public abstract T getElementAttribute(String name);
@@ -105,5 +125,6 @@ public abstract class FormatHelper<T> {
 	
 	public abstract Set<String> getAttributes();
 	public abstract String getAttribute(String name);
+
 	
 }

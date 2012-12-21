@@ -39,5 +39,10 @@
   		  <artifactId>swf</artifactId>
         <version>${project.version}</version>
   	</dependency>
+  	<dependency>
+  		<groupId>${project.groupId}</groupId>
+  		<artifactId>swf-plugin-mail</artifactId>
+  		<version>${project.version}</version>
+  	</dependency>
   </dependencies>
 </project>

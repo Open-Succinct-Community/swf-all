@@ -48,6 +48,7 @@ public class OidController extends Controller{
 	public OidController(Path path) {
 		super(path);
 	}
+	
 	protected HtmlView createLoginView(){
 		invalidateSession();
 		HtmlView view = new HtmlView(getPath()) {
@@ -86,6 +87,14 @@ public class OidController extends Controller{
 				row.createColumn().addControl(txtOpenId);				
 				row.createColumn().addControl(sbm);				
 				
+				String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
+				if (!ObjectUtil.isVoid(_redirect_to)){
+					TextBox redirect_to = new TextBox();
+					redirect_to.setVisible(false);
+					redirect_to.setName("_redirect_to");
+					redirect_to.setValue(_redirect_to);
+					layout.createRow().createColumn().addControl(redirect_to);
+				}
 				form.addControl(layout);
 				b.addControl(form);
 			}
@@ -168,6 +177,8 @@ public class OidController extends Controller{
 	protected View authenticate() {
 		String openId = getPath().getRequest().getParameter("OPEN_ID");
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
+		String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
+		
 		if (ObjectUtil.isVoid(openId) && ObjectUtil.isVoid(selectedOpenId)){
 			HtmlView lv = createLoginView();
 			lv.setStatus(StatusType.ERROR, "Open id provider not specified");
@@ -194,7 +205,7 @@ public class OidController extends Controller{
 				sPort = "" ; // Default ports must be squashed.
 			}
 			
-			String returnUrl = req.getScheme() + "://"  + req.getServerName() + sPort + getPath().controllerPath() + "/verify"; 
+			String returnUrl = req.getScheme() + "://"  + req.getServerName() + sPort + getPath().controllerPath() + "/verify" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to);  
 					
 			AuthRequest authReq = manager.authenticate(discovered, returnUrl);
 			authReq.addExtension(initializeFetchRequest());
@@ -271,7 +282,7 @@ public class OidController extends Controller{
 		    		HttpSession newSession = getPath().getSession();
 		            newSession.setAttribute("user", u);
 		            
-	    			return new RedirectorView(getPath(), "dashboard");
+	    			return new RedirectorView(getPath(), loginSuccessful());
 		    	}
 			}
 		    return createLoginView();

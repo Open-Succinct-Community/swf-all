@@ -64,7 +64,7 @@ public class CloudFoundryPlatform implements Extension{
 		if (serviceName.startsWith("postgres")){
 			jdbcurl = "jdbc:postgresql://" + host + ":" + port + "/" + db;
 		}else if (serviceName.startsWith("mysql")){
-			jdbcurl = "jdbc:mysql://" + host + ":" + port + "/" + db + "?zeroDateTimeBehavior=convertToNull" ;
+			jdbcurl = "jdbc:mysql://" + host + ":" + port + "/" + db + "?zeroDateTimeBehavior=convertToNull&sessionVariables=storage_engine=INNODB" ;
 		}
 		Logger.getLogger(CloudFoundryPlatform.class.getName()).info("jdbcurl:" + jdbcurl);
 		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("Systemproperties" + System.getProperties().toString());

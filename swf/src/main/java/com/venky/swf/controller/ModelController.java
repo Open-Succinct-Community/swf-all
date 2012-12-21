@@ -223,8 +223,8 @@ public class ModelController<M extends Model> extends Controller {
             			String mimeType = reflector.getContentType(record, fieldName);
             			String fileName = reflector.getContentName(record,fieldName);
             			if (fileName != null){
-                			return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType,
-                					"content-disposition","attachment; filename=" + fileName);
+            				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType,
+									"content-disposition","attachment; filename=\"" + fileName +"\"");
             			}else {
             				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType);
             			}

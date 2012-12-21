@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views.login;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.page.Body;
@@ -26,7 +27,9 @@ public class LoginView extends HtmlView{
     }
     @Override
     protected void createBody(Body b) {
-        b.addControl(new LinkedImage("/resources/images/oid.png","/oid/login"));
+        String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
+
+    	b.addControl(new LinkedImage("/resources/images/oid.png","/oid/login" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to)));
         Table table = new Table();
 
         Label lbluser = new Label("User: ");
@@ -44,6 +47,15 @@ public class LoginView extends HtmlView{
         row = table.createRow();
         row.createColumn().addControl(lblPassword);
         row.createColumn().addControl(txtPassword);
+        
+        if (!ObjectUtil.isVoid(_redirect_to)){
+            TextBox hidden = new TextBox();
+            hidden.setVisible(false);
+            hidden.setName("_redirect_to");
+            hidden.setValue(_redirect_to);
+            table.createRow().createColumn().addControl(hidden);
+        }
+        
         
         Submit sbm = new Submit();
         row = table.createRow();

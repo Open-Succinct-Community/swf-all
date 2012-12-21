@@ -1,10 +1,17 @@
 package com.venky.swf.integration;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 
 import com.venky.core.string.StringUtil;
 
@@ -12,6 +19,18 @@ import com.venky.core.string.StringUtil;
 public class JSON extends FormatHelper<JSONObject>{
 
 	private JSONObject root = null;
+	public JSON(InputStream in) {
+		try {
+			JSONObject input = (JSONObject)JSONValue.parseWithException(new InputStreamReader(in));
+			this.root = input;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (ParseException e) {
+			throw new RuntimeException(e);
+		}
+		
+	}
+	
 	@SuppressWarnings("unchecked")
 	public JSON(String name,boolean isPlural){
 		this.root = new JSONObject();
@@ -45,6 +64,24 @@ public class JSON extends FormatHelper<JSONObject>{
 		JSONObject child = new JSONObject();
 		children.add(child);
 		return child;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<JSONObject> getChildElements(String name){
+		String pluralName = StringUtil.pluralize(name);
+		JSONArray children = (JSONArray)root.get(pluralName);
+		if (children == null){
+			children = new JSONArray();
+			root.put(pluralName, children);
+		}
+		List<JSONObject> ret = new ArrayList<JSONObject>();
+		for (Object o : children){
+			if (o instanceof JSONObject){
+				ret.add((JSONObject)o);
+			}
+		}
+		return ret;
 	}
 	
 	@SuppressWarnings("unchecked")
