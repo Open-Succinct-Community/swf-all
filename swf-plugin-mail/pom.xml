@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.github.venkatramanm.swf-all</groupId>
     <artifactId>swf-all</artifactId>
-    <version>1.10</version>
+    <version>1.11-SNAPSHOT</version>
   </parent>
   <artifactId>swf-plugin-mail</artifactId>
   <name>swf-plugin-mail</name>
