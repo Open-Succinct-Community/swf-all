@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.github.venkatramanm.swf-all</groupId>
     <artifactId>swf-all</artifactId>
-    <version>1.10-SNAPSHOT</version>
+    <version>1.10</version>
   </parent>
   <artifactId>swf-archetype</artifactId>
   <packaging>maven-archetype</packaging>
