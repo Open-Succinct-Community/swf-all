@@ -7,6 +7,7 @@ package com.venky.swf.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls.page.Body;
@@ -19,12 +20,19 @@ import com.venky.swf.views.controls.page.layout.LineBreak;
  * @author venky
  */
 public class DashboardView extends HtmlView{
+	RuntimeException ex = null;
     public DashboardView(Path path){
         super(path);
+        ex = new RuntimeException();
     }
     
     private List<HtmlView> children = new ArrayList<HtmlView>();
     public DashboardView addChildView(HtmlView child){
+    	if (child instanceof DashboardView){
+    		MultiException ex = new MultiException("Multiple Dashboard views added");
+    		ex.add(((DashboardView)child).ex);
+    		throw ex;
+    	}
         children.add(child);
         return this;
     }

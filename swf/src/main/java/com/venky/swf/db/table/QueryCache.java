@@ -1,6 +1,5 @@
 package com.venky.swf.db.table;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,7 +22,7 @@ import com.venky.swf.sql.Select;
 
 public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
-	private HashMap<Expression, Set<Record>> queryCache = new HashMap<Expression, Set<Record>>();
+	private HashMap<Expression, SequenceSet<Record>> queryCache = new HashMap<Expression, SequenceSet<Record>>();
 	private Table<? extends Model> table;
 	private static Logger logger = Logger.getLogger(QueryCache.class.getName());
 
@@ -52,7 +51,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		try {
 			QueryCache clone = (QueryCache) super.clone();
 			clone.cachedRecords = (TreeSet<Record>) cachedRecords.clone();
-			clone.queryCache = (HashMap<Expression, Set<Record>>) queryCache.clone();
+			clone.queryCache = (HashMap<Expression, SequenceSet<Record>>) queryCache.clone();
 			
 			ObjectUtil.cloneValues(clone.cachedRecords);
 			ObjectUtil.cloneValues(clone.queryCache);
@@ -64,7 +63,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	private static final Level defaultLevel = Level.FINE;
 	
-	public Set<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
+	public SequenceSet<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
 		Timer timer = Timer.startTimer();
 		StringBuilder debug = new StringBuilder();
 		try {
@@ -74,7 +73,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			boolean requireFilteringForLockedRecords = true; 
 			String queryCriteria = (where == null ? "null" : where.getRealSQL());
 
-			Set<Record> result = queryCache.get(where);
+			SequenceSet<Record> result = queryCache.get(where);
 			
 			if (logger.isLoggable(defaultLevel) && result != null ){
 				debug.append("Cache for " + getTable().getRealTableName() + " has criteria:" + queryCriteria);
@@ -100,7 +99,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 							filter(cachedRecords,where, result, Select.MAX_RECORDS_ALL_RECORDS,false);
 							setCachedResult(where, result);
 						}else if (maxRecords > 0 ){
-							Set<Record> tmpResult = new SequenceSet<Record>();
+							SequenceSet<Record> tmpResult = new SequenceSet<Record>();
 							filter(cachedRecords,where, tmpResult, maxRecords,locked);
 							if (tmpResult.size() >= maxRecords){
 								result = tmpResult; 
@@ -113,7 +112,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			
 			if (result != null && locked &&  requireFilteringForLockedRecords){
 				debug.append(" Checking for locked records from cache!");
-				Set<Record> tmpResult = new SequenceSet<Record>();
+				SequenceSet<Record> tmpResult = new SequenceSet<Record>();
 				filter(result, null, tmpResult, maxRecords, locked);
 				if (tmpResult.size() < result.size()){
 					result = null;
@@ -166,7 +165,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		return null;
 	}
 
-	public void setCachedResult(Expression where, Set<Record> result) {
+	public void setCachedResult(Expression where, SequenceSet<Record> result) {
 		if (where != null && where.isEmpty()) {
 			where = null;
 		}
@@ -176,7 +175,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 				for (Record record:result){
 					for (String column: getTable().getReflector().getIndexedColumns()) {
 						Expression indexWhere = getIndexWhereClause(record,column);
-						Set<Record> records = queryCache.get(indexWhere); 
+						SequenceSet<Record> records = queryCache.get(indexWhere); 
 						if (records == null){
 							records = new SequenceSet<Record>();
 							queryCache.put(indexWhere, records);
@@ -214,7 +213,9 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	public boolean add(Record record) {
 		boolean ret = cachedRecords.add(record);
 		if (ret){
-			setCachedResult(getIdWhereClause(record),new HashSet<Record>(Arrays.asList(record)));
+			SequenceSet<Record> set = new SequenceSet<Record>();
+			set.add(record);
+			setCachedResult(getIdWhereClause(record),set);
 		}
 		hasLockedRecords = hasLockedRecords || record.isLocked();
 		return ret;
@@ -308,7 +309,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 					}
 				}
 			}
-			Set<Record> currentRecords = new HashSet<Record>();
+			SequenceSet<Record> currentRecords = new SequenceSet<Record>();
 			for (Record record:recentRecords){
 				Record mergedRecord = mergedRecords.get(record);
 				if (mergedRecord == null){

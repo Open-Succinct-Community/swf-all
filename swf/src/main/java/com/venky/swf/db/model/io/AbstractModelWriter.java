@@ -57,7 +57,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				write(ref.getReferredModelClass(referredModelGetter) , ((Number)value).intValue(),refElement);
 			}else {
 				String attributeName = getAttributeName(field);
-				String sValue = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter().toString(value);
+				String sValue = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toString(value);
 				formatHelper.setAttribute(attributeName, sValue);
 			}
 		}

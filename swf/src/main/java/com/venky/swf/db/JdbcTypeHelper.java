@@ -497,7 +497,7 @@ public abstract class JdbcTypeHelper {
 
     private final Map<Class<?>, TypeRef<?>> javaTypeRefMap = new HashMap<Class<?>, TypeRef<?>>();
     private final Map<Integer, List<TypeRef<?>>> jdbcTypeRefMap = new HashMap<Integer, List<TypeRef<?>>>(); 
-    protected void registerjdbcSQLType(Class<?> clazz, TypeRef<?> ref) {
+    protected <T> void registerjdbcSQLType(Class<T> clazz, TypeRef<T> ref) {
     	ref.setJavaClass(clazz);
         javaTypeRefMap.put(clazz, ref);
         List<TypeRef<?>> colTypeRefs = jdbcTypeRefMap.get(ref.jdbcType);

@@ -16,7 +16,7 @@ import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 
-@MENU("Issues")
+@MENU("Help")
 @HAS_DESCRIPTION_FIELD("TITLE")
 public interface Issue extends Model{
 	@Index

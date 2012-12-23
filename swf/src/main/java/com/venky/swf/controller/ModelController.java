@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +120,8 @@ public class ModelController<M extends Model> extends Controller {
 
 
     public View search(){
-    	Map<String,Object> formData = getFormFields();
+    	Map<String,Object> formData = new HashMap<String, Object>();
+    	formData.putAll(getFormFields());
     	String q = "";
     	int maxRecords = MAX_LIST_RECORDS;
 		if (!formData.isEmpty()){
@@ -158,7 +160,6 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		return list(maxRecords);
     }
-    
     
     public static final int MAX_LIST_RECORDS = 30 ;
 	protected void rewriteQuery(Map<String,Object> formData){
@@ -270,8 +271,13 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon="/resources/images/clone.png")
     @Depends("save,index")
     public View clone(int id){
+    	M record = Database.getTable(modelClass).get(id);
+    	M newrecord = clone(record);
+		return blank(newrecord);
+    }
+    
+    public M clone(M record){
 		Table<M> table = Database.getTable(modelClass);
-    	M record = table.get(id);
     	M newrecord = table.newRecord();
     	
     	Record oldRaw = record.getRawRecord();
@@ -283,7 +289,7 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	}
     	newRaw.setNewRecord(true);
-    	return blank(newrecord);
+    	return newrecord;
     }
     
     @Depends("save")

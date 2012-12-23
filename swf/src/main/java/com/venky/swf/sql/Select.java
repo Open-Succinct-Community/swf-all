@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
@@ -211,7 +210,7 @@ public class Select extends SqlStatement{
         PreparedStatement st = null;
         try {
         	final ModelReflector<M> ref = ModelReflector.instance(modelInterface);
-        	Set<Record> result = null;
+        	SequenceSet<Record> result = null;
         	List<M> ret = null;
         	QueryCache cache = Database.getInstance().getCache(ref);
         	result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
@@ -273,6 +272,28 @@ public class Select extends SqlStatement{
 	            	queryTimer.stop();
 	            }
         	}else {
+        		if (sortResults && orderByPassed != null && orderByPassed.length > 0){
+            		Collections.sort(result,new Comparator<Record>() {
+    					@SuppressWarnings({ "unchecked", "rawtypes" })
+    					public int compare(Record r1, Record r2) {
+    						int ret = 0;
+    						for (int i = 0 ; ret == 0 && i < orderByPassed.length ;  i ++ ){
+    							String[] orderByColumnSplit = splitOrderByColumn(orderByPassed[i]);
+    							String fieldName = orderByColumnSplit[0];
+    							Class<?> fieldType = ref.getFieldGetter(fieldName).getReturnType();
+    							TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldType).getTypeConverter();
+    							
+    							Comparable v1  = (Comparable)(converter.valueOf(r1.get(orderByColumnSplit[0])));
+    							Comparable v2  = (Comparable)(converter.valueOf(r2.get(orderByColumnSplit[0])));
+    							ret = v1.compareTo(v2);
+    							if (ret != 0 && orderByColumnSplit[1].equalsIgnoreCase("DESC")){
+    								ret *= -1 ;
+    							}
+    						}
+    						return ret;
+    					}
+            		});
+        		}
         		ret = new ArrayList<M>();
         		for (Iterator<Record> recordIterator  = result.iterator(); 
         				(maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords ) && recordIterator.hasNext() ; ){
@@ -283,30 +304,6 @@ public class Select extends SqlStatement{
         			}
         		}
         	}
-    		if (sortResults && orderByPassed != null && orderByPassed.length > 0){
-        		Collections.sort(ret,new Comparator<M>() {
-					@SuppressWarnings({ "unchecked", "rawtypes" })
-					public int compare(M o1, M o2) {
-						Record r1 = o1.getRawRecord();
-						Record r2 = o2.getRawRecord();
-						int ret = 0;
-						for (int i = 0 ; ret == 0 && i < orderByPassed.length ;  i ++ ){
-							String[] orderByColumnSplit = splitOrderByColumn(orderByPassed[i]);
-							String fieldName = orderByColumnSplit[0];
-							Class<?> fieldType = ref.getFieldGetter(fieldName).getReturnType();
-							TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldType).getTypeConverter();
-							
-							Comparable v1  = (Comparable)(converter.valueOf(r1.get(orderByColumnSplit[0])));
-							Comparable v2  = (Comparable)(converter.valueOf(r2.get(orderByColumnSplit[0])));
-							ret = v1.compareTo(v2);
-							if (ret != 0 && orderByColumnSplit[1].equalsIgnoreCase("DESC")){
-								ret *= -1 ;
-							}
-						}
-						return ret;
-					}
-        		});
-    		}
     	
     		logger.fine("Returning " + ret.size() + " when maxRecords Requested =" + maxRecords );
         	return ret;

@@ -109,7 +109,7 @@ public class LuceneIndexer {
 			}
 			
 			if (!ObjectUtil.isVoid(value) ){
-				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(value.getClass());
+				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());
 				TypeConverter<?> converter = ref.getTypeConverter();
 				if (!ref.isBLOB()){
 					addedFields = true;

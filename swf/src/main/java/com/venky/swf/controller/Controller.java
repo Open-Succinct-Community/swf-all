@@ -439,11 +439,15 @@ public class Controller {
     
     protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {
     	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
+		public DefaultModelFilter() {
+			super();
+		}
 		@Override
 		public boolean pass(M record) {
 			return defaultFilter.pass(record) && getPath().canAccessControllerAction("index", StringUtil.valueOf(record.getId()));
 		}
     }
+    
 
     protected <M extends Model> void exportxls(Class<M> modelClass,Workbook wb){
     	ModelReflector<M> reflector = ModelReflector.instance(modelClass);

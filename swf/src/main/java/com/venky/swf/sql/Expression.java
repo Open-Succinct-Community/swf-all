@@ -22,9 +22,6 @@ public class Expression {
 	public static final int CHUNK_SIZE = 30; 
 	
 	public static Expression createExpression(String columnName, Operator op, Object... values){
-		if (values.length < CHUNK_SIZE){
-			return new Expression(columnName,op,values);
-		}
 		List<List<Object>> chunks = getValueChunks(Arrays.asList(values));
 		Expression e = new Expression(Conjunction.OR);
 		for (List<Object> chunk : chunks){
@@ -35,16 +32,24 @@ public class Expression {
 	
 	public static List<List<Object>> getValueChunks(List<Object> values){
 		List<List<Object>> chunks = new ArrayList<List<Object>>();
+		chunks.add(new ArrayList<Object>());
+
 		for (Object bv: values){
-			if (chunks.isEmpty()){
-				chunks.add(new ArrayList<Object>());
-			}
 			List<Object> aChunk = chunks.get(chunks.size()-1);
+			
 			if (aChunk.size() >= CHUNK_SIZE){
 				aChunk = new ArrayList<Object>();
 				chunks.add(aChunk);
 			}
-			aChunk.add(bv);
+			
+			if (bv != null){
+				aChunk.add(bv);
+			}else {
+				if (!aChunk.isEmpty()){
+					chunks.add(new ArrayList<Object>());
+				}
+				chunks.add(new ArrayList<Object>());
+			}
 		}
 		return chunks;
 	}
