@@ -60,21 +60,20 @@ public class ParticipantControllerAccessExtension implements Extension{
 				try {
 					int id = Integer.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
-					if (selectedModel == null){
-						throw new AccessDeniedException();
-					}
-					ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
-					for (String participantRoleGroup : pGroupOptions.keySet()){
-						Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
-						for (String referencedModelIdFieldName :pOptions.keySet()){
-							Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
-							String participatingRole = referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3) ; //Remove "_ID" from the end.
-							if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-								participantingRoles.add(participatingRole);
+					if (selectedModel != null){
+						ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
+						for (String participantRoleGroup : pGroupOptions.keySet()){
+							Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
+							for (String referencedModelIdFieldName :pOptions.keySet()){
+								Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
+								String participatingRole = referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3) ; //Remove "_ID" from the end.
+								if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+									participantingRoles.add(participatingRole);
+								}
 							}
-						}
-						if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
-							throw new AccessDeniedException(); // User is not a participant on the model.
+							if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+								throw new AccessDeniedException(); // User is not a participant on the model.
+							}
 						}
 					}
 				}catch (NumberFormatException ex){
