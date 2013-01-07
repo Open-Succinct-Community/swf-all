@@ -516,9 +516,9 @@ public class Path implements _IPath{
             	try {
                     if (m.getParameterTypes().length == 0 && parameter() == null){
                         return (View)m.invoke(controller);
-                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class){
+                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class && parameter() != null){
                         return (View)m.invoke(controller, parameter());
-                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class){
+                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class && parameter() != null){
                         return (View)m.invoke(controller, Integer.valueOf(parameter()));
                     }
             	}catch(Exception e){

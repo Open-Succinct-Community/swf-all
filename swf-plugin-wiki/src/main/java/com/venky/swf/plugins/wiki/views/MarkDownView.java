@@ -42,11 +42,13 @@ public class MarkDownView extends HtmlView{
     	Link home = new Link("/pages");
 		home.setText("Home");
 		row.createColumn().addControl(home);
-		if (getPath().canAccessControllerAction("save",String.valueOf(page.getId()))){
+		if (getPath().canAccessControllerAction("edit",String.valueOf(page.getId()))){
 			Link edit = new Link(getPath().controllerPath()+"/edit/"+page.getId());
 			edit.setText("Edit");
 			row.createColumn().addControl(edit);
-			
+		}
+		
+		if (getPath().canAccessControllerAction("blank",String.valueOf(page.getId()))){
 			Link blank = new Link(getPath().controllerPath()+"/blank");
 			blank.setText("New Page");
 			row.createColumn().addControl(blank);

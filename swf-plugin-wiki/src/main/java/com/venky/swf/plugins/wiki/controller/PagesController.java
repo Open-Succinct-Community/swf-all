@@ -14,7 +14,6 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.wiki.db.model.Page;
-import com.venky.swf.plugins.wiki.exceptions.NoSuchPageException;
 import com.venky.swf.plugins.wiki.views.MarkDownView;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -159,7 +158,7 @@ public class PagesController extends ModelController<Page>{
 			if (getPath().canAccessControllerAction("save")){
 				return createBlankView(page);
 			}else {
-				throw new NoSuchPageException();
+				return new PageListView(getPath(), records);
 			}
 		}
 	}
