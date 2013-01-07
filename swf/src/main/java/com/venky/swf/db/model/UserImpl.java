@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
@@ -41,17 +42,21 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	public boolean authenticate(String password){
+		boolean ret = false;
 		try {
 			User user = getProxy();
 			if (Registry.instance().hasExtensions(User.USER_AUTHENTICATE)){
 				Registry.instance().callExtensions(User.USER_AUTHENTICATE, user,password);
 			}else {
-				return ObjectUtil.equals(user.getPassword(),password);
+				ret = ObjectUtil.equals(user.getPassword(),password);
+				if (!ret){
+					Logger.getLogger(getClass().getName()).fine("Password mismatch '" + password + "' <> '" + user.getPassword() + "'");
+				}
 			}
-			return true;
 		}catch (AccessDeniedException ex){
-			return false;
+			ret  = false;
 		}
+		return ret;
 	}
 	
 	

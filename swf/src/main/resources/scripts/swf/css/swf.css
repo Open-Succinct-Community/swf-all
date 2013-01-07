@@ -96,3 +96,12 @@ div.nav li ul ul {
 label.error { 
   color: RED; 
 }
+
+.textarea {
+  width : 1000px;
+  height : 300px;
+}
+
+table.tablesorter thead tr th.indexed { 
+  background-color: #FFCCCC
+}

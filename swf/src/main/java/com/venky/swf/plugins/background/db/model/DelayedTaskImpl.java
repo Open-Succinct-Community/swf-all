@@ -6,18 +6,20 @@ import java.io.StringWriter;
 import java.util.logging.Logger;
 
 import com.venky.core.io.StringReader;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.routing.Config;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparable<DelayedTask>{
 
 	public DelayedTaskImpl(DelayedTask proxy) {
 		super(proxy);
 	}
-	
+	private static Logger logger = Logger.getLogger(DelayedTaskImpl.class.getName());
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public int compareTo(DelayedTask o2) {
@@ -54,10 +56,15 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 					success = true;
 				}catch(Exception ex){
 					txn.rollback(ex);
+					
 					StringWriter sw = new StringWriter();
 					PrintWriter w = new PrintWriter(sw);
-					ex.printStackTrace(w);
-					Logger.getLogger(getClass().getName()).info(ex.getMessage());
+					if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(ex.getMessage())){
+			            ex.printStackTrace(w);
+			        }else {
+			        	w.write(ex.getMessage());
+			        }
+					logger.info(sw.toString());
 					locked.setLastError(new StringReader(sw.toString()));
 					locked.setNumAttempts(locked.getNumAttempts()+1);
 				}

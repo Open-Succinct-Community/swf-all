@@ -299,25 +299,27 @@ public class ModelReflector<M extends Model> {
 		}
     }
     
-    private IgnoreCaseMap<Class<? extends Model>> indexedColumns = null;
+    private SequenceSet<String> indexedColumns = null;
     public List<String> getIndexedColumns(){
     	if (indexedColumns == null){
-    		indexedColumns = new IgnoreCaseMap<Class<? extends Model>>();
+    		indexedColumns = new SequenceSet<String>();
         	for (Method indexedFieldGetter : getIndexedFieldGetters()){
         		String indexColumnName = getColumnDescriptor(indexedFieldGetter).getName();
-        		indexedColumns.put(indexColumnName,null);
-        		if (getReferredModelGetters().size() > 0){
-					Method referredModelGetter = getReferredModelGetterFor(indexedFieldGetter) ; 
-					if (referredModelGetter != null){
-						Class<? extends Model> referredModelClass = getReferredModelClass(referredModelGetter);
-						indexedColumns.put(indexColumnName, referredModelClass);
-					}
-				}
+        		indexedColumns.add(indexColumnName);
         	}
     	}
-    	return new ArrayList<String>(indexedColumns.keySet());
+    	return indexedColumns;
     }
-    
+    private SequenceSet<String> indexedFields = null ;
+    public SequenceSet<String> getIndexedFields(){
+    	if (indexedFields == null){
+    		indexedFields = new SequenceSet<String>();
+    		for (Method indexedFieldGetter : getIndexedFieldGetters()){
+    			indexedFields.add(getFieldName(indexedFieldGetter));
+    		}
+    	}
+    	return indexedFields;
+    }
     private Cache<String,UniqueKey<M>> uniqueKeys = null; 
     public Collection<UniqueKey<M>> getUniqueKeys(){
     	if (uniqueKeys == null){

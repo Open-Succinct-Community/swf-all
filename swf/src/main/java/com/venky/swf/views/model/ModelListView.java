@@ -146,9 +146,15 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     }
     
     protected void addHeadings(Row headerRow){
+    	List<String> indexedFields = getReflector().getIndexedFields();
+    	
         for (String fieldName : getIncludedFields()) {
         	String literal = getFieldLiteral(fieldName);
-        	headerRow.createColumn().setText(literal);
+        	Column column = headerRow.createColumn();
+        	column.setText(literal);
+        	if (indexedFields.contains(fieldName)){
+            	column.addClass("indexed");
+        	}
         	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
         	if (currentMaxFieldWidth == null || currentMaxFieldWidth < literal.length()){
         		maxFieldWidth.put(fieldName,literal.length());

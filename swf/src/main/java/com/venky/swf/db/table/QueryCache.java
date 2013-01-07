@@ -123,7 +123,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			}
 			
 			if (logger.isLoggable(defaultLevel)){
-				if (result == null) {
+				if (result == null || result.isEmpty()) {
 					debug.append("NOT ");
 				}
 				debug.append("Enough " + (locked ? "locked" : "" ) + "records found in cache.");

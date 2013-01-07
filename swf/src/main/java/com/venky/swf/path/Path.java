@@ -448,10 +448,15 @@ public class Path implements _IPath{
         	if (getRequest().getMethod().equalsIgnoreCase("POST")){
 	        	String username = getRequest().getParameter("name");
 	            if (!ObjectUtil.isVoid(username)){
+	            	logger.fine("Logging in " + username);
 	            	user = getUser("name",username);
+	            	logger.fine("User is valid ? " + (user != null));
+	            	
 	                String password = getRequest().getParameter("password");
 	            	if (user != null && user.authenticate(password)){
 	            		createUserSession(user,false);
+	            	}else {
+	            		logger.fine("Authentication Failed");
 	            	}
 	            }
         	}

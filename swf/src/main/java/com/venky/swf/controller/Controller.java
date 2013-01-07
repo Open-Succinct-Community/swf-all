@@ -288,6 +288,9 @@ public class Controller {
         	Map<String,Object> formFields = getFormFields();
         	if (!formFields.isEmpty()){
         		InputStream in = (InputStream)formFields.get("datafile");
+        		if (in == null){
+        			throw new RuntimeException("Nothing uploaded!");
+        		}
         		importxls(in,filter);
         	}
         	return back();
