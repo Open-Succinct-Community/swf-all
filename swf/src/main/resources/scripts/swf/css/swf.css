@@ -102,6 +102,9 @@ label.error {
   height : 300px;
 }
 
-table.tablesorter thead tr th.indexed { 
-  background-color: #FFCCCC
+table.tablesorter thead tr .indexed { 
+  background-color: #FFCCCC;
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp { 
+  background-color: #DAADAD;
 }

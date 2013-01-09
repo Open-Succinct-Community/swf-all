@@ -64,7 +64,7 @@ public class Router extends AbstractHandler {
 			    			Logger.getLogger(Router.class.getName()).info("Logging not configured! using defaults");
 			    		}
 					} catch (Exception e1) {
-						Logger.getLogger(Router.class.getName()).info("Logging not configured! using defaults");
+						Logger.getLogger(Router.class.getName()).info("config/logger.properties not configured! using defaults");
 					}
 					_IDatabase db = getDatabase(true);
 					loadExtensions();

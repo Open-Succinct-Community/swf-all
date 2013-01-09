@@ -24,8 +24,8 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
 	private HashMap<Expression, SequenceSet<Record>> queryCache = new HashMap<Expression, SequenceSet<Record>>();
 	private Table<? extends Model> table;
-	private static Logger logger = Logger.getLogger(QueryCache.class.getName());
-
+	private Logger logger = null;
+	
 	public Table<? extends Model> getTable() {
 		return table;
 	}
@@ -37,6 +37,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	private <M extends Model> QueryCache(Table<M> table){
 		this.table = table;
+		this.logger =  Logger.getLogger(QueryCache.class.getName() + "." + table.getModelClass().getSimpleName());
 	}
 	public void registerLockRelease(){
 		if (hasLockedRecords){

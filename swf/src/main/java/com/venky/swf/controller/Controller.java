@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -75,6 +76,16 @@ public class Controller {
     
     public Controller(Path path){
         this.path = path ;
+    }
+    
+    public View tron(String loggerName){
+		Logger.getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.ALL);
+    	return back();
+    }
+    
+    public View troff(String loggerName){
+		Logger.getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.OFF);
+		return back();
     }
     @Unrestricted
     public View login(){

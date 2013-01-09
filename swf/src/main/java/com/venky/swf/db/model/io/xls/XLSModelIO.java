@@ -34,6 +34,9 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 				}
 			}
 		}
+		if (fields.isEmpty()){
+			fields.add(baseFieldHeading + ".Id");
+		}
 	}
 	
 	
