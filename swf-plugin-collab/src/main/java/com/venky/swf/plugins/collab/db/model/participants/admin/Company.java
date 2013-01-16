@@ -10,6 +10,7 @@ import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
@@ -29,6 +30,7 @@ public interface Company extends Model{
 	
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY
+	@Index
 	public String getName();
 	public void setName(String name);
 

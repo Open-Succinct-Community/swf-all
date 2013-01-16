@@ -382,8 +382,17 @@ public class Controller {
 					idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
 				}
 						
-				if (idoptions != null && !idoptions.isEmpty() && idoptions.size() == 1){
-					id = idoptions.get(0);
+				if (idoptions != null && !idoptions.isEmpty()){
+					if (idoptions.size() == 1){
+						id = idoptions.get(0);
+					}else if (idoptions.size() == 2 && idoptions.contains(null)){
+						//If a field is nullable but has only one not null participating option, default the non null value. (Usability)
+						for (Integer i:idoptions){
+							if (i != null){
+								id = i;
+							}
+						}
+					}
 					if (id != null){
 						Model referredModel = Database.getTable(referredModelClass).get(id);
             	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
