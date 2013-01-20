@@ -183,12 +183,17 @@ public class ModelInvocationHandler implements InvocationHandler {
     
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	List<C> children = new ArrayList<C>();
+    	Class<? extends Model> modelClass = getReflector().getModelClass();
     	
     	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
-            if (fieldName.endsWith(StringUtil.underscorize(getModelName() +"Id"))){
-                children.addAll(getChildren(childClass, fieldName));
-            }
+        	if (fieldName.endsWith("_ID")){
+            	Method fieldGetter = childReflector.getFieldGetter(fieldName);
+            	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
+            	if (referredModelGetter != null && modelClass.isAssignableFrom(referredModelGetter.getReturnType())){
+            		children.addAll(getChildren(childClass, fieldName));
+            	}
+        	}
         }
 
     	return children;

@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.venky.extension.Registry;
 import com.venky.swf.path._IPath;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
 import com.venky.swf.views.controls.page.Head;
@@ -78,9 +79,9 @@ public abstract class HtmlView extends View{
 	}
     
     protected void createHead(Head head){
-        head.addControl(new Css("/resources/scripts/jquery-ui/css/ui-lightness/jquery-ui-1.8.16.custom.css"));
-        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-1.6.2.min.js"));
-        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-ui-1.8.16.custom.min.js"));
+        head.addControl(new Css("/resources/scripts/jquery-ui/css/ui-lightness/jquery-ui-1.10.0.custom.css"));
+        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-1.9.0.js"));
+        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-ui-1.10.0.custom.min.js"));
         
         head.addControl(new Css("/resources/scripts/jquery.tablesorter/themes/blue/style.css"));
         head.addControl(new Script("/resources/scripts/jquery.tablesorter/jquery.tablesorter.js"));
@@ -92,6 +93,6 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
     }
     
-    protected abstract void createBody(Body b);
- 
+    protected abstract void createBody(_IControl b);
+    
 }

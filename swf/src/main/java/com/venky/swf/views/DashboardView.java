@@ -10,7 +10,7 @@ import java.util.List;
 import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page._IMenu;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.LineBreak;
@@ -37,10 +37,10 @@ public class DashboardView extends HtmlView{
         return this;
     }
     @Override
-    public void createBody(Body b) {
+    public void createBody(_IControl b) {
     	createBody(b,true);
     }
-    public void createBody(Body b, boolean includeMenu) {
+    public void createBody(_IControl b, boolean includeMenu) {
     	if (includeMenu){
             _IMenu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null){

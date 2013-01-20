@@ -94,8 +94,8 @@ public class Control extends Properties implements _IControl{
         return Collections.unmodifiableList(containedControls);
     }
     
-    public void removeContainedControlAt(int index){
-    	containedControls.remove(index);
+    public _IControl removeContainedControlAt(int index){
+    	return containedControls.remove(index);
     }
 
     @Override

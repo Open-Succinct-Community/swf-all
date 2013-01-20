@@ -7,7 +7,7 @@ import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.wiki.db.model.Page;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.Table;
@@ -23,7 +23,7 @@ public class MarkDownView extends HtmlView{
 
 
 	@Override
-	protected void createBody(Body b) {
+	protected void createBody(_IControl b) {
 		b.addControl(createSearchForm(page));			
 		Div markdown = new Div();
 		b.addControl(markdown);

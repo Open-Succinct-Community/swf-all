@@ -40,6 +40,9 @@ public interface User extends Model{
     public String getName();
     public void setName(String name);
     
+    public String getLongName();
+    public void setLongName(String name);
+
     @IS_NULLABLE
     @UNIQUE_KEY("API")
     @HIDDEN

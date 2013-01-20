@@ -35,7 +35,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Table;
@@ -54,7 +54,7 @@ public class OidController extends Controller{
 		HtmlView view = new HtmlView(getPath()) {
 			
 			@Override
-			protected void createBody(Body b) {
+			protected void createBody(_IControl b) {
 				Form form = new Form();
 				form.setAction(getPath().controllerPath(), "login");
 				form.setMethod(Form.SubmitMethod.POST);

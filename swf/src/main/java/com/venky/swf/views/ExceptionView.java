@@ -11,7 +11,7 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.text.Label;
 
 /**
@@ -26,7 +26,7 @@ public class ExceptionView extends HtmlView{
     }
 
     @Override
-    protected void createBody(Body b) {
+    protected void createBody(_IControl b) {
         StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
         if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){

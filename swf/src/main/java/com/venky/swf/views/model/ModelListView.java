@@ -27,7 +27,7 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.Image;
@@ -309,7 +309,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     }
     private OrderBy orderBy = null; 
     @Override
-    protected void createBody(Body b) {
+    protected void createBody(_IControl b) {
     	if (indexedModel){
     		b.addControl(createSearchForm(getPath()));
     	}

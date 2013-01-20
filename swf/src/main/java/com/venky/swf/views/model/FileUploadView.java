@@ -3,7 +3,7 @@ package com.venky.swf.views.model;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.buttons.Submit;
@@ -37,7 +37,7 @@ public class FileUploadView extends HtmlView{
     }
 
 	@Override
-	protected void createBody(Body b) {
+	protected void createBody(_IControl  b) {
 		b.addControl(createLoadForm());
 	}
 

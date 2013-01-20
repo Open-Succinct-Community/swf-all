@@ -7,7 +7,7 @@ package com.venky.swf.views.login;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
-import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.LinkedImage;
 import com.venky.swf.views.controls.page.buttons.Submit;
@@ -26,7 +26,7 @@ public class LoginView extends HtmlView{
         super(path);
     }
     @Override
-    protected void createBody(Body b) {
+    protected void createBody(_IControl b) {
         String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
 
     	b.addControl(new LinkedImage("/resources/images/oid.png","/oid/login" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to)));

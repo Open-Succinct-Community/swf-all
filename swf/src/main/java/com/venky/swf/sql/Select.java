@@ -15,7 +15,6 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -55,11 +54,12 @@ public class Select extends SqlStatement{
 			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
 			tables[i] = ref.getTableName();
+			/*TODO Removable code. As lock release is now handled
 			if (lock && ref.isAnnotationPresent(CONFIGURATION.class)){
 				lock = false;
 				//Because Config cache stays even after commit and is shared by all threads.
 				logger.warning("Select for update downgraded to select for config table " + ref.getTableName());
-			}
+			}*/
 		}
 		return from(tables);
 	}

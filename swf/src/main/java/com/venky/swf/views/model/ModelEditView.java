@@ -20,15 +20,16 @@ import com.venky.swf.path.Path;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.buttons.Submit;
+import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.Table;
 import com.venky.swf.views.controls.page.layout.Table.Column;
 import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.layout.Table.TBody;
 import com.venky.swf.views.controls.page.layout.Table.THead;
+import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
@@ -122,7 +123,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         return r;
     }
     @Override
-    protected void createBody(Body body) {
+    protected void createBody(_IControl body) {
     	Form form = new Form();
     	body.addControl(form);
         form.setAction(getPath().controllerPath(), getFormAction());
@@ -254,14 +255,22 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	childModels.add(childModelClass);
         	}
         }
-        for (Class<? extends Model> childClass: childModels){
+
+    	Tabs multiTab = null; 
+    	for (Class<? extends Model> childClass: childModels){
 			Path childPath = new Path(getPath().getTarget()+"/"+Database.getTable(childClass).getTableName().toLowerCase() + "/index");
         	childPath.setRequest(getPath().getRequest());
         	childPath.setResponse(getPath().getResponse());
         	childPath.setSession(getPath().getSession());
         	if (childPath.canAccessControllerAction()){
             	DashboardView view =  (DashboardView)childPath.invoke();
-            	view.createBody(body,false);
+            	Div tab = new Div();
+            	view.createBody(tab,false);
+        		if (multiTab == null){
+        			multiTab = new Tabs();
+        			body.addControl(multiTab);
+        		}
+            	multiTab.addSection(tab,childClass.getSimpleName());
         	}
         }    
     }
