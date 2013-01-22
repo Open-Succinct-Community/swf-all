@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -203,25 +204,40 @@ public class Path implements _IPath{
         this.target = target;
 
         StringTokenizer stok = new StringTokenizer(target, "/");
+        StringBuilder resourcePath = new StringBuilder();
         boolean isResource = false;
         while (stok.hasMoreTokens()) {
         	String token = stok.nextToken();
-        	if (pathelements.isEmpty()){
-            	pathelements.add(token);
-            	if (token.equals("resources")){
-            		isResource = true;
-            	}
-        	}else if (isResource){
-        		if (pathelements.size() == 1){
-        			pathelements.add("/"+token);
-        		}else {
-            		String sofar = pathelements.remove(1);
-            		pathelements.add(sofar+"/"+token);
-        		}
-        	}else {
-        		pathelements.add(token);
-        	}
+    		if (pathelements.isEmpty() && token.equals("resources")){
+    			isResource = true;
+    		}else if (isResource){
+    			resourcePath.append("/").append(token);
+    		}
+    		pathelements.add(token);
         }
+        
+        if (isResource){
+        	if (!ObjectUtil.isVoid(resourcePath.toString())){
+    	        try {
+    	        	URL resource = getClass().getResource(resourcePath.toString());
+    	        	if (resource == null){
+    	        		isResource = false;
+    	        	}
+    	        }catch (Exception ex){
+    	        	isResource = false;
+    	        }
+        	}else {
+        		isResource = false;
+        	}
+	        if (isResource){
+	        	pathelements.clear();
+	        	pathelements.add("resources");
+	        	pathelements.add(resourcePath.toString());
+	        }
+        }
+        
+        
+        
         
         int pathElementSize = pathelements.size();
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
@@ -244,7 +260,7 @@ public class Path implements _IPath{
         		}
         	}
     	}
-        loadControllerClassName();
+        loadControllerClassName(isResource);
     }
     
     public static class ModelInfo{
@@ -284,13 +300,13 @@ public class Path implements _IPath{
         return target;
     }
 
-    private void loadControllerClassName(){
+    private void loadControllerClassName(boolean isResource){
         if (controllerClassName != null){
             return;
         }
         
         boolean controllerFound = false;
-        for (int i = pathelements.size() - 1; i >= 0 && !controllerFound; i--) {
+        for (int i = pathelements.size() - 1;!isResource && i >= 0 && !controllerFound; i--) {
             String pe = pathelements.get(i);
             
             for (String controllerPackageRoot: Config.instance().getControllerPackageRoots()){
