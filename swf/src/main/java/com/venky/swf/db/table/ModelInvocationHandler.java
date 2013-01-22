@@ -33,8 +33,10 @@ import com.venky.swf.db.annotations.column.validations.processors.DateFormatVali
 import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
 import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
+import com.venky.swf.db.annotations.column.validations.processors.IntegerRangeValidator;
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
+import com.venky.swf.db.annotations.column.validations.processors.NumericRangeValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.validations.ModelValidator;
@@ -369,7 +371,8 @@ public class ModelInvocationHandler implements InvocationHandler {
         fieldValidators.add(new RegExValidator());
         fieldValidators.add(new EnumerationValidator());
         fieldValidators.add(new DateFormatValidator());
-        
+        fieldValidators.add(new NumericRangeValidator());
+        fieldValidators.add(new IntegerRangeValidator());
         modelValidators.add(new UniqueKeyValidator());
     }
 
@@ -377,7 +380,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         List<String> fields = reflector.getFields();
         boolean ret = true;
         for (String field : fields) {
-        	MultiException fieldException = new MultiException("Field:" + field);
+        	MultiException fieldException = new MultiException("Field:" + field + " ");
             if (!reflector.isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
                 ex.add(fieldException);
                 ret = false;

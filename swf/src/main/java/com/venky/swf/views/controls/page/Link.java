@@ -4,6 +4,8 @@
  */
 package com.venky.swf.views.controls.page;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.venky.swf.views.controls.Control;
 
 /**
@@ -28,7 +30,7 @@ public class Link extends Control{
         }
     }
     public final void setUrl(String path){
-        setProperty("href", path);
+        setProperty("href", StringEscapeUtils.escapeHtml4(path));
     }
     
     public final String getUrl(){

@@ -1,5 +1,7 @@
 package com.venky.swf.db.model;
 
+import java.util.regex.Pattern;
+
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -26,5 +28,22 @@ public class RegexTest {
 		
 		//Patter
 	}
+	@Test
+	public void testFractionRegex(){
+		Pattern p = Pattern.compile("^*(([0]*)|(0.[0-9]*)|(1.[0]*)|1)$") ;
+		
+		Assert.assertTrue(p.matcher("0").matches());
+		Assert.assertFalse(p.matcher("-0").matches());
+		Assert.assertFalse(p.matcher("+0").matches());
+		Assert.assertTrue(p.matcher("0.1").matches());
+		Assert.assertTrue(p.matcher("0.9").matches());
 
+		Assert.assertTrue(p.matcher("0.01").matches());
+		Assert.assertTrue(p.matcher("0.099").matches());
+		Assert.assertTrue(p.matcher("0.11").matches());
+		Assert.assertTrue(p.matcher("0.99").matches());
+		Assert.assertTrue(p.matcher("1.0").matches());
+		Assert.assertTrue(p.matcher("1.").matches());
+		Assert.assertTrue(p.matcher("1").matches());
+	}
 }

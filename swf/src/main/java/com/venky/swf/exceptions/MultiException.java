@@ -61,8 +61,8 @@ public class MultiException extends RuntimeException{
 		for (Throwable th: throwables){
 			if (!ObjectUtil.isVoid(th.getMessage())){
 				b.append(th.getMessage());
+				b.append(newLine());
 			}
-			b.append(newLine());
 		}
 		return b.toString();
 	}

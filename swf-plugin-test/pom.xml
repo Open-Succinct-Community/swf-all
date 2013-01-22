@@ -35,9 +35,9 @@
 	</properties>
   <dependencies>
   	<dependency>
-        <groupId>${project.groupId}</groupId>
+        <groupId>com.github.venkatramanm.swf-all</groupId>
   		  <artifactId>swf</artifactId>
-        <version>${project.version}</version>
+        <version>${project.parent.version}</version>
   	</dependency>
   	<dependency>
   		<groupId>junit</groupId>

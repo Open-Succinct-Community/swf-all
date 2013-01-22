@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 
@@ -138,7 +140,7 @@ public class Control extends Properties implements _IControl{
     }
 
     public void setValue(final Object value){
-        setProperty("value", StringUtil.valueOf(value));
+        setProperty("value", StringEscapeUtils.escapeHtml4(StringUtil.valueOf(value)));
     }
     
     public String getValue(){
