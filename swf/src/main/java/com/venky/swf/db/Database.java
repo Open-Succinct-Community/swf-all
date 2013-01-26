@@ -34,9 +34,12 @@ import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.model.reflection.TableReflector;
 import com.venky.swf.db.platform.Platform;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 
 /**
@@ -64,6 +67,21 @@ public class Database implements _IDatabase{
 	public void close() {
 		closeConnection();
 		currentUser = null;
+	}
+	
+	public static void dispose(){
+		TaskManager.instance().shutdown();
+		tables.clear();
+		for (String key : configQueryCacheMap.keySet()){
+			configQueryCacheMap.get(key).clear();
+		}
+		configQueryCacheMap.clear();
+		_ds = null; 
+		_helper = null;
+		
+		ModelReflector.dispose();
+		TableReflector.dispose();
+		LuceneIndexer.dispose();
 	}
 
 	private Connection connection = null;

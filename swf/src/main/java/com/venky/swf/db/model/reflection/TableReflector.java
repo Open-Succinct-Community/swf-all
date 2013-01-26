@@ -26,6 +26,10 @@ import com.venky.swf.db.table.Table;
 public class TableReflector {
     
     private static final Map<String , TableReflector>  tableReflectorByTableName = new HashMap<String, TableReflector>();
+    public static void dispose(){
+    	tableReflectorByTableName.clear();
+    	MReflector.dispose();
+    }
     
     public static <M extends Model> TableReflector instance(Class<M> modelClass){
     	Class<? extends Model> realModelClass = getRealModelClass(modelClass);
@@ -230,6 +234,9 @@ public class TableReflector {
         	return ref;
         }
     	
+    	public static void dispose(){
+    		mreflectors.clear();
+    	}
 		private MReflector(Class<M> reflectedClass) {
 			super(reflectedClass, Model.class);
 		}

@@ -259,21 +259,14 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return record;
     }
 
-	private static Map<Class<? extends Model>,List<Class<?>>> modelImplsMap = new HashMap<Class<? extends Model>, List<Class<?>>>();
+	public static void dispose(){
+		modelImplClassesCache.clear();
+	}
     
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
 		ModelReflector<M> ref = ModelReflector.instance(modelClass);
 		
-		List<Class<?>> modelImplClasses = modelImplsMap.get(modelClass)	;		
-		if (modelImplClasses == null){
-			synchronized (modelImplsMap) {
-				modelImplClasses = modelImplsMap.get(modelClass);
-				if (modelImplClasses == null){
-					modelImplClasses = getModelImplClasses(modelClass);
-					modelImplsMap.put(modelClass, modelImplClasses);
-				}
-			}
-		}
+		List<Class<?>> modelImplClasses = getModelImplClasses(modelClass);		
 		
 		try {
 	    	ModelInvocationHandler mImpl = new ModelInvocationHandler(modelClass, record);

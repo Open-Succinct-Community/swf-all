@@ -485,7 +485,7 @@ public class Controller {
 				}
 			}
 		}
-		List<M> list = new Select().from(modelClass).where(getPath().getWhereClause()).execute(modelClass,new DefaultModelFilter<M>());
+		List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>());
 		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded);
 	}
     protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){

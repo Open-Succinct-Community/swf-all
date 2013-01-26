@@ -46,4 +46,18 @@ public class RegexTest {
 		Assert.assertTrue(p.matcher("1.").matches());
 		Assert.assertTrue(p.matcher("1").matches());
 	}
+	
+	@Test
+	public void testSheetName(){
+		Pattern p = Pattern.compile("[^\\\\/?\\[\\]*]*");
+		
+		Assert.assertFalse(p.matcher("A/B").matches());
+		Assert.assertFalse(p.matcher("A\\B").matches());
+		Assert.assertFalse(p.matcher("X?Y").matches());
+		Assert.assertFalse(p.matcher("AZ*D").matches());
+		Assert.assertFalse(p.matcher("[AVB").matches());
+		Assert.assertFalse(p.matcher("AVB]").matches());
+		Assert.assertTrue(p.matcher("AVB").matches());
+		
+	}
 }

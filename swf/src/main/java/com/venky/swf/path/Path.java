@@ -698,9 +698,12 @@ public class Path implements _IPath{
     	return rmg;
     }
     public Expression getWhereClause(){
+    	return getWhereClause(getModelClass());
+    }
+    public Expression getWhereClause(Class<? extends Model> modelClass){
     	Expression where = new Expression(Conjunction.AND);
 		Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
-		ModelReflector<? extends Model> reflector = ModelReflector.instance(getModelClass());
+		ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
 		
 		for (Method referredModelGetter : reflector.getReferredModelGetters()){
 			@SuppressWarnings("unchecked")

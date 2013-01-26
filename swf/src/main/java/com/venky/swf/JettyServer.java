@@ -167,6 +167,11 @@ public class JettyServer {
 				}
 				key.reset();
 				if (changeDetected){
+					try {
+						Thread.sleep(10000);
+					} catch (InterruptedException e) {
+						//
+					}
 					Router.instance().setLoader(new SWFClassLoader(getClass().getClassLoader()));
 				}
 			} while (true);

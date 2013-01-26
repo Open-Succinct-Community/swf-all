@@ -232,5 +232,8 @@ public class LuceneIndexer {
 			throw new RuntimeException(ex);
 		}
 	}
+	public static void dispose() {
+		LuceneIndexer.indexerCache.clear();
+	}
 
 }

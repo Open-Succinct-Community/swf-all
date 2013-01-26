@@ -53,9 +53,12 @@ public class Router extends AbstractHandler {
 	public void setLoader(ClassLoader loader) {
 		synchronized (this) {
 			if (this.loader != loader) {
+		    	clearExtensions();
+		    	if (this.loader != null){
+		    		disposeDatabase();
+		    	}
 				this.loader = loader;
 				if (loader != null){
-			    	clearExtensions();
 			    	try {
 			    		InputStream is = this.loader.getResourceAsStream("config/logger.properties");
 			    		if (is != null){
@@ -153,6 +156,18 @@ public class Router extends AbstractHandler {
 			Class<_IDatabase> c = (Class<_IDatabase>)getDatabaseClass();
 			_IDatabase idb = (_IDatabase)(c.getMethod("getInstance",boolean.class).invoke(c,migrate));
 			return idb;
+		}catch(Exception ex){
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void disposeDatabase(){
+		try {
+			//Database.getInstance()
+			Class<_IDatabase> c = (Class<_IDatabase>)getDatabaseClass();
+			c.getMethod("dispose").invoke(c);
+			c = null;
 		}catch(Exception ex){
 			throw new RuntimeException(ex);
 		}

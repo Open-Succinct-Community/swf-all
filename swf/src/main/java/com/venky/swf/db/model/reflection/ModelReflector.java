@@ -1155,5 +1155,9 @@ public class ModelReflector<M extends Model> {
         	orderBy = order.value();
         }
         return orderBy;
-    }    
+    }
+
+	public static void dispose() {
+		ModelReflector.modelReflectorByModelClass.clear();
+	}    
 }

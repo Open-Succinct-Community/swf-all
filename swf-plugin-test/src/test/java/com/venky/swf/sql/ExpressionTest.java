@@ -1,7 +1,5 @@
 package com.venky.swf.sql;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
 import com.venky.swf.routing.Router;

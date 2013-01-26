@@ -47,6 +47,3 @@ $(function() {
     $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):first').focus();
 });
 
-$(function() {
-    $(".tabs").tabs();
-});

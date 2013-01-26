@@ -5,13 +5,13 @@ img {
 div.nav {
 	height: 1.5em;
 	background-image: url(/resources/images/menubg.png); 
-	
 }
 div.nav ul {
   padding: 0;
   margin: 0;
   list-style: none;
   line-height: 1.5em;
+  z-index:100;
 }   
 div.nav li {
   float: left;

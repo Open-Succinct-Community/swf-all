@@ -22,3 +22,6 @@ $(function(){
 
     });
 });
+$(function() {
+    $(".tabs").tabs();
+});
