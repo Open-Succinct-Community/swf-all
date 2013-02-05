@@ -22,6 +22,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.NumericConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.ModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -114,8 +115,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		Workbook wb = r.getSheet().getWorkbook();
 		
 		CreationHelper createHelper = wb.getCreationHelper();
-		CellStyle numberStyle = wb.createCellStyle();
-		numberStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.###"));
+		CellStyle decimalStyle = wb.createCellStyle();
+		decimalStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.0##"));
+		
+		CellStyle integerStyle = wb.createCellStyle();
+		integerStyle.setDataFormat(createHelper.createDataFormat().getFormat("0"));
 		
 		CellStyle dateStyle = wb.createCellStyle();
 		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
@@ -128,11 +132,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			Object value = ref.get(m, f);
 			if (referedModelMap.get(f) != null){
 				for (String cf: referredModelFieldsToExport.get(f) ){
-					writeNextColumn(r, columnNum, getValue(m,cf), numberStyle, dateStyle);
+					writeNextColumn(r, columnNum, getValue(m,cf), integerStyle, decimalStyle,dateStyle);
 					columnNum.increment();
 				}
 			}else {
-				writeNextColumn(r, columnNum, value, numberStyle, dateStyle);
+				writeNextColumn(r, columnNum, value, integerStyle,decimalStyle, dateStyle);
 				columnNum.increment();
 			}
 		}
@@ -140,13 +144,18 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	
 
 	
-	private void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle numberStyle,CellStyle dateStyle){
+	private void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle integerStyle, CellStyle decimalStyle,CellStyle dateStyle){
 		if (!ObjectUtil.isVoid(value)){
 			Class<?> colClass = value.getClass();
 			Cell cell = r.createCell(columnNum.intValue());
 			if (isNumeric(colClass)){
                 cell.setCellValue(Double.valueOf(String.valueOf(value)));
-                cell.setCellStyle(numberStyle);
+                
+				if (NumericConverter.class.isAssignableFrom(Database.getJdbcTypeHelper().getTypeRef(colClass).getTypeConverter().getClass())){
+					cell.setCellStyle(decimalStyle);	
+				}else {
+					cell.setCellStyle(integerStyle);
+				}
             }else if (isDate(colClass)) {
                 cell.setCellValue((Date)value);
                 cell.setCellStyle(dateStyle);
