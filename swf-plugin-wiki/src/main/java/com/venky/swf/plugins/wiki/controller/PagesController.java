@@ -118,7 +118,7 @@ public class PagesController extends ModelController<Page>{
 		where.add(new Expression("TITLE",Operator.EQ,title));
 		where.add(getPath().getWhereClause());
 		Select sel = new Select().from(Page.class).where(where);
-		List<Page> pages =  sel.execute(Page.class);
+		List<Page> pages =  sel.execute(Page.class,new DefaultModelFilter<Page>());
 		Collections.sort(pages,new Comparator<Page>(){
 			@SuppressWarnings("unchecked")
 			TypeConverter<Integer> converter = (TypeConverter<Integer>)Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();
