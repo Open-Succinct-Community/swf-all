@@ -146,24 +146,11 @@ public class Path implements _IPath{
     		user =  (_Identifiable)getSession().getAttribute("user");
     		return (User)user;
     	}catch (ClassCastException ex){
-    		boolean isModel = false;
-    		boolean isUser = false; 
-    		for (Class<?> infc:user.getClass().getInterfaces()){
-    			if (infc.getName().equals(Model.class.getName())){
-    				isModel = true;
-    			}
-    			if (infc.getName().equals(User.class.getName())){
-    				isUser = true;
-    			}
-    		}
-    		if (isModel && isUser && user.getClass().getClassLoader() != getClass().getClassLoader()){
-				User reloadedUser = Database.getTable(User.class).get(user.getId()); // Reload the user with new class loader.
-    			getSession().setAttribute("user", reloadedUser);
-    			return reloadedUser;
-    		}else {
-    			return null;
-    		}
-    	}
+			Integer id = (Integer)getSession().getAttribute("user.id");
+			user = Database.getTable(User.class).get(id);
+			getSession().setAttribute("user", user);
+    		return (User)user;
+		}
     }
 
     public HttpSession getSession() {
@@ -447,6 +434,7 @@ public class Path implements _IPath{
     private void createUserSession(User user,boolean autoInvalidate){
     	HttpSession session = getRequest().getSession(true);
     	session.setAttribute("user", user);
+    	session.setAttribute("user.id",user.getId());
     	session.setAttribute("autoInvalidate", autoInvalidate);
     	setSession(session);
     }

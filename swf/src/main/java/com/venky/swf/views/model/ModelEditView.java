@@ -247,7 +247,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
     	List<Class<? extends Model>> childModels = new ArrayList<Class<? extends Model>>();
     	for (Method childGetter: getReflector().getChildGetters()){
-        	if (!List.class.isAssignableFrom(childGetter.getReturnType()) || getReflector().isAnnotationPresent(childGetter, HIDDEN.class)){
+    		HIDDEN hidden = getReflector().getAnnotation(childGetter, HIDDEN.class);
+        	if (!List.class.isAssignableFrom(childGetter.getReturnType()) || (hidden != null && hidden.value())){
         		continue;
         	}
         	Class<? extends Model> childModelClass = getReflector().getChildModelClass(childGetter);

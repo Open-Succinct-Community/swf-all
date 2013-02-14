@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -133,14 +134,25 @@ public class JettyServer {
 		@SuppressWarnings("unchecked")
 		public void run() {
 			WatchKey key = null;
+			boolean changeDetected = false; 
 			do {
 				try {
-					key = watcher.take();
+					if (changeDetected){
+						key = watcher.poll(3,TimeUnit.SECONDS);
+					}else{
+						key = watcher.take();
+					}
 				} catch (InterruptedException e) {
 					break;
 				}
+				if (key == null ){
+					if (changeDetected){
+						changeDetected = false;
+						Router.instance().setLoader(new SWFClassLoader(getClass().getClassLoader()));
+					}
+					continue;
+				}
 				Path watched = watchKeys.get(key);
-				boolean changeDetected = false; 
 				for (WatchEvent<?> event : key.pollEvents()) {
 					Kind<?> kind = event.kind();
 					if (kind == StandardWatchEventKinds.OVERFLOW) {
@@ -166,14 +178,6 @@ public class JettyServer {
 					
 				}
 				key.reset();
-				if (changeDetected){
-					try {
-						Thread.sleep(10000);
-					} catch (InterruptedException e) {
-						//
-					}
-					Router.instance().setLoader(new SWFClassLoader(getClass().getClassLoader()));
-				}
 			} while (true);
 		}
 	}

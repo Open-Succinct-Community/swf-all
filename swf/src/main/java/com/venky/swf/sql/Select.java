@@ -114,8 +114,10 @@ public class Select extends SqlStatement{
 		}else {
 			addlist(builder, columnNames);
 		}
-		builder.append(" FROM ");
-		addlist(builder, tableNames);
+		if (tableNames != null && tableNames.length > 0){
+			builder.append(" FROM ");
+			addlist(builder, tableNames);
+		}
 		builder.append(" ");
 		
 		Expression where = getWhereExpression();

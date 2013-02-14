@@ -226,7 +226,15 @@ public class Expression {
 	}
 	
 	public boolean isEmpty(){
-		return conjunction != null && connected.isEmpty() ;
+		boolean empty = false;
+		if (conjunction != null){
+			empty = true; 
+			for (Iterator<Expression> i = connected.iterator();i.hasNext() && empty ; ){
+				empty = i.next().isEmpty();
+			}
+		}
+		
+		return empty;
 	}
 	
 	@Override
