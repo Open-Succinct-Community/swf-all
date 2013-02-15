@@ -10,4 +10,5 @@ import java.lang.annotation.Target;
 
 public @interface CONNECTED_VIA {
 	public String value(); 
+	public String additional_join() default "" ;
 }

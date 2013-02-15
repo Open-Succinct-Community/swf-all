@@ -21,6 +21,7 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -53,6 +54,7 @@ import com.venky.swf.sql.Insert;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.Update;
+import com.venky.swf.sql.parser.SQLExpressionParser;
 
 /**
  *
@@ -131,7 +133,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
 	        	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
 	        	if (join != null){
-	        		return getChildren(getReflector().getChildModelClass(method),join.value());
+	        		return getChildren(getReflector().getChildModelClass(method),join.value(),join.additional_join());
 	        	}else {
 	        		return getChildren(getReflector().getChildModelClass(method));
 	        	}
@@ -184,32 +186,44 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     
     public <C extends Model> List<C> getChildren(Class<C> childClass){
-    	List<C> children = new ArrayList<C>();
     	Class<? extends Model> modelClass = getReflector().getModelClass();
-    	
+    	Expression expression = new Expression(Conjunction.OR);
     	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
         	if (fieldName.endsWith("_ID")){
             	Method fieldGetter = childReflector.getFieldGetter(fieldName);
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
             	if (referredModelGetter != null && modelClass.isAssignableFrom(referredModelGetter.getReturnType())){
-            		children.addAll(getChildren(childClass, fieldName));
+            		expression.add(new Expression(fieldName,Operator.EQ,proxy.getId()));
             	}
         	}
         }
 
-    	return children;
+    	return getChildren(childClass,expression);
     }
     public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName){
+    	return getChildren(childClass,parentIdFieldName,null);
+    }
+    public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName, String addnl_condition){
     	int parentId = proxy.getId();
-    	String parentIdColumnName = ModelReflector.instance(childClass).getColumnDescriptor(parentIdFieldName).getName();
-
+    	ModelReflector<C> childReflector = ModelReflector.instance(childClass);
+    	String parentIdColumnName = childReflector.getColumnDescriptor(parentIdFieldName).getName();
+    	Expression where = new Expression(Conjunction.AND);
+    	where.add(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
+    	if (!ObjectUtil.isVoid(addnl_condition)){
+    		Expression addnl = new SQLExpressionParser(childClass).parse(addnl_condition);
+        	where.add(addnl);
+    	}
+    	return getChildren(childClass, where);
+    }
+    
+    public <C extends Model> List<C> getChildren(Class<C> childClass, Expression expression){
     	Select  q = new Select();
     	q.from(childClass);
-    	q.where(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
+    	q.where(expression);
     	return q.execute(childClass);
     }
-
+    
     public <M extends Model> void setProxy(M proxy) {
         this.proxy = proxy;
     }

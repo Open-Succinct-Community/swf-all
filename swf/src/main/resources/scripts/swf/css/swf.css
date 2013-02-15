@@ -19,11 +19,11 @@ div.nav li {
   white-space: wrap;
   width: 15em;
   text-indent: 0.5em;
-  background-color: #bbf;
+  background-color: #f7b74d;
 }
 
 div.nav li:hover li:hover {
-	background-color: #aae;
+	background-color: #f1b13d;
 	margin : 0px 0px 0px 0px;
 }
 
@@ -107,4 +107,8 @@ table.tablesorter thead tr .indexed {
 }
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp { 
   background-color: #DAADAD;
+}
+
+div.tabs  .ui-helper-reset {
+  font-size: 10%;
 }

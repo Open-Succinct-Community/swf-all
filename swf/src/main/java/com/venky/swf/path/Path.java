@@ -63,6 +63,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.sql.parser.SQLExpressionParser;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
@@ -138,19 +139,35 @@ public class Path implements _IPath{
 
     }
     public User getSessionUser(){
+    	HttpSession session = getSession();
+    	if (session == null){
+    		return null;
+    	}
+    	
+    	_Identifiable user = null; 
+    	try {
+    		user =  (_Identifiable)session.getAttribute("user");
+    		return (User)user;
+    	}catch (ClassCastException ex){
+    		user = null;
+    		session.removeAttribute("user");
+    		Integer id = (Integer)session.getAttribute("user.id");
+    		if (id != null){
+    			Table<User> USER = Database.getTable(User.class);
+    			if (USER != null){
+    				user = USER.get(id);
+    				getSession().setAttribute("user", user);
+    			}
+    		}
+    		return (User)user;
+		}
+    }
+    public Integer getSessionUserId(){
     	if (getSession() == null){
     		return null;
     	}
-    	_Identifiable user = null; 
-    	try {
-    		user =  (_Identifiable)getSession().getAttribute("user");
-    		return (User)user;
-    	}catch (ClassCastException ex){
-			Integer id = (Integer)getSession().getAttribute("user.id");
-			user = Database.getTable(User.class).get(id);
-			getSession().setAttribute("user", user);
-    		return (User)user;
-		}
+		Integer id = (Integer)getSession().getAttribute("user.id");
+		return id;
     }
 
     public HttpSession getSession() {
@@ -713,19 +730,22 @@ public class Path implements _IPath{
 			return where;
 		}
 
-		List<ModelInfo> modelElements = getModelElements();
-
-		for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){ // The last model is self.
+		List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getModelElements());
+		Collections.reverse(modelElements);
+		Iterator<ModelInfo> miIter = modelElements.iterator() ;
+		if (miIter.hasNext()){
+			miIter.next();// The last model was self.
+		}
+		
+		Set<String> modelElementProcessed = new HashSet<String>();
+		while(miIter.hasNext()){ 
     		ModelInfo mi = miIter.next();
-    		if(!miIter.hasNext()){
-    			//last model is self.
-    			break;
-    		}
     		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector().getTableName());
     		
-    		if (referredModelGetters.isEmpty() || mi.getId() == null){
+    		if (referredModelGetters.isEmpty() || mi.getId() == null || modelElementProcessed.contains(mi.getReflector().getTableName())){
     			continue;
     		}
+    		modelElementProcessed.add(mi.getReflector().getTableName());
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
     		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
@@ -745,6 +765,11 @@ public class Path implements _IPath{
 	            	}else {
 	            		String referredModelIdColumnName = join.value();
 	            		referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            		if (!ObjectUtil.isVoid(join.additional_join())){
+		            		SQLExpressionParser parser = new SQLExpressionParser(referredModelReflector.getModelClass());
+		            		Expression expression = parser.parse(join.additional_join());
+		            		referredModelWhere.add(expression);
+	            		}
 	            	}
 	    		}
 	    	}

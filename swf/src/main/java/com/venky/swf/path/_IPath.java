@@ -30,6 +30,7 @@ public interface _IPath {
 	boolean canAccessControllerAction(String action, String parameter);
 	_IPath createRelativePath(String toUrl);
 	Object getSessionUser();
+	Integer getSessionUserId();
 	
 	void invalidateSession();
 	void autoInvalidateSession();

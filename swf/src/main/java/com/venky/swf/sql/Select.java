@@ -54,12 +54,6 @@ public class Select extends SqlStatement{
 			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
 			tables[i] = ref.getTableName();
-			/*TODO Removable code. As lock release is now handled
-			if (lock && ref.isAnnotationPresent(CONFIGURATION.class)){
-				lock = false;
-				//Because Config cache stays even after commit and is shared by all threads.
-				logger.warning("Select for update downgraded to select for config table " + ref.getTableName());
-			}*/
 		}
 		return from(tables);
 	}
