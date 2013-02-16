@@ -766,7 +766,7 @@ public class Path implements _IPath{
 	            		String referredModelIdColumnName = join.value();
 	            		referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
 	            		if (!ObjectUtil.isVoid(join.additional_join())){
-		            		SQLExpressionParser parser = new SQLExpressionParser(referredModelReflector.getModelClass());
+		            		SQLExpressionParser parser = new SQLExpressionParser(modelClass);
 		            		Expression expression = parser.parse(join.additional_join());
 		            		referredModelWhere.add(expression);
 	            		}

@@ -67,6 +67,10 @@ public class SQLExpressionParser {
 			parentExpression.add(createExpression(e, Operator.LK));
 		}else if (e.getRule().getClass() == IN.class){
 			parentExpression.add(createExpression(e, Operator.IN));
+		}else if (e.getRule().getClass() == ISNULL.class){
+			parentExpression.add(createExpression(e, Operator.EQ));
+		}else if (e.getRule().getClass() == IS_NOTNULL.class){
+			parentExpression.add(createExpression(e, Operator.NE));
 		}else {
 			Expression ex = null;
 			if (e.getRule().getClass() == And.class){
@@ -90,9 +94,12 @@ public class SQLExpressionParser {
 		if (cd == null){
 			throw new RuntimeException(table.getRealTableName() + " does not have column " + columnName);
 		}
-		List<BindVariable> columnValues = columnValues(e,cd);
-
-		return new Expression(columnName,op,columnValues.toArray());
+		if (e.getRule().getClass() == ISNULL.class || e.getRule().getClass() == IS_NOTNULL.class){
+			return new Expression(columnName,op);
+		}else { 
+			List<BindVariable> columnValues = columnValues(e,cd);
+			return new Expression(columnName,op,columnValues.toArray());
+		}
 	}
 	private String columnName(Element e){
 		List<Element> columnName = hunt(ColumnName.class,e);
@@ -237,10 +244,19 @@ public class SQLExpressionParser {
 
 	public static class SimpleOperation extends Any{
 		public SimpleOperation(){
-			super(new EQ(),new LT(), new GT(), new LE() ,new GE(), new NE() , new LIKE() , new IN() );
+			super(new EQ(),new LT(), new GT(), new LE() ,new GE(), new NE() , new LIKE() , new IN() , new ISNULL() , new IS_NOTNULL());
 		}
 	}
-
+	public static class ISNULL extends Sequence { 
+		public ISNULL(){
+			super(columnName(), new CharSequence("IS"),spaces(), new CharSequence("NULL"), spaces() );
+		}
+	}
+	public static class IS_NOTNULL extends Sequence { 
+		public IS_NOTNULL(){
+			super(columnName(), new CharSequence("IS"),spaces(), new CharSequence("NOT"),spaces(), new CharSequence("NULL"), spaces());
+		}
+	}
 	public static class EQ extends Sequence{
 		public EQ(){
 			super(columnName(), new Include('='),spaces() , columnValue());
