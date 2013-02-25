@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -358,7 +359,9 @@ public class Controller {
     }
 
     protected <M extends Model> void fillDefaultsForReferenceFields(M record,Class<M> modelClass){
-        List<ModelInfo> modelElements = getPath().getModelElements();
+        List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getPath().getModelElements());
+        Collections.reverse(modelElements);
+        
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
 	    	@SuppressWarnings("unchecked")
@@ -401,13 +404,13 @@ public class Controller {
             	    	}
 					}
 				}
-
-				for (Iterator<ModelInfo> miIter = modelElements.iterator() ; miIter.hasNext() ;){
+				Iterator<ModelInfo> miIter = modelElements.iterator();
+				if (miIter.hasNext()){
+					miIter.next();
+					//Last model was self so ignore the first one now as model Elements is already reversed.
+				}
+				while (miIter.hasNext()){
 		    		ModelInfo mi = miIter.next();
-		    		if(!miIter.hasNext()){
-		    			//last model is self.
-		    			break;
-		    		}
 		    		if (mi.getId() == null){
     	    			continue;
     	    		}

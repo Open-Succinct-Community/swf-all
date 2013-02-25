@@ -110,5 +110,6 @@ table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSo
 }
 
 div.tabs  .ui-helper-reset {
-  font-size: 10%;
+  font-size: 80%;
+  font-weight: normal;
 }

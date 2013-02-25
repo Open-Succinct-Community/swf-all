@@ -11,6 +11,8 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model._Identifiable;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Select;
 
 public class DataSecurityFilter {
@@ -23,7 +25,16 @@ public class DataSecurityFilter {
 		return false;
 	}
 	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by){
+		return getRecordsAccessible(modelClass, by, null);
+	}
+	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by, Expression condition){
 		Cache<String,Map<String,List<Integer>>> pOptions = by.getParticipationOptions(modelClass);
+		Expression where = new Expression(Conjunction.AND);
+		
+		if (condition != null){
+			where.add(condition);
+		}
+		
 		Select s = new Select().from(modelClass);
 		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 		Set<String> fields = new HashSet<String>();
@@ -31,8 +42,9 @@ public class DataSecurityFilter {
 			fields.addAll(pOptions.get(g).keySet());
 		}
 		if (!anyFieldIsVirtual(fields,ref)){
-			s.where(by.getDataSecurityWhereClause(modelClass));
+			where.add(by.getDataSecurityWhereClause(ref, pOptions));
 		}
+		s.where(where);
 		return s.execute(modelClass,new Select.AccessibilityFilter<M>(by));
 	}
 	
