@@ -90,7 +90,7 @@ public class SQLExpressionParser {
 	}
 	private Expression createExpression(Element e, Operator op){
 		String columnName = columnName(e);
-		ColumnDescriptor cd = table.getColumnDescriptor(columnName);
+		ColumnDescriptor cd = table.getReflector().getColumnDescriptor(columnName);
 		if (cd == null){
 			throw new RuntimeException(table.getRealTableName() + " does not have column " + columnName);
 		}

@@ -1,5 +1,6 @@
 package com.venky.swf.sql;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,6 +13,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
 
 
@@ -256,10 +258,28 @@ public class Expression {
 		return getRealSQL().equals(e.getRealSQL());
 	}
 	
+	private Object get(Object record, String columnName){
+		boolean isModelProxyObject = Proxy.isProxyClass(record.getClass()) && (record instanceof Model);
+		Object value = null;
+		if (isModelProxyObject){
+			Model m = (Model)record;
+			ModelInvocationHandler h = (ModelInvocationHandler) Proxy.getInvocationHandler(m);
+			if (h.getReflector().isFieldVirtual(columnName)){
+				value = h.getReflector().get(m,columnName);
+			}else {
+				value = m.getRawRecord().get(columnName);	
+			}
+		}else if (Record.class.isInstance(record)){
+			value = ((Record)record).get(columnName);
+		}else {
+			throw new RuntimeException("Don't know how to get column value from object of type " + record.getClass() + " for column " + columnName);
+		}
+		return value;
+	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public boolean eval(Record record){
+	public  boolean eval(Object record){
 		if (conjunction == null){
-			Object value = record.get(columnName);
+			Object value = get(record,columnName);
 			if (value == null){
 				return values.isEmpty();
 			}else if (values.isEmpty()){
@@ -307,11 +327,6 @@ public class Expression {
 			return ret;
 		}
 		return false;
-		
-	}
-	public <M extends Model> boolean eval(M m){
-		Record record = m.getRawRecord();
-		return eval(record);
 	}
 	
 }

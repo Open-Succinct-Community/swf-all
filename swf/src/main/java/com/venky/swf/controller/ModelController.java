@@ -208,9 +208,15 @@ public class ModelController<M extends Model> extends Controller {
 		if (integrationAdaptor != null){
 			view = integrationAdaptor.createResponse(getPath(),record);
 		}else {
-			view = dashboard(new ModelShowView<M>(getPath(), modelClass, getIncludedFields(), record));
+			view = dashboard(createModelShowView(record));
 		}
     	return view;
+    }
+    protected ModelShowView<M> createModelShowView(M record){
+    	return createModelShowView(getPath(),record);
+    }
+    protected ModelShowView<M> createModelShowView(Path path, M record){
+    	return new ModelShowView<M>(path, modelClass, getIncludedFields(), record);
     }
 
     @Depends("index")

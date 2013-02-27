@@ -175,7 +175,7 @@ public class ModelReflector<M extends Model> {
             Method setter = getFieldSetter(fieldName);
     		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
 
-        	if (!ObjectUtil.isVoid(value) || getter.getReturnType().isPrimitive() || isFieldMandatory(fieldName)){
+        	if (!ObjectUtil.isVoid(value) || getter.getReturnType().isPrimitive() ){
                 setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
         	}else {
                 setter.invoke(record, getter.getReturnType().cast(null));
