@@ -445,7 +445,14 @@ public class Path implements _IPath{
     }
     
     public boolean isSecuredAction(Method m){
-    	return !m.isAnnotationPresent(Unrestricted.class);
+    	boolean restricted = true; 
+    	Unrestricted ur = getControllerReflector().getAnnotation(m,Unrestricted.class);
+    	
+    	if (ur != null && ur.value()){
+			restricted = false;
+    	}
+
+    	return restricted;
     }
     
     private void createUserSession(User user,boolean autoInvalidate){

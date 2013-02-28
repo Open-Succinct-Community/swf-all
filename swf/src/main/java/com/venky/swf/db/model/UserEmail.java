@@ -11,6 +11,6 @@ public interface UserEmail extends Model{
 	public User getUser();
 	
 	@UNIQUE_KEY
-	public void setEmail(String email);
 	public String getEmail();
+	public void setEmail(String email);
 }
