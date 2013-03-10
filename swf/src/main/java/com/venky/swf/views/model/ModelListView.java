@@ -297,7 +297,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		
 	}
     protected void addRecordToTable(M record, BitSet showAction, Table table){
-    	if (!record.isAccessibleBy((User)getPath().getSessionUser(),getModelClass())){
+    	User u = (User)getPath().getSessionUser();
+    	if (u != null && !record.isAccessibleBy(u,getModelClass())){
     		return;
     	}
     	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){

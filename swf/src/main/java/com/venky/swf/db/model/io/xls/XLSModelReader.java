@@ -191,6 +191,9 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 						continue;
 					}
 					Cell cell1 = row.getCell(headingIndex);
+					if (cell1 == null){
+						continue;
+					}
 					if (cell1.getCellType() != Cell.CELL_TYPE_BLANK) {
 						referenceFieldsPassed = true;
 					}

@@ -91,6 +91,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/swf/js/autocomplete.js"));
         head.addControl(new Script("/resources/scripts/swf/js/datepicker.js"));
         head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
+        Registry.instance().callExtensions(getPath().controllerPathElement()+"/"+getPath().action(), head);
     }
     
     protected abstract void createBody(_IControl b);

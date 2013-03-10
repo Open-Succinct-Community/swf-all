@@ -53,9 +53,8 @@ public class MarkDownView extends HtmlView{
 			blank.setText("New Page");
 			row.createColumn().addControl(blank);
 		}
-		
-		searchForm.addControl(0, tableLinks);
-		return searchForm;
+		row.createColumn().addControl(searchForm);
+		return tableLinks;
     }
     
 	

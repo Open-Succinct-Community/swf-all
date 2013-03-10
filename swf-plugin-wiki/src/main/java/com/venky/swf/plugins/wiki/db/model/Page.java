@@ -10,14 +10,13 @@ import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
-import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 
 @HAS_DESCRIPTION_FIELD("TITLE")
-@MENU("Help")
 public interface Page extends Model{
 	@PARTICIPANT
+	@Index
 	public Integer getCompanyId();
 	public void setCompanyId(Integer companyId);
 	public Company getCompany();

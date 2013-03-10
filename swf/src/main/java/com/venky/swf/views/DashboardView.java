@@ -43,7 +43,7 @@ public class DashboardView extends HtmlView{
     public void createBody(_IControl b, boolean includeMenu) {
     	if (includeMenu){
             _IMenu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
-            if (menu != null){
+            if (menu != null && !menu.getContainedControls().isEmpty()){
                 Div nav = new Div();
                 nav.setProperty("class", "nav");
                 nav.addControl(menu);

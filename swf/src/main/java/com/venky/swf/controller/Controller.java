@@ -31,7 +31,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import com.venky.core.date.DateUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.annotations.Unrestricted;
+import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -88,7 +88,7 @@ public class Controller {
 		Logger.getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.OFF);
 		return back();
     }
-    @Unrestricted
+    @RequireLogin(false)
     public View login(){
         if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null ) {
             return createLoginView();
@@ -140,12 +140,13 @@ public class Controller {
     	return (U)getPath().getSessionUser();
     }
     
-    @Unrestricted
+    @RequireLogin(false)
     public View logout(){
         invalidateSession();
         return new RedirectorView(getPath(), "login");
     }
 
+    @RequireLogin(false)
     public View index(){
         return new RedirectorView(getPath(), "dashboard");
     }
@@ -161,7 +162,7 @@ public class Controller {
         return dashboard;
     }
 
-    @Unrestricted
+    @RequireLogin(false)
     public View resources(String name) throws IOException{
     	Path p = getPath();
     	if (name.startsWith("/config/")){
@@ -310,7 +311,7 @@ public class Controller {
         
     }
 
-    @Unrestricted
+    @RequireLogin(false)
     public RedirectorView back(){
     	RedirectorView v = new RedirectorView(getPath());
     	v.setRedirectUrl(getPath().getBackTarget());

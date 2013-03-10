@@ -1,13 +1,18 @@
 package com.venky.swf.plugins.wiki.controller;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.ModelController;
+import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -19,7 +24,6 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelListView;
@@ -34,6 +38,8 @@ public class PagesController extends ModelController<Page>{
 		exp.add(new Expression("LANDING_PAGE",Operator.EQ,true)) ;
 		if (companyId != null){
 			exp.add(new Expression("COMPANY_ID",Operator.EQ,companyId));
+		}else {
+			exp.add(new Expression("COMPANY_ID",Operator.EQ));
 		}
 		exp.add(getPath().getWhereClause());
 		
@@ -41,32 +47,50 @@ public class PagesController extends ModelController<Page>{
 		
 		return pages;
 	}
-
+	@RequireLogin(false)
+	public View search(){
+		return super.search();
+	}
+	@RequireLogin(false)
+	public View search(String q){
+		return super.search(q);
+	}
+	protected View search(String q, int maxRecords){
+		User u = getSessionUser();
+		if (u == null){
+			if (!ObjectUtil.isVoid(q)){
+				q = "(COMPANY_ID:NULL AND (" + q  + "))";
+			}else{ 
+				q = "(COMPANY_ID:NULL)";
+			}
+		}
+		return super.search(q, maxRecords);
+	}
+	@RequireLogin(false)
 	public View index(){ 
 		User u = getSessionUser();
-		List<Page> pages = getLandingPages(u.getCompanyId()); 
+		
+		List<Page> pages = new ArrayList<Page>();
+		if (u != null){
+			pages = getLandingPages(u.getCompanyId());
+		}
 		if (pages.isEmpty()){
 			pages = getLandingPages(null);
-		}
-		
-		if (pages.size() == 1){
-			return view(pages.get(0));
-		}else if (pages.isEmpty()){
-			Page page = newPage();
-			page.setLandingPage(true);
-			return blank(page);
 		}
 		return super.list(pages);
 	}
 	
+	@RequireLogin(false)
 	public View show(String title){
 		return view(title);
 	}
 
+	@RequireLogin(false)
     public View show(int id){
 		return view(id);
 	}
 	
+	@RequireLogin(false)
 	public View view(String title){
 		try {
 			int id = Integer.valueOf(title);
@@ -74,48 +98,62 @@ public class PagesController extends ModelController<Page>{
 		}catch(NumberFormatException ex){
 			List<Page> pages = findAllByTitle(title);
 			if (pages.isEmpty()){
-				//Handle empty to create empty page with right title.
-				Page page = newPage();
-				page.setTitle(title);
-				page.setTag(title);
-				return blank(page);
+				if (!getPath().isUserLoggedOn()) {
+					try {
+						String url = URLEncoder.encode("/pages/view/"+title,"UTF-8");
+						return new RedirectorView(getPath(),"","login?_redirect_to="+url);
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}else {
+					//Handle empty to create empty page with right title.
+					Page page = newPage();
+					page.setTitle(title);
+					page.setTag(title);
+					return blank(page);
+				}
 			}else {
 				return list(findAllByTitle(title));
 			}
 		}
 	}
-	
+
 	public View blank(){
 		Page page = newPage();
 		return blank(page);
 	}
 	
+	@RequireLogin(false)
 	public View view(int id){
 		Page page = Database.getTable(Page.class).get(id);
 		return view(page);
 	}
 	
 	private View view(Page page){
-		if (page.isAccessibleBy(getSessionUser())){
+		User u = getSessionUser();
+				
+		if (page.getCompanyId() == null || (u != null && page.isAccessibleBy(u))){
 			return dashboard(new MarkDownView(getPath(), page));
 		}else {
 			throw new AccessDeniedException();
 		}
 	}
+	
 	private Page newPage(){
 		Page page = Database.getTable(Page.class).newRecord();
-		/*
-		page.setTitle(title);
-		page.setTag(title);
-		*/
 		User user = getSessionUser();
-		page.setCompanyId(user.getCompanyId());
+		if (user != null){
+			page.setCompanyId(user.getCompanyId());
+		}
 		return page;
 	}
 	
 	private List<Page> findAllByTitle(String title){
 		Expression where = new Expression(Conjunction.AND);
 		where.add(new Expression("TITLE",Operator.EQ,title));
+		if (getSessionUser() == null){
+			where.add(new Expression("COMPANY_ID",Operator.EQ));
+		}
 		where.add(getPath().getWhereClause());
 		Select sel = new Select().from(Page.class).where(where);
 		List<Page> pages =  sel.execute(Page.class,new DefaultModelFilter<Page>());
@@ -146,17 +184,26 @@ public class PagesController extends ModelController<Page>{
 	protected View afterPersistDBView(Page page){
 		return new RedirectorView(getPath(), "view/" + page.getId());
 	}
-    
+	
 	@Override
-    protected HtmlView createListView(List<Page> records){
+    protected View createListView(List<Page> records){
+		User user = getSessionUser();
+		if (user == null){
+			Iterator<Page> i = records.iterator();
+			while (i.hasNext()){
+				Page p = i.next();
+				if (!Database.getJdbcTypeHelper().isVoid(p.getCompanyId())){
+					i.remove();
+				}
+			}
+		}
 		if (records.size() > 1){
 			return new PageListView(getPath(), records);
 		}else if (records.size() == 1){
-			return new MarkDownView(getPath(),records.get(0)); 
+			return redirectTo("view/"+records.get(0).getId()); 
 		}else {
-			Page page = newPage();
 			if (getPath().canAccessControllerAction("save")){
-				return createBlankView(page);
+				return redirectTo("blank");
 			}else {
 				return new PageListView(getPath(), records);
 			}

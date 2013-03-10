@@ -21,7 +21,7 @@ import org.openid4java.message.ax.FetchResponse;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.annotations.Unrestricted;
+import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.model.User;
@@ -220,7 +220,7 @@ public class OidController extends Controller{
 	
 	
 	@SuppressWarnings("rawtypes")
-	@Unrestricted
+	@RequireLogin(false)
 	public View verify(){
 		HttpServletRequest request = getPath().getRequest();
 		ParameterList openidResp = new ParameterList(request.getParameterMap());

@@ -1156,6 +1156,22 @@ public class ModelReflector<M extends Model> {
         }
         return orderBy;
     }
+    
+    private Cache<String,String> participatingRole = new Cache<String, String>() {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 163426440760440104L;
+
+		@Override
+		protected String getValue(String referencedModelIdFieldName) {
+			return referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3) ; //Remove "_ID" from the end.
+		}
+	};
+	public String getParticipatingRole(String referencedModelIdFieldName){
+		return participatingRole.get(referencedModelIdFieldName);
+	}
 
 	public static void dispose() {
 		ModelReflector.modelReflectorByModelClass.clear();

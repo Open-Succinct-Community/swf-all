@@ -1,7 +1,7 @@
 package com.venky.swf.plugins.security.extensions;
 
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,7 +18,6 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
-import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -40,12 +39,26 @@ public class ParticipantControllerAccessExtension implements Extension{
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void invoke(Object... context) {
 		User user = (User)context[0];
-		if (user.isAdmin()){
+		if (user != null && user.isAdmin()){
 			return;
 		}
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
+		Path tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName+"/"+parameterValue);
+		boolean securedAction = false;
+		for (Method m : tmpPath.getActionMethods(actionPathElementName, parameterValue)){
+			securedAction = tmpPath.isSecuredAction(m);
+			if (securedAction){
+				break;
+			}
+		}
+		if (!securedAction){
+			return;
+		}else if (user == null){
+			throw new AccessDeniedException();
+		}
+		
 		Class<? extends Model> modelClass  = null;
 		List<String> participantingRoles = new ArrayList<String>();
 		Model selectedModel = null;
@@ -61,28 +74,11 @@ public class ParticipantControllerAccessExtension implements Extension{
 					int id = Integer.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
 					if (selectedModel != null){
-						ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
-						for (String participantRoleGroup : pGroupOptions.keySet()){
-							Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
-							for (String referencedModelIdFieldName :pOptions.keySet()){
-								Integer referenceValue = (Integer)reflector.getFieldGetter(referencedModelIdFieldName).invoke(selectedModel);
-								String participatingRole = referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3) ; //Remove "_ID" from the end.
-								if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-									participantingRoles.add(participatingRole);
-								}
-							}
-							if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
-								throw new AccessDeniedException(); // User is not a participant on the model.
-							}
-						}
+						participantingRoles.addAll(selectedModel.getParticipatingRoles(user, pGroupOptions));
 					}
 				}catch (NumberFormatException ex){
 					//
-				}catch (InvocationTargetException ex) {
-					throw new RuntimeException(ex.getCause());
-				}catch (IllegalAccessException ex) {
-					throw new RuntimeException(ex);
-				} catch (IllegalArgumentException ex) {
+				}catch (IllegalArgumentException ex) {
 					throw new RuntimeException(ex);
 				}
 			}else {

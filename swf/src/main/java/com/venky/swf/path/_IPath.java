@@ -23,6 +23,7 @@ public interface _IPath {
     String getTarget();
 	String getBackTarget();
 	String controllerPath();
+	String controllerPathElement();
 	String action();
 	Map<String, Object> getFormFields();
 	boolean canAccessControllerAction();

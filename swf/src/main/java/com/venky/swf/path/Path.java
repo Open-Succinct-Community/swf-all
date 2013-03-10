@@ -43,7 +43,7 @@ import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Depends;
-import com.venky.swf.controller.annotations.Unrestricted;
+import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
@@ -264,6 +264,9 @@ public class Path implements _IPath{
         		}
         	}
     	}
+        if (pathElementSize == 0){
+        	pathelements.add("index");
+        }
         loadControllerClassName(isResource);
     }
     
@@ -445,14 +448,14 @@ public class Path implements _IPath{
     }
     
     public boolean isSecuredAction(Method m){
-    	boolean restricted = true; 
-    	Unrestricted ur = getControllerReflector().getAnnotation(m,Unrestricted.class);
+    	boolean requireLogin = true; 
+    	RequireLogin ur = getControllerReflector().getAnnotation(m,RequireLogin.class);
     	
-    	if (ur != null && ur.value()){
-			restricted = false;
+    	if (ur != null){
+    		requireLogin = ur.value();
     	}
 
-    	return restricted;
+    	return requireLogin;
     }
     
     private void createUserSession(User user,boolean autoInvalidate){
@@ -536,7 +539,16 @@ public class Path implements _IPath{
             	boolean securedAction = isSecuredAction(m) ;
             	if (securedAction){
             		if (!isRequestAuthenticated()){
-        				return new RedirectorView(this,"","login");
+            			String guestUserName = Config.instance().getProperty("swf.guest.user");
+            			if (!ObjectUtil.isVoid(guestUserName)){
+                			List<User> guests = new Select().from(User.class).where(new Expression("NAME",Operator.EQ,guestUserName)).execute(User.class);
+                			if (guests.size() == 1){
+                				createUserSession(guests.get(0), true);
+                			}            				
+            			}
+            			if(!isRequestAuthenticated()) {
+            				return new RedirectorView(this,"","login");
+            			}
             		}
             		ensureControllerActionAccess();
             	}
@@ -585,7 +597,17 @@ public class Path implements _IPath{
     public List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
     	List<Method> methods = getControllerReflector().getMethods(new MethodMatcher() {
 			public boolean matches(Method method) {
-				return method.getName().equals(actionPathElement) && View.class.isAssignableFrom(method.getReturnType()) && method.getParameterTypes().length <= 1;
+				boolean matches = false;
+				Class<?>[] parameterTypes = method.getParameterTypes();
+				
+				if (parameterTypes.length <= 1){
+					matches = method.getName().equals(actionPathElement) && View.class.isAssignableFrom(method.getReturnType());
+					if (matches && parameterTypes.length == 1){
+						matches = (parameterTypes[0] == String.class || parameterTypes[0] == int.class);
+					}
+				}
+				
+				return matches;
 			}
 		});
     	final int targetParameterLength = ObjectUtil.isVoid(parameterPathElement)? 0 : 1;
@@ -787,24 +809,25 @@ public class Path implements _IPath{
     			where.add(referredModelWhere);
     		}
     	}
+		User user = getSessionUser();
 		
-		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass());
-		if (pOptions.size() >  0){
-			Set<String> fields = new HashSet<String>();
-			for (String g: pOptions.keySet()){
-				fields.addAll(pOptions.get(g).keySet());
-			}
-			boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(fields, reflector);
-			
-			if (canFilterInSQL){
-				Expression dsw = getSessionUser().getDataSecurityWhereClause(reflector,pOptions);
-				if (dsw.getParameterizedSQL().length()> 0){
-					where.add(dsw); 
+		if (user != null){
+			Cache<String,Map<String,List<Integer>>> pOptions = user.getParticipationOptions(reflector.getModelClass());
+			if (pOptions.size() >  0){
+				Set<String> fields = new HashSet<String>();
+				for (String g: pOptions.keySet()){
+					fields.addAll(pOptions.get(g).keySet());
+				}
+				boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(fields, reflector);
+				
+				if (canFilterInSQL){
+					Expression dsw = user.getDataSecurityWhereClause(reflector,pOptions);
+					if (dsw.getParameterizedSQL().length()> 0){
+						where.add(dsw); 
+					}
 				}
 			}
 		}
-		
-		
     	return where;
 
     }

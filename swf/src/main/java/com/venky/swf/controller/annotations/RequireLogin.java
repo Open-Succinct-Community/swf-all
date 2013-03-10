@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 
-public @interface Unrestricted {
+public @interface RequireLogin {
 	public boolean value() default true;
 }

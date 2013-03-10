@@ -24,8 +24,11 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     
     public Menu createAppMenu(_IPath path) {
         Menu appmenu  = new Menu();
-        User user = (User)path.getSession().getAttribute("user");
-        createUserMenu(appmenu,user);
+        
+        User user = (User)path.getSessionUser();
+        if (user != null){
+        	createUserMenu(appmenu,user);
+        }
         createApplicationMenu(appmenu,user);
         return appmenu;
     }

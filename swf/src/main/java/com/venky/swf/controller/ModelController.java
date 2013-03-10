@@ -29,6 +29,7 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.controller.annotations.Depends;
+import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -110,6 +111,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     @Override
+    @RequireLogin(true)
     public View index() {
     	if (indexedModel){
     		return search();
@@ -139,7 +141,7 @@ public class ModelController<M extends Model> extends Controller {
     	return search(strQuery,MAX_LIST_RECORDS);
     }
     
-    private View search(String strQuery,int maxRecords) {
+    protected View search(String strQuery,int maxRecords) {
 		if (!ObjectUtil.isVoid(strQuery)){
 			if (!getFormFields().containsKey("q")){
 				getFormFields().put("q", strQuery);
@@ -181,12 +183,17 @@ public class ModelController<M extends Model> extends Controller {
     	if (integrationAdaptor != null){
     		v = integrationAdaptor.createResponse(getPath(),records);
     	}else {
-    		v = dashboard(createListView(records)); 
+    		View lv = createListView(records);
+    		if (lv instanceof HtmlView){
+        		v = dashboard((HtmlView)lv); 
+    		}else {
+    			v = lv;
+    		}
     	}
     	return v;
     }
     
-    protected HtmlView createListView(List<M> records){
+    protected View createListView(List<M> records){
     	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
     }
     

@@ -725,7 +725,7 @@ text/html					html htm shtml
 text/iuls					uls
 text/mathml					mml
 text/parityfec
-text/plain					asc txt text pot brf
+text/plain					asc txt text pot brf properties
 text/prs.lines.tag
 text/rfc822-headers
 text/richtext					rtx

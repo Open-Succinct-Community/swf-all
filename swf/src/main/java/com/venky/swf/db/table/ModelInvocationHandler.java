@@ -46,6 +46,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
@@ -239,34 +240,42 @@ public class ModelInvocationHandler implements InvocationHandler {
     public boolean isAccessibleBy(User user){
 		return isAccessibleBy(user, getReflector().getModelClass());
     }
+    public List<String> getParticipatingRoles(User user){
+    	return getParticipatingRoles(user,getReflector().getModelClass());
+    }
+    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel){
+    	if (!getReflector().reflects(asModel)){
+    		throw new AccessDeniedException(); 
+    	}
+    	return getParticipatingRoles(user, user.getParticipationOptions(asModel));
+    }
+    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
+    	ModelReflector<? extends Model> reflector = getReflector();
+    	List<String> participantingRoles = new ArrayList<String>();
+		for (String participantRoleGroup : pGroupOptions.keySet()){
+			Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
+			for (String referencedModelIdFieldName :pOptions.keySet()){
+				Integer referenceValue = reflector.get(getProxy(),referencedModelIdFieldName);
+				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
+				}
+			}
+			if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+				throw new AccessDeniedException(); // User is not a participant on the model.
+			}
+		}
+		return participantingRoles;
+    }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
     	Timer timer = Timer.startTimer();
     	try {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;
 	    	}
-	    	Cache<String,Map<String,List<Integer>>> participantRoleGroupfieldNameValues = user.getParticipationOptions(asModel);
-	    	boolean ret = true;
-	    	for (String participantRoleGroup: participantRoleGroupfieldNameValues.keySet()){
-	    		Map<String,List<Integer>> fieldNameValues = participantRoleGroupfieldNameValues.get(participantRoleGroup);
-	    		if (fieldNameValues.isEmpty()){
-	    			continue;
-	    		}
-	    		ret = false;
-	    		for (String fieldName:fieldNameValues.keySet()){
-		    		List<Integer> values = fieldNameValues.get(fieldName);
-		    		Object value = reflector.get(getProxy(), fieldName);
-		    		if (values.contains(value)) {
-		    			ret = true ; 
-		    			break; 
-		    		}
-		    	}
-
-		    	if (!ret){
-		    		break;
-		    	}
-	    	}
-	    	return ret;
+	    	List<String> pRoles = getParticipatingRoles(user,asModel);
+	    	return (pRoles != null);// It is always true. returning false depends on AccessDeniedException being thrown.
+    	}catch(AccessDeniedException ex){
+    		return false;
     	}finally{
     		timer.stop();
     	}

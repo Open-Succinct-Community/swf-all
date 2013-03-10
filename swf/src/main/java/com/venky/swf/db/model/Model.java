@@ -5,7 +5,10 @@
 package com.venky.swf.db.model;
 
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.Map;
 
+import com.venky.cache.Cache;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
@@ -76,6 +79,11 @@ public interface Model extends _Identifiable {
     public void init();
     public boolean isAccessibleBy(User user);
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
+    
+    public List<String> getParticipatingRoles(User user);
+    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel);
+    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions);
+    
     public Record getRawRecord();
     public <M extends Model> M cloneProxy();
 

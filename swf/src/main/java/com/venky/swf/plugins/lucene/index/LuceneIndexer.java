@@ -121,9 +121,11 @@ public class LuceneIndexer {
 						if (ref.isNumeric() && referredModelClass != null){
 							ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 							Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
-							doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
-									StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())), 
-									Field.Store.YES,Field.Index.ANALYZED));
+							if (referred != null){ 
+								doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
+										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())), 
+										Field.Store.YES,Field.Index.ANALYZED));
+							}
 						}
 						doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
 					}

@@ -1,7 +1,10 @@
 package com.venky.swf;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -51,6 +54,13 @@ public class JettyServer {
 		}
 		if (ObjectUtil.isVoid(port)){
 			port = "8080";
+		}
+		String pidfile = System.getProperty("swf.pidfile");
+		if (!ObjectUtil.isVoid(pidfile)){
+			PrintWriter pw = new PrintWriter(new FileWriter(pidfile, true));
+			String name = ManagementFactory.getRuntimeMXBean().getName();
+			pw.write(name);
+			pw.close();
 		}
 		
 		JettyServer s = new JettyServer(Integer.valueOf(port));
