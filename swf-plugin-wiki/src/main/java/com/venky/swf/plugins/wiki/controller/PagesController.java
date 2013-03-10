@@ -2,17 +2,14 @@ package com.venky.swf.plugins.wiki.controller;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.ModelController;
-import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -33,64 +30,26 @@ public class PagesController extends ModelController<Page>{
 		super(path);
 	}
 	
-	private List<Page> getLandingPages(Integer companyId){
-		Expression exp = new Expression (Conjunction.AND); 
-		exp.add(new Expression("LANDING_PAGE",Operator.EQ,true)) ;
-		if (companyId != null){
-			exp.add(new Expression("COMPANY_ID",Operator.EQ,companyId));
-		}else {
-			exp.add(new Expression("COMPANY_ID",Operator.EQ));
-		}
+	private List<Page> getLandingPages(){
+		Expression exp = new Expression(Conjunction.AND);
+		exp.add(new Expression("LANDING_PAGE",Operator.EQ,true));
 		exp.add(getPath().getWhereClause());
-		
 		List<Page> pages = new Select().from(Page.class).where(exp).orderBy(getReflector().getOrderBy()).execute(Page.class, MAX_LIST_RECORDS, new DefaultModelFilter<Page>());
-		
 		return pages;
 	}
-	@RequireLogin(false)
-	public View search(){
-		return super.search();
-	}
-	@RequireLogin(false)
-	public View search(String q){
-		return super.search(q);
-	}
-	protected View search(String q, int maxRecords){
-		User u = getSessionUser();
-		if (u == null){
-			if (!ObjectUtil.isVoid(q)){
-				q = "(COMPANY_ID:NULL AND (" + q  + "))";
-			}else{ 
-				q = "(COMPANY_ID:NULL)";
-			}
-		}
-		return super.search(q, maxRecords);
-	}
-	@RequireLogin(false)
+
 	public View index(){ 
-		User u = getSessionUser();
-		
-		List<Page> pages = new ArrayList<Page>();
-		if (u != null){
-			pages = getLandingPages(u.getCompanyId());
-		}
-		if (pages.isEmpty()){
-			pages = getLandingPages(null);
-		}
-		return super.list(pages);
+		return super.list(getLandingPages());
 	}
 	
-	@RequireLogin(false)
 	public View show(String title){
 		return view(title);
 	}
 
-	@RequireLogin(false)
     public View show(int id){
 		return view(id);
 	}
 	
-	@RequireLogin(false)
 	public View view(String title){
 		try {
 			int id = Integer.valueOf(title);
@@ -98,7 +57,7 @@ public class PagesController extends ModelController<Page>{
 		}catch(NumberFormatException ex){
 			List<Page> pages = findAllByTitle(title);
 			if (pages.isEmpty()){
-				if (!getPath().isUserLoggedOn()) {
+				if (!getPath().isUserLoggedOn() || getPath().isGuestUserLoggedOn()) {
 					try {
 						String url = URLEncoder.encode("/pages/view/"+title,"UTF-8");
 						return new RedirectorView(getPath(),"","login?_redirect_to="+url);
@@ -123,16 +82,13 @@ public class PagesController extends ModelController<Page>{
 		return blank(page);
 	}
 	
-	@RequireLogin(false)
 	public View view(int id){
 		Page page = Database.getTable(Page.class).get(id);
 		return view(page);
 	}
 	
 	private View view(Page page){
-		User u = getSessionUser();
-				
-		if (page.getCompanyId() == null || (u != null && page.isAccessibleBy(u))){
+		if (page.isAccessibleBy(getSessionUser())){
 			return dashboard(new MarkDownView(getPath(), page));
 		}else {
 			throw new AccessDeniedException();
@@ -142,18 +98,13 @@ public class PagesController extends ModelController<Page>{
 	private Page newPage(){
 		Page page = Database.getTable(Page.class).newRecord();
 		User user = getSessionUser();
-		if (user != null){
-			page.setCompanyId(user.getCompanyId());
-		}
+		page.setCompanyId(user.getCompanyId());
 		return page;
 	}
 	
 	private List<Page> findAllByTitle(String title){
 		Expression where = new Expression(Conjunction.AND);
 		where.add(new Expression("TITLE",Operator.EQ,title));
-		if (getSessionUser() == null){
-			where.add(new Expression("COMPANY_ID",Operator.EQ));
-		}
 		where.add(getPath().getWhereClause());
 		Select sel = new Select().from(Page.class).where(where);
 		List<Page> pages =  sel.execute(Page.class,new DefaultModelFilter<Page>());
@@ -187,16 +138,6 @@ public class PagesController extends ModelController<Page>{
 	
 	@Override
     protected View createListView(List<Page> records){
-		User user = getSessionUser();
-		if (user == null){
-			Iterator<Page> i = records.iterator();
-			while (i.hasNext()){
-				Page p = i.next();
-				if (!Database.getJdbcTypeHelper().isVoid(p.getCompanyId())){
-					i.remove();
-				}
-			}
-		}
 		if (records.size() > 1){
 			return new PageListView(getPath(), records);
 		}else if (records.size() == 1){

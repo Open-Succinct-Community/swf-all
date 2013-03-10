@@ -529,6 +529,24 @@ public class Path implements _IPath{
         return null;
     }
     
+    public User getGuestUser(){
+		String guestUserName = Config.instance().getProperty("swf.guest.user");
+		if (!ObjectUtil.isVoid(guestUserName)){
+			List<User> guests = new Select().from(User.class).where(new Expression("NAME",Operator.EQ,guestUserName)).execute(User.class);
+			if (guests.size() == 1){
+				return guests.get(0);
+			}            				
+		}
+    	return null;
+    }
+    public boolean isGuestUserLoggedOn(){
+    	String guestUserName = Config.instance().getProperty("swf.guest.user");
+    	User u = getSessionUser(); 
+    	if (u != null && ObjectUtil.equals(u.getName(),guestUserName)){
+    		return true;
+    	}
+    	return false;
+    }
 
     public _IView invoke() throws AccessDeniedException{
     	MultiException ex = null;
@@ -539,14 +557,12 @@ public class Path implements _IPath{
             	boolean securedAction = isSecuredAction(m) ;
             	if (securedAction){
             		if (!isRequestAuthenticated()){
-            			String guestUserName = Config.instance().getProperty("swf.guest.user");
-            			if (!ObjectUtil.isVoid(guestUserName)){
-                			List<User> guests = new Select().from(User.class).where(new Expression("NAME",Operator.EQ,guestUserName)).execute(User.class);
-                			if (guests.size() == 1){
-                				createUserSession(guests.get(0), true);
-                			}            				
+            			User guest = getGuestUser();
+            			if (guest != null){
+            				createUserSession(guest, true);
             			}
-            			if(!isRequestAuthenticated()) {
+            			
+        				if(!isRequestAuthenticated()) {
             				return new RedirectorView(this,"","login");
             			}
             		}

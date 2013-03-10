@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
@@ -574,5 +575,9 @@ public abstract class JdbcTypeHelper {
   	
   	public boolean isVoid (Object o){
   		return o == null || ObjectUtil.equals(getTypeRef(o.getClass()).getTypeConverter().valueOf(null),o);
+  	}
+  	
+  	public void resetIdGeneration(){
+  		Logger.getLogger(getClass().getName()).warning("resetIdGeneration not implemented in " + getClass().getName() );
   	}
 }

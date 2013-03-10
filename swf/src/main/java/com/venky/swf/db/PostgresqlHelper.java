@@ -11,6 +11,12 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.List;
+
+import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.table.Table;
+import com.venky.swf.sql.Select;
 
 /**
  *
@@ -139,5 +145,17 @@ public class PostgresqlHelper extends JdbcTypeHelper{
                             "BYTEA", 0, 0, true, true,  new InputStreamConverter())); 
     
     }
-
+    public void resetIdGeneration(){
+    	for (Table<? extends Model> table : Database.getTables().values()){
+    		if (table.isReal() && table.isExistingInDatabase()){
+    			updateSequence(table); 
+    		}
+    	}
+    }
+    private <M extends Model> void updateSequence(Table<M> table){
+    	List<Counts> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Counts.class);
+    	Counts count = counts.get(0);
+    	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1) +") AS COUNT").from();
+    	updateSequence.execute(Counts.class);
+    }
 }

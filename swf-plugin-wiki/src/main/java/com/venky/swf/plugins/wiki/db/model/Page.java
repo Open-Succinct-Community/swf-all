@@ -3,6 +3,7 @@ package com.venky.swf.plugins.wiki.db.model;
 import java.io.Reader;
 
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -17,6 +18,7 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 public interface Page extends Model{
 	@PARTICIPANT
 	@Index
+	@IS_NULLABLE(false)
 	public Integer getCompanyId();
 	public void setCompanyId(Integer companyId);
 	public Company getCompany();
