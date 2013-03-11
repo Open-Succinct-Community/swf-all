@@ -1,49 +1,12 @@
-swf-all
-=======
+Succinct Web Framework
+======================
+Docs: [Home](http://www.succinct.in)
 
-Complete SWF including various modules.
-
-Requirements:
--------------
-git, mvn, mysql/derby  
 
 Creating webapp using SWF
 -------------------------
 
-mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=[latest](http://repo1.maven.org/maven2/com/github/venkatramanm/swf-all/swf-all/maven-metadata.xml) \
--DgroupId=[your application group id] -DartifactId=[your artifact id] -Dversion=1.0-SNAPSHOT
-
-* You may want to skip subsequent sections and go directly to "Bringing up your application". 
-
-Building SWF From sources
--------------------------
-
-git clone git://github.com/venkatramanm/swf-all.git 
-
-cd swf-all
-
-git submodule init
-
-git submodule update
-
-mvn install 
-
-Keeping SWF Sources updated
----------------------------
-cd swf-all
-
-git pull
-
-git submodule update
-
-mvn install 
-
-Using SWF Built locally
------------------------
-
-mvn archetype:generate -DarchetypeCatalog=local 
-
-In interactive mode Choose number corresponding to swf-archetype and answer the questions asked.  
+mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=[latest](http://repo1.maven.org/maven2/com/github/venkatramanm/swf-all/swf-all/maven-metadata.xml) -DgroupId=<your application group id> -DartifactId=<your artifact id> -Dversion=1.0-SNAPSHOT
 
 
 Bringing up your application
@@ -51,15 +14,15 @@ Bringing up your application
 
 Find your project in a subdirectory by the name of your artifactId.
 
-cd "your artifact id"
+cd <your artifact id>
 
-Modify src/main/resources/config/swf.properties and set appropriate jdbc connection parameters. 
+Modify src/main/resources/config/swf.properties and set appropriate jdbc connection parameters. The Default properties would connect to an embedded derby instance that would be automatically created on application deployment.
 
 mvn compile exec:java -Dexec.mainClass="com.venky.swf.JettyServer"
 
-Your webapp is up on port localhost:8080. You can add or remove model interfaces and see how it effects the Application.  
+Your webapp is up on port localhost:8080. You can add or remove model interfaces and see how it effects the Application. 
 
-Note: The default user created is root with password root. You can change the password of this user from your app. 
+Note: The default user created is root with password root. You can change the password of this user after you login to the application the first time.
 
 
 Reverse Engineering
