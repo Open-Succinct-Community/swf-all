@@ -6,7 +6,7 @@ Docs: [Home](http://www.succinct.in)
 Creating webapp using SWF
 -------------------------
 
-mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=[latest](http://repo1.maven.org/maven2/com/github/venkatramanm/swf-all/swf-all/maven-metadata.xml) -DgroupId=<your application group id> -DartifactId=<your artifact id> -Dversion=1.0-SNAPSHOT
+mvn archetype:generate -DarchetypeGroupId=com.github.venkatramanm.swf-all  -DarchetypeArtifactId=swf-archetype -DarchetypeVersion=[latest](http://repo1.maven.org/maven2/com/github/venkatramanm/swf-all/swf-all/maven-metadata.xml) -DgroupId=_your_application_group_id_ -DartifactId=_your_artifact_id_ -Dversion=1.0-SNAPSHOT
 
 
 Bringing up your application
@@ -14,7 +14,7 @@ Bringing up your application
 
 Find your project in a subdirectory by the name of your artifactId.
 
-cd <your artifact id>
+cd _your_artifact_id_
 
 Modify src/main/resources/config/swf.properties and set appropriate jdbc connection parameters. The Default properties would connect to an embedded derby instance that would be automatically created on application deployment.
 
