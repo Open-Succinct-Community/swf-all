@@ -159,6 +159,9 @@ public class ModelReflector<M extends Model> {
     	Timer timer = Timer.startTimer();
         try {
             Method getter = getFieldGetter(fieldName);
+            if (getter == null){
+            	throw new NullPointerException("No Field Getter found for fieldName:" +fieldName + " In " + getModelClass().getName()); 
+            }
     		return (T)getter.invoke(record);
         } catch (Exception e1) {
             throw new RuntimeException(e1);

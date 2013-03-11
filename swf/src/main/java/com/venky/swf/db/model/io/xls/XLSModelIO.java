@@ -3,6 +3,7 @@ package com.venky.swf.db.model.io.xls;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import org.apache.poi.ss.usermodel.Row;
 
@@ -51,13 +52,17 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 			if (fieldPartTokenizer.hasMoreTokens()){
 				String referenceFieldName = StringUtil.underscorize(nextToken + "Id");
 				Integer value = ref.get(current, referenceFieldName);
-				if (value == null){
+				if (Database.getJdbcTypeHelper().isVoid(value)){
 					break;
 				}
 				Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(ref.getFieldGetter(referenceFieldName)));
 				
 				Table<?> table = Database.getTable(referredModelClass);
 				current = table.get(value);
+				if (current == null){
+					Logger.getLogger(getReflector().getModelClass().getName()).warning( table.getRealTableName() + " doesnot have id " + value + " being Referenced from " + getReflector().getTableName());
+					break;
+				}
 				ref = table.getReflector();
 			}else {
 				return ref.get(current, StringUtil.underscorize(nextToken));
