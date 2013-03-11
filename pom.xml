@@ -7,7 +7,7 @@
   <packaging>pom</packaging>
   <name>swf-all</name>
   <description>All components of succinct web framework</description>
-  <url>http://maven.apache.org</url>
+  <url>http://www.succinct.in</url>
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
