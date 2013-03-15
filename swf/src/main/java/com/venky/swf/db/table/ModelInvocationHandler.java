@@ -6,6 +6,7 @@ package com.venky.swf.db.table;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
@@ -21,6 +22,7 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -147,7 +149,9 @@ public class ModelInvocationHandler implements InvocationHandler {
 					Timer timer = Timer.startTimer(inModelImplClass.toString());
 	        		try {
 	        			return inModelImplClass.invoke(impl, args);
-	        		}finally{
+	        		}catch(InvocationTargetException ex){
+	            		throw ExceptionUtil.getRootCause(ex);
+	            	}finally{
 	        			timer.stop();
 	        		}
 	        	}

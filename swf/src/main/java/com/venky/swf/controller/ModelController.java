@@ -467,7 +467,7 @@ public class ModelController<M extends Model> extends Controller {
 	        		String message = th.getMessage();
 	        		if (message == null){
 	        			message = th.toString();
-	            		th.printStackTrace();
+	            		Database.getInstance().getCurrentTransaction().rollback(th);
 	        		}
 	
 	    	    	record.setTxnPropery("ui.error.msg", message);

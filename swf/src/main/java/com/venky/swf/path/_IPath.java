@@ -33,6 +33,7 @@ public interface _IPath {
 	Object getSessionUser();
 	Integer getSessionUserId();
 	
+	boolean isGuestUserLoggedOn();
 	void invalidateSession();
 	void autoInvalidateSession();
 }

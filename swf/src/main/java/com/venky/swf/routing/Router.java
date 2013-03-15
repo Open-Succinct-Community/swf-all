@@ -188,11 +188,11 @@ public class Router extends AbstractHandler {
 	        p.setRequest(request);
 	        p.setResponse(response);
 	        
+	        
 	        baseRequest.setHandled(true);
 	        _IDatabase db = null ;
 	        try {
 	        	db = getDatabase(); 
-	        	db.open(p.getSessionUser());
 	            view = p.invoke();
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();

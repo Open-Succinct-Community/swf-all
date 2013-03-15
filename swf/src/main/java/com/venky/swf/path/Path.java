@@ -464,6 +464,7 @@ public class Path implements _IPath{
     	session.setAttribute("user.id",user.getId());
     	session.setAttribute("autoInvalidate", autoInvalidate);
     	setSession(session);
+    	Database.getInstance().open(user);
     }
     public boolean isRequestAuthenticated(){
     	if (isUserLoggedOn()){

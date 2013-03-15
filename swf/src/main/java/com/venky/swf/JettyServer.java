@@ -100,6 +100,7 @@ public class JettyServer {
 				root = new File(url.getPath());
 			}
 			if (root != null) {
+				Logger.getLogger(getClass().getName()).info("Resource Base URL: " + url.toString() + " Found");
 				watchedFiles.add(root);
 			}
 		}
