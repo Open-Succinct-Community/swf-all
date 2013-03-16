@@ -34,7 +34,7 @@ public class PagesController extends ModelController<Page>{
 		Expression exp = new Expression(Conjunction.AND);
 		exp.add(new Expression("LANDING_PAGE",Operator.EQ,true));
 		exp.add(getPath().getWhereClause());
-		List<Page> pages = new Select().from(Page.class).where(exp).orderBy(getReflector().getOrderBy()).execute(Page.class, MAX_LIST_RECORDS, new DefaultModelFilter<Page>());
+		List<Page> pages = new Select().from(Page.class).where(exp).orderBy(getReflector().getOrderBy()).execute(Page.class, MAX_LIST_RECORDS, new DefaultModelFilter<Page>(Page.class));
 		return pages;
 	}
 
@@ -107,7 +107,7 @@ public class PagesController extends ModelController<Page>{
 		where.add(new Expression("TITLE",Operator.EQ,title));
 		where.add(getPath().getWhereClause());
 		Select sel = new Select().from(Page.class).where(where);
-		List<Page> pages =  sel.execute(Page.class,new DefaultModelFilter<Page>());
+		List<Page> pages =  sel.execute(Page.class,new DefaultModelFilter<Page>(Page.class));
 		Collections.sort(pages,new Comparator<Page>(){
 			@SuppressWarnings("unchecked")
 			TypeConverter<Integer> converter = (TypeConverter<Integer>)Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();

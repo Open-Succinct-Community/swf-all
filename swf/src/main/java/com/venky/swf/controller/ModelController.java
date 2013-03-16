@@ -154,7 +154,7 @@ public class ModelController<M extends Model> extends Controller {
 				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
 					.add(new Expression("ID",Operator.IN,ids.toArray()))
 					.add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
-				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter<M>());
+				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter<M>(getModelClass()));
 				return list(records);
 			}else {
 				return list(new ArrayList<M>());
@@ -174,7 +174,7 @@ public class ModelController<M extends Model> extends Controller {
 	
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>());
+        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>(getModelClass()));
         return list(records);
     }
     

@@ -175,6 +175,10 @@ public class Router extends AbstractHandler {
 	
 	
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    	if (target.equals("/favicon.ico")){
+    		response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    		return;
+    	}
 		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
 		
     	Timer timer = Timer.startTimer();

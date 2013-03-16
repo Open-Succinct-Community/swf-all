@@ -444,7 +444,16 @@ public class Path implements _IPath{
     public static final String ALLOW_CONTROLLER_ACTION = "allow.controller.action" ; 
     
     public boolean isUserLoggedOn(){
-    	return getSessionUser() != null ; 
+    	User currentUser =  Database.getInstance().getCurrentUser();
+    	if (currentUser == null){
+        	User sessionUser = getSessionUser();
+        	if (sessionUser != null){
+        		Database.getInstance().open(sessionUser);
+        	}
+    		currentUser = Database.getInstance().getCurrentUser();
+    	}
+    	
+    	return currentUser != null ; 
     }
     
     public boolean isSecuredAction(Method m){
@@ -464,7 +473,6 @@ public class Path implements _IPath{
     	session.setAttribute("user.id",user.getId());
     	session.setAttribute("autoInvalidate", autoInvalidate);
     	setSession(session);
-    	Database.getInstance().open(user);
     }
     public boolean isRequestAuthenticated(){
     	if (isUserLoggedOn()){

@@ -224,7 +224,7 @@ public class Controller {
         }
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());
-        List<M> records = q.execute(modelClass);
+        List<M> records = q.execute(modelClass,new DefaultModelFilter<M>(modelClass));
         Method fieldGetter = reflector.getFieldGetter(fieldName);
         TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
         
@@ -466,12 +466,16 @@ public class Controller {
     
     protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {
     	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
-		public DefaultModelFilter() {
+    	Class<M> modelClass = null;
+		public DefaultModelFilter(Class<M> modelClass) {
 			super();
+			this.modelClass = modelClass;
 		}
 		@Override
 		public boolean pass(M record) {
-			return defaultFilter.pass(record) && getPath().canAccessControllerAction("index", StringUtil.valueOf(record.getId()));
+			return defaultFilter.pass(record) && Path.canAccessControllerAction(getSessionUser(),
+					Database.getTable(modelClass).getTableName().toLowerCase(),
+					"index", StringUtil.valueOf(record.getId()));
 		}
     }
     
@@ -489,7 +493,7 @@ public class Controller {
 				}
 			}
 		}
-		List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>());
+		List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>(modelClass));
 		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded);
 	}
     protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){
