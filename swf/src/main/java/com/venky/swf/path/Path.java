@@ -835,6 +835,7 @@ public class Path implements _IPath{
 				for (String g: pOptions.keySet()){
 					fields.addAll(pOptions.get(g).keySet());
 				}
+				fields.removeAll(DataSecurityFilter.getRedundantParticipationFields(fields, reflector));
 				boolean canFilterInSQL = !DataSecurityFilter.anyFieldIsVirtual(fields, reflector);
 				
 				if (canFilterInSQL){

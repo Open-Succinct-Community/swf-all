@@ -9,4 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface PARTICIPANT {
 	public String value() default "DEFAULT";
+	public boolean redundant() default false; 
 }

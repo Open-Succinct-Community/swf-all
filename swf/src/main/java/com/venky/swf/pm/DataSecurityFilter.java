@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model._Identifiable;
@@ -24,6 +25,17 @@ public class DataSecurityFilter {
 		}
 		return false;
 	}
+	public static Set<String> getRedundantParticipationFields(Set<String> fieldSet, ModelReflector<? extends Model> ref){
+		SequenceSet<String> redundant = new SequenceSet<String>();
+		for (String field:fieldSet){
+			PARTICIPANT p = ref.getAnnotation(ref.getFieldGetter(field), PARTICIPANT.class);
+			if (p.redundant()){
+				redundant.add(field);
+			}
+		}
+		return redundant;
+	}
+	
 	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by){
 		return getRecordsAccessible(modelClass, by, null);
 	}
@@ -41,6 +53,8 @@ public class DataSecurityFilter {
 		for (String g : pOptions.keySet()){
 			fields.addAll(pOptions.get(g).keySet());
 		}
+		fields.removeAll(getRedundantParticipationFields(fields, ref));
+		
 		if (!anyFieldIsVirtual(fields,ref)){
 			where.add(by.getDataSecurityWhereClause(ref, pOptions));
 		}

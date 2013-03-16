@@ -13,6 +13,7 @@ public interface Facility extends Address, CompanySpecific, Model{
 	public void setName(String name);
 
 	@IS_NULLABLE(false)
+	@UNIQUE_KEY
 	public Integer getCompanyId();
 	
 	public List<FacilityUser> getFacilityUsers();

@@ -188,6 +188,8 @@ public class UserImpl extends ModelImpl<User>{
 						for (String g: referredModelParticipatingGroupOptions.keySet()){
 							fields.addAll(referredModelParticipatingGroupOptions.get(g).keySet());
 						}
+						fields.removeAll(DataSecurityFilter.getRedundantParticipationFields(fields, referredModelReflector));
+						
 						boolean couldFilterUsingDSW = !DataSecurityFilter.anyFieldIsVirtual(fields,referredModelReflector); 
 						
 						Select q = new Select().from(referredModelClass);
