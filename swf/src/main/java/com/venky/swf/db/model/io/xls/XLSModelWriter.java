@@ -32,7 +32,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	private final HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
 	private final HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
 	public XLSModelWriter(Class<M> modelClass){
+		this(modelClass,false);
+	}
+	public XLSModelWriter(Class<M> modelClass,boolean reportMode){
 		super(modelClass);
+		this.reportMode = reportMode;
     	ModelReflector<M> ref = getReflector();
     	
     	Iterator<String> fi = ref.getFields().iterator();
@@ -57,6 +61,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			
     	}
 	}
+	private boolean reportMode = false;
 	
 	private static final int START_ROW = 0; 
 	private static final int START_COLUMN = 0;
@@ -98,16 +103,35 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		}
     	
     	
-    	for (M m: records){
+    	for (int i = 0 ; i < records.size() ; i ++ ){
+    		M m = records.get(i);
     		rowNum.increment();
     		Row r = sheet.createRow(rowNum.intValue());
+    		if (reportMode){
+    			ModelReflector<M> reflector = getReflector();
+        		if (i > 0){
+	    			M prev = records.get(i-1);
+	    			M clone = m.cloneProxy();
+	    			for (int fieldNumber = 0 ; fieldNumber < fields.size() ; fieldNumber ++ ){
+	    				String field = fields.get(fieldNumber);
+	    				Object prevFieldValue = reflector.get(prev,field);
+	    				Object currentFieldValue = reflector.get(m, field);
+	    				if (ObjectUtil.equals(prevFieldValue, currentFieldValue)){
+	    					reflector.set(clone, field, null);
+	    				}else {
+	    					break;
+	    				}
+	    			}
+	    			m = clone;
+	    		}
+    		}
     		write(m,r,fields);
     	}
     	
     	for (int i = 0 ; i < columnNum.intValue() ; i ++ ){
     		sheet.autoSizeColumn(i);
+    		sheet.setColumnWidth(i, Math.max(Math.min(sheet.getColumnWidth(i), 40 * 256),5 * 256));
     	}
-
 	}
 
 	@Override
@@ -123,6 +147,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		
 		CellStyle dateStyle = wb.createCellStyle();
 		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
+		
+		CellStyle stringStyle = wb.createCellStyle();
+		stringStyle.setWrapText(true);
 	
 		Iterator<String> fi = fields.iterator();
 		ModelReflector<M> ref = getReflector();
@@ -132,11 +159,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			Object value = ref.get(m, f);
 			if (referedModelMap.get(f) != null){
 				for (String cf: referredModelFieldsToExport.get(f) ){
-					writeNextColumn(r, columnNum, getValue(m,cf), integerStyle, decimalStyle,dateStyle);
+					writeNextColumn(r, columnNum, getValue(m,cf), integerStyle, decimalStyle,dateStyle,stringStyle);
 					columnNum.increment();
 				}
 			}else {
-				writeNextColumn(r, columnNum, value, integerStyle,decimalStyle, dateStyle);
+				writeNextColumn(r, columnNum, value, integerStyle,decimalStyle, dateStyle,stringStyle);
 				columnNum.increment();
 			}
 		}
@@ -144,7 +171,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	
 
 	
-	private void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle integerStyle, CellStyle decimalStyle,CellStyle dateStyle){
+	protected void writeNextColumn(Row r, Bucket columnNum , Object value, CellStyle integerStyle, CellStyle decimalStyle,CellStyle dateStyle,CellStyle stringStyle){
 		if (!ObjectUtil.isVoid(value)){
 			Class<?> colClass = value.getClass();
 			Cell cell = r.createCell(columnNum.intValue());
@@ -163,6 +190,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
                 cell.setCellValue((Boolean)value);
             }else{
                 cell.setCellValue(Database.getJdbcTypeHelper().getTypeRef(colClass).getTypeConverter().toString(value));
+                cell.setCellStyle(stringStyle);
             }
 		}
 	}
