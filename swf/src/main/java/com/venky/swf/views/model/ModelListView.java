@@ -266,7 +266,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 						String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
                     	sValue = parentDescription;
                     	
-                    	_IPath parentTarget = getPath().createRelativePath("/show/" + String.valueOf(record.getId()) + "/" + tableName + "/show/" +  String.valueOf(parentId));
+                    	_IPath parentTarget = getPath().createRelativePath( (!Database.getJdbcTypeHelper().isVoid(record.getId()) ? 
+                    			"/show/" + String.valueOf(record.getId()) : "" )+ "/" + tableName + "/show/" +  String.valueOf(parentId));
                     	if (parentTarget.canAccessControllerAction()){
                         	control = new Link(parentTarget.getTarget());
                         	control.setText(sValue);

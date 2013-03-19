@@ -45,7 +45,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
-		Path tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName+"/"+parameterValue);
+		Path tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName + (parameterValue == null ? "" : "/"+parameterValue));
 		boolean securedAction = false;
 		for (Method m : tmpPath.getActionMethods(actionPathElementName, parameterValue)){
 			securedAction = tmpPath.isSecuredAction(m);
