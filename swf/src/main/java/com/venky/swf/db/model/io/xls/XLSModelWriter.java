@@ -73,7 +73,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	public void write(List<M> records, Workbook wb, List<String> fields) {
 		CellStyle headerStyle = wb.createCellStyle();
-		headerStyle.setFillForegroundColor(IndexedColors.BRIGHT_GREEN.getIndex());
+		headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
 		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
 
 		
