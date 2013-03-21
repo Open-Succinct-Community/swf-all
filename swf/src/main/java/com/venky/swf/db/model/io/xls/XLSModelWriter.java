@@ -84,6 +84,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
 		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
 		headerStyle.setFont(font);
+		headerStyle.setWrapText(true);
 		
 		String sheetName = StringUtil.pluralize(getBeanClass().getSimpleName());
 		Sheet sheet = wb.createSheet(sheetName);
@@ -192,6 +193,8 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
                 cell = createCell(r.getSheet(),r , columnNum, value , stringStyle);
             }
 			
+		}else {
+			cell = createCell(r.getSheet(), r, columnNum, value, null);
 		}
 		return cell;
 	}
@@ -265,7 +268,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	public Cell createCell(Sheet sheet, Row row, Bucket columnNum , Object  value, CellStyle style){
 		Cell cell = row.createCell(columnNum.intValue());
-		cell.setCellStyle(style);
+		if (style != null){
+			cell.setCellStyle(style);
+		}
 		if (value != null){
 			Class<?> colClass = value.getClass();
 			if (style.getWrapText()){
