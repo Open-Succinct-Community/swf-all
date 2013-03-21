@@ -233,12 +233,17 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	private int getRowHeight(String sValue){
 		int vlen = 0; 
 		int numRows = 1 ;
-		StringTokenizer tok = new StringTokenizer(sValue);
+		StringTokenizer tok = new StringTokenizer(sValue," \n",true);
+		
 		while (tok.hasMoreTokens()){
-			int ctl = tok.nextToken().length() + 1;//Add Token length.
+			String token = tok.nextToken();
+			int ctl = token.length() ;
+			if (token.equals("\n")){
+				vlen = (numRows * MAX_COLUMN_LENGTH);
+			}
 			if ( vlen + ctl > numRows * MAX_COLUMN_LENGTH) {
 				vlen = (numRows * MAX_COLUMN_LENGTH) + ctl;
-				numRows ++ ;
+				numRows += (Math.ceil(ctl * 1.0/MAX_COLUMN_LENGTH)) ;
 			}else {
 				vlen += ctl ;
 			}
@@ -273,7 +278,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		}
 		if (value != null){
 			Class<?> colClass = value.getClass();
-			if (style.getWrapText()){
+			if (style != null && style.getWrapText()){
 				fixCellDimensions(sheet, row, columnNum, value);
 			}
 			if (isNumeric(colClass)){
