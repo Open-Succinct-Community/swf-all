@@ -8,10 +8,12 @@ import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
 
 @ORDER_BY("UPDATED_AT DESC")
+@EXPORTABLE(false)
 public interface Note extends Model{
 	@PROTECTION(Kind.NON_EDITABLE)
 	@IS_NULLABLE(false)
