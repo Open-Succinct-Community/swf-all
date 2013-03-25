@@ -187,6 +187,7 @@ public class ModelController<M extends Model> extends Controller {
     		if (lv instanceof HtmlView){
         		v = dashboard((HtmlView)lv); 
     		}else {
+    			// To support View Redirection.!!
     			v = lv;
     		}
     	}

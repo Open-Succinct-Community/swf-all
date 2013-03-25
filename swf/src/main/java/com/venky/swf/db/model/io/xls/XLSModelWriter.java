@@ -199,9 +199,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		return cell;
 	}
 
-	public static final int MAX_COLUMN_LENGTH = 50 ;
+	private static final int MAX_COLUMN_LENGTH = 50 ;
 	public static final int CHARACTER_WIDTH = 293;
-	public static final int CHARACTER_HEIGHT_IN_POINTS = 13 ;
+	private static final int CHARACTER_HEIGHT_IN_POINTS = 10 ;
 	
 	private int getColumnWidth(Sheet sheet,int columnIndex){
 		if (sheet.getNumMergedRegions() == 0){
@@ -253,7 +253,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	public static Font createDefaultFont(Workbook wb){
 		Font font = wb.createFont();
 		font.setFontName("Courier New");
-		font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS-3));
+		font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS));
 		return font;
 	}
 	private void fixCellDimensions(Sheet sheet,Row row,Bucket columnNum,Object value){
@@ -267,7 +267,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), MAX_COLUMN_LENGTH * CHARACTER_WIDTH);
 			sheet.setColumnWidth(columnNum.intValue(), currentColumnWidth);
 		}
-		row.setHeightInPoints(Math.max(row.getHeightInPoints() , maxRowHeight*CHARACTER_HEIGHT_IN_POINTS));
+		row.setHeightInPoints(Math.max(row.getHeightInPoints() , maxRowHeight*(CHARACTER_HEIGHT_IN_POINTS + 1)));
 		
 
 	}
