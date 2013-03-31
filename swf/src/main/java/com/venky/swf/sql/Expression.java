@@ -264,10 +264,17 @@ public class Expression {
 		if (isModelProxyObject){
 			Model m = (Model)record;
 			ModelInvocationHandler h = (ModelInvocationHandler) Proxy.getInvocationHandler(m);
-			if (h.getReflector().isFieldVirtual(columnName)){
-				value = h.getReflector().get(m,columnName);
+			String fieldName = columnName ; 
+			if (!h.getReflector().getFields().contains(fieldName)) {
+				fieldName = h.getReflector().getFieldName(columnName);
+				if (fieldName == null){
+					throw new IllegalArgumentException(columnName + " is neither a column nor field" ); 
+				}
+			}
+			if (h.getReflector().isFieldVirtual(fieldName)){
+				value = h.getReflector().get(m,fieldName);
 			}else {
-				value = m.getRawRecord().get(columnName);	
+				value = m.getRawRecord().get(h.getReflector().getColumnDescriptor(fieldName).getName());
 			}
 		}else if (Record.class.isInstance(record)){
 			value = ((Record)record).get(columnName);

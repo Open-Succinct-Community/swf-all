@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.PrintSetup;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -77,6 +78,16 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(records,wb,fields);
 		wb.write(os);
 	}
+	public Sheet createSheet(Workbook book, String sheetName){
+		Sheet sheet = book.createSheet(sheetName);
+		sheet.setAutobreaks(false);
+
+		PrintSetup printSetup = sheet.getPrintSetup();
+		printSetup.setLandscape(true);
+		printSetup.setFitWidth((short)1);
+
+		return sheet;
+	}
 	public void write(List<M> records, Workbook wb, List<String> fields) {
 		Font font = createDefaultFont(wb);
 		
@@ -85,9 +96,10 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
 		headerStyle.setFont(font);
 		headerStyle.setWrapText(true);
+		center(headerStyle);
 		
 		String sheetName = StringUtil.pluralize(getBeanClass().getSimpleName());
-		Sheet sheet = wb.createSheet(sheetName);
+		Sheet sheet = createSheet(wb,sheetName);
 		
     	Bucket rowNum = new Bucket(START_ROW); 
     	Bucket columnNum = new Bucket(START_COLUMN);
@@ -100,10 +112,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 				createCell(sheet, header, columnNum, StringUtil.camelize(fieldName), headerStyle);
 			}else {
 				for (String headerField : referredModelFieldsToExport.get(fieldName)){
-					createCell(sheet, header, columnNum, StringUtil.camelize(headerField), headerStyle);
+					createCell(sheet, header, columnNum, headerField, headerStyle);
 				}
 			}
 		}
+    	wb.setRepeatingRowsAndColumns(wb.getSheetIndex(sheet), 0, columnNum.intValue()-1, rowNum.intValue(), rowNum.intValue());
     	
     	
     	for (int i = 0 ; i < records.size() ; i ++ ){
@@ -130,12 +143,17 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
     		}
     		write(m,r,font,fields);
     	}
+
     	
 	}
 
 	@Override
 	public void write(M m, Row r, List<String> fields) {
 		write(m,r,null,fields);
+	}
+	public void center(CellStyle style){
+		style.setAlignment(CellStyle.ALIGN_CENTER);
+		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
 	}
 	private void write(M m, Row r, Font font, List<String> fields) {
 		Workbook wb = r.getSheet().getWorkbook();
@@ -144,18 +162,22 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		CellStyle decimalStyle = wb.createCellStyle();
 		decimalStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.0##"));
 		decimalStyle.setFont(font);
-		
+		center(decimalStyle);
+
 		CellStyle integerStyle = wb.createCellStyle();
 		integerStyle.setDataFormat(createHelper.createDataFormat().getFormat("0"));
 		integerStyle.setFont(font);
+		center(integerStyle);
 		
 		CellStyle dateStyle = wb.createCellStyle();
 		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
 		dateStyle.setFont(font);
+		center(dateStyle);
 		
 		CellStyle stringStyle = wb.createCellStyle();
 		stringStyle.setWrapText(true);
 		stringStyle.setFont(font);
+		//center(stringStyle);
 		
 		Iterator<String> fi = fields.iterator();
 		ModelReflector<M> ref = getReflector();
@@ -199,7 +221,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		return cell;
 	}
 
-	private static final int MAX_COLUMN_LENGTH = 50 ;
+	private static final int MAX_COLUMN_LENGTH = 30 ;
 	public static final int CHARACTER_WIDTH = 293;
 	private static final int CHARACTER_HEIGHT_IN_POINTS = 10 ;
 	
@@ -230,7 +252,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 	}
-	private int getRowHeight(String sValue){
+	private int getNumRowsRequired(String sValue){
 		int vlen = 0; 
 		int numRows = 1 ;
 		StringTokenizer tok = new StringTokenizer(sValue," \n",true);
@@ -241,7 +263,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			if (token.equals("\n")){
 				vlen = (numRows * MAX_COLUMN_LENGTH);
 			}
-			if ( vlen + ctl > numRows * MAX_COLUMN_LENGTH) {
+			if ( vlen + ctl >= numRows * MAX_COLUMN_LENGTH) {
 				vlen = (numRows * MAX_COLUMN_LENGTH) + ctl;
 				numRows += (Math.ceil(ctl * 1.0/MAX_COLUMN_LENGTH)) ;
 			}else {
@@ -250,7 +272,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		}
 		return numRows ;
 	}
-	public static Font createDefaultFont(Workbook wb){
+	public Font createDefaultFont(Workbook wb){
 		Font font = wb.createFont();
 		font.setFontName("Courier New");
 		font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS));
@@ -260,14 +282,14 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		int currentColumnWidth = getColumnWidth(sheet,columnNum.intValue());
 		String sValue = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter().toString(value);
 		int currentValueLength = sValue.length() ;
-		int maxRowHeight = getRowHeight(sValue);
+		int numRowsRequiredForCurrentValue = getNumRowsRequired(sValue);
 		
 		if (currentColumnWidth < MAX_COLUMN_LENGTH * CHARACTER_WIDTH){
 			int currentValueWidth = (currentValueLength + 1)* CHARACTER_WIDTH; 
 			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), MAX_COLUMN_LENGTH * CHARACTER_WIDTH);
 			sheet.setColumnWidth(columnNum.intValue(), currentColumnWidth);
 		}
-		row.setHeightInPoints(Math.max(row.getHeightInPoints() , maxRowHeight*(CHARACTER_HEIGHT_IN_POINTS + 1)));
+		row.setHeightInPoints(Math.max(row.getHeightInPoints() , numRowsRequiredForCurrentValue*(CHARACTER_HEIGHT_IN_POINTS + 3)));
 		
 
 	}

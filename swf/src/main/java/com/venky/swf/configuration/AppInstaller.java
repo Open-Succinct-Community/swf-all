@@ -14,7 +14,19 @@ import com.venky.swf.sql.Select;
 public class AppInstaller implements Installer {
 	public void install(){
 		installUsers();
+		fixUserName();
 	}
+	protected void fixUserName(){
+		Select q = new Select().from(User.class);
+		ModelReflector<User> ref = ModelReflector.instance(User.class);
+		String nameColumn = ref.getColumnDescriptor("long_name").getName();
+
+		List<User> users = q.where(new Expression(nameColumn,Operator.EQ)).execute();
+		for (User user: users){
+			user.setLongName(user.getName());
+		}
+	}
+	
 	protected void installUsers(){
 		Table<User> USER = Database.getTable(User.class);
 		

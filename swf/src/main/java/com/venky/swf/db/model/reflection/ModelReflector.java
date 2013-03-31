@@ -358,7 +358,7 @@ public class ModelReflector<M extends Model> {
 				String fieldName = fd.getFieldName(); 
 				Object value = get(m, fieldName);
 				if (value != null){
-					where.add(new Expression(fd.getFieldName(),Operator.EQ, value));
+					where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
 				}else {
 					nullFieldFound = true;
 					break; 

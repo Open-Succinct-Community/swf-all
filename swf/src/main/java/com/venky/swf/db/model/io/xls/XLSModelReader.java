@@ -22,6 +22,7 @@ import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.ModelReader;
@@ -194,13 +195,21 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 					if (cell1 == null){
 						continue;
 					}
-					if (cell1.getCellType() != Cell.CELL_TYPE_BLANK) {
-						referenceFieldsPassed = true;
+					if (cell1.getCellType() == Cell.CELL_TYPE_STRING && ObjectUtil.isVoid(cell1.getStringCellValue())){
+						continue;
 					}
+					if (cell1.getCellType() == Cell.CELL_TYPE_BLANK){
+						continue;
+					}
+					referenceFieldsPassed = true;
 					fieldValues.put(field.substring(field.indexOf('.')+1), cell1);
 				}
-
-				Model referredModel = getModel(referredModelReflector,fieldValues);
+				
+				
+				Model referredModel = null; 
+				if (referenceFieldsPassed){
+					referredModel = getModel(referredModelReflector,fieldValues);
+				}
 				if (referredModel == null && referenceFieldsPassed){
 					handleInvalidReference(m,row,fieldName, referredModelClass, fieldValues);
 				}else if (referredModel != null){
@@ -261,14 +270,15 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			}else {
 				String fieldName = StringUtil.underscorize(heading);
 				Object value = getCellValue(headingValues.get(heading),reflector.getFieldGetter(fieldName).getReturnType());
-				where.add(new Expression(StringUtil.underscorize(heading),Operator.EQ,value));
+				String columnName = reflector.getColumnDescriptor(fieldName).getName();
+				where.add(new Expression(columnName,Operator.EQ,value));
 			}
 		}
 		for (String referenceFieldName: newHeadingValues.keySet()){
 			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(referenceFieldName)));
 			Model referred = getModel(ModelReflector.instance(referredModelClass), newHeadingValues.get(referenceFieldName));
 			if (referred != null){
-				where.add(new Expression(referenceFieldName,Operator.EQ,referred.getId()));
+				where.add(new Expression(reflector.getColumnDescriptor(referenceFieldName).getName(),Operator.EQ,referred.getId()));
 			}
 		}
 		
@@ -278,7 +288,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 		}else if (m.size() == 0){
 			return null;
 		}else {
-			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL());
+			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL() + " with heading Values " + headingValues.toString());
 		}
 	}
 

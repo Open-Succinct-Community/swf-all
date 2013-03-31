@@ -136,12 +136,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		exportxls.addControl(new Image("/resources/images/exportxls.png","Export"));
     		newLink.addControl(exportxls);
     	}
+    	/*
+    	 * As this is dangerous option decided to hide this from the the screen to prevent accidents.
     	if (getPath().canAccessControllerAction("truncate") && getPath().canAccessControllerAction("destroy")){
     		Link truncate = new Link();
     		truncate.setUrl(getPath().controllerPath()+"/truncate");
     		truncate.addControl(new Image("/resources/images/destroy.png","Truncate"));
     		newLink.addControl(truncate);
-    	}
+    	}*/
     	newLink.addControl(new Label(getModelClass().getSimpleName()));
     }
     

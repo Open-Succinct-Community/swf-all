@@ -19,6 +19,7 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.exceptions.AccessDeniedException;
 
 /**
  *
@@ -80,9 +81,9 @@ public interface Model extends _Identifiable {
     public boolean isAccessibleBy(User user);
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     
-    public List<String> getParticipatingRoles(User user);
-    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel);
-    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions);
+    public List<String> getParticipatingRoles(User user) throws AccessDeniedException;
+    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel) throws AccessDeniedException;
+    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions) throws AccessDeniedException;
     
     public Record getRawRecord();
     public <M extends Model> M cloneProxy();

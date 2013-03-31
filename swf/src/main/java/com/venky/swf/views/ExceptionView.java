@@ -7,7 +7,6 @@ package com.venky.swf.views;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
@@ -22,7 +21,7 @@ public class ExceptionView extends HtmlView{
     Throwable th;
     public ExceptionView(_IPath path,Throwable th){
         super(path);
-        this.th = ExceptionUtil.getRootCause(th);
+        this.th = th;
     }
 
     @Override

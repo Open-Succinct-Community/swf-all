@@ -6,6 +6,7 @@ package com.venky.swf.menu;
 
 import java.util.Set;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
@@ -70,6 +71,9 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         }
         
     	String menuName= menu.value();
+    	if (ObjectUtil.isVoid(menuName)){
+    		return;
+    	}
 
     	String controllerPathName = table.getTableName().toLowerCase();
         String target = "/" + controllerPathName  ;

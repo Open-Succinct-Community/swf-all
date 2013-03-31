@@ -30,7 +30,7 @@ import com.venky.swf.sql.Expression;
  *
  * @author venky
  */
-@HAS_DESCRIPTION_FIELD
+@HAS_DESCRIPTION_FIELD("LONG_NAME")
 @CONFIGURATION
 @MENU("Admin")
 public interface User extends Model{

@@ -22,7 +22,6 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
-import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -150,7 +149,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        		try {
 	        			return inModelImplClass.invoke(impl, args);
 	        		}catch(InvocationTargetException ex){
-	            		throw ExceptionUtil.getRootCause(ex);
+	            		throw ex.getCause();
 	            	}finally{
 	        			timer.stop();
 	        		}
@@ -161,7 +160,11 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);
         if (retType.isAssignableFrom(inCurrentClass.getReturnType())) {
-            return inCurrentClass.invoke(this, args);
+        	try {
+        		return inCurrentClass.invoke(this, args);
+        	}catch (InvocationTargetException ex){
+        		throw ex.getCause();
+        	}
         } else {
             throw new NoSuchMethodException("Donot know how to execute this method");
         }
@@ -199,7 +202,8 @@ public class ModelInvocationHandler implements InvocationHandler {
             	Method fieldGetter = childReflector.getFieldGetter(fieldName);
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
             	if (referredModelGetter != null && referredModelGetter.getReturnType().isAssignableFrom(modelClass)){
-            		expression.add(new Expression(fieldName,Operator.EQ,proxy.getId()));
+            		String columnName = childReflector.getColumnDescriptor(fieldGetter).getName();
+            		expression.add(new Expression(columnName,Operator.EQ,proxy.getId()));
             	}
         	}
         }
