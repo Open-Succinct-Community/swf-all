@@ -1,7 +1,6 @@
 package com.venky.swf.db.platform;
 
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -10,6 +9,7 @@ import org.json.simple.parser.ParseException;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
+import com.venky.swf.routing.Config;
 
 public class CloudFoundryPlatform implements Extension{
 	
@@ -17,9 +17,8 @@ public class CloudFoundryPlatform implements Extension{
 		Properties info = (Properties)context[0];
 		String vcap_services = System.getenv("VCAP_SERVICES");
 		String serviceName = System.getProperty("cf.db.service");
-
-		Logger.getLogger(CloudFoundryPlatform.class.getName()).fine("vcap_services:" + vcap_services);
-		Logger.getLogger(CloudFoundryPlatform.class.getName()).fine("cf.db.service:" +serviceName);
+		Config.instance().getLogger(CloudFoundryPlatform.class.getName()).fine("vcap_services:" + vcap_services);
+		Config.instance().getLogger(CloudFoundryPlatform.class.getName()).fine("cf.db.service:" +serviceName);
 		if (ObjectUtil.isVoid(vcap_services)){
 			return ;
 		}
@@ -66,7 +65,7 @@ public class CloudFoundryPlatform implements Extension{
 		}else if (serviceName.startsWith("mysql")){
 			jdbcurl = "jdbc:mysql://" + host + ":" + port + "/" + db + "?zeroDateTimeBehavior=convertToNull&sessionVariables=storage_engine=INNODB" ;
 		}
-		Logger.getLogger(CloudFoundryPlatform.class.getName()).info("jdbcurl:" + jdbcurl);
+		Config.instance().getLogger(CloudFoundryPlatform.class.getName()).info("jdbcurl:" + jdbcurl);
 		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("Systemproperties" + System.getProperties().toString());
 		//Logger.getLogger(CloudFoundryPlatform.class.getName()).info("SystemEnv" + System.getenv().toString());
 		

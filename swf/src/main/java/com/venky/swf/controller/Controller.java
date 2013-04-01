@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -29,6 +28,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
@@ -49,6 +49,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ModelInfo;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -80,12 +81,12 @@ public class Controller {
     }
     
     public View tron(String loggerName){
-		Logger.getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.ALL);
+    	Config.instance().getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.ALL);
     	return back();
     }
     
     public View troff(String loggerName){
-		Logger.getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.OFF);
+		Config.instance().getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.OFF);
 		return back();
     }
     @RequireLogin(false)
@@ -443,7 +444,7 @@ public class Controller {
     		Table<? extends Model> table = tables.get(tableName); 
     		EXPORTABLE exportable = table.getReflector().getAnnotation(EXPORTABLE.class);
     		if (table.isReal() && (exportable == null || exportable.value())) {
-    			Logger.getLogger(getClass().getName()).info("Exporting:" + table.getTableName());
+    			Config.instance().getLogger(getClass().getName()).info("Exporting:" + table.getTableName());
     			exportxls(table.getModelClass(), wb);
     		}
     	}
@@ -473,9 +474,14 @@ public class Controller {
 		}
 		@Override
 		public boolean pass(M record) {
-			return defaultFilter.pass(record) && Path.canAccessControllerAction(getSessionUser(),
+			Timer timer = Timer.startTimer("DefaultModelFilter.pass");
+			try {
+				return defaultFilter.pass(record) && Path.canAccessControllerAction(getSessionUser(),
 					Database.getTable(modelClass).getTableName().toLowerCase(),
 					"index", StringUtil.valueOf(record.getId()));
+			}finally{
+				timer.stop();
+			}
 		}
     }
     

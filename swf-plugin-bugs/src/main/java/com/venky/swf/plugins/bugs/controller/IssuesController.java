@@ -2,13 +2,13 @@ package com.venky.swf.plugins.bugs.controller;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.bugs.db.model.Issue;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelEditView;
@@ -26,7 +26,7 @@ public class IssuesController extends ModelController<Issue>{
 	protected ModelEditView<Issue> createBlankView(Path path , Issue record){
 		ModelEditView<Issue> mev = super.createBlankView(path, record);
 		mev.getIncludedFields().removeAll(Arrays.asList("STATUS","RESOLUTION"));
-		Logger.getLogger(IssuesController.class.getName()).info(mev.getIncludedFields().toString());
+		Config.instance().getLogger(IssuesController.class.getName()).info(mev.getIncludedFields().toString());
 		
 		return mev;
 	}

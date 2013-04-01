@@ -23,8 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
@@ -36,6 +34,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.routing.Config;
 
 /**
  * 
@@ -578,6 +577,6 @@ public abstract class JdbcTypeHelper {
   	}
   	
   	public void resetIdGeneration(){
-  		Logger.getLogger(getClass().getName()).warning("resetIdGeneration not implemented in " + getClass().getName() );
+  		Config.instance().getLogger(getClass().getName()).warning("resetIdGeneration not implemented in " + getClass().getName() );
   	}
 }

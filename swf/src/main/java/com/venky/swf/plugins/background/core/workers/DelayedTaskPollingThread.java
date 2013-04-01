@@ -1,11 +1,10 @@
 package com.venky.swf.plugins.background.core.workers;
 
 import java.util.List;
-import java.util.logging.Logger;
-
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -42,7 +41,7 @@ public class DelayedTaskPollingThread extends Thread{
 		Database db = null ;
 		while (manager.needMoreTasks()){
 			try {
-				Logger.getLogger(getClass().getName()).finest("Checking for Tasks...");
+				Config.instance().getLogger(getClass().getName()).finest("Checking for Tasks...");
 				Expression where = new Expression(Conjunction.AND);
 				where.add(new Expression(ref.getColumnDescriptor("NUM_ATTEMPTS").getName(), Operator.LT , 10 ));
 				if (lastRecord != null){
@@ -55,7 +54,7 @@ public class DelayedTaskPollingThread extends Thread{
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
 				List<DelayedTask> jobs = select.execute(DelayedTask.class,100);
 				
-				Logger.getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
+				Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
 				manager.addDelayedTasks(jobs);
 				db.getCurrentTransaction().commit();
@@ -66,7 +65,7 @@ public class DelayedTaskPollingThread extends Thread{
 				}
 			}catch (Exception e){
 				if (db != null){
-					Logger.getLogger(getClass().getName()).info("Polling thread Rolling back due to exception 1 " + e.toString());
+					Config.instance().getLogger(getClass().getName()).info("Polling thread Rolling back due to exception 1 " + e.toString());
 					try {
 						db.getCurrentTransaction().rollback(e);
 					}catch (Exception ex){

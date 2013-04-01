@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
@@ -23,6 +22,7 @@ import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -50,7 +50,7 @@ public class UserImpl extends ModelImpl<User>{
 			}else {
 				ret = ObjectUtil.equals(user.getPassword(),password);
 				if (!ret){
-					Logger.getLogger(getClass().getName()).fine("Password mismatch '" + password + "' <> '" + user.getPassword() + "'");
+					Config.instance().getLogger(getClass().getName()).fine("Password mismatch '" + password + "' <> '" + user.getPassword() + "'");
 				}
 			}
 		}catch (AccessDeniedException ex){

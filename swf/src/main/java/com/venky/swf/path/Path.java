@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
+
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -73,12 +73,8 @@ import com.venky.swf.views._IView;
  * @author venky
  */
 public class Path implements _IPath{
-	private static Logger logger; 
-	
-	
 	static {
-		logger = Logger.getLogger(Path.class.getName());
-		logger.info("Loaded by " + Path.class.getClassLoader());
+		Config.instance().getLogger(Path.class.getName()).info("Loaded by " + Path.class.getClassLoader());
 	}
 
     private List<String> pathelements = new ArrayList<String>();
@@ -192,7 +188,7 @@ public class Path implements _IPath{
 	        while(names.hasMoreElements()){
 	        	headers.add(names.nextElement());
 	        }
-	        logger.info("Request Headers:" + headers.toString());
+	        Config.instance().getLogger(Path.class.getName()).info("Request Headers:" + headers.toString());
     	}
     }
 
@@ -488,15 +484,15 @@ public class Path implements _IPath{
         	if (getRequest().getMethod().equalsIgnoreCase("POST")){
 	        	String username = getRequest().getParameter("name");
 	            if (!ObjectUtil.isVoid(username)){
-	            	logger.fine("Logging in " + username);
+	            	Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
 	            	user = getUser("name",username);
-	            	logger.fine("User is valid ? " + (user != null));
+	            	Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
 	            	
 	                String password = getRequest().getParameter("password");
 	            	if (user != null && user.authenticate(password)){
 	            		createUserSession(user,false);
 	            	}else {
-	            		logger.fine("Authentication Failed");
+	            		Config.instance().getLogger(Path.class.getName()).fine("Authentication Failed");
 	            	}
 	            }
         	}

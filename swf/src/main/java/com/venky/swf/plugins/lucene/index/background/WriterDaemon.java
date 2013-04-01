@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Logger;
-
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
@@ -17,6 +15,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.routing.Config;
 
 
 public class WriterDaemon extends Thread {
@@ -149,7 +148,7 @@ public class WriterDaemon extends Thread {
 			try {
 				job.perform();
 			} catch (IOException e) {
-				Logger.getLogger(getClass().getName()).severe(e.getMessage());
+				Config.instance().getLogger(getClass().getName()).severe(e.getMessage());
 				shutdown();
 			}
 		}

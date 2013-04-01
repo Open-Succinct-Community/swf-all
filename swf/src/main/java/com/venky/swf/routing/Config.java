@@ -17,6 +17,7 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.venky.cache.Cache;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.menu._IMenuBuilder;
@@ -168,7 +169,24 @@ public class Config {
     }
     
     public boolean isTimerEnabled(){
-    	return Logger.getLogger(TimerStatistics.class.getName()).isLoggable(Level.FINE);
+    	return getLogger(TimerStatistics.class.getName()).isLoggable(Level.FINE);
+    }
+    
+    private Cache<String,Logger> loggers = new Cache<String, Logger>() {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 7431631281937883673L;
+
+		@Override
+		protected Logger getValue(String k) {
+			return Logger.getLogger(k);
+		}
+    	
+    };
+    public Logger getLogger(String name){
+    	return loggers.get(name);
     }
     
 	public boolean isDevelopmentEnvironment(){

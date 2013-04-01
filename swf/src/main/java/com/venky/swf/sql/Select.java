@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
+
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
@@ -22,10 +22,9 @@ import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.SWFTimeoutException;
+import com.venky.swf.routing.Config;
 
 public class Select extends SqlStatement{
-	
-	private static Logger logger = Logger.getLogger(Select.class.getName());
 	
 	private String[] columnNames = null;
 	private String[] tableNames ;
@@ -213,14 +212,14 @@ public class Select extends SqlStatement{
         	
         	if (result == null){
 	            Timer queryTimer = Timer.startTimer(getRealSQL());
-	            logger.fine(getRealSQL());
+	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();
 		            if (this.orderBy != null){
 		            	sortResults = false;
 		            }
 	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper().isNoWaitSupported())) && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
-	            		Logger.getLogger(getClass().getName()).fine("Setting Statement Time out");
+	            		Config.instance().getLogger(getClass().getName()).fine("Setting Statement Time out");
 	            		st.setQueryTimeout(10);
 	            	}
 		            result = new SequenceSet<Record>();
@@ -301,7 +300,7 @@ public class Select extends SqlStatement{
         		}
         	}
     	
-    		logger.fine("Returning " + ret.size() + " when maxRecords Requested =" + maxRecords );
+        	Config.instance().getLogger(getClass().getName()).fine("Returning " + ret.size() + " when maxRecords Requested =" + maxRecords );
         	return ret;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);

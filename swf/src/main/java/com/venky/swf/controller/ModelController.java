@@ -24,6 +24,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.cache.Cache;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
@@ -113,10 +114,15 @@ public class ModelController<M extends Model> extends Controller {
     @Override
     @RequireLogin(true)
     public View index() {
-    	if (indexedModel){
-    		return search();
-    	}else {
-    		return list();
+    	Timer index = Timer.startTimer(getReflector().getTableName() + ".index");
+    	try {
+	    	if (indexedModel){
+	    		return search();
+	    	}else {
+	    		return list();
+	    	}
+    	}finally {
+    		index.stop();
     	}
     }
 

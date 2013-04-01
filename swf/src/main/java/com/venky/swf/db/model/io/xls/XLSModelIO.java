@@ -3,7 +3,6 @@ package com.venky.swf.db.model.io.xls;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.logging.Logger;
 
 import org.apache.poi.ss.usermodel.Row;
 
@@ -16,6 +15,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.routing.Config;
 
 public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 	
@@ -60,7 +60,7 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 				Table<?> table = Database.getTable(referredModelClass);
 				current = table.get(value);
 				if (current == null){
-					Logger.getLogger(getReflector().getModelClass().getName()).warning( table.getRealTableName() + " doesnot have id " + value + " being Referenced from " + getReflector().getTableName());
+					Config.instance().getLogger(getReflector().getModelClass().getName()).warning( table.getRealTableName() + " doesnot have id " + value + " being Referenced from " + getReflector().getTableName());
 					break;
 				}
 				ref = table.getReflector();

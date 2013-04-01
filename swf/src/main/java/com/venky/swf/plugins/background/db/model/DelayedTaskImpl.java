@@ -3,8 +3,6 @@ package com.venky.swf.plugins.background.db.model;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.logging.Logger;
-
 import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -19,8 +17,6 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 	public DelayedTaskImpl(DelayedTask proxy) {
 		super(proxy);
 	}
-	private static Logger logger = Logger.getLogger(DelayedTaskImpl.class.getName());
-	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public int compareTo(DelayedTask o2) {
 		int ret = 0 ;
@@ -64,7 +60,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 			        }else {
 			        	w.write(ex.getMessage());
 			        }
-					logger.info(sw.toString());
+					Config.instance().getLogger(getClass().getName()).info(sw.toString());
 					locked.setLastError(new StringReader(sw.toString()));
 					locked.setNumAttempts(locked.getNumAttempts()+1);
 				}

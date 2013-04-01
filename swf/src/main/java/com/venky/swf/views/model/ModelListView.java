@@ -164,6 +164,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
     }
     protected void setWidths(Row header,int numActions){
+    	Timer timer = Timer.startTimer("Setting widths");
+    	try { 
+    		_setWidths(header, numActions);
+    	}finally {
+    		timer.stop();
+    	}
+    }
+    protected void _setWidths(Row header,int numActions){
     	Map<String,Integer> fieldWidthMap = suggestedFieldWidth; 
     	
     	if (fieldWidthMap == null){
@@ -197,8 +205,15 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
         return showAction;
 	}
-
 	protected void addLineLevelActions(Row row, M record, BitSet showAction) {
+		Timer timer = Timer.startTimer("Adding Line Level Actions");
+		try {
+			_addLineLevelActions(row, record, showAction);
+		}finally {
+			timer.stop();
+		}
+	}
+	protected void _addLineLevelActions(Row row, M record, BitSet showAction) {
     	Timer timer = Timer.startTimer("paintAllActions");
     	List<Method> singleRecordActions = getSingleRecordActions();
         for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
@@ -268,8 +283,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 						String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
                     	sValue = parentDescription;
                     	
-                    	_IPath parentTarget = getPath().createRelativePath( (!Database.getJdbcTypeHelper().isVoid(record.getId()) ? 
-                    			"/show/" + String.valueOf(record.getId()) : "" )+ "/" + tableName + "/show/" +  String.valueOf(parentId));
+                    	_IPath parentTarget = getPath().createRelativePath( "/" + tableName + "/show/" +  String.valueOf(parentId) );
                     	if (parentTarget.canAccessControllerAction()){
                         	control = new Link(parentTarget.getTarget());
                         	control.setText(sValue);
@@ -299,7 +313,15 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }    	
 		
 	}
-    protected void addRecordToTable(M record, BitSet showAction, Table table){
+	protected void addRecordToTable(M record, BitSet showAction, Table table){
+		Timer timer = Timer.startTimer("Adding one record to table");
+		try {
+			_addRecordToTable(record, showAction, table);
+		}finally {
+			timer.stop();
+		}
+	}
+    protected void _addRecordToTable(M record, BitSet showAction, Table table){
     	User u = (User)getPath().getSessionUser();
     	if (u != null && !record.isAccessibleBy(u,getModelClass())){
     		return;
@@ -311,9 +333,18 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         addLineLevelActions(row, record, showAction);
         addFields(row, record);
     }
-    private OrderBy orderBy = null; 
+    private OrderBy orderBy = null;
     @Override
     protected void createBody(_IControl b) {
+    	Timer timer = Timer.startTimer();
+    	try {
+    		_createBody(b);
+    	}finally {
+    		timer.stop();
+    	}
+    }
+    protected void _createBody(_IControl b) {
+    	
     	if (indexedModel){
     		b.addControl(createSearchForm(getPath()));
     	}
@@ -341,6 +372,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         	addRecordToTable(record,showAction,table);        
     	}
         
+        Timer removingActions = Timer.startTimer("Removing actions not needed from table");
         int numActionsRemoved = 0 ;
         int numActions = getSingleRecordActions().size();
         for (int i = 0 ; i < numActions ; i ++ ){
@@ -349,7 +381,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         		numActionsRemoved ++; // Once a column is removed the indexes are shifted left. 
         	}
         }
+        removingActions.stop();
 
+        
         numActions -= numActionsRemoved;
     	int orderByFieldIndex = getIncludedFields().indexOf(orderBy.field);
         if (orderByFieldIndex >= 0 ){

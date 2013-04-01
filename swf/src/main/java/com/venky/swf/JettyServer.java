@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.session.SessionHandler;
 
@@ -100,7 +98,7 @@ public class JettyServer {
 				root = new File(url.getPath());
 			}
 			if (root != null) {
-				Logger.getLogger(getClass().getName()).info("Resource Base URL: " + url.toString() + " Found");
+				Config.instance().getLogger(getClass().getName()).info("Resource Base URL: " + url.toString() + " Found");
 				watchedFiles.add(root);
 			}
 		}
@@ -132,7 +130,7 @@ public class JettyServer {
 				File f = files.pop();
 				if (f.isDirectory()) {
 					Path directory = Paths.get(f.getPath());
-					Logger.getLogger(getClass().getName()).log(Level.INFO,"Added Watch for {0}",directory);
+					Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Added Watch for {0}",directory);
 					watchKeys.put(directory.register(watcher,
 							StandardWatchEventKinds.ENTRY_CREATE,
 							StandardWatchEventKinds.ENTRY_DELETE,
@@ -174,7 +172,7 @@ public class JettyServer {
 					Path name = ev.context();
 					Path child = watched.resolve(name);
 					
-					Logger.getLogger(getClass().getName()).log(Level.INFO, "Received {0} of {1} inside {2} " , new Object[] {kind , name , watched });
+					Config.instance().getLogger(getClass().getName()).log(Level.INFO, "Received {0} of {1} inside {2} " , new Object[] {kind , name , watched });
 					if (kind == StandardWatchEventKinds.ENTRY_CREATE){
 						File childFile = child.toFile();
 						if (childFile.isDirectory()){

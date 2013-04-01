@@ -4,9 +4,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.venky.swf.db.table.Record;
+import com.venky.swf.routing.Config;
 
 public class DataManupulationStatement extends SqlStatement{
 	protected Level level = Level.FINE;
@@ -18,7 +18,7 @@ public class DataManupulationStatement extends SqlStatement{
         return executeUpdate(null);
     }
     public int executeUpdate(Record generatedKeyValues,String... generatedKeyColumns){ 
-		Logger.getLogger(getClass().getName()).log(level, "Executing {0}", getRealSQL());
+    	Config.instance().getLogger(getClass().getName()).log(level, "Executing {0}", getRealSQL());
         
         PreparedStatement st = null;
         try {

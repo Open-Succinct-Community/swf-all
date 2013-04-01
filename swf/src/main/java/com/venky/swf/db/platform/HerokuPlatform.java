@@ -3,10 +3,10 @@ package com.venky.swf.db.platform;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
-import java.util.logging.Logger;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
+import com.venky.swf.routing.Config;
 
 public class HerokuPlatform implements Extension{
 	
@@ -14,7 +14,7 @@ public class HerokuPlatform implements Extension{
 		Properties info = (Properties)context[0];
 		String dbURL = System.getenv("DATABASE_URL");
 		if (!ObjectUtil.isVoid(dbURL)){
-    		Logger.getLogger(HerokuPlatform.class.getName()).fine("DATABASE_URL:" + dbURL );
+    		Config.instance().getLogger(HerokuPlatform.class.getName()).fine("DATABASE_URL:" + dbURL );
     		URI uri;
 			try {
 				uri = new URI(dbURL);

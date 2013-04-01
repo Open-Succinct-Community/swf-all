@@ -19,8 +19,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
-import java.util.logging.Logger;
-
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.dbcp.BasicDataSourceFactory;
 
@@ -102,7 +100,7 @@ public class Database implements _IDatabase{
 		if (connection != null) {
 			try {
 				if (!transactionStack.isEmpty()){
-					Logger.getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
+					Config.instance().getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
 					transactionStack.clear();
 				}
 				txnUserAttributes.rollback(); //All check points are clear.
@@ -271,7 +269,7 @@ public class Database implements _IDatabase{
 		public void setAttribute(String name,Object value){
 			checkpoint.getValue().put(name, value);
 			if (value != null && !(value instanceof Serializable) && !(value instanceof Cloneable)){
-				Logger.getLogger(getClass().getName()).warning(value.getClass().getName() + " not Serializable or Cloneable. Checkpointing in nested transactions may exhibit unexpected behaviour!");
+				Config.instance().getLogger(getClass().getName()).warning(value.getClass().getName() + " not Serializable or Cloneable. Checkpointing in nested transactions may exhibit unexpected behaviour!");
 			}
 		}
 		
@@ -398,12 +396,12 @@ public class Database implements _IDatabase{
     	List<String> installerNames = Config.instance().getInstallers();
 		try {
 			for (String installerName : installerNames){
-				Logger.getLogger(Database.class.getName()).info("Installing ... " + installerName );
+				Config.instance().getLogger(Database.class.getName()).info("Installing ... " + installerName );
 				try{
 					Installer installer = (Installer)Class.forName(installerName).newInstance();
 					installer.install();
 				}finally {
-					Logger.getLogger(Database.class.getName()).info("done!");
+					Config.instance().getLogger(Database.class.getName()).info("done!");
 				}
 			}
 			Database.getInstance().getCurrentTransaction().commit();

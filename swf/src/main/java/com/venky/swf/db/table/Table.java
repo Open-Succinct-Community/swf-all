@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
-
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.SequenceSet;
@@ -196,8 +194,8 @@ public class Table<M extends Model> {
             if (tableColumn == null){
                 fieldsAltered.get(FIELDS_ADDED).add(fieldName);
             }else if (!modelColumn.equals(tableColumn)){
-            	Logger.getLogger(Table.class.getName()).info("Model: " + modelColumn.toString());
-            	Logger.getLogger(Table.class.getName()).info("Table: " + tableColumn.toString());
+            	Config.instance().getLogger(Table.class.getName()).info("Model: " + modelColumn.toString());
+            	Config.instance().getLogger(Table.class.getName()).info("Table: " + tableColumn.toString());
             	fieldsAltered.get(FIELDS_MODIFIED).add(fieldName);
             }
         }

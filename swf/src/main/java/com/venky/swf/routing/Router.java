@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -64,10 +63,10 @@ public class Router extends AbstractHandler {
 			    		if (is != null){
 			    			LogManager.getLogManager().readConfiguration(is);
 			    		}else {
-			    			Logger.getLogger(Router.class.getName()).info("Logging not configured! using defaults");
+			    			Config.instance().getLogger(Router.class.getName()).info("Logging not configured! using defaults");
 			    		}
 					} catch (Exception e1) {
-						Logger.getLogger(Router.class.getName()).info("config/logger.properties not configured! using defaults");
+						Config.instance().getLogger(Router.class.getName()).info("config/logger.properties not configured! using defaults");
 					}
 					_IDatabase db = getDatabase(true);
 					loadExtensions();
@@ -78,7 +77,7 @@ public class Router extends AbstractHandler {
 						getPathClass();
 						getExceptionViewClass();
 					} catch (Exception e) {
-						Logger.getLogger(Router.class.getName()).log(Level.SEVERE,e.getMessage(),e);
+						Config.instance().getLogger(Router.class.getName()).log(Level.SEVERE,e.getMessage(),e);
 					}
 				}
 			}
@@ -181,7 +180,7 @@ public class Router extends AbstractHandler {
     	}
 		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
 		
-    	Timer timer = Timer.startTimer();
+    	Timer timer = Timer.startTimer("handleRequest",true);
     	try {
 	        HttpSession session  = request.getSession(false); 
 	        _IView view = null;
@@ -201,7 +200,12 @@ public class Router extends AbstractHandler {
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
 	            }
-	            view.write();
+	            Timer viewWriteTimer = Timer.startTimer(target+".view_write",true);
+	            try {
+	            	view.write();
+	            }finally{
+	            	viewWriteTimer.stop();
+	            }
 	            db.getCurrentTransaction().commit();
 	        }catch(Exception e){
 	        	try { 

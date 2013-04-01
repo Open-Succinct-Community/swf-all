@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -141,6 +142,8 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        	}
         	}
         }
+        
+        /* Optimization 
         for (Object impl: modelImplObjects){
         	try {
 	        	Method inModelImplClass = impl.getClass().getMethod(mName, parameters); 
@@ -151,13 +154,14 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        		}catch(InvocationTargetException ex){
 	            		throw ex.getCause();
 	            	}finally{
-	        			timer.stop();
+	        			timer.stop(); 
 	        		}
 	        	}
         	}catch(NoSuchMethodException ex){
         		//	
         	}
         }
+        
         Method inCurrentClass = this.getClass().getMethod(mName, parameters);
         if (retType.isAssignableFrom(inCurrentClass.getReturnType())) {
         	try {
@@ -169,7 +173,30 @@ public class ModelInvocationHandler implements InvocationHandler {
             throw new NoSuchMethodException("Donot know how to execute this method");
         }
         
-
+        */
+        Class<?> implClass = getMethodImplClass(method);
+        Object implObject = null;
+        if (implClass != null){
+        	implObject = modelImplObjects.get(implClass);
+        }
+        if (implClass == null || implObject == null){ 
+        	//implObject is null while constructing impls.
+        	implClass = this.getClass();
+        	implObject = this;
+        }
+    	Method inImplClass = implClass.getMethod(mName, parameters);
+    	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
+	        Timer timer = Timer.startTimer(inImplClass.toString());
+	        try {
+	        	return inImplClass.invoke(implObject, args);
+	        }catch (InvocationTargetException ex){
+	        	throw ex.getCause();
+	        }finally{
+	        	timer.stop();
+	        }
+    	}else {
+    		throw new NoSuchMethodException("Donot know how to execute " + reflector.getSignature(method));
+    	}
     }
 
     @SuppressWarnings("unchecked")
@@ -295,6 +322,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
 	public static void dispose(){
 		modelImplClassesCache.clear();
+		methodImplClassCache.clear();
 	}
     
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
@@ -331,11 +359,53 @@ public class ModelInvocationHandler implements InvocationHandler {
 		}
 		throw new RuntimeException("Don't know how to instantiate " + implClass.getName());
 	}
-	private List<Object> modelImplObjects = new ArrayList<Object>();
+	private SequenceMap<Class<?>,Object> modelImplObjects = new SequenceMap<Class<?>,Object>();
 	private void addModelImplObject(Object o){
-		modelImplObjects.add(o);
+		modelImplObjects.put(o.getClass(),o);
 	}
 	
+	private Class<?> getMethodImplClass(Method m){
+		return methodImplClassCache.get(reflector.getModelClass()).get(m);
+	}
+	
+	private static Cache<Class<? extends Model>,Cache<Method,Class<?>>> methodImplClassCache = new Cache<Class<? extends Model>, Cache<Method,Class<?>>>() {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -8303755398345923039L;
+
+		@Override
+		protected Cache<Method, Class<?>> getValue(final Class<? extends Model> modelClass) {
+			
+			return new Cache<Method, Class<?>>() {
+
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1322249489351360016L;
+
+				@Override
+				protected Class<?> getValue(Method method) {
+			        String mName = method.getName();
+			        Class<?> retType = method.getReturnType();
+			        Class<?>[] parameters = method.getParameterTypes();
+
+					for (Class<?> implClass: getModelImplClasses(modelClass)){
+			        	try {
+				        	Method inModelImplClass = implClass.getMethod(mName, parameters); 
+				        	if (retType.isAssignableFrom(inModelImplClass.getReturnType())){
+				        		return implClass;
+				        	}
+			        	}catch (NoSuchMethodException ex){
+			        		//
+			        	}   	
+					}
+					return null;
+				}
+			};
+		}
+	}; 
 	private static Cache<Class<? extends Model>,List<Class<?>>> modelImplClassesCache = new Cache<Class<? extends Model>, List<Class<?>>>() {
 		/**
 		 * 
