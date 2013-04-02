@@ -4,6 +4,8 @@
  */
 package com.venky.swf.db;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -23,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
@@ -513,11 +516,13 @@ public abstract class JdbcTypeHelper {
         if (ref != null) {
             return ref;
         }
-        Timer loop = Timer.startTimer("loop:" + javaClass.getName());
+        Timer loop = startTimer("loop:" + javaClass.getName());
     	try {
 	        for (Class<?> key : javaTypeRefMap.keySet()) {
 	            if (key.isAssignableFrom(javaClass)) {
-	                return javaTypeRefMap.get(key);
+	            	TypeRef<?> value = javaTypeRefMap.get(key);
+	            	javaTypeRefMap.put(key, value);
+	                return value;
 	            }
 	        }
 	        return null;
@@ -547,7 +552,7 @@ public abstract class JdbcTypeHelper {
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();
     public String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
-    	Timer timer = Timer.startTimer();
+    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
     	try {
 	    	if (def.value() == StandardDefault.CURRENT_TIMESTAMP){
 	    		return getCurrentTimeStampKW();

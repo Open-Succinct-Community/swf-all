@@ -1,29 +1,33 @@
 package com.venky.swf.plugins.security.extensions;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.Reader;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.venky.cache.Cache;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.security.db.model.RolePermission;
 import com.venky.swf.plugins.security.db.model.UserRole;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -36,61 +40,94 @@ public class ParticipantControllerAccessExtension implements Extension{
 		Registry.instance().registerExtension(Path.ALLOW_CONTROLLER_ACTION, new ParticipantControllerAccessExtension());
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void invoke(Object... context) {
-		User user = (User)context[0];
-		if (user != null && user.isAdmin()){
-			return;
+		Timer timer = startTimer("Participant Controller Action invoke",Config.instance().isTimerAdditive());
+		try {
+			_invoke(context);
+		}finally {
+			timer.stop();
 		}
-		String controllerPathElementName = (String)context[1];
-		String actionPathElementName = (String)context[2];
-		String parameterValue = (String)context[3];
-		Path tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName + (parameterValue == null ? "" : "/"+parameterValue));
-		boolean securedAction = false;
-		for (Method m : tmpPath.getActionMethods(actionPathElementName, parameterValue)){
-			securedAction = tmpPath.isSecuredAction(m);
-			if (securedAction){
-				break;
-			}
+	}
+	
+	private boolean isControllerActionAccessibleAtAll(final User user, final String controllerPathElementName, final String actionPathElementName,final Path path){
+		Cache<String,Cache<String,Boolean>> cache = Database.getInstance().getCurrentTransaction().getAttribute("user.participation.access");
+		
+		if (cache == null){
+			cache = new Cache<String, Cache<String,Boolean>>() {
+				private static final long serialVersionUID = 998528782452357935L;
+
+				@Override
+				protected Cache<String, Boolean> getValue(final String controllerPathElementName) {
+					return new Cache<String, Boolean>() {
+						private static final long serialVersionUID = 1897514771224474367L;
+
+						@Override
+						protected Boolean getValue(final String actionPathElementName) {
+							return isControllerActionAccessible(user,controllerPathElementName, actionPathElementName, null, path);
+						}
+					};
+				}
+			}; 
+			Database.getInstance().getCurrentTransaction().setAttribute("user.participation.access",cache);
 		}
+		
+		return cache.get(controllerPathElementName).get(actionPathElementName);
+		
+		
+	}
+	
+	private boolean isControllerActionAccessible(final User user, final String controllerPathElementName, final String actionPathElementName, 
+			final String parameterValue, 
+			Path path){
+		
+		Timer timer = startTimer("Check If Action is Secured",Config.instance().isTimerAdditive());
+		boolean securedAction = path.isActionSecure(actionPathElementName);
+		timer.stop();
+		
 		if (!securedAction){
-			return;
+			return true;
 		}else if (user == null){
-			throw new AccessDeniedException();
+			return false;
 		}
 		
 		Class<? extends Model> modelClass  = null;
-		List<String> participantingRoles = new ArrayList<String>();
+		Set<String> participantingRoles = new HashSet<String>();
 		Model selectedModel = null;
 
-		Table possibleTable = Path.getTable(controllerPathElementName);
+		Table<? extends Model> possibleTable = Path.getTable(controllerPathElementName);
 		if ( possibleTable != null ){
 			modelClass = possibleTable.getModelClass();
 		}
+		Timer gettingParticipatingRoles = startTimer("Getting participating Roles",Config.instance().isTimerAdditive());
 		if (modelClass != null ){
-			Cache<String,Map<String,List<Integer>>> pGroupOptions = user.getParticipationOptions(modelClass);
+			Timer t = startTimer("Getting model Reflector");
+			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+			t.stop();
+			
 			if (parameterValue != null){
+				t = startTimer("Getting Participating Roles when parameter != null");
 				try {
 					int id = Integer.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
 					if (selectedModel != null){
-						participantingRoles.addAll(selectedModel.getParticipatingRoles(user, pGroupOptions));
+						participantingRoles = selectedModel.getParticipatingRoles(user);
 					}
 				}catch (NumberFormatException ex){
 					//
 				}catch (IllegalArgumentException ex) {
 					throw new RuntimeException(ex);
+				}finally {
+					t.stop();
 				}
 			}else {
-				Set<String> fields = new HashSet<String>();
-				for (String g: pGroupOptions.keySet()){
-					fields.addAll(pGroupOptions.get(g).keySet());
-				}
-				for (String referencedModelIdFieldName :fields){
-					participantingRoles.add(referencedModelIdFieldName.substring(0, referencedModelIdFieldName.length()-3));
-				}
+				t = startTimer("Getting Participating Roles when parameter == null");
+				participantingRoles = ref.getParticipatableRoles() ;
+				t.stop();
 			}
 		}
+		gettingParticipatingRoles.stop();
+		
+		Timer preparingPermissionQuery = startTimer("Preparing Permission query",Config.instance().isTimerAdditive());
 
 		Expression permissionQueryWhere = new Expression(Conjunction.AND);
 
@@ -126,27 +163,38 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		permissionQueryWhere.add(controllerActionWhere);
 
+		preparingPermissionQuery.stop(); 
+		
+		Timer selectingUserRole = startTimer("Selecting user Roles",Config.instance().isTimerAdditive());
 		Select userRoleQuery = new Select().from(UserRole.class).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute(UserRole.class);
+		selectingUserRole.stop();
+		
+		Timer preparingRoleWhere = startTimer("Preparing role Where clause",Config.instance().isTimerAdditive());
 		List<Integer> userRoleIds = new ArrayList<Integer>();
 		Expression roleWhere = new Expression(Conjunction.OR);
 		roleWhere.add(new Expression("role_id",Operator.EQ));
 		if (!userRoles.isEmpty()){
-			List<BindVariable> role_ids = new ArrayList<BindVariable>();
 			for (UserRole ur:userRoles){
-				role_ids.add(new BindVariable(ur.getRoleId()));
 				userRoleIds.add(ur.getRoleId());
 			}
-			roleWhere.add(new Expression("role_id",Operator.IN,role_ids.toArray()));
+			roleWhere.add(new Expression("role_id",Operator.IN,userRoleIds.toArray()));
 		}
+		preparingRoleWhere.stop();
+		
 		permissionQueryWhere.add(roleWhere);
+		
+		
+		Timer selectingRolePermissions = startTimer("Selecting from role permissions",Config.instance().isTimerAdditive());
 		
 		Select permissionQuery = new Select().from(RolePermission.class);
 		permissionQuery.where(permissionQueryWhere);
-
 		List<RolePermission> permissions = permissionQuery.execute();
 		
+		selectingRolePermissions.stop();
+		
 		if (selectedModel != null){ 
+			Timer removingPermissionRecords = startTimer("Remove permission records based on condition.",Config.instance().isTimerAdditive());
 			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
 				RolePermission permission = permissionIterator.next();
 				Reader condition = permission.getConditionText();
@@ -161,12 +209,14 @@ public class ParticipantControllerAccessExtension implements Extension{
 					}
 				}
 			}
-			
+			removingPermissionRecords.stop();
 		}
 
 		if (permissions.isEmpty()){
-			return ;
+			return true ;
 		}
+		Timer permissionsChecking = startTimer("Checking Permissions for being allowed",Config.instance().isTimerAdditive());
+		
 		Collections.sort(permissions, rolepermissionComparator);
 		
 		RolePermission firstPermission = permissions.get(0);
@@ -190,20 +240,46 @@ public class ParticipantControllerAccessExtension implements Extension{
 			
 			if (effective.isAllowed()){
 				if (effective.getRoleId() != null || firstPermission.getRoleId() == null){
-					return;
+					return true;
 				}else if (!userRoleIds.isEmpty() ){
 					//First role not null but effective.role is null.
 					//If User has atleast one more role that is not configured as disallowed then allowed.
-					return;
+					return true;
 				}else {
 					//Role level dissallowed will override.
 					break;
 				}
 			}
 		}
-		throw new AccessDeniedException();
+		permissionsChecking.stop();
+
+		return false;
 	}
-	Comparator<RolePermission> permissionGroupComparator = new Comparator<RolePermission>() {
+	public void _invoke(Object... context) {
+		User user = (User)context[0];
+		if (user != null && user.isAdmin()){
+			return;
+		}
+		String controllerPathElementName = (String)context[1];
+		String actionPathElementName = (String)context[2];
+		String parameterValue = (String)context[3];
+		Path tmpPath = (Path)context[4];
+		
+		if (tmpPath == null){
+			Timer constructPath = startTimer("Create Path",Config.instance().isTimerAdditive());
+			tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName + (parameterValue == null ? "" : "/"+parameterValue));
+			constructPath.stop();
+		}
+		if (!isControllerActionAccessibleAtAll(user, controllerPathElementName, actionPathElementName, tmpPath)){
+			//This is a cached Check.
+			throw new AccessDeniedException();
+		}
+		if (!isControllerActionAccessible(user, controllerPathElementName, actionPathElementName, parameterValue, tmpPath)){
+			throw new AccessDeniedException();
+		}
+	}
+	
+	private Comparator<RolePermission> permissionGroupComparator = new Comparator<RolePermission>() {
 		@Override
 		public int compare(RolePermission o1, RolePermission o2) {
 			int ret = 0;
@@ -220,7 +296,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		
 	};
-	Comparator<RolePermission> rolepermissionComparator = new Comparator<RolePermission>() {
+	private Comparator<RolePermission> rolepermissionComparator = new Comparator<RolePermission>() {
 
 		public int compare(RolePermission o1, RolePermission o2) {
 			int ret =  0; 

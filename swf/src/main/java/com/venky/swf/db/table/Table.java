@@ -9,9 +9,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
@@ -334,17 +336,22 @@ public class Table<M extends Model> {
     	return get(id,false,false);
     }
     public M get(int id,boolean locked,boolean wait) {
-    	Select q = new Select(locked,wait);
-    	q.from(getModelClass());
-        
-    	String idColumn = getReflector().getColumnDescriptor("id").getName();
-        q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
-        List<M> result = q.execute(getModelClass());
-        if (result.isEmpty()){
-            return null;
-        }else {
-            return result.get(0);
-        }
+    	Timer timer = Timer.startTimer();
+    	try {
+	    	Select q = new Select(locked,wait);
+	    	q.from(getModelClass());
+	        
+	    	String idColumn = getReflector().getColumnDescriptor("id").getName();
+	        q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
+	        List<M> result = q.execute(getModelClass());
+	        if (result.isEmpty()){
+	            return null;
+	        }else {
+	            return result.get(0);
+	        }
+    	}finally{
+    		timer.stop();
+    	}
     }
     
     public int truncate(){

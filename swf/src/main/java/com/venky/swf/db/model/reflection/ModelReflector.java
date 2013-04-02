@@ -1,5 +1,7 @@
 package com.venky.swf.db.model.reflection;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -8,8 +10,10 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.venky.cache.Cache;
@@ -50,6 +54,7 @@ import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -156,7 +161,7 @@ public class ModelReflector<M extends Model> {
     
 	@SuppressWarnings("unchecked")
 	public <T> T get(Model record, String fieldName){
-    	Timer timer = Timer.startTimer();
+    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         try {
             Method getter = getFieldGetter(fieldName);
             if (getter == null){
@@ -172,7 +177,7 @@ public class ModelReflector<M extends Model> {
     	
     }
     public void set(Model record, String fieldName, Object value){
-    	Timer timer = Timer.startTimer();
+    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         try {
             Method getter = getFieldGetter(fieldName);
             Method setter = getFieldSetter(fieldName);
@@ -192,7 +197,7 @@ public class ModelReflector<M extends Model> {
     }
 
 	public void loadMethods(List<Method> into, MethodMatcher matcher) {
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 			reflector.loadMethods(getModelClass(), into, matcher);
 		}finally{
@@ -260,7 +265,7 @@ public class ModelReflector<M extends Model> {
     private Map<String,String> fieldColumn = new IgnoreCaseMap<String>();
 
     private void loadAllFields(){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	        if (!allfields.isEmpty()){
 	            return;
@@ -293,7 +298,7 @@ public class ModelReflector<M extends Model> {
     }
     
     public List<String> getFields(){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	loadAllFields();
 	    	return new IgnoreCaseList(false,allfields);
@@ -425,7 +430,7 @@ public class ModelReflector<M extends Model> {
     }
     
     public List<String> getColumns(FieldMatcher matcher){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	List<String> fields = getFields(matcher);
 	    	List<String> columns = new IgnoreCaseList(false);
@@ -467,7 +472,7 @@ public class ModelReflector<M extends Model> {
 	}
     
     public String getFieldName(final String columnName){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	loadAllFields();
 	    	List<String> fields = columnFields.get(columnName);
@@ -543,7 +548,7 @@ public class ModelReflector<M extends Model> {
     };
     
     public String getFieldName(Method method){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 			return fieldNameCache.get(method);
 		}finally{
@@ -625,7 +630,7 @@ public class ModelReflector<M extends Model> {
     	}
     }
     public Method getFieldGetter(String fieldName){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 			loadFieldGetters();
 			Method getter = fieldGetterMap.get(fieldName);
@@ -649,7 +654,7 @@ public class ModelReflector<M extends Model> {
     	}
     }
     public Method getFieldSetter(String fieldName){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 			loadFieldSetters();
 	    	Method setter = fieldSetterMap.get(fieldName);
@@ -683,7 +688,7 @@ public class ModelReflector<M extends Model> {
     
     private Map<String,Map<Class<? extends Annotation>, Annotation>> annotationMap = new HashMap<String, Map<Class<? extends Annotation>,Annotation>>(); 
     private Map<Class<? extends Annotation>, Annotation> getAnnotationMap(Method getter){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	String signature = getSignature(getter);
 	    	Map<Class<? extends Annotation>, Annotation> map = annotationMap.get(signature);
@@ -717,7 +722,7 @@ public class ModelReflector<M extends Model> {
     }
 
     public boolean hasMultipleAccess(String columnName){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	List<String> fields = columnFields.get(columnName);
 	    	return (fields != null && fields.size() > 1);
@@ -814,7 +819,7 @@ public class ModelReflector<M extends Model> {
 
 		@Override
 		protected Cache<Class<? extends Annotation>, Annotation> getValue(final Method k) {
-			Timer timer = Timer.startTimer();
+			Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 				return new Cache<Class<? extends Annotation>, Annotation>() {
 					/**
@@ -825,7 +830,7 @@ public class ModelReflector<M extends Model> {
 					@Override
 					protected Annotation getValue(
 							Class<? extends Annotation> annotationClass) {
-						Timer timer = Timer.startTimer();
+						Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 						try {
 							return reflector.getAnnotation(getModelClass(),k,
 									annotationClass);
@@ -846,7 +851,7 @@ public class ModelReflector<M extends Model> {
      }
      
      public Class<? extends Model> getChildModelClass(Method method){
- 		Timer timer = Timer.startTimer();
+ 		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
  		try {
 	         Class<?> possibleChildClass = null;
 	         if (!getClassForests().contains(method.getDeclaringClass())){
@@ -875,7 +880,7 @@ public class ModelReflector<M extends Model> {
      }
      
      public List<String> getReferenceFields(Class<? extends Model> referredModelClass){
- 		Timer timer = Timer.startTimer();
+ 		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
  		try {
  			List<String> names = new ArrayList<String>();
  			for (Method referredModelGetter : getReferredModelGetters(referredModelClass)){
@@ -889,7 +894,7 @@ public class ModelReflector<M extends Model> {
      
      @SuppressWarnings("unchecked")
      public List<Method> getReferredModelGetters(final Class<? extends Model> referredModelClass){
- 		Timer timer = Timer.startTimer();
+ 		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
  		try {
 	    	 ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
 	    	 List<Method> referredModelGetters = getReferredModelGetters();
@@ -907,7 +912,7 @@ public class ModelReflector<M extends Model> {
 
 	@SuppressWarnings("unchecked")
 	public Class<? extends Model> getReferredModelClass(Method referredModelGetter) {
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 			if (!getClassForests().contains(referredModelGetter.getDeclaringClass())) {
 				return null;
@@ -1015,7 +1020,7 @@ public class ModelReflector<M extends Model> {
 
     public static class GetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
-			Timer timer = Timer.startTimer();
+			Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 	            String mName = method.getName();
 	            Class<?> retType = method.getReturnType();
@@ -1051,7 +1056,7 @@ public class ModelReflector<M extends Model> {
     public static class FieldGetterMatcher extends GetterMatcher{ 
         @Override
         public boolean matches(Method method){
-    		Timer timer = Timer.startTimer();
+    		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         	try {
     			if (super.matches(method) && 
                         !Model.class.isAssignableFrom(method.getReturnType()) &&
@@ -1067,7 +1072,7 @@ public class ModelReflector<M extends Model> {
 
     public static class SetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
-        	Timer timer = Timer.startTimer();
+        	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         	try {
 	            String mName = method.getName();
 	            Class<?> retType = method.getReturnType();
@@ -1091,7 +1096,7 @@ public class ModelReflector<M extends Model> {
     public static class FieldSetterMatcher extends SetterMatcher{ 
         @Override
         public boolean matches(Method method){
-        	Timer timer = Timer.startTimer();
+        	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 				if (super.matches(method)
 						&& Database.getJdbcTypeHelper().getTypeRef(
@@ -1113,7 +1118,7 @@ public class ModelReflector<M extends Model> {
     
     private class ReferredModelGetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
-            Timer timer = Timer.startTimer();
+            Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 				return getReferredModelClass(method) != null;
 			} finally {
@@ -1129,7 +1134,7 @@ public class ModelReflector<M extends Model> {
     
     private class ParticipantModelGetterMatcher extends ReferredModelGetterMatcher{
         public boolean matches(Method method){
-            Timer timer = Timer.startTimer();
+            Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 				if (super.matches(method)){
 					return isAnnotationPresent(getFieldGetter(getReferenceField(method)), PARTICIPANT.class);
@@ -1174,6 +1179,17 @@ public class ModelReflector<M extends Model> {
 	};
 	public String getParticipatingRole(String referencedModelIdFieldName){
 		return participatingRole.get(referencedModelIdFieldName);
+	}
+	
+	private Set<String> participatableRoles = null;
+	public Set<String> getParticipatableRoles(){
+		if (participatableRoles == null){
+			participatableRoles = new HashSet<String>();
+			for (Method m : getParticipantModelGetters()){
+				participatableRoles.add(getParticipatingRole(getReferenceField(m)));
+			}
+		}
+		return new HashSet<String>(participatableRoles);
 	}
 
 	public static void dispose() {

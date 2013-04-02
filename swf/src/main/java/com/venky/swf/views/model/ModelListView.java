@@ -4,6 +4,8 @@
  */
 package com.venky.swf.views.model;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,6 +28,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
@@ -164,7 +167,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         }
     }
     protected void setWidths(Row header,int numActions){
-    	Timer timer = Timer.startTimer("Setting widths");
+    	Timer timer = startTimer("Setting widths",Config.instance().isTimerAdditive());
     	try { 
     		_setWidths(header, numActions);
     	}finally {
@@ -206,7 +209,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         return showAction;
 	}
 	protected void addLineLevelActions(Row row, M record, BitSet showAction) {
-		Timer timer = Timer.startTimer("Adding Line Level Actions");
+		Timer timer = startTimer("Adding Line Level Actions",Config.instance().isTimerAdditive());
 		try {
 			_addLineLevelActions(row, record, showAction);
 		}finally {
@@ -214,7 +217,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		}
 	}
 	protected void _addLineLevelActions(Row row, M record, BitSet showAction) {
-    	Timer timer = Timer.startTimer("paintAllActions");
     	List<Method> singleRecordActions = getSingleRecordActions();
         for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
         	Method m = singleRecordActions.get(actionIndex);
@@ -247,13 +249,18 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
             	row.createColumn();
             }
         }
-        timer.stop();
-
 	}
-	
 	protected void addFields(Row row, M record){
+		Timer addingFields = startTimer("Adding Fields",Config.instance().isTimerAdditive());
+		try {
+			_addFields(row, record);
+		}finally {
+			addingFields.stop();
+		}
+	}
+	protected void _addFields(Row row, M record){
         for (String fieldName : getIncludedFields()) {
-            Timer timer = Timer.startTimer("paintField." + fieldName);
+            Timer timer = startTimer("paintField." + fieldName,Config.instance().isTimerAdditive());
             try {
                 Column column = row.createColumn(); 
 
@@ -314,7 +321,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		
 	}
 	protected void addRecordToTable(M record, BitSet showAction, Table table){
-		Timer timer = Timer.startTimer("Adding one record to table");
+		Timer timer = startTimer("Adding one record to table",Config.instance().isTimerAdditive());
 		try {
 			_addRecordToTable(record, showAction, table);
 		}finally {
@@ -323,11 +330,21 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 	}
     protected void _addRecordToTable(M record, BitSet showAction, Table table){
     	User u = (User)getPath().getSessionUser();
-    	if (u != null && !record.isAccessibleBy(u,getModelClass())){
-    		return;
+    	Timer recordAccessibility = startTimer("Checking Record accessibility",Config.instance().isTimerAdditive());
+    	try {
+	    	if (u != null && !record.isAccessibleBy(u,getModelClass())){
+	    		return;
+	    	}
+    	}finally {
+    		recordAccessibility.stop();
     	}
-    	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
-    		return;
+    	Timer checkingIndexActionAccessibility = startTimer("Checking index action Accessibility",Config.instance().isTimerAdditive());
+    	try {
+	    	if (record.getId() > 0  && !getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
+	    		return;
+	    	}
+    	}finally {
+    		checkingIndexActionAccessibility.stop();
     	}
         Row row = table.createRow();
         addLineLevelActions(row, record, showAction);
@@ -336,7 +353,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     private OrderBy orderBy = null;
     @Override
     protected void createBody(_IControl b) {
-    	Timer timer = Timer.startTimer();
+    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
     	try {
     		_createBody(b);
     	}finally {
@@ -368,11 +385,13 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         
         addHeadings(header);
         
+        Timer timeToAddAllRecords = startTimer("Time to add allRecords" );
         for (M record : records) {
         	addRecordToTable(record,showAction,table);        
     	}
+        timeToAddAllRecords.stop();
         
-        Timer removingActions = Timer.startTimer("Removing actions not needed from table");
+        Timer removingActions = startTimer("Removing actions not needed from table",Config.instance().isTimerAdditive());
         int numActionsRemoved = 0 ;
         int numActions = getSingleRecordActions().size();
         for (int i = 0 ; i < numActions ; i ++ ){

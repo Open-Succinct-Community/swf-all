@@ -4,12 +4,16 @@
  */
 package com.venky.swf.views;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.extension.Registry;
 import com.venky.swf.path._IPath;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
@@ -39,8 +43,17 @@ public abstract class HtmlView extends View{
     @Override
     public String toString(){
         Html html = new Html();
-        createHtml(html);
-        return html.toString();
+        
+        Timer htmlCreation = startTimer("html creation.",Config.instance().isTimerAdditive());
+    	createHtml(html);
+        htmlCreation.stop();
+
+        Timer htmlToString = startTimer("html rendering.",Config.instance().isTimerAdditive());
+        try {
+        	return html.toString();
+        }finally {
+        	htmlToString.stop();
+        }
     }
 
 

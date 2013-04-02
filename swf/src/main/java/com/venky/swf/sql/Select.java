@@ -1,5 +1,7 @@
 package com.venky.swf.sql;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,7 +11,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
-
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
@@ -211,7 +212,7 @@ public class Select extends SqlStatement{
         	result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
         	
         	if (result == null){
-	            Timer queryTimer = Timer.startTimer(getRealSQL());
+	            Timer queryTimer = startTimer(getRealSQL());
 	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();

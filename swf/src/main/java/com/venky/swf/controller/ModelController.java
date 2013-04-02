@@ -4,6 +4,8 @@
  */
 package com.venky.swf.controller; 
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -114,7 +116,7 @@ public class ModelController<M extends Model> extends Controller {
     @Override
     @RequireLogin(true)
     public View index() {
-    	Timer index = Timer.startTimer(getReflector().getTableName() + ".index");
+    	Timer index = startTimer(getReflector().getTableName() + ".index");
     	try {
 	    	if (indexedModel){
 	    		return search();
@@ -418,7 +420,7 @@ public class ModelController<M extends Model> extends Controller {
     	return performPostAction(new SaveAction());
     }
 
-    protected View performPostAction(Action<M> action){
+	protected View performPostAction(Action<M> action){
         Map<String,Object> formFields = getFormFields();
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
@@ -600,17 +602,6 @@ public class ModelController<M extends Model> extends Controller {
 		boolean isNullable = !reflector.isFieldMandatory(autoCompleteFieldName); 
 		
         return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value,isNullable);
-    }
-    
-    protected <K extends Model> void save(K record, Class<K> modelClass){
-    	super.save(record, modelClass);
-    	if (!Path.canAccessControllerAction(getPath().getSessionUser(),getControllerPathElementName(modelClass),"save",String.valueOf(record.getId()))){
-    		Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
-    		throw new AccessDeniedException();	
-		}
-    }
-    protected String getControllerPathElementName(Class<? extends Model> modelClass){
-    	return Database.getTable(modelClass).getTableName().toLowerCase();
     }
     
     @Override

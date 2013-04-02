@@ -1,11 +1,11 @@
 package com.venky.swf.db.extensions;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -59,7 +59,7 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		if (allowedValues != null){ 
 			List<Integer> existing = participatingOptions.get(fieldName);
 			if (existing == null){
-				existing = new ArrayList<Integer>();
+				existing = new SequenceSet<Integer>();
 				participatingOptions.put(fieldName, existing);
 			}
 			existing.addAll(allowedValues);

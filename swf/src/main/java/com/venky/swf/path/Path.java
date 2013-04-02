@@ -4,6 +4,8 @@
  */
 package com.venky.swf.path;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -20,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -39,11 +40,9 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
-import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Depends;
-import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
@@ -452,17 +451,6 @@ public class Path implements _IPath{
     	return currentUser != null ; 
     }
     
-    public boolean isSecuredAction(Method m){
-    	boolean requireLogin = true; 
-    	RequireLogin ur = getControllerReflector().getAnnotation(m,RequireLogin.class);
-    	
-    	if (ur != null){
-    		requireLogin = ur.value();
-    	}
-
-    	return requireLogin;
-    }
-    
     private void createUserSession(User user,boolean autoInvalidate){
     	HttpSession session = getRequest().getSession(true);
     	session.setAttribute("user", user);
@@ -557,9 +545,9 @@ public class Path implements _IPath{
     	MultiException ex = null;
     	List<Method> methods = getActionMethods(action(), parameter());
     	for (Method m :methods){
-        	Timer timer = Timer.startTimer(); 
+        	Timer timer = startTimer(null,Config.instance().isTimerAdditive()); 
         	try {
-            	boolean securedAction = isSecuredAction(m) ;
+            	boolean securedAction = getControllerReflector().isSecuredActionMethod(m) ;
             	if (securedAction){
             		if (!isRequestAuthenticated()){
             			User guest = getGuestUser();
@@ -614,23 +602,13 @@ public class Path implements _IPath{
     	}
     	return cref;
     }
+    public boolean isActionSecure(String actionPathElement){
+    	return getControllerReflector().isActionSecure(actionPathElement);
+    }
     
-    public List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
-    	List<Method> methods = getControllerReflector().getMethods(new MethodMatcher() {
-			public boolean matches(Method method) {
-				boolean matches = false;
-				Class<?>[] parameterTypes = method.getParameterTypes();
-				
-				if (parameterTypes.length <= 1){
-					matches = method.getName().equals(actionPathElement) && View.class.isAssignableFrom(method.getReturnType());
-					if (matches && parameterTypes.length == 1){
-						matches = (parameterTypes[0] == String.class || parameterTypes[0] == int.class);
-					}
-				}
-				
-				return matches;
-			}
-		});
+    private List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
+    	List<Method> methods = getControllerReflector().getActionMethods(actionPathElement);
+    	
     	final int targetParameterLength = ObjectUtil.isVoid(parameterPathElement)? 0 : 1;
     	boolean parameterIsNumeric = false;
 
@@ -664,7 +642,7 @@ public class Path implements _IPath{
     	return methods;
     }
     public boolean canAccessControllerAction(String actionPathElement,String parameterPathElement){
-    	boolean accessible =  canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement);
+    	boolean accessible =  canAccessControllerAction(getSessionUser(), controllerPathElement(), actionPathElement, parameterPathElement,this);
     	if (!accessible) {
     		return accessible;
     	}
@@ -689,9 +667,9 @@ public class Path implements _IPath{
     	return accessible;
     }
 
-    public static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement){
+    public static boolean canAccessControllerAction(User user,String controllerPathElement,String actionPathElement,String parameterPathElement,Path path){
     	try {
-    		ensureControllerActionAccess(user,controllerPathElement,actionPathElement,parameterPathElement);
+    		ensureControllerActionAccess(user,controllerPathElement,actionPathElement,parameterPathElement,path);
     	}catch (AccessDeniedException ex){
     		return false;
     	}
@@ -699,10 +677,10 @@ public class Path implements _IPath{
     }
     
     private void ensureControllerActionAccess() throws AccessDeniedException{
-    	ensureControllerActionAccess(getSessionUser(),controllerPathElement(),action(),parameter()); 
+    	ensureControllerActionAccess(getSessionUser(),controllerPathElement(),action(),parameter(),this); 
     }
-    private static void ensureControllerActionAccess(User user,String controllerPathElement,String actionPathElement , String parameterPathElement) throws AccessDeniedException{
-    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, user, controllerPathElement,actionPathElement,parameterPathElement);
+    private static void ensureControllerActionAccess(User user,String controllerPathElement,String actionPathElement , String parameterPathElement,Path path) throws AccessDeniedException{
+    	Registry.instance().callExtensions(ALLOW_CONTROLLER_ACTION, user, controllerPathElement,actionPathElement,parameterPathElement, path);
     }
     
 

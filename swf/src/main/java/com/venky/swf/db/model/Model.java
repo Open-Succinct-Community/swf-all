@@ -7,6 +7,7 @@ package com.venky.swf.db.model;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
@@ -81,9 +82,9 @@ public interface Model extends _Identifiable {
     public boolean isAccessibleBy(User user);
     public boolean isAccessibleBy(User user, Class<? extends Model> asModel);
     
-    public List<String> getParticipatingRoles(User user) throws AccessDeniedException;
-    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel) throws AccessDeniedException;
-    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions) throws AccessDeniedException;
+    public Set<String> getParticipatingRoles(User user) throws AccessDeniedException;
+    public Set<String> getParticipatingRoles(User user,Class<? extends Model> asModel) throws AccessDeniedException;
+    public Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions) throws AccessDeniedException;
     
     public Record getRawRecord();
     public <M extends Model> M cloneProxy();

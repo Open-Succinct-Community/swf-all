@@ -1,5 +1,7 @@
 package com.venky.swf.db.table;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -65,7 +67,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private static final Level defaultLevel = Level.FINE;
 	
 	public SequenceSet<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		StringBuilder debug = new StringBuilder();
 		try {
 			if (where != null && where.isEmpty()) {

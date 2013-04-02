@@ -1,7 +1,8 @@
 package com.venky.swf.db.model;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -101,6 +102,7 @@ public class UserImpl extends ModelImpl<User>{
 	}; 
 	
 	public <R extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<R> modelClass){
+		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName());
 		Set<String> tables = new HashSet<String>(relatedTables.get(modelClass));
 		tables.retainAll(Database.getInstance().getCurrentTransaction().getTablesChanged());
 		Cache<Class<? extends Model>,Cache<String,Map<String,List<Integer>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
@@ -120,13 +122,13 @@ public class UserImpl extends ModelImpl<User>{
 		if (!tables.isEmpty()){
 			baseParticipationOptions.remove(modelClass);
 		}
-
+		timer.stop();
 		return baseParticipationOptions.get(modelClass);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
-		Timer timer = Timer.startTimer();
+		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
 		try {
 			Cache<String,Map<String, List<Integer>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Integer>>>(){
 
@@ -200,10 +202,7 @@ public class UserImpl extends ModelImpl<User>{
 							filter = new Select.AccessibilityFilter<Model>(user);
 						}
 						List<? extends Model> referables = q.execute(referredModelClass,filter);
-						List<Integer> ids = new ArrayList<Integer>();
-						for (Model referable:referables){
-							ids.add(referable.getId());
-						}
+						List<Integer> ids = DataSecurityFilter.getIds(referables);
 						mapParticipatingOptions.put(referredModelIdFieldName,ids);
 					}
 				}

@@ -51,9 +51,9 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     protected Menu userMenu(User user){
         Menu userMenu = new Menu();
         
-        if (Path.canAccessControllerAction(user, "users", "edit", String.valueOf(user.getId()))){
+        if (Path.canAccessControllerAction(user, "users", "edit", String.valueOf(user.getId()),null)){
             userMenu.createMenuItem("Settings", "/users/edit/" +user.getId());
-        }else if (Path.canAccessControllerAction(user, "users", "show", String.valueOf(user.getId()))){
+        }else if (Path.canAccessControllerAction(user, "users", "show", String.valueOf(user.getId()),null)){
         	userMenu.createMenuItem("Settings", "/users/show/" +user.getId());
         }
         
@@ -77,7 +77,8 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
 
     	String controllerPathName = table.getTableName().toLowerCase();
         String target = "/" + controllerPathName  ;
-        if (Path.canAccessControllerAction(user,controllerPathName,"index",null) ){
+        
+        if (Path.canAccessControllerAction(user,controllerPathName,"index",null,null) ){
         	Menu subMenu = appMenu.getSubmenu(menuName);
             String modelName = modelClass.getSimpleName();
         	subMenu.createMenuItem(modelName, target);

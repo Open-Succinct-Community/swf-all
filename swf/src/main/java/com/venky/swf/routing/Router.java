@@ -14,6 +14,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -180,7 +181,7 @@ public class Router extends AbstractHandler {
     	}
 		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
 		
-    	Timer timer = Timer.startTimer("handleRequest",true);
+    	Timer timer = startTimer("handleRequest",Config.instance().isTimerAdditive());
     	try {
 	        HttpSession session  = request.getSession(false); 
 	        _IView view = null;
@@ -200,7 +201,7 @@ public class Router extends AbstractHandler {
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
 	            }
-	            Timer viewWriteTimer = Timer.startTimer(target+".view_write",true);
+	            Timer viewWriteTimer = startTimer(target+".view_write");
 	            try {
 	            	view.write();
 	            }finally{

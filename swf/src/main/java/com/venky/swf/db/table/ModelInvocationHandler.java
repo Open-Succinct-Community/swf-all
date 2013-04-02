@@ -4,6 +4,8 @@
  */
 package com.venky.swf.db.table;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +14,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.MultiException;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
 import com.venky.swf.sql.Expression;
@@ -148,7 +152,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	try {
 	        	Method inModelImplClass = impl.getClass().getMethod(mName, parameters); 
 	        	if (retType.isAssignableFrom(inModelImplClass.getReturnType())){
-					Timer timer = Timer.startTimer(inModelImplClass.toString());
+					Timer timer = startTimer(inModelImplClass.toString());
 	        		try {
 	        			return inModelImplClass.invoke(impl, args);
 	        		}catch(InvocationTargetException ex){
@@ -186,7 +190,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     	Method inImplClass = implClass.getMethod(mName, parameters);
     	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
-	        Timer timer = Timer.startTimer(inImplClass.toString());
+	        Timer timer = startTimer(inImplClass.toString());
 	        try {
 	        	return inImplClass.invoke(implObject, args);
 	        }catch (InvocationTargetException ex){
@@ -275,39 +279,44 @@ public class ModelInvocationHandler implements InvocationHandler {
     public boolean isAccessibleBy(User user){
 		return isAccessibleBy(user, getReflector().getModelClass());
     }
-    public List<String> getParticipatingRoles(User user){
+    public Set<String> getParticipatingRoles(User user){
     	return getParticipatingRoles(user,getReflector().getModelClass());
     }
-    public List<String> getParticipatingRoles(User user,Class<? extends Model> asModel){
+    public Set<String> getParticipatingRoles(User user,Class<? extends Model> asModel){
     	if (!getReflector().reflects(asModel)){
     		throw new AccessDeniedException(); 
     	}
     	return getParticipatingRoles(user, user.getParticipationOptions(asModel));
     }
-    public List<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
-    	ModelReflector<? extends Model> reflector = getReflector();
-    	List<String> participantingRoles = new ArrayList<String>();
-		for (String participantRoleGroup : pGroupOptions.keySet()){
-			Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
-			for (String referencedModelIdFieldName :pOptions.keySet()){
-				Integer referenceValue = reflector.get(getProxy(),referencedModelIdFieldName);
-				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
-				}
-			}
-			if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
-				throw new AccessDeniedException(); // User is not a participant on the model.
-			}
-		}
-		return participantingRoles;
+    private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
+    	Timer timer = startTimer();
+    	try {
+        	ModelReflector<? extends Model> reflector = getReflector();
+        	Set<String> participantingRoles = new HashSet<String>();
+    		for (String participantRoleGroup : pGroupOptions.keySet()){
+    			Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
+    			for (String referencedModelIdFieldName :pOptions.keySet()){
+    				Integer referenceValue = reflector.get(getProxy(),referencedModelIdFieldName);
+    				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+    					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
+    				}
+    			}
+    			if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+    				throw new AccessDeniedException(); // User is not a participant on the model.
+    			}
+    		}
+    		return participantingRoles;
+    	}finally{
+    		timer.stop();
+    	}
     }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
-    	Timer timer = Timer.startTimer();
+    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
     	try {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;
 	    	}
-	    	List<String> pRoles = getParticipatingRoles(user,asModel);
+	    	Set<String> pRoles = getParticipatingRoles(user,asModel);
 	    	return (pRoles != null);// It is always true. returning false depends on AccessDeniedException being thrown.
     	}catch(AccessDeniedException ex){
     		return false;
