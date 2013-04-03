@@ -46,6 +46,7 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -173,7 +174,24 @@ public class ModelController<M extends Model> extends Controller {
     
     public static final int MAX_LIST_RECORDS = 30 ;
 	protected void rewriteQuery(Map<String,Object> formData){
+		String strQuery = StringUtil.valueOf(formData.get("q"));
+		StringBuilder q = new StringBuilder();
 		
+		if (!ObjectUtil.isVoid(strQuery) && !strQuery.contains(":")){
+			for (String f:getReflector().getIndexedFields()){
+				if (q.length() > 0 ){
+					q.append(" OR ");
+				}
+				Method referredModelIdGetter = getReflector().getFieldGetter(f);
+				if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
+					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(strQuery);
+				}else {
+					q.append(f).append(":").append(strQuery);
+				}
+			}
+			formData.put("q", q.toString());
+		}
+		Config.instance().getLogger(getClass().getName()).fine(formData.toString());
 	}
 	
 	public View list(){
