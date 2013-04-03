@@ -13,7 +13,6 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
-import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.page.Menu;
 
@@ -28,32 +27,33 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         
         User user = (User)path.getSessionUser();
         if (user != null){
-        	createUserMenu(appmenu,user);
+        	createUserMenu(path,appmenu,user);
         }
-        createApplicationMenu(appmenu,user);
+        createApplicationMenu(path,appmenu,user);
         return appmenu;
     }
-    protected void createUserMenu(Menu appmenu, User user){
-    	Menu userMenu = userMenu(user);
+    protected void createUserMenu(_IPath path, Menu appmenu, User user){
+    	Menu userMenu = userMenu(path,user);
         userMenu.createMenuItem("Signout", "/logout");
         appmenu.createMenuItem("Welcome " + user.getName(), userMenu);
     }
 
-    protected void createApplicationMenu(Menu appmenu, User user){
+    protected void createApplicationMenu(_IPath path,Menu appmenu, User user){
 		Set<String> tableNames = Database.getTableNames();
         for (String tableName : tableNames){
 			Table<?> table = Database.getTable(tableName);
-			addMenuItem(user,appmenu, table);
+			addMenuItem(path,user,appmenu, table);
         }
         return ;
     }
 
-    protected Menu userMenu(User user){
+    protected Menu userMenu(_IPath path, User user){
         Menu userMenu = new Menu();
+        _IPath userPath = path.getModelAccessPath(User.class);
         
-        if (Path.canAccessControllerAction(user, "users", "edit", String.valueOf(user.getId()),null)){
+        if (userPath.canAccessControllerAction("edit", String.valueOf(user.getId()))){
             userMenu.createMenuItem("Settings", "/users/edit/" +user.getId());
-        }else if (Path.canAccessControllerAction(user, "users", "show", String.valueOf(user.getId()),null)){
+        }else if (userPath.canAccessControllerAction("show", String.valueOf(user.getId()))){
         	userMenu.createMenuItem("Settings", "/users/show/" +user.getId());
         }
         
@@ -61,7 +61,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     }
     
 
-    protected void addMenuItem(User user, Menu appMenu, Table<?> table){
+    protected void addMenuItem(_IPath path,User user, Menu appMenu, Table<?> table){
     	Class<? extends Model> modelClass = table.getModelClass();
     	ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
         MENU menu = ref.getAnnotation(MENU.class);
@@ -74,14 +74,12 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     	if (ObjectUtil.isVoid(menuName)){
     		return;
     	}
-
-    	String controllerPathName = table.getTableName().toLowerCase();
-        String target = "/" + controllerPathName  ;
+    	_IPath modelAccessPath = path.getModelAccessPath(modelClass);
         
-        if (Path.canAccessControllerAction(user,controllerPathName,"index",null,null) ){
+        if (modelAccessPath.canAccessControllerAction("index")){
         	Menu subMenu = appMenu.getSubmenu(menuName);
             String modelName = modelClass.getSimpleName();
-        	subMenu.createMenuItem(modelName, target);
+        	subMenu.createMenuItem(modelName, modelAccessPath.getTarget());
         }
     }
     

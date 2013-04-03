@@ -29,7 +29,6 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -347,9 +346,6 @@ public class Controller {
     	save(record,modelClass);
     }
     
-    protected final String getControllerPathElementName(Class<? extends Model> modelClass){
-    	return Database.getTable(modelClass).getTableName().toLowerCase();
-    }
 
     protected <M extends Model> void save(M record, Class<M> modelClass) {
         if (record.getRawRecord().isNewRecord()){
@@ -364,34 +360,12 @@ public class Controller {
         }else {
         	throw new AccessDeniedException(modelClass.getSimpleName());
         }
-    	Path tmpPath = null ;
-    	if (getControllerPathElementName(modelClass).equals(getPath().controllerPathElement())) {
-    		tmpPath = getPath();
-    	}else {
-    		tmpPath = pathCache.get(modelClass);
-    	}
-    	if (!Path.canAccessControllerAction(getPath().getSessionUser(),getControllerPathElementName(modelClass),"save",
-    			String.valueOf(record.getId()),tmpPath)){
+    	Path tmpPath = getPath().getModelAccessPath(modelClass);
+    	if (!tmpPath.canAccessControllerAction("save",String.valueOf(record.getId()))){
     		Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
     		throw new AccessDeniedException();	
 		}
 	}
-    private Cache<Class<? extends Model>, Path> pathCache = new Cache<Class<? extends Model>, Path>() {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -1430185913473112366L;
-
-		@Override
-		protected Path getValue(Class<? extends Model> modelClass) {
-			Path p = new Path("/" + getControllerPathElementName(modelClass) + "/index");
-			p.setSession(getPath().getSession());
-			p.setRequest(getPath().getRequest());
-			p.setResponse(getPath().getResponse());
-			return p;
-		}
-	};
-
 
 
 
@@ -511,18 +485,8 @@ public class Controller {
 		public boolean pass(M record) {
 			Timer timer = startTimer("DefaultModelFilter.pass",Config.instance().isTimerAdditive());
 			try {
-				boolean pass = defaultFilter.pass(record) ;
-				if (pass){
-					Path path = getPath();
-					if (!path.controllerPathElement().equals(getControllerPathElementName(modelClass))){
-						path = pathCache.get(modelClass);
-					}
-					
-					pass = Path.canAccessControllerAction(getSessionUser(),
-						Database.getTable(modelClass).getTableName().toLowerCase(),
-						"index", StringUtil.valueOf(record.getId()),path);
-				}
-				return pass;
+				return defaultFilter.pass(record) && getPath().getModelAccessPath(modelClass).canAccessControllerAction("index",
+						StringUtil.valueOf(record.getId()));
 			}finally{
 				timer.stop();
 			}

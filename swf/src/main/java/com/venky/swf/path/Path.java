@@ -723,6 +723,7 @@ public class Path implements _IPath{
     	path.setSession(getSession());
     	return path;
     }
+    
     private List<Method> getReferredModelGetters(Map<String,List<Method>> referredModelGettersMap, String referredTableName){
     	List<Method> rmg = referredModelGettersMap.get(referredTableName);
     	if (rmg == null){
@@ -846,4 +847,35 @@ public class Path implements _IPath{
     		}
 		}
 	}
+	
+    public final String getControllerPathElementName(Class<? extends Model> modelClass){
+    	return Database.getTable(modelClass).getTableName().toLowerCase();
+    }
+
+    public <M extends Model> Path getModelAccessPath(Class<M> modelClass){
+    	return pathCache.get(modelClass);
+    }
+    
+    private Cache<Class<? extends Model>, Path> pathCache = new Cache<Class<? extends Model>, Path>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -1430185913473112366L;
+
+		@Override
+		protected Path getValue(Class<? extends Model> modelClass) {
+			Path p = Path.this; 
+			if (!p.controllerPathElement().equals(getControllerPathElementName(modelClass))){
+				Path newPath = new Path("/" + getControllerPathElementName(modelClass) + "/index");
+				newPath.setSession(p.getSession());
+				newPath.setRequest(p.getRequest());
+				newPath.setResponse(p.getResponse());
+				p = newPath;
+			}
+			return p;
+		}
+	};
+
+    
+
 }

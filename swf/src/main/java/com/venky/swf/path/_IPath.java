@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.swf.db.model.Model;
 import com.venky.swf.views._IView;
 
 public interface _IPath {
@@ -30,6 +31,7 @@ public interface _IPath {
 	boolean canAccessControllerAction(String action);
 	boolean canAccessControllerAction(String action, String parameter);
 	_IPath createRelativePath(String toUrl);
+	<M extends Model> _IPath getModelAccessPath(Class<M> modelClass);
 	Object getSessionUser();
 	Integer getSessionUserId();
 	

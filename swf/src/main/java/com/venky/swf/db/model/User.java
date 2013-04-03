@@ -42,6 +42,7 @@ public interface User extends Model{
     public String getName();
     public void setName(String name);
     
+    @Index
     public String getLongName();
     public void setLongName(String name);
 
