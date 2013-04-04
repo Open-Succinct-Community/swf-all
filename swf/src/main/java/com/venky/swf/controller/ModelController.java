@@ -230,6 +230,14 @@ public class ModelController<M extends Model> extends Controller {
 	protected Class<M> getModelClass() {
 		return modelClass;
 	}
+    @RequireLogin(false)
+    public RedirectorView back(){
+    	RedirectorView v = super.back();
+    	String url = v.getRedirectUrl();
+		url = url+"?_select_tab="+ getModelClass().getSimpleName();
+    	v.setRedirectUrl(url);
+    	return v;
+    }
 
     @SingleRecordAction(icon="/resources/images/show.png")
     @Depends("index")
@@ -632,5 +640,5 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	};
     }
-    
+
 }

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 
 import com.venky.core.util.ObjectUtil;
@@ -81,8 +82,13 @@ public class JettyServer {
 		}else {
 			router.setLoader(getClass().getClassLoader());
 		}
+		
+		ContextHandler ctxHandler = new ContextHandler();
+		ctxHandler.setHandler(router);
+
 		SessionHandler sessionHandler = new SessionHandler();
-		sessionHandler.setHandler(router);
+		sessionHandler.setHandler(ctxHandler);
+		
 		server.setHandler(sessionHandler);
 		server.start();
 		server.join();

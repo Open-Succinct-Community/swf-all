@@ -196,8 +196,7 @@ public class Controller {
         p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
         return new BytesView(getPath(), baos.toByteArray(),MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
-    
-    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
+    public <M extends Model> XMLDocument autocompleteXML(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
@@ -242,6 +241,10 @@ public class Controller {
                 throw new RuntimeException(ex);
             }
         }
+        return doc;
+    }
+    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
+    	XMLDocument doc = autocompleteXML(modelClass, baseWhereClause, fieldName, value, isNullable);
         return new BytesView(path, String.valueOf(doc).getBytes());
     }
     private void createEntry(XMLElement root,Object name, Object id){
@@ -378,7 +381,8 @@ public class Controller {
 	    	@SuppressWarnings("unchecked")
 			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
 	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName)){
+	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) || 
+	    			!reflector.isFieldMandatory(referredModelIdFieldName) ){
 	    		continue;
 	    	}
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
@@ -388,6 +392,7 @@ public class Controller {
 				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
 					continue;
 				}
+				
 				List<Integer> idoptions = null ;
 				Integer id = null; 
 
@@ -400,7 +405,6 @@ public class Controller {
 					if (idoptions.size() == 1){
 						id = idoptions.get(0);
 					}else if (idoptions.size() == 2 && idoptions.contains(null)){
-						//If a field is nullable but has only one not null participating option, default the non null value. (Usability)
 						for (Integer i:idoptions){
 							if (i != null){
 								id = i;

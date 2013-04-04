@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
@@ -17,6 +19,7 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
@@ -126,7 +129,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     protected void createBody(_IControl body) {
     	Form form = new Form();
     	body.addControl(form);
-        form.setAction(getPath().controllerPath(), getFormAction());
+    	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
+    	Config.instance().getLogger(getClass().getName()).fine("action:" + action);
+    	
+        form.setAction(action, getFormAction());
         form.setMethod(SubmitMethod.POST);
         
     	Table table = new Table();
