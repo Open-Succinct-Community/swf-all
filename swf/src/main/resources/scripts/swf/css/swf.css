@@ -113,3 +113,8 @@ div.tabs  .ui-helper-reset {
   font-size: 80%;
   font-weight: normal;
 }
+td .textbox {
+  display: block;
+  height: 100%;
+  width:99%;
+}

@@ -137,7 +137,7 @@ public class PagesController extends ModelController<Page>{
 	}
 	
 	@Override
-    protected View createListView(List<Page> records){
+    protected View constructModelListView(List<Page> records){
 		if (records.size() > 1){
 			return new PageListView(getPath(), records);
 		}else if (records.size() == 1){

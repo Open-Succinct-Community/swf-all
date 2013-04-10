@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -288,7 +289,8 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 		}else if (m.size() == 0){
 			return null;
 		}else {
-			throw new RuntimeException("Unique Record not found in " + reflector.getTableName() + " for " + where.getRealSQL() + " with heading Values " + headingValues.toString());
+			Logger.getLogger(XLSModelReader.class.getName()).warning("Import Failed: " + reflector.getTableName() + " cannot be identified for " + where.getRealSQL() + " with heading Values " + headingValues.toString());
+			throw new RuntimeException("Import Failed: " + reflector.getModelClass().getSimpleName() + " data is incomplete!");
 		}
 	}
 

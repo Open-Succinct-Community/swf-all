@@ -19,12 +19,13 @@ public class IssuesController extends ModelController<Issue>{
 	public IssuesController(Path path) {
 		super(path);
 	}
-	protected HtmlView createListView(List<Issue> records){
+	protected HtmlView constructModelListView(List<Issue> records){
 		return new ModelListView<Issue>(getPath(), Issue.class, new String[]{"TITLE","PRIORITY","STATUS","ASSIGNED_TO_ID","RESOLUTION"}, records);
     }
 	
-	protected ModelEditView<Issue> createBlankView(Path path , Issue record){
-		ModelEditView<Issue> mev = super.createBlankView(path, record);
+	@Override
+	protected ModelEditView<Issue> createBlankView(Path path , Issue record,String formAction){
+		ModelEditView<Issue> mev = super.createBlankView(path, record,formAction);
 		mev.getIncludedFields().removeAll(Arrays.asList("STATUS","RESOLUTION"));
 		Config.instance().getLogger(IssuesController.class.getName()).info(mev.getIncludedFields().toString());
 		

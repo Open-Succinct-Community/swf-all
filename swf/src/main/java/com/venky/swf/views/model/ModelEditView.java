@@ -51,26 +51,21 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     public ModelEditView(Path path,
                         Class<M> modelClass,
                         String[] includeFields,M record){
-        super(path,modelClass,includeFields);
-        this.record = record;
+    	this(path,modelClass,includeFields,record,"save");
     }
-    
-    private String formAction = "save";
-    
-    
-    
-
-    public void setFormAction(String formAction) {
+    public ModelEditView(Path path,
+            Class<M> modelClass,
+            String[] includeFields,M record,String formAction){
+		super(path,modelClass,includeFields);
+		this.record = record;
 		this.formAction = formAction;
 	}
-
-
+    private String formAction = null ;    
+    
 
 	public M getRecord() {
 		return record;
 	}
-
-
 
 	public int getNumFieldsPerRow() {
         return numFieldsPerRow;

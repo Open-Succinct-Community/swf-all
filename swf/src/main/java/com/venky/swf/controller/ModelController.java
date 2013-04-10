@@ -209,7 +209,7 @@ public class ModelController<M extends Model> extends Controller {
     	if (integrationAdaptor != null){
     		v = integrationAdaptor.createResponse(getPath(),records);
     	}else {
-    		View lv = createListView(records);
+    		View lv = constructModelListView(records);
     		if (lv instanceof HtmlView){
         		v = dashboard((HtmlView)lv); 
     		}else {
@@ -220,7 +220,7 @@ public class ModelController<M extends Model> extends Controller {
     	return v;
     }
     
-    protected View createListView(List<M> records){
+    protected View constructModelListView(List<M> records){
     	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
     }
     
@@ -255,9 +255,9 @@ public class ModelController<M extends Model> extends Controller {
     	return view;
     }
     protected ModelShowView<M> createModelShowView(M record){
-    	return createModelShowView(getPath(),record);
+    	return constructModelShowView(getPath(),record);
     }
-    protected ModelShowView<M> createModelShowView(Path path, M record){
+    protected ModelShowView<M> constructModelShowView(Path path, M record){
     	return new ModelShowView<M>(path, modelClass, getIncludedFields(), record);
     }
 
@@ -306,14 +306,14 @@ public class ModelController<M extends Model> extends Controller {
     	return createModelEditView(getPath(), record, formAction);
     }
     protected ModelEditView<M> createModelEditView(Path path, M record, String formAction){
-        if (record.isAccessibleBy(getSessionUser(),modelClass)){
-        	ModelEditView<M> mev = new ModelEditView<M>(path, modelClass, getIncludedFields(), record);
-        	mev.setFormAction(formAction);
-            return mev;
+        if (record.isAccessibleBy(getSessionUser(),getModelClass())){
+        	return constructModelEditView(path, record, formAction);
         }else {
         	throw new AccessDeniedException();
         }
-    	
+    }
+    protected ModelEditView<M> constructModelEditView(Path path, M record, String formAction){
+    	return new ModelEditView<M>(path, getModelClass(), getIncludedFields(), record,formAction);
     }
 
     @SingleRecordAction(icon="/resources/images/clone.png")
@@ -351,16 +351,16 @@ public class ModelController<M extends Model> extends Controller {
     	if (integrationAdaptor != null){
     		return integrationAdaptor.createResponse(getPath(),record);
     	}else {
-    		return dashboard(createBlankView(record));
+    		return dashboard(createBlankView(record,"save"));
     	}
     }
 
-    protected ModelEditView<M> createBlankView(M record){
-    	return createBlankView(getPath(), record);
+    protected ModelEditView<M> createBlankView(M record,String formAction){
+    	return createBlankView(getPath(), record, formAction);
     }
     
-    protected ModelEditView<M> createBlankView(Path path , M record){
-		ModelEditView<M> mev = new ModelEditView<M>(path, getModelClass(), getIncludedFields(), record);
+    protected ModelEditView<M> createBlankView(Path path , M record, String formAction){
+		ModelEditView<M> mev = constructModelEditView(path, record,formAction);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
 		        mev.getIncludedFields().remove(field);
@@ -433,11 +433,10 @@ public class ModelController<M extends Model> extends Controller {
 		public View error(M m) {
 			ModelEditView<M> errorView = null;
 			if (m.getRawRecord().isNewRecord()){
-    			errorView = createBlankView(getPath().createRelativePath("blank"),m);
+    			errorView = createBlankView(getPath().createRelativePath("blank"),m,"save");
     		}else {
-    			errorView = new ModelEditView<M>(getPath().createRelativePath("edit/" + m.getId()), getModelClass(), getIncludedFields(), m);
+    			errorView = createModelEditView(getPath().createRelativePath("edit/" + m.getId()), m,"save");
     		}
-	    	errorView.setFormAction("save");
 	    	return errorView;
     	} 
     	

@@ -9,6 +9,7 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -186,14 +187,19 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	Control.hunt(header,Column.class,columns);
 
     	int i = numActions;
+
+    	total.increment(numActions);
+    	final int fieldOffset = 3 ;;// Extra for sorting icon space.
     	for (String field: fieldWidthMap.keySet()){
-    		total.increment(fieldWidthMap.get(field));
+    		total.increment(fieldWidthMap.get(field) + fieldOffset);
     	}
-    	int pctLeft = 100 - numActions;
+    	
     	
     	for (String field: getIncludedFields()){
+    		int currentFieldWidth = fieldWidthMap.get(field) + fieldOffset;
+    		long pctWidth = (int)( (currentFieldWidth * 100.0) / total.doubleValue() );
     		Column column = columns.get(i);
-    		column.setProperty("width", (int)((fieldWidthMap.get(field) * pctLeft)/total.doubleValue()) +"%");
+    		column.setProperty("width",  pctWidth +"%");
     		i++;
     	}
     	
