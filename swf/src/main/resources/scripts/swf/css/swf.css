@@ -118,3 +118,8 @@ td .textbox {
   height: 100%;
   width:99%;
 }
+td .passwordtext {
+  display: block;
+  height: 100%;
+  width:99%;
+}

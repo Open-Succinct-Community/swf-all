@@ -79,7 +79,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         if (modelAccessPath.canAccessControllerAction("index")){
         	Menu subMenu = appMenu.getSubmenu(menuName);
             String modelName = modelClass.getSimpleName();
-        	subMenu.createMenuItem(modelName, modelAccessPath.getTarget());
+        	subMenu.createMenuItem(modelName, modelAccessPath.controllerPath() + "/index");
         }
     }
     
