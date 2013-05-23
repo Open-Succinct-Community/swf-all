@@ -9,7 +9,6 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -296,7 +295,9 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 						String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
                     	sValue = parentDescription;
                     	
-                    	_IPath parentTarget = getPath().createRelativePath( "/" + tableName + "/show/" +  String.valueOf(parentId) );
+                    	_IPath parentTarget = getPath().createRelativePath( getPath().action() + 
+                    			( ObjectUtil.isVoid(getPath().parameter()) ?  "" : "/" + getPath().parameter() )+
+                    			"/" + tableName + "/show/" +  String.valueOf(parentId) );
                     	if (parentTarget.canAccessControllerAction()){
                         	control = new Link(parentTarget.getTarget());
                         	control.setText(sValue);
