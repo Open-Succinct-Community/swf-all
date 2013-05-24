@@ -230,7 +230,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         	if (canAccessAction){
             	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
             	String icon = "/resources/images/show.png" ; 
-            	String tooltip = actionName;
+            	String tooltip = StringUtil.camelize(actionName);
             	if (sra != null) {
             		if (!ObjectUtil.isVoid(sra.icon())){
                 		icon = sra.icon(); 

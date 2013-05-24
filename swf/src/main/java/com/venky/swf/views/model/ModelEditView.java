@@ -199,7 +199,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             }
             
             
-            if (fieldData.isEnabled()){
+            if (fieldData.isEnabled() && reflector.isFieldSettable(fieldName)){
             	if (hashFieldValue.length() > 0){
             		hashFieldValue.append(",");
             	}

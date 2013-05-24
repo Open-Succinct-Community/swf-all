@@ -196,6 +196,18 @@ public abstract class JdbcTypeHelper {
             return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y"));
         }
 
+    	public String toString(Object m) {
+    		if (m != null){
+    			Boolean v = valueOf(StringUtil.valueOf(m));
+    			if (v){
+    				return "Y";
+    			}else {
+    				return "N";
+    			}
+    		}
+        	return StringUtil.valueOf(m);
+        }
+
 		@Override
 		public String getDisplayClassName() {
 			return "boolean";
