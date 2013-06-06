@@ -231,7 +231,11 @@ public class Router extends AbstractHandler {
 	        	}
 	        	if (session != null){
 	        		session.setAttribute("ui.error.msg", e.getMessage());
-		        	ev = createRedirectorView(p,p.getBackTarget());
+	        		if (p.getTarget().equals(p.getBackTarget())){
+	        			ev = createRedirectorView(p, "/dashboard");
+	        		}else {
+	        			ev = createRedirectorView(p,p.getBackTarget());
+	        		}
 	        	}else {
 	        		ev = createExceptionView(p, e);
 	        	}

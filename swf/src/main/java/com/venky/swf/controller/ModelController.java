@@ -591,10 +591,11 @@ public class ModelController<M extends Model> extends Controller {
 
     	String fieldLiteral = referredModelGetter.getName().substring("get".length());
     	
-    	if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue) && Database.getJdbcTypeHelper().isVoid(currentValue)){
+    	if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue)) {
+    		if (!Database.getJdbcTypeHelper().isVoid(currentValue)){
+    			formFields.put(field, "");
+    		}
     		return;
-		}else if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue)){
-			throw new RuntimeException("Please choose " + fieldLiteral + " from lookup." );
 		}
     	
     	//autoCompleteHelperFieldValue is not void.
@@ -705,9 +706,7 @@ public class ModelController<M extends Model> extends Controller {
 		Path autoCompletePath = getPath().createRelativePath(autoCompleteModelReflector.getTableName().toLowerCase());
 		where.add(autoCompletePath.getWhereClause());
 		
-		boolean isNullable = !reflector.isFieldMandatory(autoCompleteFieldName); 
-		
-        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value,isNullable);
+        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value);
     }
     
     @Override

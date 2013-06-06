@@ -18,6 +18,7 @@ import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.routing.Config;
 
 /**
  *
@@ -226,6 +227,7 @@ public class TableReflector {
         		synchronized (mreflectors) {
         			ref = (MReflector<M>)mreflectors.get(modelClass);
         			if (ref == null){
+        				Config.instance().getLogger(TableReflector.class.getName()).fine("Trying to reflect "+ modelClass.getName());
         				ref = new MReflector<M>(modelClass);
         				mreflectors.put(modelClass, ref);
         			}

@@ -337,14 +337,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     private OrderBy orderBy = null;
     @Override
     protected void createBody(_IControl b) {
-    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
-    	try {
-    		_createBody(b);
-    	}finally {
-    		timer.stop();
-    	}
-    }
-    protected void _createBody(_IControl b) {
     	
     	Table container = new Table();
     	container.addClass("hfill");

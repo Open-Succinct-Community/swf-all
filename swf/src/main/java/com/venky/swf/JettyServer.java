@@ -154,7 +154,7 @@ public class JettyServer {
 			do {
 				try {
 					if (changeDetected){
-						key = watcher.poll(3,TimeUnit.SECONDS);
+						key = watcher.poll(10,TimeUnit.SECONDS);
 					}else{
 						key = watcher.take();
 					}

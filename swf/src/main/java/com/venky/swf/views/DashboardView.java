@@ -37,7 +37,11 @@ public class DashboardView extends HtmlView{
         this.child = child;
     }
     @Override
-    public void createBody(_IControl b) {
+    protected void _createBody(_IControl b) {
+    	createBody(b);
+    }
+    @Override
+    protected void createBody(_IControl b) {
     	createBody(b,true);
     }
     public void createBody(_IControl b, boolean includeMenu) {

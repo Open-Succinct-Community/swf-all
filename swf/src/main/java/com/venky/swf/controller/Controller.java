@@ -193,15 +193,11 @@ public class Controller {
         p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
         return new BytesView(getPath(), baos.toByteArray(),MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
-    public <M extends Model> XMLDocument autocompleteXML(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
+    public <M extends Model> XMLDocument autocompleteXML(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
         XMLDocument doc = new XMLDocument("entries");
         XMLElement root = doc.getDocumentRoot();
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
-
-        if (isNullable){
-        	createEntry(root, "-Not Selected-", " ");
-        }
 
         String columnName = fd.getName();
 
@@ -240,8 +236,8 @@ public class Controller {
         }
         return doc;
     }
-    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value,boolean isNullable){
-    	XMLDocument doc = autocompleteXML(modelClass, baseWhereClause, fieldName, value, isNullable);
+    public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
+    	XMLDocument doc = autocompleteXML(modelClass, baseWhereClause, fieldName, value);
         return new BytesView(path, String.valueOf(doc).getBytes());
     }
     private void createEntry(XMLElement root,Object name, Object id){

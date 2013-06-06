@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.indexing.Index;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 
@@ -12,6 +14,8 @@ import com.venky.swf.db.model.Model;
 public interface SentMail extends Model{
 	
 	@IS_NULLABLE(false)
+	@PARTICIPANT
+	@Index
 	public Integer getUserId();
 	public void setUserId(Integer id);
 	public User getUser();
@@ -19,6 +23,7 @@ public interface SentMail extends Model{
 	public String getEmail();
 	public void setEmail(String email);
 
+	@Index
 	public String getSubject();
 	public void setSubject(String title);
 	
