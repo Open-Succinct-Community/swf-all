@@ -19,7 +19,6 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
-import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.controller.reflection.ControllerReflector;
@@ -33,6 +32,8 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls.page.Image;
+import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.DateBox;
@@ -65,22 +66,12 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         }
         
         controllerReflector = ControllerReflector.instance(path.getControllerClass());
-        singleRecordActions = controllerReflector.getMethods(new SingleRecordActionMatcher(controllerReflector));
+        singleRecordActions = controllerReflector.getSingleRecordActionMethods();
     }
     
     public ControllerReflector<? extends Controller> getControllerReflector() {
 		return controllerReflector;
 	}
-    
-    private class SingleRecordActionMatcher implements MethodMatcher {
-    	final ControllerReflector<? extends Controller> ref ;
-    	public SingleRecordActionMatcher(ControllerReflector<? extends Controller> ref) {
-    		this.ref = ref;
-		}
-		public boolean matches(Method method) {
-			return ref.isAnnotationPresent(method,SingleRecordAction.class);
-		} 
-    }
     
     public ModelReflector<M> getReflector() {
         return reflector;
@@ -202,5 +193,43 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
     List<Method> singleRecordActions = new ArrayList<Method>();
     public List<Method> getSingleRecordActions(){
     	return singleRecordActions;
+    }
+    
+    public Link createSingleRecordActionLink(Method m, M record){
+    	String actionName = m.getName();
+    	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
+    	
+    	if (sra == null){
+    		return null;
+    	}
+    	
+    	boolean canAccessAction = record.getId() > 0  && getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
+    	if (!canAccessAction){
+    		return null;
+    	}
+    	Link actionLink = new Link();
+    	String icon = "/resources/images/show.png" ; 
+    	String tooltip = StringUtil.camelize(actionName);
+    	if (sra != null) {
+    		if (!ObjectUtil.isVoid(sra.icon())){
+        		icon = sra.icon(); 
+    		}
+    		if (!ObjectUtil.isVoid(sra.tooltip())){
+        		tooltip = sra.tooltip(); 
+    		}
+    	}
+        StringBuilder sAction = new StringBuilder();
+        if ("search".equals(getPath().action())){
+        	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
+        }else {
+        	sAction.append(getPath().getTarget());
+        }
+    	sAction.append("/").append(getPath().controllerPathElement());
+    	sAction.append("/").append(actionName).append("/").append(record.getId());
+    	actionLink.setUrl(sAction.toString());
+
+    	actionLink.addControl(new Image(icon,tooltip));
+
+    	return actionLink;
     }
 }

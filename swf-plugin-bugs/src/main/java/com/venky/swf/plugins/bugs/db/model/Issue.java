@@ -7,6 +7,7 @@ import java.util.List;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
@@ -20,6 +21,7 @@ import com.venky.swf.db.model.User;
 @HAS_DESCRIPTION_FIELD("TITLE")
 public interface Issue extends Model{
 	@Index
+	@CLONING_PROTECT
 	public String getTitle();
 	public void setTitle(String title);
 
@@ -50,6 +52,7 @@ public interface Issue extends Model{
 	public void setResolution(String resolution);
 	
 	@IS_NULLABLE
+	@CLONING_PROTECT
 	public Integer getAssignedToId();
 	public void setAssignedToId(Integer id);
 	public User getAssignedTo();

@@ -36,12 +36,14 @@ import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
@@ -230,14 +232,6 @@ public class ModelController<M extends Model> extends Controller {
 	protected Class<M> getModelClass() {
 		return modelClass;
 	}
-    @RequireLogin(false)
-    public RedirectorView back(){
-    	RedirectorView v = super.back();
-    	String url = v.getRedirectUrl();
-		url = url+"?_select_tab="+ getModelClass().getSimpleName();
-    	v.setRedirectUrl(url);
-    	return v;
-    }
 
     @SingleRecordAction(icon="/resources/images/show.png")
     @Depends("index")
@@ -324,7 +318,7 @@ public class ModelController<M extends Model> extends Controller {
 		return blank(newrecord);
     }
     
-    public M clone(M record){
+	public M clone(M record){
 		Table<M> table = Database.getTable(modelClass);
     	M newrecord = table.newRecord();
     	
@@ -332,7 +326,7 @@ public class ModelController<M extends Model> extends Controller {
     	Record newRaw = newrecord.getRawRecord();
     	
     	for (String f:oldRaw.getFieldNames()){ //Fields in raw records are column names.
-    		if (!reflector.isHouseKeepingField(reflector.getFieldName(f))){
+    		if (getReflector().isFieldCopiedWhileCloning(getReflector().getFieldName(f))){
         		newRaw.put(f, oldRaw.get(f));
     		}
     	}
@@ -347,7 +341,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     protected View blank(M record) {
-    	fillDefaultsForReferenceFields(record,getModelClass());
+    	getPath().fillDefaultsForReferenceFields(record,getModelClass());
     	if (integrationAdaptor != null){
     		return integrationAdaptor.createResponse(getPath(),record);
     	}else {
@@ -419,11 +413,15 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public static interface Action<M> {
+    	public View noAction(M m);
     	public void act(M m);
     	public View error(M m);
     }
     
     public class SaveAction implements Action<M>{
+    	public View noAction(M m){
+    		return afterPersistDBView(m);
+    	}
 		@Override
 		public void act(M m) {
 			save(m, getModelClass());
@@ -474,11 +472,19 @@ public class ModelController<M extends Model> extends Controller {
         Iterator<String> e = formFields.keySet().iterator();
         String buttonName = null;
         String digest = null;
+        MultiException dataValidationExceptions = new MultiException("Invalid input: ");
+        boolean hasUserModifiedData = false; 
         while (e.hasNext()) {
             String name = e.next();
             String fieldName = setableFields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
             if (fieldName != null){
-	            Object value = formFields.get(fieldName);
+            	try {
+            		validateEnteredData(fieldName, formFields);
+            	}catch (Exception ex){
+            		dataValidationExceptions.add(ex);
+            		hasUserModifiedData = true;
+            	}
+            	Object value = formFields.get(fieldName);
 	            Class<?> fieldClass = reflector.getFieldGetter(fieldName).getReturnType();
 	            if (value == null && (Reader.class.isAssignableFrom(fieldClass) || InputStream.class.isAssignableFrom(fieldClass))){
 	            	continue;
@@ -491,33 +497,46 @@ public class ModelController<M extends Model> extends Controller {
             }
         }
         boolean isNew = record.getRawRecord().isNewRecord();
-        boolean hasUserModifiedData = hasUserModifiedData(formFields,digest);
+        hasUserModifiedData = hasUserModifiedData || hasUserModifiedData(formFields,digest);
         if (hasUserModifiedData || isNew){
         	try {
+        		if (!dataValidationExceptions.isEmpty()){
+        			throw dataValidationExceptions;
+        		}
         		action.act(record);
+                if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
+                	//Usability Logic: If user is not modifying data shown, then why be in data entry mode.
+                	getPath().getSession().setAttribute("ui.info.msg", getModelClass().getSimpleName() + " created sucessfully, press Done when finished.");
+            		return clone(record.getId());
+                }
         	}catch (RuntimeException ex){
         		if (hasUserModifiedData){
 	        		Throwable th = ExceptionUtil.getRootCause(ex);
 	        		String message = th.getMessage();
 	        		if (message == null){
 	        			message = th.toString();
-	            		Database.getInstance().getCurrentTransaction().rollback(th);
 	        		}
+            		Database.getInstance().getCurrentTransaction().rollback(th);
 	
-	    	    	record.setTxnPropery("ui.error.msg", message);
-	    	    	return action.error(record);
+	            	getPath().getSession().setAttribute("ui.error.msg", message);
+	    	    	View eView = action.error(record);
+	    	    	if (eView instanceof HtmlView){
+		    	    	return dashboard((HtmlView)eView);
+	    	    	}else {
+	    	    		return eView;
+	    	    	}
         		}
         	}
+        	return afterPersistDBView(record);
+    	}else {
+    		View view = action.noAction(record);
+        	if (view instanceof HtmlView){
+    	    	return dashboard((HtmlView)view);
+	    	}else {
+	    		return view;
+	    	}
     	}
-        
-        if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
-        	//Usability Logic: If user is not modifying data shown, then why be in data entry mode.
-        	return clone(record.getId());
-        }
-        
-        return afterPersistDBView(record);
     }
-    
     protected View afterPersistDBView(M record){
     	View v = null; 
     	if (integrationAdaptor != null){
@@ -531,10 +550,11 @@ public class ModelController<M extends Model> extends Controller {
     protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
     	StringBuilder hash = null;
         for (String field: reflector.getFields()){
-        	if (!formFields.containsKey(field) || !reflector.isFieldSettable(field)){
+        	if (!formFields.containsKey(field) || !reflector.isFieldSettable(field) || reflector.getFieldProtection(field) == Kind.DISABLED){
         		continue;
         	}
     		Object currentValue = formFields.get(field);
+
 			if (hash != null){
 				hash.append(",");
 			}else {
@@ -545,7 +565,68 @@ public class ModelController<M extends Model> extends Controller {
         String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
         return !ObjectUtil.equals(newDigest, oldDigest);
     }
-    
+
+    private void validateEnteredData(String field,  Map<String,Object> formFields){
+    	String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
+    	if (!formFields.containsKey(autoCompleteHelperField)){
+    		return ;
+    	}
+    	Object autoCompleteHelperFieldValue = formFields.get(autoCompleteHelperField);
+    	Object currentValue = formFields.get(field);
+
+		Method referredModelIdGetter = reflector.getFieldGetter(field);
+		Method referredModelGetter = referredModelIdGetter == null ? null : reflector.getReferredModelGetterFor(referredModelIdGetter);
+		Class<? extends Model> referredModelClass = referredModelGetter == null ? null : reflector.getReferredModelClass(referredModelGetter);
+
+		if (referredModelClass == null){
+			return ;//Defensive. not really needed due to first condition. of check existance of autoCompleteHelperField in formFields.
+		}
+		ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+		
+		String descriptionField = referredModelReflector.getDescriptionField();
+		Method descriptionFieldGetter = referredModelReflector.getFieldGetter(descriptionField);
+
+    	
+    	Model referredModel = null;
+
+    	String fieldLiteral = referredModelGetter.getName().substring("get".length());
+    	
+    	if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue) && Database.getJdbcTypeHelper().isVoid(currentValue)){
+    		return;
+		}else if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue)){
+			throw new RuntimeException("Please choose " + fieldLiteral + " from lookup." );
+		}
+    	
+    	//autoCompleteHelperFieldValue is not void.
+    	
+		if (Database.getJdbcTypeHelper().isVoid(currentValue)){
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(new Expression(
+					referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,autoCompleteHelperFieldValue)).execute(referredModelClass,new Select.AccessibilityFilter());
+			
+			if (models.size() == 1){
+				referredModel = models.get(0);
+				currentValue = StringUtil.valueOf(referredModel.getId());
+				formFields.put(field, currentValue);
+			}
+		}else {
+			Integer id = (Integer) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter().valueOf(currentValue);
+			referredModel = Database.getTable(referredModelClass).get(id);
+		}
+		
+		
+		if (referredModel == null){
+			throw new RuntimeException("Please choose " + fieldLiteral + " from lookup." );
+		}else {
+			Object descriptionValue = referredModelReflector.get(referredModel, descriptionField);
+			
+			String sDescriptionValue = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(descriptionValue);
+			String sAutoCompleteFieldDesc = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(autoCompleteHelperFieldValue);
+			if (!ObjectUtil.equals(sDescriptionValue, sAutoCompleteFieldDesc)){
+				throw new RuntimeException("Please choose " + fieldLiteral + " from lookup." );
+			}
+		}
+    }
     
     public View save() {
         HttpServletRequest request = getPath().getRequest();

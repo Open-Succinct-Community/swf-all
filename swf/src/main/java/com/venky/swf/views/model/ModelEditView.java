@@ -11,11 +11,10 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
@@ -25,6 +24,9 @@ import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
+import com.venky.swf.views.controls.page.HotLink;
+import com.venky.swf.views.controls.page.Image;
+import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.Table;
@@ -36,8 +38,6 @@ import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
-import com.venky.swf.views.controls.page.text.StatusBar;
-import com.venky.swf.views.controls.page.text.StatusBar.Type;
 import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
 
@@ -120,6 +120,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         }
         return r;
     }
+    
     @Override
     protected void createBody(_IControl body) {
     	Form form = new Form();
@@ -132,12 +133,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
     	Table table = new Table();
         form.addControl(table);
-        String errorMsg = StringUtil.valueOf(record.removeTxnProperty("ui.error.msg"));
-        if (!ObjectUtil.isVoid(errorMsg)){
-            Row statusRow = table.createRow() ;
-            Column column = statusRow.createColumn(getNumColumnsPerRow());
-            column.addControl(new StatusBar(Type.ERROR, errorMsg));
-        }
         
 
         Iterator<String> field = getIncludedFields().iterator();
@@ -190,7 +185,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	rpadLastRow(table);
             	form.setProperty("enctype","multipart/form-data");
             	FileTextBox ftb = (FileTextBox)fieldData;
-            	if (getReflector().getContentSize(record, fieldName) != 0){
+            	if (getReflector().getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
             		ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId(),getReflector().getContentName(record, fieldName));
                     Row streamRow = table.createRow();
                     Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
@@ -228,37 +223,32 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         
         if (getRecord().getRawRecord().isNewRecord()) {
             c = buttonRow.createColumn(getNumFieldsPerRow());
-            Submit sbm = new Submit();
+            Submit sbm = new Submit("Save & More");
+            sbm.setToolTip("Done with this but more to go");
             sbm.setName("_SUBMIT_MORE");
-            sbm.setValue("Next");
             c.addControl(sbm);
 
             c = buttonRow.createColumn(getNumFieldsPerRow());
-        	sbm = new Submit();
+        	sbm = new Submit("Done");
+        	sbm.setToolTip("Done with all");
 	        sbm.setName("_SUBMIT_NO_MORE");
-	        sbm.setValue("Done");
 	        c.addControl(sbm);
 	        return;
         }else {
             c = buttonRow.createColumn(getNumColumnsPerRow());
-            Submit sbm = new Submit();
-            sbm.setName("_SUBMIT_NO_MORE");
-            c.addControl(sbm);
+            String label = "Done";
+            if (getFormAction().equals("back")){
+            	label = "Close";
+            }
+        	Submit sbm = new Submit(label);
+	        sbm.setName("_SUBMIT_NO_MORE");
+	        c.addControl(sbm);
         }
         
-    	List<Class<? extends Model>> childModels = new ArrayList<Class<? extends Model>>();
-    	for (Method childGetter: getReflector().getChildGetters()){
-    		HIDDEN hidden = getReflector().getAnnotation(childGetter, HIDDEN.class);
-        	if (!List.class.isAssignableFrom(childGetter.getReturnType()) || (hidden != null && hidden.value())){
-        		continue;
-        	}
-        	Class<? extends Model> childModelClass = getReflector().getChildModelClass(childGetter);
-        	if (!childModels.contains(childModelClass)){
-            	childModels.add(childModelClass);
-        	}
-        }
+    	List<Class<? extends Model>> childModels = getReflector().getChildModels(true, true);
 
-    	Tabs multiTab = null; 
+    	
+    	Tabs multiTab = null;
     	for (Class<? extends Model> childClass: childModels){
 			Path childPath = new Path(getPath().getTarget()+"/"+Database.getTable(childClass).getTableName().toLowerCase() + "/index");
         	childPath.setRequest(getPath().getRequest());
@@ -267,7 +257,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	if (childPath.canAccessControllerAction()){
             	DashboardView view =  (DashboardView)childPath.invoke();
             	Div tab = new Div();
-            	view.createBody(tab,false);
+            	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
+            	excludeLinks.addAll(getHotLinks());
+            	
+            	//Exclude back link on included child as it is a redundant link to the record in focus currently.
+            	HotLink childBack = new HotLink(childPath.controllerPath() + "/back");
+            	excludeLinks.add(childBack); 
+            	
+            	view.createBody(tab,false,excludeLinks);
         		if (multiTab == null){
         			multiTab = new Tabs();
         			body.addControl(multiTab);
@@ -282,5 +279,42 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     
     protected Kind getFieldProtection(String fieldName){
     	return reflector.getFieldProtection(fieldName);
+    }
+    
+    private SequenceSet<HotLink> links = null;
+    @Override
+    public SequenceSet<HotLink> getHotLinks(){
+    	if (links == null){
+    		links = super.getHotLinks();
+    		
+            if (!getFormAction().equals("back")){
+                HotLink sbm = new HotLink("#save");
+                sbm.addControl(new Image("/resources/images/save.png","Submit"));
+                sbm.setName("_SUBMIT_NO_MORE");
+    	        links.add(sbm);
+            }
+
+	        if (getRecord().getRawRecord().isNewRecord()) {
+                HotLink sbm = new HotLink("#save_and_move_to_next");
+                sbm.addControl(new Image("/resources/images/next.png","Save & use as template for next."));
+                sbm.setName("_SUBMIT_MORE");
+                links.add(sbm);
+            }
+            
+
+    		for (Method m : getSingleRecordActions()){
+            	String actionName = m.getName();
+            	if (actionName.equals("destroy") || actionName.equals(getPath().action())){
+            		continue;
+            	}
+            	Link actionLink = createSingleRecordActionLink(m, getRecord());
+            	if (actionLink != null) {
+            		links.add(new HotLink(actionLink));
+            	}
+            }
+
+
+    	}
+    	return links;
     }
 }

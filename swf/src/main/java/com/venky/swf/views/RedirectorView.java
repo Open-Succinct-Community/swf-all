@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 
 /**
  *
@@ -26,16 +26,16 @@ public class RedirectorView extends View{
 		this.redirectUrl = redirectUrl;
 	}
 	
-    public RedirectorView(Path path,String controllerAction){
+    public RedirectorView(_IPath path,String controllerAction){
     	this(path,path.controllerPath(),controllerAction);
     }
 
-    public RedirectorView(Path currentRequestPath, String redirectControllerPath, String redirectControllerAction){
+    public RedirectorView(_IPath currentRequestPath, String redirectControllerPath, String redirectControllerAction){
         this(currentRequestPath);
         setRedirectUrl(redirectControllerPath + "/" + redirectControllerAction);
     }
     
-    public RedirectorView(Path path){
+    public RedirectorView(_IPath path){
     	super(path);
     }
     

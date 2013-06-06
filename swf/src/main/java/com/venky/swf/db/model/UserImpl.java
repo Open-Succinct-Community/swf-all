@@ -171,7 +171,12 @@ public class UserImpl extends ModelImpl<User>{
 				
 				if (!extnFound) {
 					Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-					Integer rmid = (Integer)model.getRawRecord().get(referredModelIdFieldName);
+					Integer rmid = null;
+					if (ref.isFieldVirtual(referredModelIdFieldName)){
+						rmid = ref.get(model,referredModelIdFieldName);
+					}else {
+						rmid = (Integer)model.getRawRecord().get(ref.getColumnDescriptor(referredModelIdFieldName).getName());
+					}
 					Model referredModel = null;
 					if (rmid != null){
 						referredModel = Database.getTable(referredModelClass).get(rmid);

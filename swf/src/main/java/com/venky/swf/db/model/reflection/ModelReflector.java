@@ -39,6 +39,7 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
@@ -259,6 +260,25 @@ public class ModelReflector<M extends Model> {
     	}
     	return childModelGetters;
     }
+    public List<Class<? extends Model>> getChildModels(){
+    	return getChildModels(false,false);
+    }
+    public List<Class<? extends Model>> getChildModels(boolean onlyMultipleChildren ,boolean onlyVisible){
+    	SequenceSet<Class<? extends Model>> childModels = new SequenceSet<Class<? extends Model>>();
+		for (Method childGetter: getChildGetters()){
+        	if (onlyMultipleChildren && !List.class.isAssignableFrom(childGetter.getReturnType())){
+        		continue;
+        	}
+    		HIDDEN hidden = getAnnotation(childGetter, HIDDEN.class);
+        	if (onlyVisible && hidden != null && hidden.value()){
+        		continue;
+        	}
+        	Class<? extends Model> childModelClass = getChildModelClass(childGetter);
+        	childModels.add(childModelClass);
+        }
+    	return childModels;
+    }
+    
 
     private List<String> allfields = new IgnoreCaseList(false);
     private Map<String,List<String>> columnFields = new IgnoreCaseMap<List<String>>();
@@ -285,7 +305,7 @@ public class ModelReflector<M extends Model> {
 	                allfields.add(fieldName);
 	        		List<String> fields = columnFields.get(columnName);
 	        		if (fields == null){
-	        			fields = new ArrayList<String>();
+	        			fields = new IgnoreCaseList(false);
 	        			columnFields.put(columnName, fields);
 	        		}
 	        		fields.add(fieldName);
@@ -443,6 +463,20 @@ public class ModelReflector<M extends Model> {
 		}
     }
 
+    public boolean isFieldCopiedWhileCloning(String fieldName){
+    	Method fieldGetter = getFieldGetter(fieldName);
+		CLONING_PROTECT cloningProtect = getAnnotation(fieldGetter, CLONING_PROTECT.class);
+		boolean protectedFromCloning = false; 
+		
+		if (cloningProtect == null){
+			protectedFromCloning = isHouseKeepingField(fieldName);
+		}else {
+			protectedFromCloning = cloningProtect.value();
+		}
+		
+		return !protectedFromCloning;
+    }
+    
     public boolean isFieldMandatory(String fieldName){
     	Method fieldGetter = getFieldGetter(fieldName);
     	return !getColumnDescriptor(fieldGetter).isNullable();
@@ -746,7 +780,7 @@ public class ModelReflector<M extends Model> {
         	return cd;
         }else if (hasMultipleAccess(columnName)){
         	if (!columnFields.get(columnName).contains(columnName)){
-        		throw new RuntimeException(columnName + " has multiple access while none of the field has the same name!");
+        		throw new RuntimeException(columnName + " has multiple access while none of the field has the same name!(" + columnFields.get(columnName).toString() + ")");
         	}else if (!columnName.equalsIgnoreCase(fieldName)){
         		return getColumnDescriptor(columnName);
         	}
@@ -866,7 +900,7 @@ public class ModelReflector<M extends Model> {
 	             if (possibleChildClass != null && Model.class.isAssignableFrom(possibleChildClass)){
 	                 // Validate That child has a parentReferenceId. 
 	                 @SuppressWarnings("unchecked")
-					Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
+	                 Class<? extends Model> childClass = (Class<? extends Model>)possibleChildClass;
 	                 ModelReflector<? extends Model> childReflector = ModelReflector.instance(childClass);
 	                 if (!childReflector.getReferenceFields(getModelClass()).isEmpty()){
 	                	return childClass; 

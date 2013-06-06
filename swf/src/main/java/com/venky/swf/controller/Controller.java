@@ -13,7 +13,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.Model;
@@ -49,7 +47,6 @@ import com.venky.swf.db.table.Table;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
-import com.venky.swf.path.Path.ModelInfo;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -161,7 +158,7 @@ public class Controller {
     
     protected DashboardView dashboard(HtmlView aContainedView){
         DashboardView dashboard = dashboard();
-        dashboard.addChildView(aContainedView);
+        dashboard.setChildView(aContainedView);
         return dashboard;
     }
 
@@ -345,7 +342,7 @@ public class Controller {
     }
     
     protected <M extends Model> void importRecord(M record, Class<M> modelClass){
-    	fillDefaultsForReferenceFields(record,modelClass);
+    	getPath().fillDefaultsForReferenceFields(record,modelClass);
     	save(record,modelClass);
     }
     
@@ -372,83 +369,6 @@ public class Controller {
 
 
 
-    protected <M extends Model> void fillDefaultsForReferenceFields(M record,Class<M> modelClass){
-        List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getPath().getModelElements());
-        Collections.reverse(modelElements);
-        
-        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-		for (Method referredModelGetter: reflector.getReferredModelGetters()){
-	    	@SuppressWarnings("unchecked")
-			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
-	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) || 
-	    			!reflector.isFieldMandatory(referredModelIdFieldName) ){
-	    		continue;
-	    	}
-	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
-	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
-	    	try {
-				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
-				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
-					continue;
-				}
-				
-				List<Integer> idoptions = null ;
-				Integer id = null; 
-
-				PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
-				if (participant != null){
-					idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
-				}
-						
-				if (idoptions != null && !idoptions.isEmpty()){
-					if (idoptions.size() == 1){
-						id = idoptions.get(0);
-					}else if (idoptions.size() == 2 && idoptions.contains(null)){
-						for (Integer i:idoptions){
-							if (i != null){
-								id = i;
-							}
-						}
-					}
-					if (id != null){
-						Model referredModel = Database.getTable(referredModelClass).get(id);
-            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-            	    		referredModelIdSetter.invoke(record,id);
-            	    		continue;
-            	    	}
-					}
-				}
-				Iterator<ModelInfo> miIter = modelElements.iterator();
-				if (miIter.hasNext()){
-					miIter.next();
-					//Last model was self so ignore the first one now as model Elements is already reversed.
-				}
-				while (miIter.hasNext()){
-		    		ModelInfo mi = miIter.next();
-		    		if (mi.getId() == null){
-    	    			continue;
-    	    		}
-	        		if (mi.getReflector().reflects(referredModelClass)){
-	        	    	try {
-	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
-	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-	            	    		referredModelIdSetter.invoke(record, mi.getId());
-	            	    		break;
-	            	    	}
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-	        		}
-	        		
-				}
-			} catch (Exception e1) {
-				throw new RuntimeException(e1);
-			}
-		}
-		record.setCreatorUserId(getSessionUser().getId());
-		record.setUpdaterUserId(getSessionUser().getId());
-    }
 
     public View exportxls(){
     	Map<String,Table<? extends Model>> tables = Database.getTables();

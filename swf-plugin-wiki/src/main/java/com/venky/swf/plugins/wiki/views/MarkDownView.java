@@ -38,10 +38,6 @@ public class MarkDownView extends HtmlView{
 
 		Table tableLinks = new Table();
 		Row row = tableLinks.createRow();
-
-    	Link home = new Link("/pages");
-		home.setText("Home");
-		row.createColumn().addControl(home);
 		if (getPath().canAccessControllerAction("edit",String.valueOf(page.getId()))){
 			Link edit = new Link(getPath().controllerPath()+"/edit/"+page.getId());
 			edit.setText("Edit");

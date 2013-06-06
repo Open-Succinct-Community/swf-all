@@ -40,6 +40,9 @@ public class DataSecurityFilter {
 		return getRecordsAccessible(modelClass, by, null);
 	}
 	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by, Expression condition){
+		return getRecordsAccessible(modelClass, by, condition, Select.MAX_RECORDS_ALL_RECORDS);
+	}
+	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by, Expression condition,int maxRecords){
 		Cache<String,Map<String,List<Integer>>> pOptions = by.getParticipationOptions(modelClass);
 		Expression where = new Expression(Conjunction.AND);
 		
@@ -59,7 +62,7 @@ public class DataSecurityFilter {
 			where.add(by.getDataSecurityWhereClause(ref, pOptions));
 		}
 		s.where(where);
-		return s.execute(modelClass,new Select.AccessibilityFilter<M>(by));
+		return s.execute(modelClass,maxRecords,new Select.AccessibilityFilter<M>(by));
 	}
 	
 	public static SequenceSet<Integer> getIds(List<? extends _Identifiable> idables){

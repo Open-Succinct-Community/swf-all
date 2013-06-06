@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.Model;
@@ -33,6 +33,7 @@ import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
+import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.buttons.Submit;
@@ -81,12 +82,13 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     
     public static Control createSearchForm(_IPath path){
     	com.venky.swf.views.controls.page.layout.Table table = new com.venky.swf.views.controls.page.layout.Table();
+    	table.addClass("search");
+    	
 		Row row = table.createRow();
 		TextBox search = new TextBox();
 		search.setName("q");
 		search.setValue(path.getFormFields().get("q"));
 
-		row.createColumn().addControl(new Label("Search"));
 		row.createColumn().addControl(search);
 
 		row.createColumn().addControl(new Submit("Search"));
@@ -118,36 +120,33 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		}
     	}
     }
-    protected void addHeaderLevelActions(Row header){
-    	Column newLink = header.createColumn();
-
-    	if (getPath().canAccessControllerAction("blank") && getPath().canAccessControllerAction("save")){
-        	Link create = new Link();
-            create.setUrl(getPath().controllerPath()+"/blank");
-            create.addControl(new Image("/resources/images/blank.png","New"));
-        	newLink.addControl(create);
+    
+    private SequenceSet<HotLink> links = null;
+    @Override
+    public SequenceSet<HotLink>  getHotLinks(){
+    	if (links == null ){
+    		links = super.getHotLinks();
+    		if (getPath().canAccessControllerAction("blank") && getPath().canAccessControllerAction("save")){
+            	HotLink create = new HotLink();
+                create.setUrl(getPath().controllerPath()+"/blank");
+                create.addControl(new Image("/resources/images/blank.png","New"));
+            	links.add(create);
+        	}
+        	if (getPath().canAccessControllerAction("importxls") && getPath().canAccessControllerAction("save")){
+        		HotLink importxls = new HotLink();
+        		importxls.setUrl(getPath().controllerPath()+"/importxls");
+        		importxls.addControl(new Image("/resources/images/importxls.png","Import"));
+    			links.add(importxls);
+        	}
+        	
+        	if (getPath().canAccessControllerAction("exportxls")){
+        		HotLink exportxls = new HotLink();
+        		exportxls.setUrl(getPath().controllerPath()+"/exportxls");
+        		exportxls.addControl(new Image("/resources/images/exportxls.png","Export"));
+    			links.add(exportxls);
+        	}
     	}
-    	if (getPath().canAccessControllerAction("importxls") && getPath().canAccessControllerAction("save")){
-    		Link importxls = new Link();
-    		importxls.setUrl(getPath().controllerPath()+"/importxls");
-    		importxls.addControl(new Image("/resources/images/importxls.png","Import"));
-    		newLink.addControl(importxls);
-    	}
-    	if (getPath().canAccessControllerAction("exportxls")){
-    		Link exportxls = new Link();
-    		exportxls.setUrl(getPath().controllerPath()+"/exportxls");
-    		exportxls.addControl(new Image("/resources/images/exportxls.png","Export"));
-    		newLink.addControl(exportxls);
-    	}
-    	/*
-    	 * As this is dangerous option decided to hide this from the the screen to prevent accidents.
-    	if (getPath().canAccessControllerAction("truncate") && getPath().canAccessControllerAction("destroy")){
-    		Link truncate = new Link();
-    		truncate.setUrl(getPath().controllerPath()+"/truncate");
-    		truncate.addControl(new Image("/resources/images/destroy.png","Truncate"));
-    		newLink.addControl(truncate);
-    	}*/
-    	newLink.addControl(new Label(getModelClass().getSimpleName()));
+    	return links;
     }
     
     protected void addHeadings(Row headerRow){
@@ -225,34 +224,12 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	List<Method> singleRecordActions = getSingleRecordActions();
         for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
         	Method m = singleRecordActions.get(actionIndex);
-        	String actionName = m.getName();
-        	boolean canAccessAction = record.getId() > 0  && getPath().canAccessControllerAction(actionName,String.valueOf(record.getId()));
-        	if (canAccessAction){
-            	SingleRecordAction sra = getControllerReflector().getAnnotation(m,SingleRecordAction.class);
-            	String icon = "/resources/images/show.png" ; 
-            	String tooltip = StringUtil.camelize(actionName);
-            	if (sra != null) {
-            		if (!ObjectUtil.isVoid(sra.icon())){
-                		icon = sra.icon(); 
-            		}
-            		if (!ObjectUtil.isVoid(sra.tooltip())){
-                		tooltip = sra.tooltip(); 
-            		}
-            	}
-	            Link actionLink = new Link();
-	            StringBuilder sAction = new StringBuilder();
-	            if ("search".equals(getPath().action())){
-	            	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
-	            }
-            	sAction.append(getPath().controllerPath()).append("/").append(actionName).append("/").append(record.getId());
-            	actionLink.setUrl(sAction.toString());
-
-            	actionLink.addControl(new Image(icon,tooltip));
-	            row.createColumn().addControl(actionLink);
-	            showAction.set(actionIndex);
-        	}else{
-            	row.createColumn();
-            }
+        	Column actionLinkCell = row.createColumn();
+        	Link singleRecordActionLink = createSingleRecordActionLink(m, record);
+        	if (singleRecordActionLink != null){
+        		actionLinkCell.addControl(singleRecordActionLink);
+        		showAction.set(actionIndex);
+        	}
         }
 	}
 	protected void addFields(Row row, M record){
@@ -369,23 +346,30 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     }
     protected void _createBody(_IControl b) {
     	
-    	if (indexedModel){
-    		b.addControl(createSearchForm(getPath()));
-    	}
-    	
     	Table container = new Table();
     	container.addClass("hfill");
     	b.addControl(container);
+    	
     	Row header = container.createHeader();
-    	addHeaderLevelActions(header);
-
+    	Column headerColumn = header.createColumn(2);
+    	headerColumn.addControl(new Label(getModelClass().getSimpleName()));
+    	if (indexedModel){
+    		Row searchFormRow = container.createRow();
+    		Column searchFormCell = searchFormRow.createColumn();
+    		searchFormCell.addControl(createSearchForm(getPath()));
+    		
+    		searchFormRow.createColumn();
+    	}
+    	
+    	
+    	
     	Row rowContainingTable = container.createRow();
-    	Column columnContainingTable = rowContainingTable.createColumn();
+    	Column columnContainingTable = rowContainingTable.createColumn(2);
     	
     	
         Table table = new Table();
         columnContainingTable.addControl(table);
-        table.setProperty("class", "tablesorter");
+        table.setClass("tablesorter");
         
         header = table.createHeader();
         BitSet showAction = addHeadingsForLineLevelActions(header);

@@ -7,9 +7,25 @@ import com.venky.cache.Cache;
 import com.venky.reflection.Reflector;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.RequireLogin;
+import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.views.View;
 
 public class ControllerReflector<C extends Controller> extends Reflector<Controller,C>{
+    
+	private class SingleRecordActionMatcher implements MethodMatcher {
+		public boolean matches(Method method) {
+			return isAnnotationPresent(method,SingleRecordAction.class);
+		} 
+    }
+	
+	private List<Method> singleRecordActionMethods = null; 
+    public List<Method> getSingleRecordActionMethods(){
+    	if (singleRecordActionMethods == null){
+    		singleRecordActionMethods = super.getMethods(new SingleRecordActionMatcher());
+    	}
+    	return singleRecordActionMethods;
+    }
+
 
 	public ControllerReflector(Class<C> reflectedClass) {
 		super(reflectedClass, Controller.class);

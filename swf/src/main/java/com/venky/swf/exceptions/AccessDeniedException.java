@@ -9,6 +9,7 @@ public class AccessDeniedException extends RuntimeException {
 	
 
 	public AccessDeniedException() {
+		this("Access Denied");
 	}
 
 	public AccessDeniedException(String message) {

@@ -45,6 +45,7 @@ import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.CONTROLLER;
@@ -370,8 +371,28 @@ public class Path implements _IPath{
     	if (backTarget.length() == 0){
     		backTarget.setLength(0);
     		backTarget.append(controllerPath()).append("/index");
+    		return backTarget.toString();
     	}
-    	return backTarget.toString();
+    	
+    	String url = backTarget.toString();
+    	
+    	if (url.endsWith("/index")){ // http://host:port/..../controller/index
+    		Path backPath = new Path(url);
+    		if (backPath.getModelClass() != null){
+        		Path twobackPath = new Path(backPath.getBackTarget());
+        		if (twobackPath.getModelClass() != null){
+        			ModelReflector<? extends Model> bmr = ModelReflector.instance(twobackPath.getModelClass());
+        			for (Class<? extends Model> childModel : bmr.getChildModels(true, true)){
+        				if (ModelReflector.instance(childModel).reflects(backPath.getModelClass())){
+            				url = twobackPath.getTarget() + "?_select_tab="+ backPath.getModelClass().getSimpleName();
+            				break;
+        				}
+        			}
+        		}
+    		}	
+		}
+
+    	return url;
     }
     public String controllerPathElement(){
         if (controllerPathIndex <= pathelements.size() - 1){
@@ -876,6 +897,82 @@ public class Path implements _IPath{
 		}
 	};
 
-    
+    public <M extends Model> void fillDefaultsForReferenceFields(M record,Class<M> modelClass){
+        List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getModelElements());
+        Collections.reverse(modelElements);
+        
+        ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+		for (Method referredModelGetter: reflector.getReferredModelGetters()){
+	    	@SuppressWarnings("unchecked")
+			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
+	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
+	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) || 
+	    			!reflector.isFieldMandatory(referredModelIdFieldName) ){
+	    		continue;
+	    	}
+	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
+	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
+	    	try {
+				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
+				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
+					continue;
+				}
+				
+				List<Integer> idoptions = null ;
+				Integer id = null; 
+
+				PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
+				if (participant != null){
+					idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
+				}
+						
+				if (idoptions != null && !idoptions.isEmpty()){
+					if (idoptions.size() == 1){
+						id = idoptions.get(0);
+					}else if (idoptions.size() == 2 && idoptions.contains(null)){
+						for (Integer i:idoptions){
+							if (i != null){
+								id = i;
+							}
+						}
+					}
+					if (id != null){
+						Model referredModel = Database.getTable(referredModelClass).get(id);
+            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+            	    		referredModelIdSetter.invoke(record,id);
+            	    		continue;
+            	    	}
+					}
+				}
+				Iterator<ModelInfo> miIter = modelElements.iterator();
+				if (miIter.hasNext()){
+					miIter.next();
+					//Last model was self so ignore the first one now as model Elements is already reversed.
+				}
+				while (miIter.hasNext()){
+		    		ModelInfo mi = miIter.next();
+		    		if (mi.getId() == null){
+    	    			continue;
+    	    		}
+	        		if (mi.getReflector().reflects(referredModelClass)){
+	        	    	try {
+	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
+	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+	            	    		referredModelIdSetter.invoke(record, mi.getId());
+	            	    		break;
+	            	    	}
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+	        		}
+	        		
+				}
+			} catch (Exception e1) {
+				throw new RuntimeException(e1);
+			}
+		}
+		record.setCreatorUserId(getSessionUser().getId());
+		record.setUpdaterUserId(getSessionUser().getId());
+    }
 
 }

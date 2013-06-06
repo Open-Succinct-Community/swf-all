@@ -35,7 +35,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     protected void createUserMenu(_IPath path, Menu appmenu, User user){
     	Menu userMenu = userMenu(path,user);
         userMenu.createMenuItem("Signout", "/logout");
-        appmenu.createMenuItem("Welcome " + user.getName(), userMenu);
+        appmenu.createMenuItem(user.getName(), userMenu);
     }
 
     protected void createApplicationMenu(_IPath path,Menu appmenu, User user){

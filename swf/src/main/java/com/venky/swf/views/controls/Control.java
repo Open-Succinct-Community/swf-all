@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 
@@ -46,15 +47,27 @@ public class Control extends Properties implements _IControl{
 
     public Control(String tag, String... pairs) {
         this.tag = tag;
-        setProperty("class", getClass().getSimpleName().toLowerCase());
+        addClass(getClass().getSimpleName().toLowerCase());
         setProperty("id", String.valueOf(nextId()));
 
         Properties p = ObjectUtil.createProperties(true, pairs);
         putAll(p);
     }
     
+    SequenceSet<String> classes = new SequenceSet<String>();
+    public void setClass(String className){
+    	classes.clear();
+    	addClass(className);
+    }
     public void addClass(String className){
-    	setProperty("class", getProperty("class") + " " + className);
+    	classes.add(className);
+    	StringBuilder classNames = new StringBuilder();
+    	for (String cn: classes){
+    		classNames.append(cn);
+    		classNames.append(" ");
+    	}
+    	classNames.setLength(classNames.length()-1);
+    	setProperty("class", classNames);
     }
 
     public void setProperty(String name, Object value) {

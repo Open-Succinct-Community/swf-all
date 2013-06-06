@@ -151,6 +151,10 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	public void write(M m, Row r, List<String> fields) {
 		write(m,r,null,fields);
 	}
+	public void alignTop(CellStyle style){
+		style.setAlignment(CellStyle.ALIGN_LEFT);
+		style.setVerticalAlignment(CellStyle.VERTICAL_TOP);
+	}
 	public void center(CellStyle style){
 		style.setAlignment(CellStyle.ALIGN_CENTER);
 		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
@@ -177,6 +181,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		CellStyle stringStyle = wb.createCellStyle();
 		stringStyle.setWrapText(true);
 		stringStyle.setFont(font);
+		alignTop(stringStyle);
 		//center(stringStyle);
 		
 		Iterator<String> fi = fields.iterator();
@@ -222,7 +227,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 
 	private static final int MAX_COLUMN_LENGTH = 30 ;
-	public static final int CHARACTER_WIDTH = 293;
+	public static final int CHARACTER_WIDTH = 300 ; // earlier 293; fixed for ms excel.
 	private static final int CHARACTER_HEIGHT_IN_POINTS = 10 ;
 	
 	private int getColumnWidth(Sheet sheet,int columnIndex){
@@ -289,7 +294,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), MAX_COLUMN_LENGTH * CHARACTER_WIDTH);
 			sheet.setColumnWidth(columnNum.intValue(), currentColumnWidth);
 		}
-		row.setHeightInPoints(Math.max(row.getHeightInPoints() , numRowsRequiredForCurrentValue*(CHARACTER_HEIGHT_IN_POINTS + 3)));
+		row.setHeightInPoints(Math.max(row.getHeightInPoints() , numRowsRequiredForCurrentValue*(CHARACTER_HEIGHT_IN_POINTS + 4) + 5));
 		
 
 	}

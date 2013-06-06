@@ -38,6 +38,7 @@ public class ExceptionView extends HtmlView{
         lbl.setText(sw.toString());
         b.addControl(lbl);
         
+        
     }
     
 }

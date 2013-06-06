@@ -27,11 +27,13 @@ public class Menu extends Control implements _IMenu{
 	}
 	
 	public MenuItem createMenuItem(String text,String url){
-        MenuItem mi = new MenuItem(text, url) ;
-        addControl(mi);
-        return mi;
+		return createMenuItem(text, url,null); 
     }
-    
+	public MenuItem createMenuItem(String text,String url,Image img){
+	    MenuItem mi = new MenuItem(text, url,img) ;
+	    addControl(mi);
+	    return mi;
+	}
 	private transient Map<String,Menu> subMenuMap = new HashMap<String, Menu>();
     public MenuItem createMenuItem(String text,Menu subMenu){
         MenuItem mi = new MenuItem(text, subMenu) ;
@@ -45,10 +47,16 @@ public class Menu extends Control implements _IMenu{
 		 */
 		private static final long serialVersionUID = 1L;
 		public MenuItem(String text,String url){
+            this(text,url,null);
+        }
+		public MenuItem(String text,String url,Image img){
             super("li");
             Link link = new Link();
             link.setUrl(url);
             link.setText(text);
+            if (img != null){
+            	link.addControl(img);
+            }
             addControl(link);
         }
         public MenuItem(String text,Menu submenu){

@@ -45,9 +45,7 @@ div.nav li ul ul {
 .hidden {
 	visibility:hidden;
 }
-.hfill {
-	width: 100%;
-}
+
 .hfill tr th {
 	text-align: left;
 }
@@ -63,23 +61,6 @@ div.nav li ul ul {
     margin-right:auto;
     width:10em;
 }
-.table .linkbutton {
-    display:block ;
-    margin-left:auto ;
-    margin-right:auto;
-    width:20%;
-
-    text-decoration: none;
-    background-color: #EEEEEE;
-    color: #333333;
-    padding: 2px 6px 2px 6px;
-    border-top: 1px solid #CCCCCC;
-    border-right: 1px solid #333333;
-    border-bottom: 1px solid #333333;
-    border-left: 1px solid #CCCCCC;
-}
-
-.table .select { width:100% }
 
 .tablesorter .stream img {
 	width: 56px;
@@ -94,11 +75,20 @@ div.nav li ul ul {
 }
 
 label.error { 
-  color: RED; 
+  padding-left:2%; 
+  padding-right:2%;
+  color: red; 
+  display:block;
+}
+label.info { 
+  color: green; 
+  padding-left:2%; 
+  padding-right:2%;
+  display:block;
 }
 
 .textarea {
-  width : 1000px;
+  width : 98%;
   height : 100px;
 }
 
@@ -116,10 +106,71 @@ div.tabs  .ui-helper-reset {
 td .textbox {
   display: block;
   height: 100%;
-  width:99%;
+  width:95%;
 }
 td .passwordtext {
   display: block;
   height: 100%;
-  width:99%;
+  width:95%;
 }
+
+td label { 
+  display: block;
+  height: 100%;
+  width:auto;
+}
+
+td .select { 
+  display: block;
+  height: 100%;
+  width:95% 
+}
+
+.table { 
+  width:100%;
+  padding-left:2%; 
+  padding-right:2%;
+  padding-top:5px;
+}
+
+table.login { 
+  margin-top:10%; 
+  margin-left:35%;
+  width:auto;
+}
+
+table.login tbody tr:first-child td  {
+  text-align:center;
+  font-size:20px;
+  height:2em;
+  color:#ffaacc;
+}
+
+table.hotlinks {
+  float:left;
+}
+
+a.hotlink img{
+  cursor:pointer;
+  padding:4px; 
+}
+
+.tabs .ui-tabs-panel {
+  width:100%;
+  padding:0;
+}
+
+/* Search Screen */
+table.search {
+  width:100%;
+  padding:0;
+}
+
+table.search .submit {
+    display:block ;
+    margin-left:auto ;
+    margin-right:auto;
+    width:10em;
+    float:left;
+}
+

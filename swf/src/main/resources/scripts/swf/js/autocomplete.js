@@ -44,6 +44,15 @@ $(function(){
 });
 
 $(function() {
-    $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):first').focus();
-});
+  $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):first').focus();
+
+
+  $("a[name='_SUBMIT_NO_MORE']").click(function (){ 
+                            $(":submit[name='_SUBMIT_NO_MORE']").trigger('click');
+                        });
+  $("a[name='_SUBMIT_MORE']").click(function (){ 
+                            $(":submit[name='_SUBMIT_MORE']").trigger('click');
+                        });
+})
+
 

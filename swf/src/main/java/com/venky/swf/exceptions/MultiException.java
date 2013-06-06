@@ -51,12 +51,13 @@ public class MultiException extends RuntimeException{
 	}
 	
 	private String newLine(){
-		return (System.getProperty("line.separator"));
+		return (System.getProperty("line.separator") + "<br/>");
 	}
 	public String getMessage() {
 		StringBuilder b = new StringBuilder();
 		if (!ObjectUtil.isVoid(super.getMessage())){
 			b.append(super.getMessage());
+			b.append(newLine());
 		}
 		for (Throwable th: throwables){
 			if (!ObjectUtil.isVoid(th.getMessage())){
@@ -68,6 +69,9 @@ public class MultiException extends RuntimeException{
 	}
 	
 	public void printStackTrace(PrintStream s) {
+		if (throwables.isEmpty()){
+			super.printStackTrace(s);
+		}
 		for (Throwable th: throwables){
 			th.printStackTrace(s);
 			s.println();
@@ -75,6 +79,9 @@ public class MultiException extends RuntimeException{
 		}
 	}
 	public void printStackTrace(PrintWriter w) {
+		if (throwables.isEmpty()){
+			super.printStackTrace(w);
+		}
 		for (Throwable th: throwables){
 			th.printStackTrace(w);
 			w.println();

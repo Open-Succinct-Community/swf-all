@@ -486,7 +486,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         List<String> fields = reflector.getFields();
         boolean ret = true;
         for (String field : fields) {
-        	MultiException fieldException = new MultiException("Field:" + field + " ");
+        	MultiException fieldException = new MultiException(" Field:" + field + " ");
             if (!reflector.isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
                 ex.add(fieldException);
                 ret = false;
@@ -513,7 +513,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     protected void validate(){
     	beforeValidate();
-    	MultiException me = new MultiException(getModelName());
+    	MultiException me = new MultiException();
         if (!isModelValid(me)) {
             throw me;
         }
@@ -588,6 +588,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         	
         	for (String referenceField: referenceFields){
 				try {
+					if (Database.getTable(childModelClass).isVirtual()){
+						continue;
+					}
 					@SuppressWarnings("unchecked")
 					List<Model> children = (List<Model>)childrenGetter.invoke(getProxy());
 					for (Model child : children){

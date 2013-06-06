@@ -288,9 +288,17 @@ public class Expression {
 		if (conjunction == null){
 			Object value = get(record,columnName);
 			if (value == null){
-				return values.isEmpty();
+				if (values.isEmpty() || values.contains(null)){
+					return (op == Operator.EQ || op == Operator.IN);
+				}else {
+					return op == Operator.NE;
+				}
 			}else if (values.isEmpty()){
-				return false;
+				if (op == Operator.EQ || op == Operator.IN){
+					return false;
+				}else if (op == Operator.NE){
+					return true;
+				}
 			}
 			if (values.size() == 1){
 				Object v = values.get(0).getValue();

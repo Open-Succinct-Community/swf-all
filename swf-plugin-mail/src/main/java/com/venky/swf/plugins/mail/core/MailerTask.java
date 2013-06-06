@@ -8,10 +8,12 @@ import org.codemonkey.simplejavamail.Email;
 import org.codemonkey.simplejavamail.Mailer;
 import org.codemonkey.simplejavamail.TransportStrategy;
 
+import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.plugins.mail.db.model.SentMail;
 import com.venky.swf.plugins.mail.db.model.User;
 import com.venky.swf.routing.Config;
 
@@ -56,6 +58,13 @@ public class MailerTask implements Task{
 		email.addRecipient(to.getName(), toEmail.getEmail(), RecipientType.TO);
 		email.setTextHTML(text);
 		
+		SentMail mail = Database.getTable(SentMail.class).newRecord();
+		mail.setUserId(toUserId);
+		mail.setEmail(toEmail.getEmail());
+		mail.setSubject(subject);
+		mail.setBody(new StringReader(text));
+		mail.save();
+
 		Mailer mailer = new Mailer(host, port, emailId,password,TransportStrategy.SMTP_SSL); 
 		mailer.sendMail(email);
 		

@@ -4,8 +4,11 @@
  */
 package com.venky.swf.routing;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -14,7 +17,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -133,10 +135,23 @@ public class Router extends AbstractHandler {
 	private Class<?> getExceptionViewClass() throws ClassNotFoundException {
 		return getClass("com.venky.swf.views.ExceptionView");
 	}
+	private Class<?> getRedirectorViewClass() throws ClassNotFoundException {
+		return getClass("com.venky.swf.views.RedirectorView");
+	}
 	private Class<?> getDatabaseClass() throws ClassNotFoundException{
 		return getClass("com.venky.swf.db.Database");
 	}
-	
+	private _IView createRedirectorView(_IPath p,String url){
+		try {
+			Class<?> evc = getRedirectorViewClass();
+			_IView ev = (_IView) evc.getConstructor(_IPath.class).newInstance(p);
+			Method m = evc.getMethod("setRedirectUrl", String.class);
+			m.invoke(ev, url);
+			return ev;
+		}catch (Exception e){
+			throw new RuntimeException(e);
+		}
+	}
 	private _IView createExceptionView(_IPath p, Throwable th){
 		try {
 			Class<?> evc = getExceptionViewClass();
@@ -214,8 +229,13 @@ public class Router extends AbstractHandler {
 	        	}catch (Exception ex){
 	        		ex.printStackTrace();
 	        	}
-	            ev = createExceptionView(p, e);
-	            ev.write();
+	        	if (session != null){
+	        		session.setAttribute("ui.error.msg", e.getMessage());
+		        	ev = createRedirectorView(p,p.getBackTarget());
+	        	}else {
+	        		ev = createExceptionView(p, e);
+	        	}
+	        	ev.write();
 	        }finally {
 	        	if (db != null ){
 	        		db.close();

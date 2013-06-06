@@ -9,8 +9,11 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
@@ -18,9 +21,10 @@ import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
 import com.venky.swf.views.controls.page.Head;
+import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page.Html;
+import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Script;
-import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.text.Label;
 
 /**
@@ -31,7 +35,24 @@ public abstract class HtmlView extends View{
     public HtmlView(_IPath path){
         super(path);
     }
+    
+    private SequenceSet<HotLink> links = null; 
+    public SequenceSet<HotLink> getHotLinks(){
+    	if (links == null){
+    	    links = new SequenceSet<HotLink>();
+        	HotLink home = new HotLink("/dashboard");
+        	home.addClass("home");
+        	home.addControl(new Image("/resources/images/home.png","Home"));
+        	links.add(home);
 
+        	HotLink back = new HotLink(getPath().controllerPath() + "/back");
+        	back.addClass("back");
+        	back.addControl(new Image("/resources/images/back.png","Back"));
+	        links.add(back);
+    	}
+    	return links;
+    }
+    
     public void write() throws IOException{ 
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/html;charset=utf-8");
@@ -64,9 +85,7 @@ public abstract class HtmlView extends View{
         html.addControl(head);
         
         Body body = new Body();
-        createBody(body);
-        body.addControl(new LineBreak());
-        body.addControl(status);
+        _createBody(body);
         html.addControl(body);
 
         Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
@@ -76,19 +95,28 @@ public abstract class HtmlView extends View{
     public static enum StatusType {
     	ERROR(){
     		public String toString(){
-    			return "status-error";
+    			return "error";
     		}
     	},
     	INFO() {
     		public String toString(){
-    			return "status-info";
+    			return "info";
     		}
     	}
     }
     
     public void setStatus(StatusType type, String text){
+    	if (ObjectUtil.isVoid(text)){
+    		return;
+    	}
     	this.status.addClass(type.toString());
-    	this.status.setText(text);
+    	String statusText = this.status.getText();
+    	if (!ObjectUtil.isVoid(statusText)){
+        	statusText += "<br/>" ;
+    	}
+		statusText += text;
+    	
+		this.status.setText(statusText);
 	}
     
     protected void createHead(Head head){
@@ -106,7 +134,32 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
     }
-    
+    protected void _createBody(_IControl body){
+		body.addControl(status);
+    	createBody(body);
+		HttpSession session = getPath().getSession();
+		if (session != null){
+    		String errorMsg = (String) session.getAttribute("ui.error.msg");
+    		session.removeAttribute("ui.error.msg");
+
+    		String infoMsg = (String) session.getAttribute("ui.info.msg");
+    		session.removeAttribute("ui.info.msg");
+    		
+            boolean hasError = !ObjectUtil.isVoid(errorMsg);
+            boolean hasInfo = !ObjectUtil.isVoid(infoMsg);
+
+            String message = null;
+            if (hasError) {
+            	message = errorMsg;
+            	if (hasInfo){
+            		message += "<br>" + infoMsg;
+            	}
+            }else if (hasInfo) {
+            	message = infoMsg;
+            }
+            setStatus(hasError ? StatusType.ERROR : StatusType.INFO , message);
+		}
+    }
     protected abstract void createBody(_IControl b);
     
 }

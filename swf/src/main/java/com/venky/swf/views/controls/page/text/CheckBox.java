@@ -4,6 +4,8 @@
  */
 package com.venky.swf.views.controls.page.text;
 
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.views.controls._IControl;
 
 /**
@@ -27,7 +29,9 @@ public class CheckBox extends Input{
     }
      
     public void setChecked(Object value){
-        if (Boolean.valueOf(String.valueOf(value))){
+    	@SuppressWarnings("unchecked")
+		TypeConverter<Boolean> converter = (TypeConverter<Boolean>) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter();
+        if (converter.valueOf(String.valueOf(value))){
             super.setProperty("checked", value);
         }else {
             super.remove("checked");
