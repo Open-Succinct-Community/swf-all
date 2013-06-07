@@ -147,7 +147,7 @@ table.login tbody tr:first-child td  {
 }
 
 table.hotlinks {
-  float:left;
+  float:right;
 }
 
 a.hotlink img{
