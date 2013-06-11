@@ -102,7 +102,7 @@ public class UserImpl extends ModelImpl<User>{
 	}; 
 	
 	public <R extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<R> modelClass){
-		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName());
+		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName(), Config.instance().isTimerAdditive());
 		Set<String> tables = new HashSet<String>(relatedTables.get(modelClass));
 		tables.retainAll(Database.getInstance().getCurrentTransaction().getTablesChanged());
 		Cache<Class<? extends Model>,Cache<String,Map<String,List<Integer>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
@@ -128,7 +128,7 @@ public class UserImpl extends ModelImpl<User>{
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
-		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
+		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ), Config.instance().isTimerAdditive());
 		try {
 			Cache<String,Map<String, List<Integer>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Integer>>>(){
 
@@ -171,12 +171,7 @@ public class UserImpl extends ModelImpl<User>{
 				
 				if (!extnFound) {
 					Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-					Integer rmid = null;
-					if (ref.isFieldVirtual(referredModelIdFieldName)){
-						rmid = ref.get(model,referredModelIdFieldName);
-					}else {
-						rmid = (Integer)model.getRawRecord().get(ref.getColumnDescriptor(referredModelIdFieldName).getName());
-					}
+					Integer rmid = ref.get(model,referredModelIdFieldName);
 					Model referredModel = null;
 					if (rmid != null){
 						referredModel = Database.getTable(referredModelClass).get(rmid);

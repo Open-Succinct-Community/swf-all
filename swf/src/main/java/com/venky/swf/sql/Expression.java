@@ -239,10 +239,14 @@ public class Expression {
 		return empty;
 	}
 	
+	private Integer hashValue = null;
 	@Override
 	public int hashCode(){
-		setFinalized(true);
-		return getRealSQL().hashCode();
+		if (hashValue == null){
+			setFinalized(true);
+			hashValue = getRealSQL().hashCode();
+		}
+		return hashValue;
 	}
 	
 	public boolean equals(Object other){
@@ -255,7 +259,11 @@ public class Expression {
 		Expression e = (Expression) other;
 		setFinalized(true);
 		e.setFinalized(true);
-		return getRealSQL().equals(e.getRealSQL());
+		if (hashCode() != e.hashCode()){
+			return false;
+		}else {
+			return getRealSQL().equals(e.getRealSQL());
+		}
 	}
 	
 	private Object get(Object record, String columnName){
@@ -271,11 +279,7 @@ public class Expression {
 					throw new IllegalArgumentException(columnName + " is neither a column nor field" ); 
 				}
 			}
-			if (h.getReflector().isFieldVirtual(fieldName)){
-				value = h.getReflector().get(m,fieldName);
-			}else {
-				value = m.getRawRecord().get(h.getReflector().getColumnDescriptor(fieldName).getName());
-			}
+			value = h.getReflector().get(m,fieldName);
 		}else if (Record.class.isInstance(record)){
 			value = ((Record)record).get(columnName);
 		}else {

@@ -37,6 +37,8 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
 
 /**
@@ -528,7 +530,7 @@ public abstract class JdbcTypeHelper {
         if (ref != null) {
             return ref;
         }
-        Timer loop = startTimer("loop:" + javaClass.getName());
+        Timer loop = startTimer("loop:" + javaClass.getName(), Config.instance().isTimerAdditive());
     	try {
 	        for (Class<?> key : javaTypeRefMap.keySet()) {
 	            if (key.isAssignableFrom(javaClass)) {
@@ -594,6 +596,15 @@ public abstract class JdbcTypeHelper {
   	}
   	
   	public void resetIdGeneration(){
-  		Config.instance().getLogger(getClass().getName()).warning("resetIdGeneration not implemented in " + getClass().getName() );
+    	for (Table<? extends Model> table : Database.getTables().values()){
+    		if (table.isReal() && table.isExistingInDatabase()){
+    			updateSequence(table); 
+    		}
+    	}
+    }
+  	
+  	protected <M extends Model> void updateSequence(Table<M> table){
+  		Config.instance().getLogger(getClass().getName()).warning("updateSequence not implemented in " + getClass().getName() );
   	}
+    
 }

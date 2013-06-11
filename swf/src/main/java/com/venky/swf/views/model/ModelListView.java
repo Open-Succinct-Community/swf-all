@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.collections.UpperCaseStringCache;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
@@ -116,7 +118,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		StringTokenizer tok = new StringTokenizer(orderBy);
     		this.field = tok.nextToken();
     		if (tok.hasMoreTokens()){
-        		this.ascOrDesc = tok.nextToken().toUpperCase(); 
+        		this.ascOrDesc = UpperCaseStringCache.instance().get(tok.nextToken());
     		}
     	}
     }
@@ -269,7 +271,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
                     if (!ObjectUtil.isVoid(parentDescription)){
                     	Object parentId = getter.invoke(record);
                     	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
-						String tableName = Database.getTable(parentModelClass).getTableName().toLowerCase();
+						String tableName = LowerCaseStringCache.instance().get(Database.getTable(parentModelClass).getTableName());
                     	sValue = parentDescription;
                     	
                     	_IPath parentTarget = getPath().createRelativePath( getPath().action() + 
@@ -368,10 +370,10 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         
         addHeadings(header);
         
-        Timer timeToAddAllRecords = startTimer("Time to add allRecords" );
+        Timer timeToAddAllRecords = startTimer("Time to add allRecords" , Config.instance().isTimerAdditive());
         for (M record : records) {
         	addRecordToTable(record,showAction,table);        
-    	}
+    	  }
         timeToAddAllRecords.stop();
         
         Timer removingActions = startTimer("Removing actions not needed from table",Config.instance().isTimerAdditive());

@@ -22,6 +22,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
@@ -102,7 +103,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         if (getReflector().getFieldGetterSignatures().contains(getReflector().getSignature(method))) {
             String fieldName = getReflector().getFieldName(method);
             if (!virtualFields.contains(fieldName)){
-                ColumnDescriptor cd = getReflector().getColumnDescriptor(method);
+                ColumnDescriptor cd = getReflector().getColumnDescriptor(fieldName);
                 String columnName = cd.getName();
 
                 Object value = record.get(columnName);
@@ -190,7 +191,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     	Method inImplClass = implClass.getMethod(mName, parameters);
     	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
-	        Timer timer = startTimer(inImplClass.toString());
+	        Timer timer = startTimer(inImplClass.toString(), Config.instance().isTimerAdditive());
 	        try {
 	        	return inImplClass.invoke(implObject, args);
 	        }catch (InvocationTargetException ex){
@@ -233,7 +234,7 @@ public class ModelInvocationHandler implements InvocationHandler {
             	Method fieldGetter = childReflector.getFieldGetter(fieldName);
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
             	if (referredModelGetter != null && referredModelGetter.getReturnType().isAssignableFrom(modelClass)){
-            		String columnName = childReflector.getColumnDescriptor(fieldGetter).getName();
+            		String columnName = childReflector.getColumnDescriptor(fieldName).getName();
             		expression.add(new Expression(columnName,Operator.EQ,proxy.getId()));
             	}
         	}
@@ -289,14 +290,15 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return getParticipatingRoles(user, user.getParticipationOptions(asModel));
     }
     private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
-    	Timer timer = startTimer();
+    	Timer timer = startTimer(null, Config.instance().isTimerAdditive());
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
         	Set<String> participantingRoles = new HashSet<String>();
     		for (String participantRoleGroup : pGroupOptions.keySet()){
     			Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
     			for (String referencedModelIdFieldName :pOptions.keySet()){
-    				Integer referenceValue = reflector.get(getProxy(),referencedModelIdFieldName);
+    				Integer referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);	
+    				
     				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
     					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
     				}
@@ -693,7 +695,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         
         for (String anAutoIncrementColumn:autoIncrementColumns){
 			if ( Database.getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB() ){
-        		generatedKeys.add(anAutoIncrementColumn.toLowerCase());
+        		generatedKeys.add(LowerCaseStringCache.instance().get(anAutoIncrementColumn));
         	}else {
         		generatedKeys.add(anAutoIncrementColumn);
         	}

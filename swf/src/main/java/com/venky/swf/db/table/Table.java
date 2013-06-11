@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -336,13 +337,16 @@ public class Table<M extends Model> {
     	return get(id,false,false);
     }
     public M get(int id,boolean locked,boolean wait) {
-    	Timer timer = Timer.startTimer();
+    	Timer timer = Timer.startTimer(null, Config.instance().isTimerAdditive());
     	try {
 	    	Select q = new Select(locked,wait);
 	    	q.from(getModelClass());
-	        
+
 	    	String idColumn = getReflector().getColumnDescriptor("id").getName();
+	    	Timer createWhereTimer = Timer.startTimer(null, Config.instance().isTimerAdditive());
 	        q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
+	        createWhereTimer.stop();
+	        
 	        List<M> result = q.execute(getModelClass());
 	        if (result.isEmpty()){
 	            return null;
@@ -510,7 +514,7 @@ public class Table<M extends Model> {
 				throw new RuntimeException("Unknown JDBCType" + getJDBCType());
 			}
             if (helper.isColumnNameAutoLowerCasedInDB()){
-            	buff.append(getName().toLowerCase());
+            	buff.append(LowerCaseStringCache.instance().get(getName()));
             }else {
             	buff.append(getName());
             }

@@ -37,6 +37,7 @@ import com.venky.swf.db.model.reflection.TableReflector;
 import com.venky.swf.db.platform.Platform;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.path.ControllerCache;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
@@ -81,6 +82,7 @@ public class Database implements _IDatabase{
 		ModelReflector.dispose();
 		TableReflector.dispose();
 		LuceneIndexer.dispose();
+		ControllerCache.dispose();
 	}
 
 	private Connection connection = null;

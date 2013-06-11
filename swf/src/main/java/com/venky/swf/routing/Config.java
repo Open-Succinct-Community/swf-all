@@ -197,7 +197,11 @@ public class Config {
 		return false;
 	}
 
+	private Boolean timerAdditive = null;
 	public boolean isTimerAdditive(){
-		return Boolean.valueOf(Config.instance().getProperty("swf.timer.additive", "true"));
+		if (timerAdditive == null){
+			timerAdditive = Boolean.valueOf(getProperty("swf.timer.additive", "true")); 
+		}
+		return timerAdditive; 
 	}
 }

@@ -7,10 +7,12 @@ import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 
 @MENU("")
+@EXPORTABLE(false)
 public interface SentMail extends Model{
 	
 	@IS_NULLABLE(false)

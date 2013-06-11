@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -54,6 +55,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
+import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -159,16 +161,37 @@ public class ModelReflector<M extends Model> {
         }
         return "ID";
     }
-    
 	@SuppressWarnings("unchecked")
-	public <T> T get(Model record, String fieldName){
+	public <T> T get(Object o, String fieldName){
+		Model record = null; 
+		Record rawRecord = null ;
+		if (Record.class.isInstance(o)){
+			rawRecord = (Record)o;
+		}else if (Proxy.isProxyClass(o.getClass()) && (o instanceof Model)){
+			record = (Model)o;
+		}else {
+			throw new RuntimeException ("Don't know how to get " + fieldName );
+		}
+		if (rawRecord == null){
+			rawRecord = record.getRawRecord();
+		}
+				
     	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         try {
-            Method getter = getFieldGetter(fieldName);
-            if (getter == null){
-            	throw new NullPointerException("No Field Getter found for fieldName:" +fieldName + " In " + getModelClass().getName()); 
-            }
-    		return (T)getter.invoke(record);
+        	T ret = (T)rawRecord.get(fieldName);
+        	if (ret == null){
+        		ColumnDescriptor cd = getColumnDescriptor(fieldName);
+                if (!cd.isVirtual()){
+                	ret = (T)rawRecord.get(cd.getName());
+                }else {
+                	if (record == null){
+                		record = rawRecord.getAsProxy(getModelClass());
+                	}
+                    Method getter = getFieldGetter(fieldName);
+                	ret = (T)getter.invoke(record); 
+                }
+        	}
+        	return ret;
         } catch (Exception e1) {
             throw new RuntimeException(e1);
         } finally {
@@ -332,7 +355,7 @@ public class ModelReflector<M extends Model> {
     	if (indexedColumns == null){
     		indexedColumns = new SequenceSet<String>();
         	for (Method indexedFieldGetter : getIndexedFieldGetters()){
-        		String indexColumnName = getColumnDescriptor(indexedFieldGetter).getName();
+        		String indexColumnName = getColumnDescriptor(getFieldName(indexedFieldGetter)).getName();
         		indexedColumns.add(indexColumnName);
         	}
     	}
@@ -478,8 +501,7 @@ public class ModelReflector<M extends Model> {
     }
     
     public boolean isFieldMandatory(String fieldName){
-    	Method fieldGetter = getFieldGetter(fieldName);
-    	return !getColumnDescriptor(fieldGetter).isNullable();
+    	return !getColumnDescriptor(fieldName).isNullable();
     }
     public boolean isFieldEditable(String fieldName){
         return isFieldVisible(fieldName) && isFieldSettable(fieldName) && !isFieldProtected(fieldName) ;
@@ -505,19 +527,21 @@ public class ModelReflector<M extends Model> {
     	return (hidden == null ? false : hidden.value());
 	}
     
-    public String getFieldName(final String columnName){
+    public String getFieldName(final String columnOrFieldName){
 		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
 	    	loadAllFields();
-	    	List<String> fields = columnFields.get(columnName);
-	    	
-	    	if (!fields.isEmpty()){
-	    		if (fields.contains(columnName)){
-	    			return columnName;
-	    		}
-	    		return fields.get(0);
+	    	//Mostly column name and fieldnames are same.
+	    	if (!fieldColumn.containsKey(columnOrFieldName)){
+		    	List<String> fields = columnFields.get(columnOrFieldName);
+		    	int numFields = fields.size();
+		    	if (numFields == 1){
+		    		return fields.get(0); 
+		    	}else if (numFields == 0){
+		    		return null;
+		    	}
 	    	}
-	    	return null;
+			return columnOrFieldName;
     	}finally{
     		timer.stop();
     	}
@@ -752,9 +776,23 @@ public class ModelReflector<M extends Model> {
     }
     
     public ColumnDescriptor getColumnDescriptor(String fieldName){
-        return getColumnDescriptor(getFieldGetter(fieldName));
+    	Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+    	try {
+    		return getColumnDescriptors().get(fieldName);
+    	}finally{
+    		timer.stop();
+    	}
     }
-
+    /*
+    public ColumnDescriptor getColumnDescriptor(Method fieldGetter){
+    	Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+    	try {
+    		return getColumnDescriptor(getFieldName(fieldGetter));
+    	}finally{
+    		timer.stop();
+    	}
+	}*/
+    
     public boolean hasMultipleAccess(String columnName){
 		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 		try {
@@ -765,54 +803,74 @@ public class ModelReflector<M extends Model> {
 		}
     }
 
-    private Map<String,ColumnDescriptor> columnDescriptors = new HashMap<String,ColumnDescriptor>();
-    public ColumnDescriptor getColumnDescriptor(Method fieldGetter ){
-    	loadAllFields();
-        if (!getFieldGetters().contains(fieldGetter)){
-            throw new RuntimeException("Method:" + fieldGetter.getName() + " is not recognizable as a a FieldGetter");
-        }
-
-        String fieldName = getFieldName(fieldGetter);
-        String columnName = fieldColumn.get(fieldName);
-
-        ColumnDescriptor cd = columnDescriptors.get(columnName);
-        if (cd != null){
-        	return cd;
-        }else if (hasMultipleAccess(columnName)){
-        	if (!columnFields.get(columnName).contains(columnName)){
-        		throw new RuntimeException(columnName + " has multiple access while none of the field has the same name!(" + columnFields.get(columnName).toString() + ")");
-        	}else if (!columnName.equalsIgnoreCase(fieldName)){
-        		return getColumnDescriptor(columnName);
-        	}
-        }
-        
-        Map<Class<? extends Annotation>, Annotation> map = getAnnotationMap(fieldGetter);
-        COLUMN_SIZE size = (COLUMN_SIZE) map.get(COLUMN_SIZE.class);
-        DATA_TYPE type 	 = (DATA_TYPE) map.get(DATA_TYPE.class);
-        DECIMAL_DIGITS digits = (DECIMAL_DIGITS) map.get(DECIMAL_DIGITS.class);
-        IS_NULLABLE isNullable = (IS_NULLABLE)map.get(IS_NULLABLE.class);
-        IS_AUTOINCREMENT isAutoIncrement = (IS_AUTOINCREMENT)map.get(IS_AUTOINCREMENT.class);
-        IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
-        COLUMN_DEF colDef = (COLUMN_DEF)map.get(COLUMN_DEF.class);
-        
-        cd = new ColumnDescriptor();
-        cd.setName(columnName);
-        JdbcTypeHelper helper = Database.getJdbcTypeHelper();
-		TypeRef<?> typeRef = helper.getTypeRef(fieldGetter.getReturnType());
-        assert typeRef != null;
-        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
-        cd.setNullable(isNullable != null ? isNullable.value() : !fieldGetter.getReturnType().isPrimitive());
-        cd.setSize(size == null? typeRef.getSize() : size.value());
-        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
-        cd.setAutoIncrement(isAutoIncrement == null? false : true);
-        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
-        if (colDef != null){
-    		cd.setColumnDefault(toDefaultKW(typeRef,colDef));
-        }
-        columnDescriptors.put(columnName,cd);
-        return cd;
+    private class ColumnDescriptorCache extends Cache<String,ColumnDescriptor>{
+    	
+		private static final long serialVersionUID = 302310307824397179L;
+		
+    	public ColumnDescriptorCache(){
+    		super(Cache.MAX_ENTRIES_UNLIMITED,0);
+    		loadAllFields();
+    	}
+    	
+    	@Override
+		protected ColumnDescriptor getValue(String fieldName) {
+    		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+    		try {
+    			Method fieldGetter = getFieldGetter(fieldName);
+		        if (!getFieldGetters().contains(fieldGetter)){
+		            throw new RuntimeException("Method:" + fieldGetter.getName() + " is not recognizable as a a FieldGetter");
+		        }
+	
+		        //String fieldName = getFieldName(fieldGetter);
+		        String columnName = fieldColumn.get(fieldName);
+	
+		        if (hasMultipleAccess(columnName)){
+		        	if (!columnFields.get(columnName).contains(columnName)){
+		        		throw new RuntimeException(columnName + " has multiple access while none of the field has the same name!(" + columnFields.get(columnName).toString() + ")");
+		        	}else if (!columnName.equalsIgnoreCase(fieldName)){
+		        		return get(columnName);
+		        	}
+		        }
+		        
+		        Map<Class<? extends Annotation>, Annotation> map = getAnnotationMap(fieldGetter);
+		        COLUMN_SIZE size = (COLUMN_SIZE) map.get(COLUMN_SIZE.class);
+		        DATA_TYPE type 	 = (DATA_TYPE) map.get(DATA_TYPE.class);
+		        DECIMAL_DIGITS digits = (DECIMAL_DIGITS) map.get(DECIMAL_DIGITS.class);
+		        IS_NULLABLE isNullable = (IS_NULLABLE)map.get(IS_NULLABLE.class);
+		        IS_AUTOINCREMENT isAutoIncrement = (IS_AUTOINCREMENT)map.get(IS_AUTOINCREMENT.class);
+		        IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
+		        COLUMN_DEF colDef = (COLUMN_DEF)map.get(COLUMN_DEF.class);
+		        
+		        ColumnDescriptor cd = new ColumnDescriptor();
+		        cd.setName(columnName);
+		        JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+				TypeRef<?> typeRef = helper.getTypeRef(fieldGetter.getReturnType());
+		        assert typeRef != null;
+		        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
+		        cd.setNullable(isNullable != null ? isNullable.value() : !fieldGetter.getReturnType().isPrimitive());
+		        cd.setSize(size == null? typeRef.getSize() : size.value());
+		        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
+		        cd.setAutoIncrement(isAutoIncrement == null? false : true);
+		        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
+		        if (colDef != null){
+		    		cd.setColumnDefault(toDefaultKW(typeRef,colDef));
+		        }
+		        return cd;
+			}finally {
+				timer.stop();
+			}
+		}
+    	
     }
     
+    private ColumnDescriptorCache columnDescriptors = null; 
+    private ColumnDescriptorCache getColumnDescriptors(){
+    	if (columnDescriptors == null){
+    		columnDescriptors = new ColumnDescriptorCache();
+    	}
+    	return columnDescriptors;
+    }
+
     private String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
     	return Database.getJdbcTypeHelper().toDefaultKW(ref,def);
     }

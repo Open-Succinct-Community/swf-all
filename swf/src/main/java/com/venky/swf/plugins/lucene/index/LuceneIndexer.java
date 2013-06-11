@@ -68,7 +68,7 @@ public class LuceneIndexer {
 			for (Class<? extends Model> mClass: Database.getTable(tableName).getReflector().getModelClasses()){
 				ModelReflector<? extends Model> ref = ModelReflector.instance(mClass);
 				for (Method indexedFieldGetter: ref.getIndexedFieldGetters()){
-					String indexedColumnName = ref.getColumnDescriptor(indexedFieldGetter).getName();
+					String indexedColumnName = ref.getColumnDescriptor(ref.getFieldName(indexedFieldGetter)).getName();
 					indexedColumns.add(indexedColumnName);
 					if (ref.getReferredModelGetters().size() > 0){
 						Method referredModelGetter = ref.getReferredModelGetterFor(indexedFieldGetter) ; 
@@ -101,12 +101,7 @@ public class LuceneIndexer {
 		for (String fieldName: indexedColumns){
 			ModelReflector<?> reflector = Database.getTable(tableName).getReflector();
 			
-			Object value = null; 
-			if (reflector.isFieldVirtual(fieldName)){
-				value = reflector.get(r.getAsProxy(reflector.getModelClass()), fieldName);
-			}else {
-				value = r.get(fieldName);
-			}
+			Object value = reflector.get(r, fieldName);
 			
 			if (!ObjectUtil.isVoid(value) ){
 				TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());

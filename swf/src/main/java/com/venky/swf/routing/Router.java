@@ -196,7 +196,7 @@ public class Router extends AbstractHandler {
     	}
 		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
 		
-    	Timer timer = startTimer("handleRequest",Config.instance().isTimerAdditive());
+    	Timer timer = startTimer("handleRequest",true);
     	try {
 	        HttpSession session  = request.getSession(false); 
 	        _IView view = null;
@@ -216,7 +216,7 @@ public class Router extends AbstractHandler {
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
 	            }
-	            Timer viewWriteTimer = startTimer(target+".view_write");
+	            Timer viewWriteTimer = startTimer(target+".view_write", Config.instance().isTimerAdditive());
 	            try {
 	            	view.write();
 	            }finally{
@@ -231,6 +231,7 @@ public class Router extends AbstractHandler {
 	        	}
 	        	if (session != null){
 	        		session.setAttribute("ui.error.msg", e.getMessage());
+	        		e.printStackTrace();
 	        		if (p.getTarget().equals(p.getBackTarget())){
 	        			ev = createRedirectorView(p, "/dashboard");
 	        		}else {

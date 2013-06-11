@@ -11,6 +11,13 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.List;
+
+import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.table.Table;
+import com.venky.swf.sql.DataManupulationStatement;
+import com.venky.swf.sql.Select;
 
 /**
  *
@@ -124,6 +131,15 @@ public class MySqlHelper extends JdbcTypeHelper{
                             "BLOB", 0, 0, true, true, new InputStreamConverter()));
             
     
+    }
+
+    @Override
+    protected <M extends Model> void updateSequence(Table<M> table){
+    	List<Counts> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Counts.class);
+    	Counts count = counts.get(0);
+    	DataManupulationStatement ddl = new DataManupulationStatement();
+    	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf(count.getCount() + 1) );
+    	ddl.executeUpdate();
     }
 
 }

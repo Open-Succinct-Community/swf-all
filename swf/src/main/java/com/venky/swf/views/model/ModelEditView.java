@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
@@ -250,7 +251,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	
     	Tabs multiTab = null;
     	for (Class<? extends Model> childClass: childModels){
-			Path childPath = new Path(getPath().getTarget()+"/"+Database.getTable(childClass).getTableName().toLowerCase() + "/index");
+			Path childPath = new Path(getPath().getTarget()+"/"+ LowerCaseStringCache.instance().get(Database.getTable(childClass).getTableName()) + "/index");
         	childPath.setRequest(getPath().getRequest());
         	childPath.setResponse(getPath().getResponse());
         	childPath.setSession(getPath().getSession());

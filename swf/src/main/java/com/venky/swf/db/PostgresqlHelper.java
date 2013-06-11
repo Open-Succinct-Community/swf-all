@@ -145,14 +145,8 @@ public class PostgresqlHelper extends JdbcTypeHelper{
                             "BYTEA", 0, 0, true, true,  new InputStreamConverter())); 
     
     }
-    public void resetIdGeneration(){
-    	for (Table<? extends Model> table : Database.getTables().values()){
-    		if (table.isReal() && table.isExistingInDatabase()){
-    			updateSequence(table); 
-    		}
-    	}
-    }
-    private <M extends Model> void updateSequence(Table<M> table){
+    @Override
+    protected <M extends Model> void updateSequence(Table<M> table){
     	List<Counts> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Counts.class);
     	Counts count = counts.get(0);
     	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1) +") AS COUNT").from();

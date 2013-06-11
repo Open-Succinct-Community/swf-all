@@ -47,15 +47,20 @@ public class Select extends SqlStatement{
 	
 	@SuppressWarnings("unchecked")
 	public Select from(Class<?>... models){
-		String[] tables = new String[models.length];
-		for (int i = 0 ; i< models.length ; i++){
-			if (!Model.class.isAssignableFrom(models[i])){
-				continue;
+		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+		try {
+			String[] tables = new String[models.length];
+			for (int i = 0 ; i< models.length ; i++){
+				if (!Model.class.isAssignableFrom(models[i])){
+					continue;
+				}
+				ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
+				tables[i] = ref.getTableName();
 			}
-			ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
-			tables[i] = ref.getTableName();
+			return from(tables);
+		}finally{
+			timer.stop();
 		}
-		return from(tables);
 	}
 	
 	private Select from(String... tables){
@@ -85,19 +90,24 @@ public class Select extends SqlStatement{
 	}
 	
 	private <M extends Model> boolean allOrderByColumnsAreReal(Class<M> modelClass){
-		if (orderBy == null){
-			return false;
-		}
-		ModelReflector<M> ref = ModelReflector.instance(modelClass);
-		
-		for (int i = 0 ; i < orderBy.length ; i ++ ){
-			String[] split = splitOrderByColumn(orderBy[i]);
-			String column = split[0];
-			if (ref.getColumnDescriptor(ref.getFieldName(column)).isVirtual()){
+		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+		try {
+			if (orderBy == null){
 				return false;
 			}
+			ModelReflector<M> ref = ModelReflector.instance(modelClass);
+			
+			for (int i = 0 ; i < orderBy.length ; i ++ ){
+				String[] split = splitOrderByColumn(orderBy[i]);
+				String column = split[0];
+				if (ref.getColumnDescriptor(ref.getFieldName(column)).isVirtual()){
+					return false;
+				}
+			}
+			return true;
+		}finally{
+			timer.stop();
 		}
-		return true;
 	}
 	
 	protected void finalizeParameterizedSQL(){
@@ -212,7 +222,7 @@ public class Select extends SqlStatement{
         	result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
         	
         	if (result == null){
-	            Timer queryTimer = startTimer(getRealSQL());
+	            Timer queryTimer = startTimer(getRealSQL(), Config.instance().isTimerAdditive());
 	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();
@@ -269,6 +279,7 @@ public class Select extends SqlStatement{
 	            }
         	}else {
         		if (sortResults && orderByPassed != null && orderByPassed.length > 0){
+        			Timer sorting = startTimer("Sorting cached records", Config.instance().isTimerAdditive());
             		Collections.sort(result,new Comparator<Record>() {
     					@SuppressWarnings({ "unchecked", "rawtypes" })
     					public int compare(Record r1, Record r2) {
@@ -289,7 +300,10 @@ public class Select extends SqlStatement{
     						return ret;
     					}
             		});
+        			sorting.stop();
         		}
+        		
+        		Timer processingCache = startTimer("Processing cached records", Config.instance().isTimerAdditive());
         		ret = new ArrayList<M>();
         		for (Iterator<Record> recordIterator  = result.iterator(); 
         				(maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords ) && recordIterator.hasNext() ; ){
@@ -299,9 +313,9 @@ public class Select extends SqlStatement{
         				ret.add(m);
         			}
         		}
+        		processingCache.stop();
         	}
     	
-        	Config.instance().getLogger(getClass().getName()).fine("Returning " + ret.size() + " when maxRecords Requested =" + maxRecords );
         	return ret;
         } catch (SQLException ex) {
             throw new RuntimeException(ex);

@@ -35,20 +35,19 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
-import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.annotations.model.CONTROLLER;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model._Identifiable;
@@ -302,7 +301,8 @@ public class Path implements _IPath{
     public String getTarget() {
         return target;
     }
-
+    
+	
     private void loadControllerClassName(boolean isResource){
         if (controllerClassName != null){
             return;
@@ -311,30 +311,18 @@ public class Path implements _IPath{
         boolean controllerFound = false;
         for (int i = pathelements.size() - 1;!isResource && i >= 0 && !controllerFound; i--) {
             String pe = pathelements.get(i);
-            
-            for (String controllerPackageRoot: Config.instance().getControllerPackageRoots()){
-                String clazzName = controllerPackageRoot + "." + camelize(pe) + "Controller";
-                if (getClass(clazzName) != null) {
-                    controllerClassName = clazzName;
-                    controllerPathIndex = i ;
-                    controllerFound = true;
-                    break;
-                }
+            try {
+            	Integer.valueOf(pe);
+            	continue; // Ignore numeric path elements.
+            }catch (NumberFormatException ex){
+            	
             }
-            if (!controllerFound){
-	            Class<? extends Model> modelClass = getModelClass(pe);
-	            if (modelClass != null){
-	            	ModelReflector<?> ref = ModelReflector.instance(modelClass);
-	            	CONTROLLER controller = ref.getAnnotation(CONTROLLER.class);
-	            	if (controller != null){
-	            		controllerClassName = controller.value();
-	            	}
-	            	if (ObjectUtil.isVoid(controllerClassName)){
-	                    controllerClassName = ModelController.class.getName();
-	            	}
-	                controllerPathIndex = i ;
-	                controllerFound = true;
-	            }
+            
+            String className = ControllerCache.instance().get(pe);
+            if (className != null){
+            	controllerClassName = className;
+            	controllerPathIndex = i; 
+            	controllerFound = true;
             }
             if (controllerFound){
             	break;
@@ -710,7 +698,7 @@ public class Path implements _IPath{
         return (Class<T>) getClass(getControllerClassName());
     }
 
-    private Class<?> getClass(String name) {
+    public static Class<?> getClass(String name) {
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException ex) {
@@ -870,7 +858,7 @@ public class Path implements _IPath{
 	}
 	
     public final String getControllerPathElementName(Class<? extends Model> modelClass){
-    	return Database.getTable(modelClass).getTableName().toLowerCase();
+    	return LowerCaseStringCache.instance().get(Database.getTable(modelClass).getTableName());
     }
 
     public <M extends Model> Path getModelAccessPath(Class<M> modelClass){

@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -47,7 +48,7 @@ public class Control extends Properties implements _IControl{
 
     public Control(String tag, String... pairs) {
         this.tag = tag;
-        addClass(getClass().getSimpleName().toLowerCase());
+        addClass(LowerCaseStringCache.instance().get(getClass().getSimpleName()));
         setProperty("id", String.valueOf(nextId()));
 
         Properties p = ObjectUtil.createProperties(true, pairs);

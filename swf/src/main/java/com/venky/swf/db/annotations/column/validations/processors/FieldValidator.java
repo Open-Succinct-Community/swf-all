@@ -36,7 +36,7 @@ public abstract class FieldValidator<T extends Annotation>  {
         }
 
     	Record record = m.getRawRecord();
-        Object value = record.get(h.getReflector().getColumnDescriptor(getter).getName());
+        Object value = record.get(h.getReflector().getColumnDescriptor(field).getName());
         return validate(annotation, StringUtil.valueOf(value),fieldException);
     }
     public abstract boolean validate(T annotation, String value, MultiException fieldException);
