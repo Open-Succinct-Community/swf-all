@@ -26,6 +26,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ExceptionUtil;
@@ -119,7 +120,7 @@ public class ModelController<M extends Model> extends Controller {
     @Override
     @RequireLogin(true)
     public View index() {
-    	Timer index = startTimer(getReflector().getTableName() + ".index");
+    	Timer index = startTimer(getReflector().getTableName() + ".index", Config.instance().isTimerAdditive());
     	try {
 	    	if (indexedModel){
 	    		return search();
@@ -149,7 +150,12 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View search(String strQuery) {
-    	return search(strQuery,MAX_LIST_RECORDS);
+    	getFormFields().put("q",strQuery);
+    	Map<String,Object> formData = new HashMap<String, Object>(getFormFields());
+    	rewriteQuery(formData);
+
+    	String q = StringUtil.valueOf(formData.get("q"));
+    	return search(q,MAX_LIST_RECORDS);
     }
     
     protected View search(String strQuery,int maxRecords) {
@@ -703,7 +709,7 @@ public class ModelController<M extends Model> extends Controller {
 		
 		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
 		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
-		Path autoCompletePath = getPath().createRelativePath(autoCompleteModelReflector.getTableName().toLowerCase());
+		Path autoCompletePath = getPath().createRelativePath( LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) );
 		where.add(autoCompletePath.getWhereClause());
 		
         return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value);
