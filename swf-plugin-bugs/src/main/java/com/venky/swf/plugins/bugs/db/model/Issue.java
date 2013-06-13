@@ -13,6 +13,8 @@ import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
@@ -23,6 +25,7 @@ import com.venky.swf.db.model.User;
 @HAS_DESCRIPTION_FIELD("TITLE")
 public interface Issue extends Model{
 	@HIDDEN(false)
+	@PROTECTION(Kind.NON_EDITABLE)
 	public int getId();
 	
 	@Index
