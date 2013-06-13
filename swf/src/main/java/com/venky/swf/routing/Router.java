@@ -8,10 +8,13 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -230,8 +233,13 @@ public class Router extends AbstractHandler {
 	        		ex.printStackTrace();
 	        	}
 	        	if (session != null){
-	        		session.setAttribute("ui.error.msg", e.getMessage());
-	        		e.printStackTrace();
+	        		p.addErrorMessage(e.getMessage());
+	        		Logger logger = Config.instance().getLogger(getClass().getName());
+	        		if (logger.isLoggable(Level.FINE)){
+		        		StringWriter error = new StringWriter();
+		        		e.printStackTrace(new PrintWriter(error));
+		        		logger.fine(error.toString());
+	        		}
 	        		if (p.getTarget().equals(p.getBackTarget())){
 	        			ev = createRedirectorView(p, "/dashboard");
 	        		}else {

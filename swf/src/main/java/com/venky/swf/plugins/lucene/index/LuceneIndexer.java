@@ -18,6 +18,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -27,6 +29,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 
@@ -51,8 +54,8 @@ public class LuceneIndexer {
 	}
 	
 	
-	private SequenceSet<String> indexedColumns = new SequenceSet<String>();
-	private Map<String,Class<? extends Model>> indexedReferenceColumns = new HashMap<String,Class<? extends Model>>(); 
+	private IgnoreCaseSet indexedColumns = new IgnoreCaseSet();
+	private Map<String,Class<? extends Model>> indexedReferenceColumns = new IgnoreCaseMap<Class<? extends Model>>(); 
 	private final String tableName ;
 
 	public String getTableName() {
@@ -98,9 +101,10 @@ public class LuceneIndexer {
 		}
 		Document doc = new Document();
 		boolean addedFields = false;
-		for (String fieldName: indexedColumns){
+		for (String columnName: indexedColumns){
 			ModelReflector<?> reflector = Database.getTable(tableName).getReflector();
 			
+			String fieldName = reflector.getFieldName(columnName);
 			Object value = reflector.get(r, fieldName);
 			
 			if (!ObjectUtil.isVoid(value) ){
@@ -111,7 +115,7 @@ public class LuceneIndexer {
 					if (Reader.class.isAssignableFrom(ref.getJavaClass())){
 						doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
 					}else{
-						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(fieldName);
+						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
 						String sValue = converter.toString(value);
 						if (ref.isNumeric() && referredModelClass != null){
 							ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
@@ -216,7 +220,9 @@ public class LuceneIndexer {
 		try {
 			return new QueryParser(Version.LUCENE_35,defaultField,new StandardAnalyzer(Version.LUCENE_35)).parse(queryString);
 		} catch (ParseException e) {
-			throw new RuntimeException(e);
+			MultiException ex = new MultiException("Could not form lucene query for:\n" + queryString + "\n");
+			ex.add(e);
+			throw ex;
 		}
 	}
 	public void fire(Query q ,int numHits, ResultCollector callback) {

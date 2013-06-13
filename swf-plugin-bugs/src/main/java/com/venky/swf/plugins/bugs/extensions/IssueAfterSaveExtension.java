@@ -41,7 +41,11 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 			note.save();
 			User admin = Database.getTable(User.class).get(1);
 			if (admin != null && !admin.getUserEmails().isEmpty()){
-				admin.sendMail("Issue: " + model.getId() + " " + model.getTitle() , description == null ? "" : description);
+				admin.sendMail("Issue: " + model.getId() + " " + model.getTitle() + " (" + model .getResolution() + ")" , description == null ? "" : description);
+			}
+			User creator = (User)model.getCreatorUser();
+			if (creator != null && !creator.getUserEmails().isEmpty()) {
+				creator.sendMail("Issue: " + model.getId() + " " + model.getTitle() + " (" + model .getResolution() + ")" , description == null ? "" : description);
 			}
 		}
 	}

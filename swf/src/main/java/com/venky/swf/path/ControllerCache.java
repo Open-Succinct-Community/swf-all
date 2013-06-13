@@ -44,6 +44,8 @@ public class ControllerCache extends Cache<String,String>{
                 break;
             }
             clazzName = null;
+		}
+		if (clazzName == null){
             Class<? extends Model> modelClass = Path.getModelClass(k);
             if (modelClass != null){
             	ModelReflector<?> ref = ModelReflector.instance(modelClass);
@@ -54,9 +56,6 @@ public class ControllerCache extends Cache<String,String>{
             	if (ObjectUtil.isVoid(clazzName)){
             		clazzName = ModelController.class.getName();
             	}
-            }
-            if (clazzName != null){
-            	break;
             }
         }
         return clazzName;

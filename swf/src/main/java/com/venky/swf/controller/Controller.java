@@ -350,14 +350,11 @@ public class Controller {
     	}
         record.setUpdaterUserId(getSessionUser().getId());
         record.setUpdatedAt(null);
-
-    	if (record.isAccessibleBy(getSessionUser(),modelClass)){
-            record.save();
-        }else {
-        	throw new AccessDeniedException(modelClass.getSimpleName());
-        }
-    	Path tmpPath = getPath().getModelAccessPath(modelClass);
-    	if (!tmpPath.canAccessControllerAction("save",String.valueOf(record.getId()))){
+        
+        record.save(); //Allow extensions to fill defaults etc.
+    	
+    	if (!record.isAccessibleBy(getSessionUser()) || 
+    			!getPath().getModelAccessPath(modelClass).canAccessControllerAction("save",String.valueOf(record.getId()))){
     		Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
     		throw new AccessDeniedException();	
 		}

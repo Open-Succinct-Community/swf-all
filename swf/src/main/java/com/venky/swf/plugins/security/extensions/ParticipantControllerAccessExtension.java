@@ -379,10 +379,10 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		if (!isControllerActionAccessibleAtAll(user, controllerPathElementName, actionPathElementName, tmpPath)){
 			//This is a cached Check.
-			throw new AccessDeniedException();
+			throw new AccessDeniedException(tmpPath.getTarget());
 		}
 		if (!isControllerActionAccessible(user, controllerPathElementName, actionPathElementName, parameterValue, tmpPath)){
-			throw new AccessDeniedException();
+			throw new AccessDeniedException(tmpPath.getTarget());
 		}
 	}
 	

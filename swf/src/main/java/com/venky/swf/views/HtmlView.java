@@ -7,6 +7,8 @@ package com.venky.swf.views;
 import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -25,6 +27,7 @@ import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page.Html;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Script;
+import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.text.Label;
 
 /**
@@ -93,6 +96,7 @@ public abstract class HtmlView extends View{
     
     private Label status = new Label(); 
     public static enum StatusType {
+    	
     	ERROR(){
     		public String toString(){
     			return "error";
@@ -102,6 +106,9 @@ public abstract class HtmlView extends View{
     		public String toString(){
     			return "info";
     		}
+    	};
+    	public String getSessionKey(){
+    		return "ui."+ toString() + ".msg";
     	}
     }
     
@@ -139,25 +146,22 @@ public abstract class HtmlView extends View{
     	createBody(body);
 		HttpSession session = getPath().getSession();
 		if (session != null){
-    		String errorMsg = (String) session.getAttribute("ui.error.msg");
-    		session.removeAttribute("ui.error.msg");
-
-    		String infoMsg = (String) session.getAttribute("ui.info.msg");
-    		session.removeAttribute("ui.info.msg");
-    		
-            boolean hasError = !ObjectUtil.isVoid(errorMsg);
-            boolean hasInfo = !ObjectUtil.isVoid(infoMsg);
-
-            String message = null;
-            if (hasError) {
-            	message = errorMsg;
-            	if (hasInfo){
-            		message += "<br>" + infoMsg;
-            	}
-            }else if (hasInfo) {
-            	message = infoMsg;
+			List<String> errorMessages = getPath().getErrorMessages();
+			List<String> infoMessages = getPath().getInfoMessages();
+			
+			boolean hasError = errorMessages.isEmpty();
+            boolean addNewLine = false;
+            StringBuilder message = new StringBuilder();
+            for (List<String> messageList : Arrays.asList(errorMessages,infoMessages)){
+    			for (String errorMsg : messageList){
+    				if (addNewLine){
+    					message.append(new LineBreak());	
+    				}
+    				message.append(errorMsg);
+    				addNewLine = true;
+    			}
             }
-            setStatus(hasError ? StatusType.ERROR : StatusType.INFO , message);
+            setStatus(hasError ? StatusType.ERROR : StatusType.INFO , message.toString());
 		}
     }
     protected abstract void createBody(_IControl b);

@@ -1,5 +1,7 @@
 package com.venky.swf.views.model;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
@@ -29,8 +31,8 @@ public class FileUploadView extends HtmlView{
 		Form loadForm = new Form();
 		loadForm.setMethod(SubmitMethod.POST);
 		loadForm.setProperty("enctype","multipart/form-data");
-		
-		loadForm.setAction(getPath().controllerPath(),getPath().action());
+		String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
+		loadForm.setAction(action,getPath().action());
 		loadForm.addControl(table);
 		
 		return loadForm;

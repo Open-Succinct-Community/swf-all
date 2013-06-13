@@ -36,6 +36,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -63,6 +64,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.parser.SQLExpressionParser;
+import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
@@ -963,4 +965,51 @@ public class Path implements _IPath{
 		record.setUpdaterUserId(getSessionUser().getId());
     }
 
+    public void addMessage(StatusType type, String message){
+    	if (getSession() == null){
+    		return ;
+    	}
+    	HttpSession session = getSession();
+		@SuppressWarnings("unchecked")
+		List<String> existing = (List<String>) session.getAttribute(type.getSessionKey());
+		if (existing == null){
+			existing = new SequenceSet<String>();
+			session.setAttribute(type.getSessionKey(), existing);
+		}
+		if (!ObjectUtil.isVoid(message)){
+			existing.add(message);
+		}
+    }
+    public List<String> getMessages(StatusType type){
+    	SequenceSet<String> ret = new SequenceSet<String>(); 
+    	if (getSession() == null){
+    		return ret;
+    	}
+    	HttpSession session = getSession();
+    	@SuppressWarnings("unchecked")
+		List<String> existing = (List<String>) session.getAttribute(type.getSessionKey());
+    	if (existing != null){
+	    	ret.addAll(existing);
+	    	existing.clear();
+    	}
+    	return ret;
+    	
+    }
+	@Override
+	public void addErrorMessage(String msg) {
+		addMessage(StatusType.ERROR, msg);
+	}
+	@Override
+	public void addInfoMessage(String msg) {
+		addMessage(StatusType.INFO, msg);
+		
+	}
+	@Override
+	public List<String> getErrorMessages() {
+		return getMessages(StatusType.ERROR);
+	}
+	@Override
+	public List<String> getInfoMessages() {
+		return getMessages(StatusType.INFO);
+	}
 }

@@ -5,8 +5,10 @@ import java.io.Reader;
 import java.util.List;
 
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
@@ -20,8 +22,13 @@ import com.venky.swf.db.model.User;
 @MENU("Help")
 @HAS_DESCRIPTION_FIELD("TITLE")
 public interface Issue extends Model{
+	@HIDDEN(false)
+	public int getId();
+	
 	@Index
 	@CLONING_PROTECT
+	@UNIQUE_KEY
+	@IS_NULLABLE(false)
 	public String getTitle();
 	public void setTitle(String title);
 
@@ -56,6 +63,10 @@ public interface Issue extends Model{
 	public Integer getAssignedToId();
 	public void setAssignedToId(Integer id);
 	public User getAssignedTo();
+	
+	@Index
+	@COLUMN_NAME("creator_id")
+	public Integer getCreatorUserId();
 	
 	@IS_VIRTUAL
 	public InputStream getAttachment();

@@ -174,3 +174,6 @@ table.search .submit {
     float:left;
 }
 
+input.filetextbox { 
+  width:100%;
+}

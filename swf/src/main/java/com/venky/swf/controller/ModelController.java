@@ -59,6 +59,7 @@ import com.venky.swf.views.ForwardedView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
@@ -197,6 +198,15 @@ public class ModelController<M extends Model> extends Controller {
 					q.append(f).append(":").append(strQuery);
 				}
 			}
+			try { 
+				Integer id = Integer.valueOf(strQuery);
+				if (q.length() > 0){
+					q.append(" OR ");
+				}
+				q.append("ID:").append(strQuery);
+			}catch (NumberFormatException ex){
+				// Nothing to do.
+			}
 			formData.put("q", q.toString());
 		}
 		Config.instance().getLogger(getClass().getName()).fine(formData.toString());
@@ -209,6 +219,9 @@ public class ModelController<M extends Model> extends Controller {
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>(getModelClass()));
+        if (maxRecords > 0 && records.size() ==  maxRecords){
+        	getPath().addInfoMessage("Refine your search if the record you are looking for is not listed.");
+        }
         return list(records);
     }
     
@@ -512,7 +525,7 @@ public class ModelController<M extends Model> extends Controller {
         		action.act(record);
                 if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
                 	//Usability Logic: If user is not modifying data shown, then why be in data entry mode.
-                	getPath().getSession().setAttribute("ui.info.msg", getModelClass().getSimpleName() + " created sucessfully, press Done when finished.");
+                	getPath().addInfoMessage(getModelClass().getSimpleName() + " created sucessfully, press Done when finished.");
             		return clone(record.getId());
                 }
         	}catch (RuntimeException ex){
@@ -523,8 +536,7 @@ public class ModelController<M extends Model> extends Controller {
 	        			message = th.toString();
 	        		}
             		Database.getInstance().getCurrentTransaction().rollback(th);
-	
-	            	getPath().getSession().setAttribute("ui.error.msg", message);
+	            	getPath().addMessage(StatusType.ERROR, message);
 	    	    	View eView = action.error(record);
 	    	    	if (eView instanceof HtmlView){
 		    	    	return dashboard((HtmlView)eView);

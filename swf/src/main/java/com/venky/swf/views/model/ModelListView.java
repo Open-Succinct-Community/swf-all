@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.collections.UpperCaseStringCache;
@@ -96,7 +98,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		row.createColumn().addControl(new Submit("Search"));
 		
 		Form searchForm = new Form();
-		searchForm.setAction(path.controllerPath(),"search");
+		searchForm.setAction(StringEscapeUtils.escapeHtml4(path.controllerPath()),"search");
 		searchForm.setMethod(SubmitMethod.GET);
 		
 		searchForm.addControl(table);

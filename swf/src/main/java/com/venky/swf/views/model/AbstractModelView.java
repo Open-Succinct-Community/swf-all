@@ -222,7 +222,10 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView {
         if ("search".equals(getPath().action())){
         	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
         }else {
-        	sAction.append(getPath().getTarget());
+        	sAction.append(getPath().controllerPath()).append("/").append(getPath().action());
+        	if (!ObjectUtil.isVoid(getPath().parameter())){
+        		sAction.append("/").append(getPath().parameter());
+        	}
         }
     	sAction.append("/").append(getPath().controllerPathElement());
     	sAction.append("/").append(actionName).append("/").append(record.getId());

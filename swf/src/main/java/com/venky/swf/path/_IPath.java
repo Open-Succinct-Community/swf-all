@@ -1,5 +1,6 @@
 package com.venky.swf.path;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +36,11 @@ public interface _IPath {
 	<M extends Model> _IPath getModelAccessPath(Class<M> modelClass);
 	Object getSessionUser();
 	Integer getSessionUserId();
+	
+	void addErrorMessage(String msg);
+	void addInfoMessage(String msg);
+	List<String> getErrorMessages();
+	List<String> getInfoMessages();
 	
 	boolean isGuestUserLoggedOn();
 	void invalidateSession();
