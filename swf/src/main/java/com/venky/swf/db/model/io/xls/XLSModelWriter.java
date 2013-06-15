@@ -294,9 +294,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), MAX_COLUMN_LENGTH * CHARACTER_WIDTH);
 			sheet.setColumnWidth(columnNum.intValue(), currentColumnWidth);
 		}
-		row.setHeightInPoints(Math.max(row.getHeightInPoints() , numRowsRequiredForCurrentValue*(CHARACTER_HEIGHT_IN_POINTS + 4) + 5));
-		
-
+		row.setHeightInPoints(Math.max(row.getHeightInPoints() , getRowHeightInPoints(numRowsRequiredForCurrentValue)));
+	}
+	
+	public int getRowHeightInPoints(int numRows){
+		return numRows*(CHARACTER_HEIGHT_IN_POINTS + 4) + 5;
 	}
 	public Cell createCell(Sheet sheet, Row row, Bucket columnNum , Object  value, CellStyle style){
 		Cell cell = row.createCell(columnNum.intValue());

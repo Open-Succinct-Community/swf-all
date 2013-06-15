@@ -961,8 +961,6 @@ public class Path implements _IPath{
 				throw new RuntimeException(e1);
 			}
 		}
-		record.setCreatorUserId(getSessionUser().getId());
-		record.setUpdaterUserId(getSessionUser().getId());
     }
 
     public void addMessage(StatusType type, String message){

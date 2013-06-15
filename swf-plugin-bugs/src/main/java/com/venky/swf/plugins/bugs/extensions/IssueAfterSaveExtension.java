@@ -45,7 +45,8 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 			}
 			User creator = (User)model.getCreatorUser();
 			if (creator != null && !creator.getUserEmails().isEmpty()) {
-				creator.sendMail("Issue: " + model.getId() + " " + model.getTitle() + " (" + model .getResolution() + ")" , description == null ? "" : description);
+				String resolution = model.getResolution();
+				creator.sendMail("Issue: " + model.getId() + " " + model.getTitle() + (resolution == null ? "" : " (" + model .getResolution() + ")" ) , description == null ? "" : description);
 			}
 		}
 	}

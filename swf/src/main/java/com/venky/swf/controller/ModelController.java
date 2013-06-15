@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -57,9 +58,9 @@ import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.ForwardedView;
 import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
@@ -273,20 +274,45 @@ public class ModelController<M extends Model> extends Controller {
     protected ModelShowView<M> constructModelShowView(Path path, M record){
     	return new ModelShowView<M>(path, modelClass, getIncludedFields(), record);
     }
-
+    
     @Depends("index")
     public View view(int id){
+    	return view(id,null);
+    }
+    private boolean isViewableInLine(String mimeType){
+    	if (mimeType == null){
+    		return false ;
+    	}
+    	
+    	if (mimeType.startsWith("image")){
+    		return true;
+    	}else if (mimeType.startsWith("video")){
+    		return true;
+    	}else if (mimeType.equals("audio/ogg")){
+    		return true;
+    	}
+    	
+    	return false;
+    }
+    private View view(int id,Boolean asAttachment){
 		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             try {
             	for (Method getter : reflector.getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
             			String fieldName = reflector.getFieldName(getter);
-            			String mimeType = reflector.getContentType(record, fieldName);
             			String fileName = reflector.getContentName(record,fieldName);
-            			if (fileName != null){
-            				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType,
-									"content-disposition","attachment; filename=\"" + fileName +"\"");
+            			String mimeType = reflector.getContentType(record, fieldName);
+            			if (reflector.getDefaultContentType().equals(mimeType) && fileName != null) {
+            				mimeType = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName);
+            			}
+            		
+            			if (asAttachment == null){ 
+            				asAttachment = !isViewableInLine(mimeType);
+            			}
+            			if (fileName != null && asAttachment){
+	            				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType,
+										"content-disposition","attachment; filename=\"" + fileName +"\"");
             			}else {
             				return new BytesView(getPath(), StringUtil.readBytes((InputStream)getter.invoke(record)), mimeType);
             			}
@@ -361,6 +387,8 @@ public class ModelController<M extends Model> extends Controller {
     
     protected View blank(M record) {
     	getPath().fillDefaultsForReferenceFields(record,getModelClass());
+		record.setCreatorUserId(getSessionUser().getId());
+		record.setUpdaterUserId(getSessionUser().getId());
     	if (integrationAdaptor != null){
     		return integrationAdaptor.createResponse(getPath(),record);
     	}else {

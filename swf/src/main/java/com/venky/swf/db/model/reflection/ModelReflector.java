@@ -183,13 +183,14 @@ public class ModelReflector<M extends Model> {
         		ColumnDescriptor cd = getColumnDescriptor(fieldName);
                 if (!cd.isVirtual()){
                 	ret = (T)rawRecord.get(cd.getName());
-                }else {
-                	if (record == null){
-                		record = rawRecord.getAsProxy(getModelClass());
-                	}
-                    Method getter = getFieldGetter(fieldName);
-                	ret = (T)getter.invoke(record); 
                 }
+        	} 
+        	if (ret == null) {
+            	if (record == null){
+            		record = rawRecord.getAsProxy(getModelClass());
+            	}
+                Method getter = getFieldGetter(fieldName);
+            	ret = (T)getter.invoke(record); 
         	}
         	return ret;
         } catch (Exception e1) {
@@ -633,9 +634,12 @@ public class ModelReflector<M extends Model> {
     		}
     	}
     	if (mimeType == null){
-			mimeType = MimeType.APPLICATION_OCTET_STREAM.toString();
+			mimeType = getDefaultContentType();
 		}
     	return mimeType; 
+    }
+    public String getDefaultContentType(){
+    	return MimeType.APPLICATION_OCTET_STREAM.toString();
     }
     
     public String getContentName(Model record, String fieldName){
