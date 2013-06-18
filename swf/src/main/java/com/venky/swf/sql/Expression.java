@@ -12,6 +12,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
@@ -346,6 +347,60 @@ public class Expression {
 			return ret;
 		}
 		return false;
+	}
+
+	public <M extends Model> String toLucene(Class<M> modelClass) {
+		StringBuilder builder = new StringBuilder();
+		if (conjunction == null){
+			if (ModelReflector.instance(modelClass).getIndexedColumns().contains(columnName) || "ID".equals(columnName)){
+				if (values == null || values.isEmpty()){
+					if (op == Operator.EQ || op == Operator.IN){
+						builder.append(" ( ");
+						builder.append(columnName);
+						builder.append(":NULL ");
+						builder.append(" ) ");
+					}/*else {
+						builder.append("NOT ");
+						builder.append(columnName);
+						builder.append(":NULL ");
+					}*/
+				}else {
+					builder.append(" ( ");
+					for (int i = 0 ; i < values.size() ; i++){
+						if (i != 0){
+							builder.append(" OR ");
+						}
+						builder.append(columnName);
+						builder.append(":");
+						builder.append(values.get(i).getValue());
+					}
+					builder.append(" ) ");
+				}
+			}
+		}else if (!connected.isEmpty()){
+			int numExpressionsConnected = 0 ;  
+			
+			Iterator<Expression> i = connected.iterator();
+			while(i.hasNext()){
+				Expression expression = i.next();
+				String luceneString = expression.toLucene(modelClass);
+				if (!ObjectUtil.isVoid(luceneString)){
+					if (builder.length() > 0){
+						builder.append(" ");
+						builder.append(conjunction);
+						builder.append(" ");
+					}
+					builder.append(luceneString);
+					numExpressionsConnected ++;
+				}
+			}
+			if (builder.length() > 0 && numExpressionsConnected > 1){ //avoid frivolous brackets
+				builder.insert(0,"( ");
+				builder.append(" )");
+			}
+		}
+		
+		return builder.toString();
 	}
 	
 }

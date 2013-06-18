@@ -149,7 +149,7 @@ public abstract class HtmlView extends View{
 			List<String> errorMessages = getPath().getErrorMessages();
 			List<String> infoMessages = getPath().getInfoMessages();
 			
-			boolean hasError = errorMessages.isEmpty();
+			boolean hasError = !errorMessages.isEmpty();
             boolean addNewLine = false;
             StringBuilder message = new StringBuilder();
             for (List<String> messageList : Arrays.asList(errorMessages,infoMessages)){

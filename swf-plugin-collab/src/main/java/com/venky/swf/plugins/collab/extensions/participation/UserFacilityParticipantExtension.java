@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.User;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
+import com.venky.swf.plugins.collab.db.model.participants.admin.FacilityUser;
 import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Conjunction;
@@ -59,11 +61,20 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					ret = new ArrayList<Integer>();
 					Facility f = model.getFacility();
 					if (f.isAccessibleBy(user, Facility.class)){
+						List<FacilityUser> existingSubscriptions = f.getFacilityUsers();
+						List<Integer> existingUsers = new SequenceSet<Integer>();
+						for (FacilityUser fu: existingSubscriptions){
+							existingUsers.add(fu.getUserId());
+						}
+								
+						
 						List<User> allowedUsers = getAllowedUsers(f);
 						Iterator<User> allowedUserIterator = allowedUsers.iterator(); 
 						while (allowedUserIterator.hasNext()){
 							User allowedUser = allowedUserIterator.next();
-							if (!allowedUser.isAccessibleBy(user)){
+							if (existingUsers.contains(allowedUser.getId())){
+								allowedUserIterator.remove();
+							}else if (!allowedUser.isAccessibleBy(user)){
 								allowedUserIterator.remove();
 							}
 						}

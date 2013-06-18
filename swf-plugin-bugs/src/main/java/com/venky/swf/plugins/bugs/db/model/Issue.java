@@ -2,6 +2,7 @@ package com.venky.swf.plugins.bugs.db.model;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.sql.Timestamp;
 import java.util.List;
 
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
@@ -16,6 +17,7 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
@@ -26,6 +28,7 @@ import com.venky.swf.db.model.User;
 public interface Issue extends Model{
 	@HIDDEN(false)
 	@PROTECTION(Kind.NON_EDITABLE)
+	@EXPORTABLE
 	public int getId();
 	
 	@Index
@@ -69,7 +72,12 @@ public interface Issue extends Model{
 	
 	@Index
 	@COLUMN_NAME("creator_id")
+	@EXPORTABLE
 	public Integer getCreatorUserId();
+
+	@EXPORTABLE
+	public Timestamp getCreatedAt();
+
 	
 	@IS_VIRTUAL
 	public InputStream getAttachment();

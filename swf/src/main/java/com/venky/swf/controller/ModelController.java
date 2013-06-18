@@ -182,7 +182,6 @@ public class ModelController<M extends Model> extends Controller {
 		return list(maxRecords);
     }
     
-    public static final int MAX_LIST_RECORDS = 30 ;
 	protected void rewriteQuery(Map<String,Object> formData){
 		String strQuery = StringUtil.valueOf(formData.get("q"));
 		StringBuilder q = new StringBuilder();
@@ -200,7 +199,7 @@ public class ModelController<M extends Model> extends Controller {
 				}
 			}
 			try { 
-				Integer id = Integer.valueOf(strQuery);
+				Integer.valueOf(strQuery);
 				if (q.length() > 0){
 					q.append(" OR ");
 				}
@@ -733,14 +732,14 @@ public class ModelController<M extends Model> extends Controller {
     	Expression where = new Expression(Conjunction.AND);
     	
     	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
-		if (reflector.isAnnotationPresent(autoCompleteFieldGetter,PARTICIPANT.class)){
+		PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
+		if (participant != null){
     		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
-    		PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
     		if (pOptions.get(participant.value()).containsKey(autoCompleteFieldName)){
     			List<Integer> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
     				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
-    				where.add(new Expression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
+    				where.add(Expression.createExpression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
     			}else {
     				where.add(new Expression("ID",Operator.EQ));
     			}

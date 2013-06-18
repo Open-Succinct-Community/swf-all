@@ -606,5 +606,9 @@ public abstract class JdbcTypeHelper {
   	protected <M extends Model> void updateSequence(Table<M> table){
   		Config.instance().getLogger(getClass().getName()).warning("updateSequence not implemented in " + getClass().getName() );
   	}
+
+	public String getLowerCaseFunction() {
+		return "LOWER";
+	}
     
 }

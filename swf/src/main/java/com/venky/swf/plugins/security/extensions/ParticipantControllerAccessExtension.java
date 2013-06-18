@@ -135,7 +135,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 						participantingRoles = selectedModel.getParticipatingRoles(user);
 					}
 				}catch (NumberFormatException ex){
-					//
+					participantingRoles = ref.getParticipatableRoles();
 				}catch (IllegalArgumentException ex) {
 					throw new RuntimeException(ex);
 				}finally {

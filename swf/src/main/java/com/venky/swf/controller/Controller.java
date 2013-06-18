@@ -67,9 +67,11 @@ import com.venky.xml.XMLElement;
 /**
  *
  * @author venky
- */
+ */ 
 public class Controller {
+    public static final int MAX_LIST_RECORDS = 30 ;
     protected Path path;
+
 
     public Path getPath() {
         return path;
@@ -204,22 +206,28 @@ public class Controller {
         Expression where = new Expression(Conjunction.AND);
         where.add(baseWhereClause);
         
-        if (reflector.getIndexedColumns().contains(columnName) && !ObjectUtil.isVoid(value)){
-        	LuceneIndexer indexer = LuceneIndexer.instance(reflector);
-        	Query q = indexer.constructQuery(columnName +":" + value +"*");
-        	List<Integer> top10Records = indexer.findIds(q, 20);
-        	if (!top10Records.isEmpty()){
-            	Expression idExpression = Expression.createExpression("ID", Operator.IN, top10Records.toArray());
-            	where.add(idExpression);
-        	}else {
-        		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
-        	}
-        }else{
-	        where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
-        }
+    	int maxRecordsToGet = MAX_LIST_RECORDS;
+    	if (!ObjectUtil.isVoid(value)){
+	        if (reflector.getIndexedColumns().contains(columnName)){
+	        	LuceneIndexer indexer = LuceneIndexer.instance(reflector);
+	        	StringBuilder qry = new StringBuilder();
+	        	qry.append("( ").append(columnName).append(":").append(value).append("* )");
+	        	Query q = indexer.constructQuery(qry.toString());
+	        	List<Integer> topRecords = indexer.findIds(q, maxRecordsToGet);
+	        	int numRecordRetrieved = topRecords.size();
+	        	if (numRecordRetrieved > 0 && numRecordRetrieved < maxRecordsToGet){
+	            	Expression idExpression = Expression.createExpression("ID", Operator.IN, topRecords.toArray());
+	            	where.add(idExpression);
+	        	}else {
+	        		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+	        	}
+	        }else {
+	        	where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+	        }
+    	}
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());
-        List<M> records = q.execute(modelClass,new DefaultModelFilter<M>(modelClass));
+        List<M> records = q.execute(modelClass,maxRecordsToGet,new DefaultModelFilter<M>(modelClass));
         Method fieldGetter = reflector.getFieldGetter(fieldName);
         TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
         
@@ -418,15 +426,23 @@ public class Controller {
 		int numUniqueKeys = reflector.getUniqueKeys().size(); 
 		while (fieldIterator.hasNext()){
 			String field = fieldIterator.next();
-			if (reflector.isHouseKeepingField(field)){
+			EXPORTABLE exportable = reflector.getAnnotation(reflector.getFieldGetter(field), EXPORTABLE.class);
+			if (exportable != null){
+				if (!exportable.value()){
+					fieldIterator.remove();
+				}
+			}else if (reflector.isHouseKeepingField(field)){
 				if (!field.equals("ID") || numUniqueKeys > 0){
 					fieldIterator.remove();
 				}
 			}
 		}
-		List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>(modelClass));
+		exportxls(modelClass, wb, fieldsIncluded);
+    }
+    protected <M extends Model> void exportxls(Class<M> modelClass,Workbook wb , List<String> fieldsIncluded){
+    	List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>(modelClass));
 		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded);
-	}
+    }
     protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){
     	return new XLSModelWriter<M>(modelClass); 
     }

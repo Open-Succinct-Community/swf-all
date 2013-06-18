@@ -243,63 +243,111 @@ public class Path implements _IPath{
         int pathElementSize = pathelements.size();
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
         	String token = pathelements.get(i);
-        	Class<? extends Model> modelClass = getModelClass(token);
-        	if (modelClass != null){
-        		ModelInfo info = new ModelInfo(modelClass);
-        		modelElements.add(info);
-        		if (i <pathElementSize -1){
-	        		info.setAction(pathelements.get(i+1));
-	        		i+= 1;
-        		}
-        		try {
-        			if (i < pathElementSize - 1){
-	        			info.setId(Integer.valueOf(pathelements.get(i+1)));
-	        			i+=1;
-        			}
-        		}catch (NumberFormatException ex){
-        			//
-        		}
+        	try {
+        		Integer.valueOf(token);
+        		continue; //Ignore integer elements;
+        	}catch (NumberFormatException e){
+        		//
         	}
+        	
+        	String controllerClassName = ControllerCache.instance().get(token);
+        	if (controllerClassName == null){
+        		continue;
+        	}
+        	ControllerInfo info = new ControllerInfo(token,controllerClassName);
+        	info.setControllerPathIndex(i);
+        	controllerElements.add(info);
+        	
+    		if (i < pathElementSize -1){
+        		info.setAction(pathelements.get(i+1));
+        		i+= 1;
+    		}
+    		try {
+    			if (i < pathElementSize - 1){
+        			info.setParameter(Integer.valueOf(pathelements.get(i+1)));
+        			i+=1;
+    			}
+    		}catch (NumberFormatException ex){
+    			//It is possible that the parameter is a string one. So lets check the next parameter to see if it is a model or this is 
+    			//the last pathelement.
+    			if (i  < pathElementSize - 2){
+    				String nextElement =  pathelements.get(i+2);
+    				try {
+    					Integer.valueOf(nextElement);
+    				}catch(NumberFormatException nfe){
+        				if (ControllerCache.instance().get(nextElement) != null){
+            				info.setParameter(pathelements.get(i+1));
+            				i ++ ;
+            			}
+    				}
+    			}else {
+    				//Last pathelement.
+    				info.setParameter(pathelements.get(i+1));
+    				i++;
+    			}
+    		}
     	}
         if (pathElementSize == 0){
         	pathelements.add("index");
         }
         loadControllerClassName(isResource);
     }
-    
-    public static class ModelInfo{
-    	private ModelReflector<? extends Model> reflector;
-    	private Integer id;
-    	private String action = "index";
-    	public ModelInfo(Class<? extends Model> modelClass){
-    		this.reflector = ModelReflector.instance(modelClass);
+    public static class ControllerInfo { 
+    	private String action = null; 
+    	private Object parameter = null; 
+    	private Class<? extends Model> modelClass = null;
+    	private Class<?> controllerClass = null;
+    	private int controllerPathIndex = -1;
+    	public ControllerInfo(String controllerName, String controllerClassName){
+    		this.controllerClass = Path.getClass(controllerClassName);
+    		this.modelClass = Path.getModelClass(controllerName);
     	}
-    	public ModelReflector<? extends Model> getReflector(){
-    		return reflector;
-    	}
-    	
-		public Integer getId() {
-			return id;
+
+		public Class<?> getControllerClass() {
+			return controllerClass;
 		}
-		public void setId(Integer id) {
-			this.id = id;
+		public Class<? extends Model> getModelClass(){ 
+			return modelClass;
 		}
+		
 		public String getAction() {
 			return action;
 		}
 		public void setAction(String action) {
 			this.action = action;
 		}
-		
-    }
-    
-    private List<ModelInfo> modelElements = new ArrayList<Path.ModelInfo>();
-    
-    public List<ModelInfo> getModelElements(){
-    	return modelElements;
-    }
-    
+		@SuppressWarnings("unchecked")
+		public <T> T getParameter() {
+			return (T) parameter;
+		}
+		public <T> void setParameter(T parameter) {
+			this.parameter = parameter;
+		}
 
+		public Integer getId() {
+			if (parameter == null){
+				return null;
+			}
+			if (parameter instanceof Integer){
+				return (Integer)parameter;
+			}
+			return null;
+		}
+
+		public int getControllerPathIndex() {
+			return controllerPathIndex;
+		}
+
+		public void setControllerPathIndex(int controllerPathIndex) {
+			this.controllerPathIndex = controllerPathIndex;
+		}
+    	
+    }
+    private List<ControllerInfo> controllerElements  = new ArrayList<Path.ControllerInfo>();
+    public List<ControllerInfo> getControllerElements(){ 
+    	return controllerElements;
+    }
+    
     public String getTarget() {
         return target;
     }
@@ -309,27 +357,12 @@ public class Path implements _IPath{
         if (controllerClassName != null){
             return;
         }
-        
-        boolean controllerFound = false;
-        for (int i = pathelements.size() - 1;!isResource && i >= 0 && !controllerFound; i--) {
-            String pe = pathelements.get(i);
-            try {
-            	Integer.valueOf(pe);
-            	continue; // Ignore numeric path elements.
-            }catch (NumberFormatException ex){
-            	
-            }
-            
-            String className = ControllerCache.instance().get(pe);
-            if (className != null){
-            	controllerClassName = className;
-            	controllerPathIndex = i; 
-            	controllerFound = true;
-            }
-            if (controllerFound){
-            	break;
-            }
+        if (!controllerElements.isEmpty()){
+        	ControllerInfo cinfo = controllerElements.get(controllerElements.size() -1 );
+        	controllerClassName = cinfo.getControllerClass().getName();
+        	controllerPathIndex = cinfo.getControllerPathIndex();
         }
+        
         if (controllerClassName == null) {
             controllerClassName = Controller.class.getName();
             controllerPathIndex = -1;
@@ -408,9 +441,13 @@ public class Path implements _IPath{
         }
     }
     public static <M extends Model> Table<M> getTable(String pathElement){
-        String tableName = Table.tableName(StringUtil.singularize(camelize(pathElement)));
-		Table<M> table = Database.getTable(tableName);
-        return table;
+    	String camelPathElement = StringUtil.camelize(pathElement);
+    	if (StringUtil.pluralize(camelPathElement).equals(camelPathElement)){
+            String tableName = Table.tableName(StringUtil.singularize(camelPathElement));
+    		Table<M> table = Database.getTable(tableName);
+            return table;
+    	}
+    	return null;
     }
     
     public String action() {
@@ -711,10 +748,6 @@ public class Path implements _IPath{
         return controllerClassName;
     }
 
-    private static String camelize(String s) {
-        return StringUtil.camelize(s);
-    }
-    
     public Path createRelativePath(String toUrl){
     	String relPath = null; 
     	if (parameter() != null){
@@ -770,27 +803,31 @@ public class Path implements _IPath{
 			return where;
 		}
 
-		List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getModelElements());
-		Collections.reverse(modelElements);
-		Iterator<ModelInfo> miIter = modelElements.iterator() ;
-		if (miIter.hasNext()){
-			miIter.next();// The last model was self.
+		List<ControllerInfo> controllerElements = new ArrayList<ControllerInfo>(getControllerElements());
+		Collections.reverse(controllerElements);
+		Iterator<ControllerInfo> cInfoIter = controllerElements.iterator() ;
+		if (cInfoIter.hasNext()){
+			cInfoIter.next();// The last model was self.
 		}
 		
 		Set<String> modelElementProcessed = new HashSet<String>();
-		while(miIter.hasNext()){ 
-    		ModelInfo mi = miIter.next();
-    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, mi.getReflector().getTableName());
-    		
-    		if (referredModelGetters.isEmpty() || mi.getId() == null || modelElementProcessed.contains(mi.getReflector().getTableName())){
+		while(cInfoIter.hasNext()){ 
+    		ControllerInfo controllerInfo = cInfoIter.next();
+    		if (controllerInfo.getModelClass() == null){
     			continue;
     		}
-    		modelElementProcessed.add(mi.getReflector().getTableName());
+    		ModelReflector<? extends Model> ref = ModelReflector.instance(controllerInfo.getModelClass());
+    		List<Method> referredModelGetters = getReferredModelGetters(referredModelGetterMap, ref.getTableName());
+    		
+    		if (referredModelGetters.isEmpty() || controllerInfo.getId() == null || modelElementProcessed.contains(ref.getTableName())){
+    			continue;
+    		}
+    		modelElementProcessed.add(ref.getTableName());
     		
     		Expression referredModelWhere = new Expression(Conjunction.AND);
     		Expression referredModelWhereChoices = new Expression(Conjunction.OR);
 
-    		ModelReflector<?> referredModelReflector = mi.getReflector();
+    		ModelReflector<?> referredModelReflector = ref;
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
 	    		if (reflector.reflects(childModelClass)){
@@ -800,11 +837,11 @@ public class Path implements _IPath{
     	        	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
     	        	    	String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
 
-    	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+    	        	    	referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(controllerInfo.getId())));
 	            		}
 	            	}else {
 	            		String referredModelIdColumnName = join.value();
-	            		referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(mi.getId())));
+	            		referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(controllerInfo.getId())));
 	            		if (!ObjectUtil.isVoid(join.additional_join())){
 		            		SQLExpressionParser parser = new SQLExpressionParser(modelClass);
 		            		Expression expression = parser.parse(join.additional_join());
@@ -888,16 +925,15 @@ public class Path implements _IPath{
 	};
 
     public <M extends Model> void fillDefaultsForReferenceFields(M record,Class<M> modelClass){
-        List<ModelInfo> modelElements = new ArrayList<ModelInfo>(getModelElements());
-        Collections.reverse(modelElements);
+        List<ControllerInfo> controllerElements = new ArrayList<ControllerInfo>(getControllerElements());
+        Collections.reverse(controllerElements);
         
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
 		for (Method referredModelGetter: reflector.getReferredModelGetters()){
 	    	@SuppressWarnings("unchecked")
 			Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
 	    	String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) || 
-	    			!reflector.isFieldMandatory(referredModelIdFieldName) ){
+	    	if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName)){
 	    		continue;
 	    	}
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
@@ -907,55 +943,59 @@ public class Path implements _IPath{
 				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
 					continue;
 				}
-				
-				List<Integer> idoptions = null ;
-				Integer id = null; 
+				Integer valueToSet = null;
 
-				PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
-				if (participant != null){
-					idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
-				}
-						
-				if (idoptions != null && !idoptions.isEmpty()){
-					if (idoptions.size() == 1){
-						id = idoptions.get(0);
-					}else if (idoptions.size() == 2 && idoptions.contains(null)){
-						for (Integer i:idoptions){
-							if (i != null){
-								id = i;
-							}
-						}
-					}
-					if (id != null){
-						Model referredModel = Database.getTable(referredModelClass).get(id);
-            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-            	    		referredModelIdSetter.invoke(record,id);
-            	    		continue;
-            	    	}
-					}
-				}
-				Iterator<ModelInfo> miIter = modelElements.iterator();
+				Iterator<ControllerInfo> miIter = controllerElements.iterator();
 				if (miIter.hasNext()){
 					miIter.next();
 					//Last model was self so ignore the first one now as model Elements is already reversed.
 				}
 				while (miIter.hasNext()){
-		    		ModelInfo mi = miIter.next();
+		    		ControllerInfo mi = miIter.next();
 		    		if (mi.getId() == null){
     	    			continue;
     	    		}
-	        		if (mi.getReflector().reflects(referredModelClass)){
+		    		if (mi.getModelClass() == null){
+		    			continue;
+		    		}
+		    		ModelReflector<? extends Model> ref = ModelReflector.instance(mi.getModelClass());
+	        		if (ref.reflects(referredModelClass)){
 	        	    	try {
 	        	    		Model referredModel = Database.getTable(referredModelClass).get(mi.getId());
 	            	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
-	            	    		referredModelIdSetter.invoke(record, mi.getId());
+	            	    		valueToSet = mi.getId();
 	            	    		break;
 	            	    	}
 						} catch (Exception e) {
 							throw new RuntimeException(e);
 						}
 	        		}
-	        		
+				}
+				if (valueToSet == null){
+					List<Integer> idoptions = null ;
+	
+					PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
+					if (participant != null){
+						idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
+					}
+							
+					if (idoptions != null && !idoptions.isEmpty()){
+						if (idoptions.size() == 1){
+							valueToSet = idoptions.get(0);
+						}else if (idoptions.size() == 2 && idoptions.contains(null)){
+							for (Integer i:idoptions){
+								if (i != null){
+									valueToSet = i;
+								}
+							}
+						}
+					}
+				}
+				if (valueToSet != null){
+					Model referredModel = Database.getTable(referredModelClass).get(valueToSet);
+        	    	if (referredModel.isAccessibleBy(getSessionUser(),referredModelClass)){
+        	    		referredModelIdSetter.invoke(record,valueToSet);
+        	    	}
 				}
 			} catch (Exception e1) {
 				throw new RuntimeException(e1);
