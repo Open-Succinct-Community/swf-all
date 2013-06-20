@@ -353,7 +353,6 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     		Row searchFormRow = container.createRow();
     		Column searchFormCell = searchFormRow.createColumn();
     		searchFormCell.addControl(createSearchForm(getPath()));
-    		
     		searchFormRow.createColumn();
     	}
     	

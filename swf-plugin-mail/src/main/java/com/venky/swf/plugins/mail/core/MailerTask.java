@@ -5,8 +5,6 @@ import java.util.List;
 import javax.mail.Message.RecipientType;
 
 import org.codemonkey.simplejavamail.Email;
-import org.codemonkey.simplejavamail.Mailer;
-import org.codemonkey.simplejavamail.TransportStrategy;
 
 import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
@@ -24,10 +22,14 @@ public class MailerTask implements Task{
 	int toUserId ;
 	String subject; 
 	String text; 
+	boolean isHtml = false;
 	public MailerTask(User to,String subject, String text){
 		this.toUserId = to.getId();
 		this.subject = subject;
 		this.text = text;
+		if (text != null){
+			this.isHtml = text.trim().substring(0, 5).equalsIgnoreCase("<html");
+		}
 	}
 	
 	public void execute() {
@@ -42,9 +44,6 @@ public class MailerTask implements Task{
 		
 		String emailId = Config.instance().getProperty("swf.sendmail.user");
 		String userName = Config.instance().getProperty("swf.sendmail.user.name");
-		String password = Config.instance().getProperty("swf.sendmail.password");
-		String host = Config.instance().getProperty("swf.sendmail.smtp.host");
-		int port = Config.instance().getIntProperty("swf.sendmail.smtp.port");
 		
 		if( ObjectUtil.isVoid(emailId)) {
 			throw new RuntimeException("Plugin not configured :swf.sendmail.user" );
@@ -52,11 +51,15 @@ public class MailerTask implements Task{
 		
 		UserEmail toEmail = emails.get(0);
 		
-		Email email = new Email();
+		final Email email = new Email();
 		email.setFromAddress(userName, emailId);
 		email.setSubject(subject);
 		email.addRecipient(to.getName(), toEmail.getEmail(), RecipientType.TO);
-		email.setTextHTML(text);
+		if (isHtml){
+			email.setTextHTML(text);
+		}else {
+			email.setText(text);
+		}
 		
 		SentMail mail = Database.getTable(SentMail.class).newRecord();
 		mail.setUserId(toUserId);
@@ -65,9 +68,7 @@ public class MailerTask implements Task{
 		mail.setBody(new StringReader(text));
 		mail.save();
 
-		Mailer mailer = new Mailer(host, port, emailId,password,TransportStrategy.SMTP_SSL); 
-		mailer.sendMail(email);
-		
+		AsyncMailer.instance().addEmail(email);
 	}
 
 }

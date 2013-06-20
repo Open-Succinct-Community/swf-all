@@ -13,6 +13,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
@@ -46,6 +47,17 @@ public class PostgresqlHelper extends JdbcTypeHelper{
 			return ex.getSQLState().equals("55P03");
 		}
 		return super.isQueryTimeoutException(ex);
+	}
+	@Override
+	public boolean hasTransactionRolledBack(Throwable ex){
+		if (super.hasTransactionRolledBack(ex)){
+			return true;
+		}
+		SQLException sqlex = (SQLException) ExceptionUtil.getEmbeddedException(ex,SQLException.class);
+		if (sqlex != null && (sqlex.getSQLState().startsWith("08") || sqlex.getSQLState().startsWith("57"))){
+			return true;
+		}
+		return false;
 	}
     @Override
     public String getAutoIncrementInstruction() {

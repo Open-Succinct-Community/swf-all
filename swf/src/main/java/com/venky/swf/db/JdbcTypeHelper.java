@@ -51,7 +51,7 @@ public abstract class JdbcTypeHelper {
 	}
 	
 	public boolean hasTransactionRolledBack(Throwable ex){
-		return getEmbeddedException(ex, SQLTransactionRollbackException.class) != null ;
+		return getEmbeddedException(ex, SQLTransactionRollbackException.class) != null  ;
 	}
 	
 	public boolean isQueryTimeoutSupported(){ 
