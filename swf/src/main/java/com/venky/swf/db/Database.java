@@ -422,7 +422,12 @@ public class Database implements _IDatabase{
 				
 		    	String driver = Config.instance().getProperty("swf.jdbc.driver");
 				info.setProperty("driverClassName",driver);
-
+				info.setProperty("validationQuery", "select 1 as dbcp_connection_test");
+				info.setProperty("testOnBorrow", "true");
+				info.setProperty("testOnReturn", "true");
+				info.setProperty("testWhileIdle", "true");
+				info.setProperty("timeBetweenEvictionRunsMillis",String.valueOf(1000*60*2));
+				info.setProperty("minEvictableIdleTimeMillis",String.valueOf(1000*60));
 				try {
 					Class<?> driverClass = Class.forName(driver);
 					_ds = (BasicDataSource)BasicDataSourceFactory.createDataSource(info);

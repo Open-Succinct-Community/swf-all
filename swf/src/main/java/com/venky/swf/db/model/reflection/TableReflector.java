@@ -98,6 +98,7 @@ public class TableReflector {
     				lastRealClass = null;
     			}else if (lastRealClass == null){
     				lastRealClass = claz;
+    				break;
     			}
     		}else if (lastRealClass == null){
     			lastRealClass = claz;

@@ -13,11 +13,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
-import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.DashboardView;
@@ -36,7 +35,6 @@ import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.layout.Table.TBody;
 import com.venky.swf.views.controls.page.layout.Table.THead;
 import com.venky.swf.views.controls.page.layout.Tabs;
-import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.TextArea;
@@ -49,15 +47,12 @@ import com.venky.swf.views.controls.page.text.TextBox;
 public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     private int numFieldsPerRow = 2;
     private M record; 
-    public ModelEditView(Path path,
-                        Class<M> modelClass,
-                        String[] includeFields,M record){
-    	this(path,modelClass,includeFields,record,"save");
+    public ModelEditView(Path path, String[] includeFields,M record){
+    	this(path,includeFields,record,"save");
     }
-    public ModelEditView(Path path,
-            Class<M> modelClass,
-            String[] includeFields,M record,String formAction){
-		super(path,modelClass,includeFields);
+    
+    public ModelEditView(Path path, String[] includeFields,M record,String formAction){
+		super(path,includeFields);
 		this.record = record;
 		this.formAction = formAction;
 	}
@@ -124,6 +119,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     
     @Override
     protected void createBody(_IControl body) {
+    	ModelReflector<M> reflector = getModelAwareness().getReflector();
     	Form form = new Form();
     	body.addControl(form);
     	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
@@ -144,33 +140,17 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         hiddenHashField.setName("_FORM_DIGEST");
         hiddenFields.add(hiddenHashField);
         
-        StringBuilder hashFieldValue = new StringBuilder();
-        
         while (field.hasNext()){
             String fieldName = field.next();
             
-            Control fieldData = getInputControl(fieldName, record);
-            Label fieldLabel = new Label(getFieldLiteral(fieldName));
+            Control fieldData = getModelAwareness().getInputControl(fieldName,fieldName, record, this);
+            Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
             if (reflector.isFieldVisible(fieldName)){
             	if (fieldData instanceof TextArea || fieldData instanceof FileTextBox){
             		rpadLastRow(table);
             	}
-            	
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
-            	if (!isFieldEditable(fieldName)){
-                    Kind protectionKind = getFieldProtection(fieldName);
-                    switch(protectionKind){
-                    	case NON_EDITABLE:
-                    		fieldData.setEnabled(true);
-                    		fieldData.setReadOnly(true);
-                    		break;
-                    	default:
-                            fieldData.setEnabled(false);
-                            break;
-                    }
-                }
-
             	if (fieldData instanceof TextArea){
                     r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
             	}else {
@@ -178,7 +158,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	}
             	r.getLastColumn().addClass("data");
             }else {
-                fieldData.setVisible(false);
                 hiddenFields.add(fieldData);
             }
             
@@ -186,34 +165,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	rpadLastRow(table);
             	form.setProperty("enctype","multipart/form-data");
             	FileTextBox ftb = (FileTextBox)fieldData;
-            	if (getReflector().getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
-            		ftb.setStreamUrl(getPath().controllerPath()+"/view/"+record.getId(),getReflector().getContentName(record, fieldName));
+            	if (reflector.getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
                     Row streamRow = table.createRow();
                     Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
                     streamColumn.addControl(ftb.getStreamLink());
             	}
             }
-            
-            
-            if (fieldData.isEnabled() && reflector.isFieldSettable(fieldName)){
-            	if (hashFieldValue.length() > 0){
-            		hashFieldValue.append(",");
-            	}
-            	String fieldValue = fieldData.getValue();
-	            if (fieldData instanceof CheckBox){
-	            	fieldValue = StringUtil.valueOf(((CheckBox)fieldData).isChecked());
-	            }else if  (fieldData instanceof TextArea){
-	            	fieldValue = fieldData.getText();
-	            }
-	            
-            	hashFieldValue.append(fieldName);
-            	hashFieldValue.append("=");
-            	hashFieldValue.append(StringUtil.valueOf(fieldValue));
-            }
         }
         
-        hiddenHashField.setValue(Encryptor.encrypt(hashFieldValue.toString()));
-
         Row r = rpadLastRow(table);
         Column c = r.getLastColumn();
         for (Control hiddenField: hiddenFields){
@@ -246,7 +205,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        c.addControl(sbm);
         }
         
-    	List<Class<? extends Model>> childModels = getReflector().getChildModels(true, true);
+    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
 
     	
     	Tabs multiTab = null;
@@ -256,16 +215,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	childPath.setResponse(getPath().getResponse());
         	childPath.setSession(getPath().getSession());
         	if (childPath.canAccessControllerAction()){
-            	DashboardView view =  (DashboardView)childPath.invoke();
             	Div tab = new Div();
-            	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
-            	excludeLinks.addAll(getHotLinks());
-            	
-            	//Exclude back link on included child as it is a redundant link to the record in focus currently.
-            	HotLink childBack = new HotLink(childPath.controllerPath() + "/back");
-            	excludeLinks.add(childBack); 
-            	
-            	view.createBody(tab,false,excludeLinks);
+            	addChildModelToTab(childPath,tab,form);
         		if (multiTab == null){
         			multiTab = new Tabs();
         			body.addControl(multiTab);
@@ -273,15 +224,21 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	multiTab.addSection(tab,childClass.getSimpleName());
         	}
         }    
-    }
-    protected boolean isFieldEditable(String fieldName) {
-        return reflector.isFieldEditable(fieldName);
-    }
-    
-    protected Kind getFieldProtection(String fieldName){
-    	return reflector.getFieldProtection(fieldName);
+
+        hiddenHashField.setValue(Encryptor.encrypt(getModelAwareness().getHashFieldValue().toString()));
+
     }
     
+    protected void addChildModelToTab(Path childPath,Div tab ,Form form){
+    	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
+    	excludeLinks.addAll(getHotLinks());
+    	//Exclude back link on included child as it is a redundant link to the record in focus currently.
+    	HotLink childBack = new HotLink(childPath.controllerPath() + "/back");
+    	excludeLinks.add(childBack); 
+
+    	DashboardView view =  (DashboardView)childPath.invoke();
+    	view.createBody(tab,false,excludeLinks);
+    }
     private SequenceSet<HotLink> links = null;
     @Override
     public SequenceSet<HotLink> getHotLinks(){
@@ -303,12 +260,12 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             }
             
 
-    		for (Method m : getSingleRecordActions()){
+    		for (Method m : getModelAwareness().getSingleRecordActions()){
             	String actionName = m.getName();
             	if (actionName.equals("destroy") || actionName.equals(getPath().action())){
             		continue;
             	}
-            	Link actionLink = createSingleRecordActionLink(m, getRecord());
+            	Link actionLink = getModelAwareness().createSingleRecordActionLink(m, getRecord());
             	if (actionLink != null) {
             		links.add(new HotLink(actionLink));
             	}
@@ -318,4 +275,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	}
     	return links;
     }
+    
+    
 }

@@ -30,6 +30,10 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     public AutoCompleteText(Class<M> modelClass){
     	this(modelClass,"");
     }
+    
+    public void setOnAutoCompleteSelectProcessingUrl(String url){
+    	description.setOnAutoCompleteSelectProcessingUrl(url);
+    }
     public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
         ModelReflector<M> ref = ModelReflector.instance(modelClass);
@@ -41,6 +45,8 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         this.description.setAutocompleteServiceURL(url);
         setVisible(true);
         setEnabled(true);
+    	setWaterMark("Enter space to see complete list");
+    	setToolTip("Enter the first few characters or space to see the full list.");
     }
     
     public void setVisible(boolean visible){
@@ -49,6 +55,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     		description.setVisible(visible);
     	}
     }
+    
     
     public Class<M> getModelClass(){
         return modelClass;
@@ -60,10 +67,26 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         parent.addControl(description);
     }    
     
+    public void setWaterMark(String watermark){
+    	if (description != null){
+    		description.setWaterMark(watermark);
+    	}
+    }
+    public void setToolTip(String watermark){
+    	if (description != null){
+    		description.setToolTip(watermark);
+    	}
+    }
+
     @Override
     public void setName(String name){
         super.setName(name);
-        description.setName("_AUTO_COMPLETE_"+getName());
+        int indexOfDot = name.indexOf('.');
+        String autoCompleteFieldName = "_AUTO_COMPLETE_" + name;
+        if (indexOfDot > 0){
+        	autoCompleteFieldName = name.substring(0,indexOfDot) + "._AUTO_COMPLETE_" + name.substring(indexOfDot+1);
+        }
+        description.setName(autoCompleteFieldName);
     }
     @Override
     public void setReadOnly(final boolean readonly){
@@ -96,5 +119,16 @@ public class AutoCompleteText<M extends Model> extends TextBox{
                 description.setValue(dvalue);
             }
         }
+    }
+    
+    @Override
+    public void setForm(String formId){
+    	super.setForm(formId);
+    	if (description != null){
+    		description.setForm(formId);
+    	}
+    }
+    public TextBox getDescriptionField(){
+    	return description;
     }
 }

@@ -30,6 +30,16 @@ public class UniqueKeyFieldDescriptor<M extends Model> {
 			referredModelReflector = null;
 		}
 	}
+
+	private boolean multipleRecordsWithNullAllowed = true;
+	public void setMultipleRecordsWithNullAllowed(
+			boolean allowMultipleRecordsWithNull) {
+		this.multipleRecordsWithNullAllowed = allowMultipleRecordsWithNull;
+	}
+	
+	public boolean isMultipleRecordsWithNullAllowed(){
+		return this.multipleRecordsWithNullAllowed;
+	}
 	
 	
 	

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +26,7 @@ import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.json.simple.JSONObject;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.LowerCaseStringCache;
@@ -37,7 +39,10 @@ import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
+import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
@@ -134,12 +139,15 @@ public class ModelController<M extends Model> extends Controller {
     	}
     }
 
+    public int getMaxListRecords(){
+    	return MAX_LIST_RECORDS;
+    }
 
     public View search(){
     	Map<String,Object> formData = new HashMap<String, Object>();
     	formData.putAll(getFormFields());
     	String q = "";
-    	int maxRecords = MAX_LIST_RECORDS;
+    	int maxRecords = getMaxListRecords();
 		if (!formData.isEmpty()){
 			rewriteQuery(formData);
 			q = StringUtil.valueOf(formData.get("q"));
@@ -157,7 +165,7 @@ public class ModelController<M extends Model> extends Controller {
     	rewriteQuery(formData);
 
     	String q = StringUtil.valueOf(formData.get("q"));
-    	return search(q,MAX_LIST_RECORDS);
+    	return search(q,getMaxListRecords());
     }
     
     protected View search(String strQuery,int maxRecords) {
@@ -242,7 +250,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     protected View constructModelListView(List<M> records){
-    	return new ModelListView<M>(getPath(), modelClass, getIncludedFields(), records);
+    	return new ModelListView<M>(getPath(), getIncludedFields(), records);
     }
     
     protected String[] getIncludedFields(){
@@ -271,7 +279,7 @@ public class ModelController<M extends Model> extends Controller {
     	return constructModelShowView(getPath(),record);
     }
     protected ModelShowView<M> constructModelShowView(Path path, M record){
-    	return new ModelShowView<M>(path, modelClass, getIncludedFields(), record);
+    	return new ModelShowView<M>(path, getIncludedFields(), record);
     }
     
     @Depends("index")
@@ -351,7 +359,7 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
     protected ModelEditView<M> constructModelEditView(Path path, M record, String formAction){
-    	return new ModelEditView<M>(path, getModelClass(), getIncludedFields(), record,formAction);
+    	return new ModelEditView<M>(path, getIncludedFields(), record,formAction);
     }
 
     @SingleRecordAction(icon="/resources/images/clone.png")
@@ -461,6 +469,7 @@ public class ModelController<M extends Model> extends Controller {
     public static interface Action<M> {
     	public View noAction(M m);
     	public void act(M m);
+    	public <C extends Model> void actOnChild(M parent,Class<C> childModelClass, Model c);
     	public View error(M m);
     }
     
@@ -471,6 +480,20 @@ public class ModelController<M extends Model> extends Controller {
 		@Override
 		public void act(M m) {
 			save(m, getModelClass());
+		}
+		
+		@SuppressWarnings("unchecked")
+		public <C extends Model> void actOnChild(M parent, Class<C> childModelClass, Model c){
+			ModelReflector<C> childReflector = ModelReflector.instance(childModelClass);
+			for (String f : childReflector.getReferenceFields(getModelClass())){
+				if (childReflector.isFieldSettable(f)){
+					Object oldValue = childReflector.get(c, f);
+					if (Database.getJdbcTypeHelper().isVoid(oldValue)){
+						childReflector.set(c, f, parent.getId());
+					}
+				}
+			}
+			save((C)c,childModelClass);
 		}
 
 		@Override
@@ -488,11 +511,12 @@ public class ModelController<M extends Model> extends Controller {
     private View  saveModelFromForm(){
     	return performPostAction(new SaveAction());
     }
-
-	protected View performPostAction(Action<M> action){
-        Map<String,Object> formFields = getFormFields();
+    
+    protected View performPostAction(Action<M> action){
+    	Map<String,Object> formFields = getFormFields();
         String id = (String)formFields.get("ID");
         String lockId = (String)formFields.get("LOCK_ID");
+        
         M record = null;
         if (ObjectUtil.isVoid(id)) {
 			record = Database.getTable(modelClass).newRecord();
@@ -507,14 +531,13 @@ public class ModelController<M extends Model> extends Controller {
             	throw new AccessDeniedException();
             }
         }
-
         List<String> setableFields = reflector.getRealFields();
         for (String virtualField: reflector.getVirtualFields()){
     		if (reflector.isFieldSettable(virtualField)){
     			setableFields.add(virtualField);
     		}
         }
-        
+
         Iterator<String> e = formFields.keySet().iterator();
         String buttonName = null;
         String digest = null;
@@ -550,7 +573,19 @@ public class ModelController<M extends Model> extends Controller {
         			throw dataValidationExceptions;
         		}
         		action.act(record);
-                if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
+                for (Class<? extends Model> childModelClass: reflector.getChildModels(true, false)){
+                	@SuppressWarnings("unchecked")
+					Map<Integer,Map<String,Object>> childFormRecords = (Map<Integer, Map<String, Object>>) formFields.get(childModelClass.getSimpleName());
+                	if (childFormRecords != null){
+                		for (Integer key: childFormRecords.keySet()){
+                			Map<String,Object> childFormFields = childFormRecords.get(key);
+                			action.actOnChild(record,childModelClass, loadChildFromFormFields(childModelClass,childFormFields));
+                		}
+                	}
+                }
+                
+
+        		if (isNew &&  hasUserModifiedData && buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank",String.valueOf(record.getId()))){
                 	//Usability Logic: If user is not modifying data shown, then why be in data entry mode.
                 	getPath().addInfoMessage(getModelClass().getSimpleName() + " created sucessfully, press Done when finished.");
             		return clone(record.getId());
@@ -582,7 +617,59 @@ public class ModelController<M extends Model> extends Controller {
 	    	}
     	}
     }
-    protected View afterPersistDBView(M record){
+    private <T extends Model> T loadChildFromFormFields( Class<T> childModelClass, Map<String, Object> formFields) {
+        
+    	String id = (String)formFields.get("ID");
+        String lockId = (String)formFields.get("LOCK_ID");
+        
+        T record = null;
+        if (ObjectUtil.isVoid(id)) {
+			record = Database.getTable(childModelClass).newRecord();
+        } else {
+			record = Database.getTable(childModelClass).get(Integer.valueOf(id));
+            if (!ObjectUtil.isVoid(lockId)) {
+                if (record.getLockId() != Long.parseLong(lockId)) {
+                    throw new RuntimeException("Stale record update prevented. Please reload and retry!");
+                }
+            }
+            if (!record.isAccessibleBy(getSessionUser(),childModelClass)){
+            	throw new AccessDeniedException();
+            }
+        }
+        ModelReflector<T> childReflector = ModelReflector.instance(childModelClass);
+        List<String> setableFields = childReflector.getRealFields();
+        for (String virtualField: childReflector.getVirtualFields()){
+    		if (childReflector.isFieldSettable(virtualField)){
+    			setableFields.add(virtualField);
+    		}
+        }
+
+        Iterator<String> e = formFields.keySet().iterator();
+        MultiException dataValidationExceptions = new MultiException("Invalid input: ");
+        while (e.hasNext()) {
+            String name = e.next();
+            String fieldName = setableFields.contains(name) && !childReflector.isHouseKeepingField(name) ? name : null;
+            if (fieldName != null){
+            	try {
+            		validateEnteredData(childReflector,fieldName, formFields);
+            	}catch (Exception ex){
+            		dataValidationExceptions.add(ex);
+            	}
+            	Object value = formFields.get(fieldName);
+	            Class<?> fieldClass = childReflector.getFieldGetter(fieldName).getReturnType();
+	            if (value == null && (Reader.class.isAssignableFrom(fieldClass) || InputStream.class.isAssignableFrom(fieldClass))){
+	            	continue;
+	            }
+                childReflector.set(record, fieldName, value);
+            }
+        }
+        if (!dataValidationExceptions.isEmpty()){
+        	throw dataValidationExceptions;
+        }
+		return record;
+	}
+
+	protected View afterPersistDBView(M record){
     	View v = null; 
     	if (integrationAdaptor != null){
     		v = integrationAdaptor.createResponse(getPath(),record);
@@ -591,33 +678,64 @@ public class ModelController<M extends Model> extends Controller {
     	}
         return v;
     }
-    
-    protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
-    	StringBuilder hash = null;
-        for (String field: reflector.getFields()){
+    private static void computeHash(StringBuilder hash, ModelReflector<? extends Model> reflector, Map<String,Object> formFields, String fieldPrefix){
+    	for (String field: reflector.getFields()){
         	if (!formFields.containsKey(field) || !reflector.isFieldSettable(field) || reflector.getFieldProtection(field) == Kind.DISABLED){
         		continue;
         	}
     		Object currentValue = formFields.get(field);
-
-			if (hash != null){
-				hash.append(",");
-			}else {
-				hash = new StringBuilder();
-			}
+    		if (hash.length() > 0){
+    			hash.append(",");
+    		}
+        	String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
+        	if (formFields.containsKey(autoCompleteHelperField)){
+        		String autoCompleteHelperFieldValue = StringUtil.valueOf(formFields.get(autoCompleteHelperField));
+        		if (fieldPrefix != null){
+        			hash.append(fieldPrefix);
+        		}
+        		hash.append(autoCompleteHelperField).append("=").append(autoCompleteHelperFieldValue);
+        		hash.append(",");
+        	}
+    		if (fieldPrefix != null){
+    			hash.append(fieldPrefix);
+    		}
 			hash.append(field).append("=").append(StringUtil.valueOf(currentValue));
         }
+
+    	for (Class<? extends Model> modelClass: reflector.getChildModels(true, false)){
+        	String modelName = modelClass.getSimpleName();
+        	ModelReflector<? extends Model> childModelReflector = ModelReflector.instance(modelClass);
+        	
+        	@SuppressWarnings("unchecked")
+			SortedMap<Integer,Map<String,Object>> records = (SortedMap<Integer, Map<String, Object>>) formFields.get(modelName);
+        	if (records == null){
+        		continue;
+        	}
+        	for (Integer key: records.keySet()){
+        		Map<String,Object> childFormFields = records.get(key);
+        		computeHash(hash, childModelReflector, childFormFields,modelClass.getSimpleName()+"[" + key + "].");
+        	}
+        }
+    }
+    
+    protected boolean hasUserModifiedData(Map<String,Object> formFields, String oldDigest){
+    	StringBuilder hash = new StringBuilder();
+    	computeHash(hash, reflector, formFields,null);
         String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
         return !ObjectUtil.equals(newDigest, oldDigest);
     }
-
+    
+    
     private void validateEnteredData(String field,  Map<String,Object> formFields){
+    	validateEnteredData(reflector,field, formFields);
+    }
+    private static <T extends Model> void validateEnteredData(ModelReflector<T> reflector, String field,  Map<String,Object> formFields){
     	String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
     	if (!formFields.containsKey(autoCompleteHelperField)){
     		return ;
     	}
     	Object autoCompleteHelperFieldValue = formFields.get(autoCompleteHelperField);
-    	Object currentValue = formFields.get(field);
+    	Object currentValue = Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter().valueOf(formFields.get(field));
 
 		Method referredModelIdGetter = reflector.getFieldGetter(field);
 		Method referredModelGetter = referredModelIdGetter == null ? null : reflector.getReferredModelGetterFor(referredModelIdGetter);
@@ -702,6 +820,66 @@ public class ModelController<M extends Model> extends Controller {
     	return integrationAdaptor.createResponse(getPath(),models);
     }
     
+    @SuppressWarnings("unchecked")
+	public View onAutoCompleteSelect(){
+    	ensureUI();
+		List<String> fields = reflector.getFields();
+		Map<String,Object> formData = getFormFields();
+		M model = null;
+		if (formData.containsKey("ID")){
+			model = Database.getTable(modelClass).get(Integer.valueOf(formData.get("ID").toString()));
+			model = model.cloneProxy();
+		}else {
+			model = Database.getTable(modelClass).newRecord();
+		}
+			
+		String autoCompleteFieldName = null;
+		for (String fieldName : formData.keySet()){
+			if (fields.contains(fieldName)){
+				Object ov = formData.get(fieldName);
+				if (reflector.isFieldSettable(fieldName)){
+					reflector.set(model,fieldName, ov);
+				}
+			}else if (fieldName.startsWith("_AUTO_COMPLETE_")){
+				autoCompleteFieldName = fieldName.split("_AUTO_COMPLETE_")[1];
+			}
+		}
+		
+    	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
+    	OnLookupSelect onlookup = reflector.getAnnotation(autoCompleteFieldGetter, OnLookupSelect.class);
+    	if (onlookup != null){
+    		try {
+				OnLookupSelectionProcessor<M> processor = (OnLookupSelectionProcessor<M>) Class.forName(onlookup.processor()).newInstance();
+				processor.process(autoCompleteFieldName, model);
+			} catch (InstantiationException | IllegalAccessException
+					| ClassNotFoundException e) {
+				//
+			}
+    	}
+    	TypeConverter<Integer> integerTypeConverter = (TypeConverter<Integer>) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();
+    	
+    	JSONObject obj = new JSONObject();
+    	Record record = model.getRawRecord();
+    	for (String f:record.getDirtyFields()){
+    		Object value = record.get(f);
+    		obj.put(f,value);
+
+    		Method fieldGetter = reflector.getFieldGetter(f);
+    		Method referredModelGetter = reflector.getReferredModelGetterFor(fieldGetter);
+    		if (referredModelGetter != null){
+    			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(referredModelGetter);
+    			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+
+    			int referredModelId = integerTypeConverter.valueOf(record.get(f));
+    			Model referredModel = Database.getTable(referredModelClass).get(referredModelId);
+
+    			String referredModelDescriptionField = referredModelReflector.getDescriptionField(); 
+    			obj.put("_AUTO_COMPLETE_"+f, referredModelReflector.get(referredModel, referredModelDescriptionField));
+    		}
+    	}
+    	return new BytesView(getPath(), obj.toString().getBytes());
+    }
+    
     public View autocomplete() {
     	ensureUI();
 		List<String> fields = reflector.getFields();
@@ -748,7 +926,9 @@ public class ModelController<M extends Model> extends Controller {
 		
 		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
 		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
-		Path autoCompletePath = getPath().createRelativePath( LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) );
+		
+		Path autoCompletePath = getPath().createRelativePath( (getPath().parameter() != null? "" : getPath().action()) +"/" + LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) +  "/index");
+		
 		where.add(autoCompletePath.getWhereClause());
 		
         return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value);

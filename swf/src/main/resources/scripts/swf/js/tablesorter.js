@@ -14,6 +14,15 @@ function GetURLParameter(sParam){
 $(function(){
     var _findex = 0; 
     var tabName = GetURLParameter("_select_tab");
+    var textExtractor = function(elem){
+                          var $label = $("label",elem);
+                          var $input = $("input[type=text]",elem);
+                          if ($input) {
+                            return $input.val();
+                          }else {
+                            return $label.text();
+                          }
+                        }
 
     $(".tabs ul li a").each(function(i){
         if ( $(this).text() == tabName ) {
@@ -35,10 +44,13 @@ $(function(){
 
             if (!column){
                     $(this)
-                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] });
+                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , 
+                                      textExtraction: textExtractor
+                             });
             } else {
                     $(this)
-                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , sortList: [[column,order]] });
+                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , sortList: [[column,order]] ,
+                                      textExtraction: textExtractor});
             }
     });
 

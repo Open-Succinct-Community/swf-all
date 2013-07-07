@@ -21,7 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -95,7 +97,8 @@ public class Path implements _IPath{
     	if (formFields != null){
     		return formFields;
     	}
-    	formFields = new HashMap<String, Object>();
+    	formFields = new HashMap<String,Object>();
+    	Map<String,Object> formInput = new HashMap<String, Object>();
     	HttpServletRequest request = getRequest();
         boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
         if (isMultiPart){
@@ -105,19 +108,19 @@ public class Path implements _IPath{
 				List<FileItem> fis = fu.parseRequest(request);
 				for (FileItem fi:fis){
 					if (fi.isFormField()){
-						if (!formFields.containsKey(fi.getFieldName())){
-							formFields.put(fi.getFieldName(), fi.getString());
+						if (!formInput.containsKey(fi.getFieldName())){
+							formInput.put(fi.getFieldName(), fi.getString());
 						}
 					}else {
 						byte[] content = StringUtil.readBytes(fi.getInputStream());
 						if (content == null || content.length == 0){
 							content = null;
 						}else {
-							formFields.put(fi.getFieldName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fi.getName()));
-							formFields.put(fi.getFieldName() + "_CONTENT_NAME", fi.getName());
-							formFields.put(fi.getFieldName() + "_CONTENT_SIZE", fi.getSize());
+							formInput.put(fi.getFieldName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fi.getName()));
+							formInput.put(fi.getFieldName() + "_CONTENT_NAME", fi.getName());
+							formInput.put(fi.getFieldName() + "_CONTENT_SIZE", fi.getSize());
 						}
-						formFields.put(fi.getFieldName(), content == null ? null : new ByteArrayInputStream(content));
+						formInput.put(fi.getFieldName(), content == null ? null : new ByteArrayInputStream(content));
 					}
 				}
 			} catch (FileUploadException e1) {
@@ -129,11 +132,43 @@ public class Path implements _IPath{
         	Enumeration<String> parameterNames = request.getParameterNames();
         	while (parameterNames.hasMoreElements()){
         		String name =parameterNames.nextElement();
-            	formFields.put(name,request.getParameter(name));
+            	formInput.put(name,request.getParameter(name));
         	}
         }
+        
+        for (String key : formInput.keySet()){
+        	int dotIndex = key.indexOf('.') ; 
+        	if ( dotIndex < 0){
+        		this.formFields.put(key, formInput.get(key));
+        	}else{
+        		String fieldName = key.substring(dotIndex+1);
+        		
+        		String modelNameWithIndex = key.substring(0,dotIndex);
+        		
+        		int indexOfOpenBracket = modelNameWithIndex.lastIndexOf('[');
+        		int indexOfCloseBracket = modelNameWithIndex.indexOf(']',indexOfOpenBracket);
+        		
+        		String modelName = modelNameWithIndex.substring(0, indexOfOpenBracket);
+        		
+        		Integer index = Integer.valueOf(modelNameWithIndex.substring(indexOfOpenBracket+1,indexOfCloseBracket));
+        		
+        		
+        		SortedMap<Integer,Map<String,Object>> modelRecords =  (SortedMap<Integer, Map<String, Object>>) formFields.get(modelName);
+        		if (modelRecords == null){
+        			modelRecords = new TreeMap<Integer,Map<String,Object>>();
+        			formFields.put(modelName, modelRecords);		
+        		}
+        		
+        		Map<String,Object> modelAttributes = modelRecords.get(index);
+        		if (modelAttributes == null){
+        			modelAttributes = new HashMap<String,Object>();
+        			modelRecords.put(index, modelAttributes);
+        		}
+        		modelAttributes.put(fieldName, formInput.get(key));
+    		}
+        }
+        
         return formFields;
-
     }
     public User getSessionUser(){
     	HttpSession session = getSession();
@@ -830,7 +865,7 @@ public class Path implements _IPath{
     		ModelReflector<?> referredModelReflector = ref;
 	    	for (Method childGetter : referredModelReflector.getChildGetters()){
 	    		Class<? extends Model> childModelClass = referredModelReflector.getChildModelClass(childGetter);
-	    		if (reflector.reflects(childModelClass)){
+	    		if (reflector.getClassHierarchies().contains(childModelClass)){
 	            	CONNECTED_VIA join = referredModelReflector.getAnnotation(childGetter,CONNECTED_VIA.class);
 	            	if (join == null){
 	            		for (Method referredModelGetter: referredModelGetters){ 
@@ -896,7 +931,7 @@ public class Path implements _IPath{
 		}
 	}
 	
-    public final String getControllerPathElementName(Class<? extends Model> modelClass){
+    public static final String getControllerPathElementName(Class<? extends Model> modelClass){
     	return LowerCaseStringCache.instance().get(Database.getTable(modelClass).getTableName());
     }
 

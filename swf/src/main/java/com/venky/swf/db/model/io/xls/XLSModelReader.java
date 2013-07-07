@@ -70,7 +70,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
         return sheet.getRow(0).getCell(0).getCellStyle();
     }
     
-	protected Object getCellValue(Cell cell, Class<?> hint){
+	public static Object getCellValue(Cell cell, Class<?> hint){
 		Object value = null;
 		switch (cell.getCellType()) {
 			case Cell.CELL_TYPE_NUMERIC:

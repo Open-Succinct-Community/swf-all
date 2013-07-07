@@ -7,15 +7,10 @@ import java.util.List;
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.User;
-import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
 import com.venky.swf.plugins.collab.db.model.participants.admin.FacilityUser;
 import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 import com.venky.swf.pm.DataSecurityFilter;
-import com.venky.swf.sql.Conjunction;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
 
 public class UserFacilityParticipantExtension extends ParticipantExtension<UserFacility> {
 	static {
@@ -57,49 +52,46 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					}
 				}
 			}else {
-				if (model.getFacilityId() > 0){
-					ret = new ArrayList<Integer>();
-					Facility f = model.getFacility();
-					if (f.isAccessibleBy(user, Facility.class)){
-						List<FacilityUser> existingSubscriptions = f.getFacilityUsers();
-						List<Integer> existingUsers = new SequenceSet<Integer>();
-						for (FacilityUser fu: existingSubscriptions){
-							existingUsers.add(fu.getUserId());
-						}
-								
-						
-						List<User> allowedUsers = getAllowedUsers(f);
-						Iterator<User> allowedUserIterator = allowedUsers.iterator(); 
-						while (allowedUserIterator.hasNext()){
-							User allowedUser = allowedUserIterator.next();
-							if (existingUsers.contains(allowedUser.getId())){
-								allowedUserIterator.remove();
-							}else if (!allowedUser.isAccessibleBy(user)){
-								allowedUserIterator.remove();
-							}
-						}
-						ret = DataSecurityFilter.getIds(allowedUsers);
+				List<Facility> facilites = DataSecurityFilter.getRecordsAccessible(Facility.class,user);
+				List<Integer> facilityIds = DataSecurityFilter.getIds(facilites);
+				ret = new SequenceSet<Integer>();
+				if (facilityIds.isEmpty() || ( model.getFacilityId() > 0 && !facilityIds.contains(model.getFacilityId()))){
+					return ret; 
+				}
+				//Facility is accessible or not passed.
+				
+				List<Integer> userIdsAlreadySubscribedToSomeFacility = new SequenceSet<Integer>();
+				for (Facility f : facilites){
+					for (FacilityUser fu : f.getFacilityUsers()){
+						userIdsAlreadySubscribedToSomeFacility.add(fu.getUserId());
 					}
-				}else {
-					ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class,user));
 				}
 				
+				Facility f = model.getFacility(); 
+				
+				List<User> allowedUsers = DataSecurityFilter.getRecordsAccessible(User.class,user);
+				
+				Iterator<User> aui = allowedUsers.iterator();
+				while( aui.hasNext() ){
+					User allowedUser = aui.next();
+					Integer companyId = ((com.venky.swf.plugins.collab.db.model.user.User)allowedUser).getCompanyId();
+					if (companyId == null){
+						aui.remove();
+					}else if (userIdsAlreadySubscribedToSomeFacility.contains(allowedUser.getId())){
+						aui.remove();
+					}else if (f != null){
+						if (f.getCompanyId() != companyId){
+							aui.remove();
+						}else if (!f.isAccessibleBy(allowedUser)){
+							aui.remove();
+						}
+					}
+				}
+				
+				ret = DataSecurityFilter.getIds(allowedUsers);
 			}
-			
 		}
 		return ret;	
-	}
-	//If Company participation changes. This function needs to be altered. 
-	private List<User> getAllowedUsers(Company company){
-		Expression where = new Expression(Conjunction.OR);
-		where.add(new Expression("COMPANY_ID",Operator.EQ,company.getId()));
-		where.add(new Expression("ID",Operator.EQ,company.getCreatorUserId()));
-		Select sel = new Select().from(User.class).where(where);
-		return sel.execute();
-	}
-	
-	private List<User> getAllowedUsers(Facility facility){
-		return getAllowedUsers(facility.getCompany());
 	}
 
 

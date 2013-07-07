@@ -63,6 +63,7 @@ div.nav li a:link, a:visited, a:hover, a:active{
 
 .hidden {
   visibility:hidden;
+  display:none;
 }
 
 .hfill tr th {

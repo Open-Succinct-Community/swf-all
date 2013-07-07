@@ -15,15 +15,15 @@ import com.venky.swf.views.controls.page.Body;
  */
 public class ModelShowView<M extends Model> extends ModelEditView<M> {
 
-    public ModelShowView(Path path, Class<M> modelClass, String[] includeFields, M record) {
-        super(path, modelClass, includeFields, record);
+    public ModelShowView(Path path, String[] includeFields, M record) {
+        super(path, includeFields, record);
     }
 
     @Override
-    protected boolean isFieldEditable(String fieldName) {
+    public boolean isFieldEditable(String fieldName) {
         return false;
     }
-    protected Kind getFieldProtection(String fieldName){
+    public Kind getFieldProtection(String fieldName){
     	return Kind.DISABLED;
     }
     @Override

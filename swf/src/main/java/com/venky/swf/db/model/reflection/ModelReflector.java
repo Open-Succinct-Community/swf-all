@@ -390,7 +390,8 @@ public class ModelReflector<M extends Model> {
         			StringTokenizer keys = new StringTokenizer(key.value(),",");
         			while (keys.hasMoreTokens()){
         				String keyName = keys.nextToken();
-            			uniqueKeys.get(keyName).addField(fieldName);
+            			UniqueKey<M> uk = uniqueKeys.get(keyName);
+            			uk.addField(fieldName,key.allowMultipleRecordsWithNull());
         			}
     			}
     		}
@@ -402,18 +403,22 @@ public class ModelReflector<M extends Model> {
     	List<Expression> col = new ArrayList<Expression>();
     	for (UniqueKey<M> key : getUniqueKeys() ){
 			Expression where = new Expression(Conjunction.AND);
-			boolean nullFieldFound = false;
+			boolean ignoreWhereClause = false;
 			for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
 				String fieldName = fd.getFieldName(); 
 				Object value = get(m, fieldName);
 				if (value != null){
 					where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
 				}else {
-					nullFieldFound = true;
-					break; 
+					if (!fd.isMultipleRecordsWithNullAllowed()){
+						where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ));
+					}else {
+						ignoreWhereClause = true;
+						break;
+					}
 				}
 			}
-			if (!nullFieldFound){
+			if (!ignoreWhereClause){
 				col.add(where);
 			}
 		}

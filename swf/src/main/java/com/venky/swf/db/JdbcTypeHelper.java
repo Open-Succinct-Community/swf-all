@@ -200,7 +200,7 @@ public abstract class JdbcTypeHelper {
 
     	public String toString(Object m) {
     		if (m != null){
-    			Boolean v = valueOf(StringUtil.valueOf(m));
+    			Boolean v = valueOf(m);
     			if (v){
     				return "Y";
     			}else {
@@ -362,7 +362,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object date) {
-            return date == null ? "" :DateUtils.getDateStr((java.util.Date) date);
+            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getDateStr(valueOf(date)));
         }
         @Override
 		public String getDisplayClassName() {
@@ -384,7 +384,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object time) {
-            return time == null ? "" : DateUtils.getTimeStr((java.util.Date) time);
+            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimeStr(valueOf(time)));
         }
         
         @Override
@@ -407,7 +407,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object ts) {
-            return ts == null ? "" : DateUtils.getTimestampStr((java.util.Date) ts);
+            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts)));
         }
         @Override
 		public String getDisplayClassName() {
@@ -446,7 +446,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object in) {
-            return in == null ? "" : StringUtil.read((InputStream) in);
+            return in == null ? "" : (in instanceof String ? (String)in : StringUtil.read(valueOf(in)));
         }
         
         @Override
@@ -486,7 +486,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object reader) {
-            return reader == null ? "" : StringUtil.read((Reader) reader);
+            return reader == null ? "" : (reader instanceof String ? (String)reader : StringUtil.read(valueOf(reader)));
         }
         @Override
 		public String getDisplayClassName() {

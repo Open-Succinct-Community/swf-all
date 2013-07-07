@@ -29,7 +29,12 @@ public class Control extends Properties implements _IControl{
     private long nextId(){
     	return new Object().hashCode();
     }
+
+    public void setForm(String formId){
+    	setProperty("form", formId);
+    }
     
+
     public void setWaterMark(String watermark){
     	if (!ObjectUtil.isVoid(watermark)){
         	setProperty("placeholder", watermark);
@@ -60,8 +65,11 @@ public class Control extends Properties implements _IControl{
     	classes.clear();
     	addClass(className);
     }
-    public void addClass(String className){
-    	classes.add(className);
+    public void removeClass(String className){
+    	classes.remove(className);
+    	finalizeClassAttribute();
+    }
+    private void finalizeClassAttribute(){
     	StringBuilder classNames = new StringBuilder();
     	for (String cn: classes){
     		classNames.append(cn);
@@ -69,6 +77,10 @@ public class Control extends Properties implements _IControl{
     	}
     	classNames.setLength(classNames.length()-1);
     	setProperty("class", classNames);
+    }
+    public void addClass(String className){
+    	classes.add(className);
+    	finalizeClassAttribute();
     }
 
     public void setProperty(String name, Object value) {
@@ -183,7 +195,11 @@ public class Control extends Properties implements _IControl{
     }
 
     public void setVisible(final boolean visible){
-    	addClass("hidden");
+    	if (visible){
+    		removeClass("hidden");
+    	}else {
+    		addClass("hidden");
+    	}
     }
 
     public boolean isVisible(){ 

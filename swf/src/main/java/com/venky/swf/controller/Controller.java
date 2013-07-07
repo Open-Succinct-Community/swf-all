@@ -154,12 +154,20 @@ public class Controller {
     }
 
     public DashboardView dashboard(){
-        DashboardView dashboard = new DashboardView(getPath());
-        return dashboard;
+        return Controller.dashboard(getPath());
     }
     
     protected DashboardView dashboard(HtmlView aContainedView){
-        DashboardView dashboard = dashboard();
+    	return Controller.dashboard(getPath(),aContainedView);
+    }
+
+    protected static DashboardView dashboard(Path currentPath){
+    	return new DashboardView(currentPath);
+    }
+    
+    
+    protected static DashboardView dashboard(Path currentPath, HtmlView aContainedView){
+        DashboardView dashboard = dashboard(currentPath);
         dashboard.setChildView(aContainedView);
         return dashboard;
     }
@@ -356,9 +364,10 @@ public class Controller {
         	record.setCreatorUserId(getSessionUser().getId());
         	record.setCreatedAt(null);
     	}
-        record.setUpdaterUserId(getSessionUser().getId());
-        record.setUpdatedAt(null);
-        
+        if (!record.getRawRecord().getDirtyFields().isEmpty()){
+            record.setUpdaterUserId(getSessionUser().getId());
+            record.setUpdatedAt(null);
+        }
         record.save(); //Allow extensions to fill defaults etc.
     	
     	if (!record.isAccessibleBy(getSessionUser()) || 

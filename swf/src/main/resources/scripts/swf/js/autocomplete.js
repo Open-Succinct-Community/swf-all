@@ -6,21 +6,59 @@
 $(function(){
     $("[autocompleteurl]").each(function(index,element){
         var autocompleteurl = $(this).attr("autocompleteurl");
+        var onAutoCompleteSelectUrl = $(this).attr("onAutoCompleteSelectUrl");
+
         var name=$(this).attr("name");
-        var hidden_field_name=name.substring("_AUTO_COMPLETE_".length, name.length);
+
+        var bIsNameIndexed = false;
+
+        var nameParts=name.split("["); 
+        var modelName = ""; 
+        var rowIndex = "" ;
+
+        if (nameParts.length == 2){
+          modelName = nameParts[0];
+          rowIndex = nameParts[1].split("]")[0]
+          bIsNameIndexed = true;
+        }
+        var hidden_field_name = name.replace("_AUTO_COMPLETE_","");
+
+
+
+
         var values = (function(){
                 var v = {} ;
-                var $inputs = $('form:first :input[name$="ID"]');
+
+                var $inputs = null; 
+                if ( !bIsNameIndexed ) {
+                  $inputs = $(':input[name$="ID"]');
+                }else { 
+                  $inputs = $(':input[name^="'                 + modelName + '[' + rowIndex + ']."][name$="ID"]')
+                }
+
+
                 //:not([name^="_AUTO"])')
                 $inputs.each(function() { 
                   if (this.name == name || 
                       this.name.indexOf("_AUTO_COMPLETE_") < 0 ){
-                    v[this.name] = $(this).val();
+
+                    var cname = this.name; 
+
+                    if (bIsNameIndexed) {
+                      cname = this.name.split(".")[1]; 
+                    }
+                    
+                    v[cname] = $(this).val();
                   }
                 });
 
                 return v;
         }) ;
+        $(this).focusout(function(){
+            if ( $(this).val().length == 0 ) { 
+              $(':input[name="' + hidden_field_name + '"]').removeAttr("value");
+            }
+        });
         
         $(this).autocomplete({ 
             source: function(request,response){ 
@@ -38,6 +76,19 @@ $(function(){
                 select: function(event, ui){
                                     $(this).attr("value",ui.item.value);
                                     $('input[name="' + hidden_field_name + '"]').attr("value",ui.item.id);
+                                    if (onAutoCompleteSelectUrl){
+                                            $.ajax({
+                                              url : onAutoCompleteSelectUrl, 
+                                              dataType: "json", 
+                                              data: values(), 
+                                              success: function(jsonresponse){
+                                                for (var i in jsonresponse){
+                                                    $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]); 
+                                                }
+                                              }
+                                            });
+
+                                    }
                                 }
         }) ;
   });

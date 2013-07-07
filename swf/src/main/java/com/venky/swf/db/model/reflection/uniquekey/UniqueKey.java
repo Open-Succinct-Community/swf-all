@@ -28,8 +28,10 @@ public class UniqueKey<M extends Model> {
 	}
 
 	private Map<String,UniqueKeyFieldDescriptor<M>> fields = new HashMap<String, UniqueKeyFieldDescriptor<M>>();
-	public void addField(String field){
-		this.fields.put(field, new UniqueKeyFieldDescriptor<M>(this,field));
+	public void addField(String field, boolean allowMultipleRecordsWithNull) {
+		UniqueKeyFieldDescriptor<M> ukfd = new UniqueKeyFieldDescriptor<M>(this,field);
+		ukfd.setMultipleRecordsWithNullAllowed(allowMultipleRecordsWithNull);
+		this.fields.put(field, ukfd);
 		
 	}
 	
@@ -44,4 +46,5 @@ public class UniqueKey<M extends Model> {
 	public Collection<UniqueKeyFieldDescriptor<M>> getFields(){
 		return fields.values();
 	}
+
 }

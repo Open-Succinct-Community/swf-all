@@ -18,7 +18,9 @@ public class TextBox extends Input{
 	public void setAutocompleteServiceURL(String autoCompleteServiceURL){
         setProperty("autoCompleteUrl", autoCompleteServiceURL);
     }
-    
+	public void setOnAutoCompleteSelectProcessingUrl(String url){
+		setProperty("onAutoCompleteSelectUrl",url);
+	}
     public TextBox(){
         super();
     }

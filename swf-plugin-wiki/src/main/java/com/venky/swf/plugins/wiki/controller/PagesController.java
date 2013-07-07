@@ -153,7 +153,7 @@ public class PagesController extends ModelController<Page>{
     
     public class PageListView extends ModelListView<Page>{
 		public PageListView(Path path, List<Page> records) {
-			super(path, Page.class, null, records);
+			super(path, null, records);
 			getIncludedFields().remove("BODY");
 		}
     }

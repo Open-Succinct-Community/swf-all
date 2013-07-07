@@ -257,7 +257,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 	}
-	private int getNumRowsRequired(String sValue){
+	private int getNumRowsRequired(String sValue,int maxColumnLength){
 		int vlen = 0; 
 		int numRows = 1 ;
 		StringTokenizer tok = new StringTokenizer(sValue," \n",true);
@@ -266,11 +266,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			String token = tok.nextToken();
 			int ctl = token.length() ;
 			if (token.equals("\n")){
-				vlen = (numRows * MAX_COLUMN_LENGTH);
+				vlen = (numRows * maxColumnLength);
 			}
-			if ( vlen + ctl >= numRows * MAX_COLUMN_LENGTH) {
-				vlen = (numRows * MAX_COLUMN_LENGTH) + ctl;
-				numRows += (Math.ceil(ctl * 1.0/MAX_COLUMN_LENGTH)) ;
+			if ( vlen + ctl >= numRows * maxColumnLength) {
+				vlen = (numRows * maxColumnLength) + ctl;
+				numRows += (Math.ceil(ctl * 1.0/maxColumnLength)) ;
 			}else {
 				vlen += ctl ;
 			}
@@ -283,24 +283,28 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS));
 		return font;
 	}
-	private void fixCellDimensions(Sheet sheet,Row row,Bucket columnNum,Object value){
+	private void fixCellDimensions(Sheet sheet,Row row,Bucket columnNum,CellStyle style, Object value, int maxColumnLength){
 		int currentColumnWidth = getColumnWidth(sheet,columnNum.intValue());
 		String sValue = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter().toString(value);
 		int currentValueLength = sValue.length() ;
-		int numRowsRequiredForCurrentValue = getNumRowsRequired(sValue);
+		int numRowsRequiredForCurrentValue = getNumRowsRequired(sValue,maxColumnLength);
+		Font font = sheet.getWorkbook().getFontAt(style.getFontIndex());
 		
-		if (currentColumnWidth < MAX_COLUMN_LENGTH * CHARACTER_WIDTH){
+		if (currentColumnWidth < maxColumnLength * CHARACTER_WIDTH){
 			int currentValueWidth = (currentValueLength + 1)* CHARACTER_WIDTH; 
-			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), MAX_COLUMN_LENGTH * CHARACTER_WIDTH);
+			currentColumnWidth = Math.min(Math.max(currentValueWidth,currentColumnWidth), maxColumnLength * CHARACTER_WIDTH);
 			sheet.setColumnWidth(columnNum.intValue(), currentColumnWidth);
 		}
-		row.setHeightInPoints(Math.max(row.getHeightInPoints() , getRowHeightInPoints(numRowsRequiredForCurrentValue)));
+		row.setHeightInPoints(Math.max(row.getHeightInPoints() , getRowHeightInPoints(numRowsRequiredForCurrentValue,font)));
 	}
 	
-	public int getRowHeightInPoints(int numRows){
-		return numRows*(CHARACTER_HEIGHT_IN_POINTS + 4) + 5;
+	public int getRowHeightInPoints(int numRows,Font font){
+		return numRows*((font == null ? CHARACTER_HEIGHT_IN_POINTS : font.getFontHeightInPoints()) + 4) + 5;
 	}
 	public Cell createCell(Sheet sheet, Row row, Bucket columnNum , Object  value, CellStyle style){
+		return createCell(sheet,row,columnNum,value,style,MAX_COLUMN_LENGTH);	
+	}
+	public Cell createCell(Sheet sheet, Row row, Bucket columnNum , Object  value, CellStyle style,int maxColumnLength){
 		Cell cell = row.createCell(columnNum.intValue());
 		if (style != null){
 			cell.setCellStyle(style);
@@ -308,7 +312,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		if (value != null){
 			Class<?> colClass = value.getClass();
 			if (style != null && style.getWrapText()){
-				fixCellDimensions(sheet, row, columnNum, value);
+				fixCellDimensions(sheet, row, columnNum, style,value, maxColumnLength);
 			}
 			if (isNumeric(colClass)){
 				cell.setCellValue(Double.valueOf(String.valueOf(value)));
