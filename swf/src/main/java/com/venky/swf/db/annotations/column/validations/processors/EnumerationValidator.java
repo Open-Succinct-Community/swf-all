@@ -25,7 +25,7 @@ public class EnumerationValidator extends FieldValidator<Enumeration> {
                 return true;
             }
         }
-        ex.add(new FieldValidationException( value + " not in (" + annotation.value() +  ")"));
+        ex.add(new FieldValidationException( "must be one of these values. (" + annotation.value() +  ")"));
         return false;
 
     }

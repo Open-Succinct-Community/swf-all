@@ -210,11 +210,17 @@ public class ModelListTable<M extends Model> extends Table{
         	FileTextBox ftb = (FileTextBox)modelAwareness.getInputControl(controlName,fieldName, record,null);
         	String contentName = reflector.getContentName(record, fieldName);
 			if (reflector.getContentSize(record, fieldName) != 0){
-				ftb.setStreamUrl(modelAwareness.getPath().controllerPath()+"/view/"+record.getId(),contentName);
-            	control = ftb.getStreamLink();
+				Path linkPath = modelAwareness.getPath().createRelativePath("/view/"+record.getId());
+				if (linkPath.canAccessControllerAction()){
+					ftb.setStreamUrl(modelAwareness.getPath().controllerPath()+"/view/"+record.getId(),contentName);
+	            	control = ftb.getStreamLink();
+				}else {
+					control = new Label("***");
+				}
 			}else {
 				control = new Label("No Attachment");
 			}
+            control.addClass(converter.getDisplayClassName());
         }else {
             Object value = reflector.get(record,fieldName);
             String sValue = converter.toString(value);
@@ -239,10 +245,10 @@ public class ModelListTable<M extends Model> extends Table{
             	}
             }else {
                 control = new Label(sValue);
+                control.addClass(converter.getDisplayClassName());
             }
         }
         
-        control.addClass(converter.getDisplayClassName());
         return control;
 	}
 	protected void _addFields(Row row, M record){

@@ -16,7 +16,7 @@ public class NumericRangeValidator extends FieldValidator<NumericRange> {
 		Double dValue = (Double) Database.getJdbcTypeHelper().getTypeRef(Double.class).getTypeConverter().valueOf(value);
 		boolean valid = (annotation.min() <= dValue && annotation.max() >= dValue);
 		if (!valid){
-			 fieldException.add(new FieldValidationException("Value out of Range:(" + annotation.min() + "," + annotation.max() + ")"));
+			 fieldException.add(new FieldValidationException("must be between:(" + annotation.min() + "," + annotation.max() + ")"));
 		}
 		return valid;
 

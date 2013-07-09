@@ -48,6 +48,7 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -973,6 +974,7 @@ public class Path implements _IPath{
 	    	}
 	    	Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
 	    	Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
+	    	
 	    	try {
 				Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
 				if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
@@ -1010,7 +1012,7 @@ public class Path implements _IPath{
 					List<Integer> idoptions = null ;
 	
 					PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
-					if (participant != null){
+					if (participant != null && participant.defaultable()){
 						idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
 					}
 							

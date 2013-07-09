@@ -26,7 +26,9 @@ public class CompanySpecificParticipantExtension<M extends Model> extends Partic
 					return Arrays.asList(cs.getCompanyId());
 				}else {
 					SequenceSet<Integer> ids =  DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Company.class,user));
-					ids.add(null);
+					if (!getReflector().isFieldMandatory(fieldName)){
+						ids.add(null);
+					}
 					return ids;
 				}
 			}else if ("COMPANY_CREATOR_USER_ID".equalsIgnoreCase(fieldName)){

@@ -21,7 +21,7 @@ public class DateFormatValidator extends FieldValidator<COLUMN_DEF> {
 				try {
 					new SimpleDateFormat(format).parse(value);
 				} catch (ParseException e) {
-					ex.add(new FieldValidationException("Input doesnot match format:" + format));
+					ex.add(new FieldValidationException("must be in " + format + " format."));
 					return false;
 				}
 			}

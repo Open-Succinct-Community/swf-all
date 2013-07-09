@@ -18,7 +18,7 @@ public class MaxLengthValidator extends FieldValidator<MaxLength>{
         if (rule.value() >= value.length() ){
             return true;
         }
-        ex.add(new FieldValidationException("Field length cannot exceed "+ rule.value()));
+        ex.add(new FieldValidationException("length cannot exceed "+ rule.value()));
         return false;
     }
 

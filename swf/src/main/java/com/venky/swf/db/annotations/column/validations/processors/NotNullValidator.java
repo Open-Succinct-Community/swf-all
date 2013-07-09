@@ -16,7 +16,7 @@ public class NotNullValidator extends FieldValidator<IS_NULLABLE> {
     @Override
     public boolean validate(IS_NULLABLE annotation, String value,MultiException ex) {
         if (!annotation.value() && value.trim().length() == 0 ){
-            ex.add(new FieldValidationException("Mandatory field"));
+            ex.add(new FieldValidationException("is mandatory"));
             return false;
         }
         return true;

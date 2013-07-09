@@ -5,9 +5,6 @@ img {
 div.nav {
   height: 28px;
   background-image: url(/resources/images/menubg.png); 
-  outline-color:#f7b74d;
-  outline-style:solid;
-  outline-width:2px;
 }
 div.nav ul {
   padding: 0;
@@ -23,9 +20,6 @@ div.nav li {
   width: 240px;
   text-indent: 8px;
   background-color: #f7b74d;
-  outline-color:#f7b74d;
-  outline-style:solid;
-  outline-width:2px;
 }
 
 
@@ -33,7 +27,7 @@ div.nav li:hover li:hover {
   background-color: #f1a13d;
   outline-color:#ffaa00;
   outline-style:solid;
-  outline-width:2px;
+  outline-width:1px;
   z-index:1;
 }
 

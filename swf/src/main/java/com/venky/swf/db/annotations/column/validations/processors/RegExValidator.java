@@ -23,7 +23,7 @@ public class RegExValidator extends FieldValidator<RegEx>{
         if (ObjectUtil.isVoid(value) || pattern.matcher(value).matches()){
             return true;
         }
-        ex.add(new FieldValidationException(" Does not match regex :" + annotation.value()));
+        ex.add(new FieldValidationException(" must match regex :" + annotation.value()));
         return false;
     }
     

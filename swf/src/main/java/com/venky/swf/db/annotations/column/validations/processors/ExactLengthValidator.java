@@ -20,7 +20,7 @@ public class ExactLengthValidator extends FieldValidator<ExactLength>{
         if (ObjectUtil.isVoid(value) || annotation.value() == value.length()){
             return true;
         }
-        ex.add(new FieldValidationException("Expected data length :" + annotation.value() + " Actual data length :" + value.length()));
+        ex.add(new FieldValidationException("must be of length " + annotation.value() + " but current length is " + value.length()));
         return false;
         
     }
