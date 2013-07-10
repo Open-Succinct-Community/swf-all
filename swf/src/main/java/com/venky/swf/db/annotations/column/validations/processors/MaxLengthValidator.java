@@ -14,11 +14,11 @@ import com.venky.swf.exceptions.MultiException;
 public class MaxLengthValidator extends FieldValidator<MaxLength>{
 
     @Override
-    public boolean validate(MaxLength rule, String value, MultiException ex){
+    public boolean validate(MaxLength rule, String humanizedFieldName, String value, MultiException ex){
         if (rule.value() >= value.length() ){
             return true;
         }
-        ex.add(new FieldValidationException("length cannot exceed "+ rule.value()));
+        ex.add(new FieldValidationException(humanizedFieldName + " length cannot exceed "+ rule.value()));
         return false;
     }
 

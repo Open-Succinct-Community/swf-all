@@ -11,7 +11,7 @@ import com.venky.swf.exceptions.MultiException;
 public class DateFormatValidator extends FieldValidator<COLUMN_DEF> {
 
 	@Override
-	public boolean validate(COLUMN_DEF annotation, String value, MultiException ex){
+	public boolean validate(COLUMN_DEF annotation, String humanizedFieldName, String value, MultiException ex){
 		if (ObjectUtil.isVoid(value)){
 			return true;
 		}
@@ -21,7 +21,7 @@ public class DateFormatValidator extends FieldValidator<COLUMN_DEF> {
 				try {
 					new SimpleDateFormat(format).parse(value);
 				} catch (ParseException e) {
-					ex.add(new FieldValidationException("must be in " + format + " format."));
+					ex.add(new FieldValidationException(humanizedFieldName + " must be in " + format + " format."));
 					return false;
 				}
 			}

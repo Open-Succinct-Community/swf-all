@@ -16,11 +16,11 @@ public class ExactLengthValidator extends FieldValidator<ExactLength>{
 
 
     @Override
-    public boolean validate(ExactLength annotation, String value, MultiException ex){
+    public boolean validate(ExactLength annotation, String humanizedFieldName, String value, MultiException ex){
         if (ObjectUtil.isVoid(value) || annotation.value() == value.length()){
             return true;
         }
-        ex.add(new FieldValidationException("must be of length " + annotation.value() + " but current length is " + value.length()));
+        ex.add(new FieldValidationException(humanizedFieldName + " must be of length " + annotation.value() + " but current length is " + value.length()));
         return false;
         
     }

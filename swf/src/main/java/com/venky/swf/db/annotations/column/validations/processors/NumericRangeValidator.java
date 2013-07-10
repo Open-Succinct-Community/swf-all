@@ -8,7 +8,7 @@ import com.venky.swf.exceptions.MultiException;
 public class NumericRangeValidator extends FieldValidator<NumericRange> {
 
 	@Override
-	public boolean validate(NumericRange annotation, String value,
+	public boolean validate(NumericRange annotation,String humanizedFieldName,  String value,
 			MultiException fieldException) {
 		if (ObjectUtil.isVoid(value)){
 			return true;
@@ -16,7 +16,7 @@ public class NumericRangeValidator extends FieldValidator<NumericRange> {
 		Double dValue = (Double) Database.getJdbcTypeHelper().getTypeRef(Double.class).getTypeConverter().valueOf(value);
 		boolean valid = (annotation.min() <= dValue && annotation.max() >= dValue);
 		if (!valid){
-			 fieldException.add(new FieldValidationException("must be between:(" + annotation.min() + "," + annotation.max() + ")"));
+			 fieldException.add(new FieldValidationException(humanizedFieldName + " must be between:(" + annotation.min() + "," + annotation.max() + ")"));
 		}
 		return valid;
 

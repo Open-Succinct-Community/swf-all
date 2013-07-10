@@ -18,12 +18,12 @@ public class RegExValidator extends FieldValidator<RegEx>{
 
     
     @Override
-    public boolean validate(RegEx annotation, String value, MultiException ex){
+    public boolean validate(RegEx annotation, String humanizedFieldName, String value, MultiException ex){
         Pattern pattern = Pattern.compile(annotation.value());
         if (ObjectUtil.isVoid(value) || pattern.matcher(value).matches()){
             return true;
         }
-        ex.add(new FieldValidationException(" must match regex :" + annotation.value()));
+        ex.add(new FieldValidationException(humanizedFieldName + " must match regex :" + annotation.value()));
         return false;
     }
     

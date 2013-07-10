@@ -11,6 +11,7 @@ import java.lang.reflect.Proxy;
 
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.exceptions.MultiException;
@@ -28,8 +29,19 @@ public abstract class FieldValidator<T extends Annotation>  {
 	
     public <M extends Model> boolean isValid(M m, String field,MultiException fieldException){
     	ModelInvocationHandler h = (ModelInvocationHandler)Proxy.getInvocationHandler(m);
+    	ModelReflector<M> reflector = h.getReflector();
     	
-        Method getter = h.getReflector().getFieldGetter(field);
+        Method getter = reflector.getFieldGetter(field);
+
+        Method referredModelGetter = reflector.getReferredModelGetterFor(getter);
+        
+        String humanizedFieldName = StringUtil.camelize(field);
+        
+    	if ( referredModelGetter != null){
+    		humanizedFieldName = reflector.getReferredModelClass(referredModelGetter).getSimpleName();
+    	}
+    	
+
         T annotation = h.getReflector().getAnnotation(getter, getAnnotationClass());
         if (annotation == null ){
             return true;
@@ -37,9 +49,10 @@ public abstract class FieldValidator<T extends Annotation>  {
 
     	Record record = m.getRawRecord();
         Object value = record.get(h.getReflector().getColumnDescriptor(field).getName());
-        return validate(annotation, StringUtil.valueOf(value),fieldException);
+        return validate(annotation, humanizedFieldName, StringUtil.valueOf(value),fieldException);
+        
     }
-    public abstract boolean validate(T annotation, String value, MultiException fieldException);
+    public abstract boolean validate(T annotation, String humanizedFieldName, String value, MultiException fieldException);
     
     
     public static class FieldValidationException extends RuntimeException {

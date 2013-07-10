@@ -3,8 +3,8 @@ package com.venky.swf.plugins.mail.core;
 import java.util.LinkedList;
 
 import org.codemonkey.simplejavamail.Email;
-import org.codemonkey.simplejavamail.Mailer;
-import org.codemonkey.simplejavamail.TransportStrategy;
+//import org.codemonkey.simplejavamail.Mailer;
+//import org.codemonkey.simplejavamail.TransportStrategy;
 
 import com.venky.swf.routing.Config;
 
@@ -29,11 +29,7 @@ public class AsyncMailer extends Thread{
 
 	private LinkedList<Email> emails = new LinkedList<Email>();
 	private AsyncMailer() {
-		String emailId = Config.instance().getProperty("swf.sendmail.user");
-		String password = Config.instance().getProperty("swf.sendmail.password");
-		String host = Config.instance().getProperty("swf.sendmail.smtp.host");
-		int port = Config.instance().getIntProperty("swf.sendmail.smtp.port");
-		mailer = new Mailer(host, port, emailId,password,TransportStrategy.SMTP_SSL);
+		mailer = MailerFactory.instance().getMailer(Config.instance().getProperty("swf.sendmail.protocol"));
 		setDaemon(false);
 	}
 	public void addEmail(Email email){

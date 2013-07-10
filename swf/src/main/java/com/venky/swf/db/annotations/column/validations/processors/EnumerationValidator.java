@@ -17,7 +17,7 @@ import com.venky.swf.exceptions.MultiException;
 public class EnumerationValidator extends FieldValidator<Enumeration> {
 
     @Override
-    public boolean validate(Enumeration annotation, String value, MultiException ex){
+    public boolean validate(Enumeration annotation, String humanizedFieldName, String value, MultiException ex){
         StringTokenizer tokens = new StringTokenizer(annotation.value(),",");
         while (tokens.hasMoreElements()){
             String token = tokens.nextToken();
@@ -25,7 +25,7 @@ public class EnumerationValidator extends FieldValidator<Enumeration> {
                 return true;
             }
         }
-        ex.add(new FieldValidationException( "must be one of these values. (" + annotation.value() +  ")"));
+        ex.add(new FieldValidationException( humanizedFieldName + " must be one of these values. (" + annotation.value() +  ")"));
         return false;
 
     }

@@ -488,14 +488,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         List<String> fields = reflector.getFields();
         boolean ret = true;
         for (String field : fields) {
-        	String fieldInError = field;
-
-        	Method referredModelIdGetter = reflector.getFieldGetter(field);
-        	Method referredModelGetter = reflector.getReferredModelGetterFor(referredModelIdGetter);
-        	if ( referredModelGetter != null){
-        		fieldInError = reflector.getReferredModelClass(referredModelGetter).getSimpleName();
-        	}
-        	MultiException fieldException = new MultiException(fieldInError + " ");
+        	MultiException fieldException = new MultiException();
             if (!reflector.isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
                 ex.add(fieldException);
                 ret = false;

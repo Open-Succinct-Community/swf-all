@@ -14,9 +14,9 @@ import com.venky.swf.exceptions.MultiException;
 public class NotNullValidator extends FieldValidator<IS_NULLABLE> {
 
     @Override
-    public boolean validate(IS_NULLABLE annotation, String value,MultiException ex) {
+    public boolean validate(IS_NULLABLE annotation,String humanizedFieldName,  String value,MultiException ex) {
         if (!annotation.value() && value.trim().length() == 0 ){
-            ex.add(new FieldValidationException("is mandatory"));
+            ex.add(new FieldValidationException(humanizedFieldName + " is mandatory"));
             return false;
         }
         return true;
