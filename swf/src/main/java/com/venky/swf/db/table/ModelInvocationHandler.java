@@ -449,7 +449,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
 
     public void save() {
-        if (record.getDirtyFields().isEmpty()) {
+        if (!isDirty()) {
             return;
         }
         validate();
@@ -766,5 +766,8 @@ public class ModelInvocationHandler implements InvocationHandler {
     public Object removeTxnProperty(String name) { 
     	return txnProperties.remove(name);
     }
- 
+
+    public boolean isDirty(){
+    	return !getProxy().getRawRecord().getDirtyFields().isEmpty();
+    }
 }

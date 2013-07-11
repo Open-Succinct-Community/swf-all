@@ -105,6 +105,9 @@ public class Control extends Properties implements _IControl{
     public String getTag() {
         return tag;
     }
+    protected void setTag(String tag){
+    	this.tag = tag;
+    }
 
     public void setParent(_IControl parent) {
         this.parent = parent;

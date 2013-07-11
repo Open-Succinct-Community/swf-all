@@ -104,6 +104,28 @@ $(function() {
   $("a[name='_SUBMIT_MORE']").click(function (){ 
                             $(":submit[name='_SUBMIT_MORE']").trigger('click');
                         });
-})
+});
 
+
+
+/* Unsaved data Warning Code */
+function setConfirmUnload(on) {
+     window.onbeforeunload = (on) ? unloadMessage : null;
+}
+
+function unloadMessage(e) {
+     return ' If you navigate away from this page without' +           
+        ' first saving your data, the changes will be' +
+        ' lost.';
+}
+
+$(function(){ 
+  $(':input').bind("change", function() {
+      setConfirmUnload(true);
+  });
+  $('form').submit(function(){
+      setConfirmUnload(false); 
+      return true;
+  });
+});
 

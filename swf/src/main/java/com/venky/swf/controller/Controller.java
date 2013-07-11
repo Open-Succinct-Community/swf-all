@@ -74,7 +74,7 @@ public class Controller {
 
 
     public Path getPath() {
-        return path;
+        return path; 
     }
     
     public Controller(Path path){
@@ -364,7 +364,7 @@ public class Controller {
         	record.setCreatorUserId(getSessionUser().getId());
         	record.setCreatedAt(null);
     	}
-        if (!record.getRawRecord().getDirtyFields().isEmpty()){
+        if (record.isDirty()){
             record.setUpdaterUserId(getSessionUser().getId());
             record.setUpdatedAt(null);
         }

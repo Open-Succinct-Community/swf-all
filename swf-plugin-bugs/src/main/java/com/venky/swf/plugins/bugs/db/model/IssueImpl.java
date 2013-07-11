@@ -3,6 +3,8 @@ package com.venky.swf.plugins.bugs.db.model;
 import java.io.InputStream;
 import java.io.Reader;
 
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.table.ModelImpl;
 
@@ -25,6 +27,9 @@ public class IssueImpl extends ModelImpl<Issue>{
 		issue.setStatus("WIP");
 		issue.setAssignedToId(Database.getInstance().getCurrentUser().getId());
 		issue.save();
+	}
+	public boolean isDirty(){
+		return super.isDirty() || (description != null && !ObjectUtil.isVoid(StringUtil.read(description))); 
 	}
 
 	private InputStream attachment;

@@ -16,6 +16,7 @@ import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
@@ -93,4 +94,8 @@ public interface Model extends _Identifiable {
     public Object getTxnProperty(String name);
     public void setTxnPropery(String name,Object value);
     public Object removeTxnProperty(String name);
+    
+    @IS_VIRTUAL
+    @HIDDEN
+    public boolean isDirty();
 }

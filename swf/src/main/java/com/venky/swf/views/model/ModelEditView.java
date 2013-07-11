@@ -196,10 +196,11 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        return;
         }else {
             c = buttonRow.createColumn(getNumColumnsPerRow());
-            String label = "Done";
+            String label = "Save";
             if (getFormAction().equals("back")){
             	label = "Close";
             }
+            
         	Submit sbm = new Submit(label);
 	        sbm.setName("_SUBMIT_NO_MORE");
 	        c.addControl(sbm);

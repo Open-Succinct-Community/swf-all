@@ -4,6 +4,7 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -586,7 +587,15 @@ public class ModelReflector<M extends Model> {
     	Method getter = getFieldGetter(fieldName);
     	return isAnnotationPresent(getter,Enumeration.class);
     }
+    public boolean isFieldValueLongForTextBox(String fieldName){
+    	Method getter = getFieldGetter(fieldName);
+    	Class<?> returnType = getter.getReturnType();
 
+    	return Reader.class.isAssignableFrom(returnType) || 
+    					(String.class.isAssignableFrom(returnType) && 
+    							getColumnDescriptor(fieldName).getSize() > 2 * Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ;
+
+    }
     private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
 		/**
 		 * 

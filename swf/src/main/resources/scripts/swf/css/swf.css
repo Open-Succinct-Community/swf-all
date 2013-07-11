@@ -105,7 +105,9 @@ label.info {
   width : 98%;
   height : 100px;
 }
-
+table.tablesorter {
+  font-size:10pt;
+}
 table.tablesorter thead tr .indexed { 
   background-color: #FFCCCC;
 }
@@ -192,4 +194,6 @@ input.filetextbox {
   width:100%;
 }
 
-
+input:disabled, isindex:disabled, textarea:disabled  { 
+  color: rgb(84,84,84);
+}

@@ -1,7 +1,6 @@
 package com.venky.swf.views.controls.model;
 
 import java.io.InputStream;
-import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
@@ -78,7 +77,6 @@ public class ModelAwareness implements FieldUIMetaProvider{
         
     }
 
-
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	public <M extends Model> Control getInputControl(String controlName, String fieldName, M record, FieldUIMetaProvider metaprovider) {
     	if (metaprovider == null){
@@ -100,9 +98,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
-        }else if (Reader.class.isAssignableFrom(returnType) || 
-        			(String.class.isAssignableFrom(returnType) && 
-        				reflector.getColumnDescriptor(fieldName).getSize() > 2 * Database.getJdbcTypeHelper().getTypeRef(String.class).getSize() )){
+        }else if (reflector.isFieldValueLongForTextBox(fieldName)){
         	TextArea txtArea = new TextArea();
         	txtArea.setText(converter.toString(value));
         	control = txtArea;
@@ -144,15 +140,6 @@ public class ModelAwareness implements FieldUIMetaProvider{
             	control.setValue(converter.toString(value));
             }
         }
-        WATERMARK watermark = getReflector().getAnnotation(getter, WATERMARK.class);
-        if (watermark != null){
-        	control.setWaterMark(watermark.value());
-        }
-        TOOLTIP tooltip = getReflector().getAnnotation(getter, TOOLTIP.class);
-        if (tooltip != null){
-        	control.setToolTip(tooltip.value());
-        }
-        
         control.setName(controlName);
 
         if (!metaprovider.isFieldVisible(fieldName)){
@@ -168,6 +155,19 @@ public class ModelAwareness implements FieldUIMetaProvider{
             		control.setEnabled(false);
                     break;
             }
+        }
+        if (control.isVisible() && control.isEnabled() && !control.isReadOnly()){
+	        WATERMARK watermark = getReflector().getAnnotation(getter, WATERMARK.class);
+	        if (watermark != null){
+	        	control.setWaterMark(watermark.value());
+	        }
+	        TOOLTIP tooltip = getReflector().getAnnotation(getter, TOOLTIP.class);
+	        if (tooltip != null){
+	        	control.setToolTip(tooltip.value());
+	        }
+        }else {
+        	control.setWaterMark(null);
+        	control.setToolTip(null);
         }
 
         if (control.isEnabled() && getReflector().isFieldSettable(fieldName)){

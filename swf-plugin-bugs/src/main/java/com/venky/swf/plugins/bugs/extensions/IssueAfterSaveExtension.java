@@ -18,13 +18,13 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 	public void afterSave(Issue model) {
 		Note note = Database.getTable(Note.class).newRecord();
 		note.setIssueId(model.getId());
-		boolean persist = false;
+		boolean persistNote = false;
 		String description = null;
 		if (!ObjectUtil.isVoid(model.getDescription())){
 			description = StringUtil.read(model.getDescription());
 			if (!ObjectUtil.isVoid(description)){
 				note.setNotes(model.getDescription());
-				persist = true; 
+				persistNote = true; 
 			}
 		}
 		try {
@@ -32,23 +32,23 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 				note.setAttachment(model.getAttachment());
 				note.setAttachmentContentName(model.getAttachmentContentName());
 				note.setAttachmentContentType(model.getAttachmentContentType());
-				persist = true;
+				persistNote = true;
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		if (persist){
+		if (persistNote){
 			note.save();
-			User admin = Database.getTable(User.class).get(1);
-			if (admin != null && !admin.getUserEmails().isEmpty()){
-				String resolution = model.getResolution();
-				admin.sendMail("Issue: " + model.getId() + " " + model.getTitle() +  (resolution == null ? "" : " (" + resolution + ")") , description == null ? "" : description);
-			}
-			User creator = (User)model.getCreatorUser();
-			if (creator != null && !creator.getUserEmails().isEmpty()) {
-				String resolution = model.getResolution();
-				creator.sendMail("Issue: " + model.getId() + " " + model.getTitle() + (resolution == null ? "" : " (" + resolution + ")" ) , description == null ? "" : description);
-			}
+		}
+		User admin = Database.getTable(User.class).get(1);
+		if (admin != null && !admin.getUserEmails().isEmpty()){
+			String resolution = model.getResolution();
+			admin.sendMail("Issue: " + model.getId() + " " + model.getTitle() +  (resolution == null ? "" : " (" + resolution + ")") , description == null ? "" : description);
+		}
+		User creator = (User)model.getCreatorUser();
+		if (creator != null && !creator.getUserEmails().isEmpty()) {
+			String resolution = model.getResolution();
+			creator.sendMail("Issue: " + model.getId() + " " + model.getTitle() + (resolution == null ? "" : " (" + resolution + ")" ) , description == null ? "" : description);
 		}
 	}
 
