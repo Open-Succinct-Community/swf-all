@@ -9,7 +9,9 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.logging.Level;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -593,6 +596,7 @@ public class ModelController<M extends Model> extends Controller {
         	}catch (RuntimeException ex){
         		if (hasUserModifiedData){
 	        		Throwable th = ExceptionUtil.getRootCause(ex);
+	        		Config.instance().printStackTrace(getClass(), th);
 	        		String message = th.getMessage();
 	        		if (message == null){
 	        			message = th.toString();

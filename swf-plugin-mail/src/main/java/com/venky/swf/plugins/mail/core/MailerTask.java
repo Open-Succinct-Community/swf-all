@@ -7,6 +7,7 @@ import javax.mail.Message.RecipientType;
 import org.codemonkey.simplejavamail.Email;
 
 import com.venky.core.io.StringReader;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.UserEmail;
@@ -27,8 +28,11 @@ public class MailerTask implements Task{
 		this.toUserId = to.getId();
 		this.subject = subject;
 		this.text = text;
-		if (text != null){
-			this.isHtml = text.trim().substring(0, 5).equalsIgnoreCase("<html");
+		if (!ObjectUtil.isVoid(text)){
+			int len = text.trim().length();
+			if (len > 5 ) { 
+				this.isHtml = text.trim().substring(0, 5).equalsIgnoreCase("<html");
+			}
 		}
 	}
 	

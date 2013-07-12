@@ -226,7 +226,6 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			try {
 				set(m,fieldName,value);
 			} catch (Exception e) {
-				e.printStackTrace();
 				throw new RuntimeException("Cannot set " + heading[i] + " as "
 						+ value + " of Class " + value.getClass().getName(), e);
 			}

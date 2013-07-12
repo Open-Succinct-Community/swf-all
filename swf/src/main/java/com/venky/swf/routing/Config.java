@@ -6,6 +6,8 @@ package com.venky.swf.routing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
 import com.venky.core.log.TimerStatistics;
+import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.swf.menu._IMenuBuilder;
 
@@ -203,5 +206,16 @@ public class Config {
 			timerAdditive = Boolean.valueOf(getProperty("swf.timer.additive", "true")); 
 		}
 		return timerAdditive; 
+	}
+	
+	public void printStackTrace(Class<?> fromClazz, Throwable th){
+        StringWriter sw = new StringWriter();
+        PrintWriter w = new PrintWriter(sw);
+        if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){
+            th.printStackTrace(w);
+        }else {
+        	w.write(th.getMessage());
+        }
+		Config.instance().getLogger(fromClazz.getName()).fine(sw.toString());
 	}
 }

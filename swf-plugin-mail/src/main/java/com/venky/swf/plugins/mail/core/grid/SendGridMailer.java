@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -58,10 +57,8 @@ public class SendGridMailer implements Mailer{
 			String sResponse = StringUtil.read(response.getEntity().getContent());
 
 			Config.instance().getLogger(getClass().getName()).info(sResponse);
-		}catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		}catch (IOException e) {
+			Config.instance().printStackTrace(getClass(), e);
 		}
 	}
 }

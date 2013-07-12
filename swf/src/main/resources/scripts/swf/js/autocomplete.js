@@ -3,6 +3,27 @@
  * and open the template in the editor.
  */
  
+/* Unsaved data Warning Code */
+function setConfirmUnload(on) {
+     window.onbeforeunload = (on) ? unloadMessage : null;
+}
+
+function unloadMessage(e) {
+     return ' If you navigate away from this page without' +           
+        ' first saving your data, the changes will be' +
+        ' lost.';
+}
+
+$(function(){ 
+  $(':input').bind("change", function() {
+      setConfirmUnload(true);
+  });
+  $('form').submit(function(){
+      setConfirmUnload(false); 
+      return true;
+  });
+});
+
 $(function(){
     $("[autocompleteurl]").each(function(index,element){
         var autocompleteurl = $(this).attr("autocompleteurl");
@@ -56,7 +77,12 @@ $(function(){
         }) ;
         $(this).focusout(function(){
             if ( $(this).val().length == 0 ) { 
-              $(':input[name="' + hidden_field_name + '"]').removeAttr("value");
+              target=$(':input[name="' + hidden_field_name + '"]');
+              hidden_value=target.attr("value");
+              if (hidden_value) {
+                target.removeAttr("value");
+                setConfirmUnload(true)
+              }
             }
         });
         
@@ -76,6 +102,7 @@ $(function(){
                 select: function(event, ui){
                                     $(this).attr("value",ui.item.value);
                                     $('input[name="' + hidden_field_name + '"]').attr("value",ui.item.id);
+                                    setConfirmUnload(true)
                                     if (onAutoCompleteSelectUrl){
                                             $.ajax({
                                               url : onAutoCompleteSelectUrl, 
@@ -84,6 +111,7 @@ $(function(){
                                               success: function(jsonresponse){
                                                 for (var i in jsonresponse){
                                                     $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]); 
+                                                    setConfirmUnload(true)
                                                 }
                                               }
                                             });
@@ -107,25 +135,4 @@ $(function() {
 });
 
 
-
-/* Unsaved data Warning Code */
-function setConfirmUnload(on) {
-     window.onbeforeunload = (on) ? unloadMessage : null;
-}
-
-function unloadMessage(e) {
-     return ' If you navigate away from this page without' +           
-        ' first saving your data, the changes will be' +
-        ' lost.';
-}
-
-$(function(){ 
-  $(':input').bind("change", function() {
-      setConfirmUnload(true);
-  });
-  $('form').submit(function(){
-      setConfirmUnload(false); 
-      return true;
-  });
-});
 
