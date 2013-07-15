@@ -46,10 +46,10 @@ public class ModelListTable<M extends Model> extends Table{
 		return modelAwareness;
 	}
 
-	public ModelListTable(Path path, String[] includeFields , FieldUIMetaProvider metaProvider) {
+	public ModelListTable(Path path, ModelAwareness modelAwareness, FieldUIMetaProvider metaProvider) {
 		addClass("hfill");
 		addClass("tablesorter");
-		this.modelAwareness = new ModelAwareness(path,includeFields);
+		this.modelAwareness = modelAwareness;
 		this.metaprovider = metaProvider;
 	}
 	
@@ -151,7 +151,7 @@ public class ModelListTable<M extends Model> extends Table{
     			continue;
     		}
     		int currentFieldWidth = fieldWidthMap.get(field) + fieldOffset;
-    		long pctWidth = (int)( (currentFieldWidth * 100.0) / total.doubleValue() );
+    		long pctWidth = (long)Math.ceil((currentFieldWidth * 100.0) / total.doubleValue() );
     		Column column = columns.get(i);
     		column.setProperty("width",  pctWidth +"%");
     		i++;
@@ -260,7 +260,7 @@ public class ModelListTable<M extends Model> extends Table{
             if (getMetaprovider().isFieldVisible(fieldName)){
                 column = row.createColumn(); 
             	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
-            	Integer currentFieldWidth = Math.min(80,control.getText().length());
+            	Integer currentFieldWidth = getDataLength(control);
             	if (currentMaxFieldWidth == null || currentMaxFieldWidth < currentFieldWidth){
             		maxFieldWidth.put(fieldName,currentFieldWidth);
             	}
@@ -271,6 +271,9 @@ public class ModelListTable<M extends Model> extends Table{
 
         }    	
 		
+	}
+	protected int getDataLength(Control control){
+		return control.getText().length();
 	}
 	protected void addRecordToTable(M record, BitSet showAction){
 		Timer timer = startTimer("Adding one record to table",Config.instance().isTimerAdditive());

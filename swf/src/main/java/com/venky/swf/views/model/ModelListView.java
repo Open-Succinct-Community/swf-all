@@ -55,7 +55,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         
     }
 	protected ModelListTable<M> createModelListTable(Path path){
-		return new ModelListTable<M>(path,getIncludedFields().toArray(new String[]{}),this);
+		return new ModelListTable<M>(path,getModelAwareness(),this);
 	}
     
     public static Control createSearchForm(_IPath path){
