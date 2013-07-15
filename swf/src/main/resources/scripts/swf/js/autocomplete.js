@@ -15,7 +15,7 @@ function unloadMessage(e) {
 }
 
 $(function(){ 
-  $(':input').bind("change", function() {
+  $(':input:not([name="q"])').bind("change", function() {
       setConfirmUnload(true);
   });
   $('form').submit(function(){
