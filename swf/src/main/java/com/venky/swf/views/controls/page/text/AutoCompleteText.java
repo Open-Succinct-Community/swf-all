@@ -26,34 +26,28 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 	private static final long serialVersionUID = 1L;
 	private Class<M> modelClass; 
     private String descriptionField = null ;
-    private TextBox description = null; 
+    private TextBox hiddenField = null; 
     public AutoCompleteText(Class<M> modelClass){
     	this(modelClass,"");
     }
-    
-    public void setOnAutoCompleteSelectProcessingUrl(String url){
-    	description.setOnAutoCompleteSelectProcessingUrl(url);
+    public TextBox getHiddenField(){
+    	return hiddenField;
     }
+    
     public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
         ModelReflector<M> ref = ModelReflector.instance(modelClass);
         this.descriptionField = ref.getDescriptionField();
-    	this.description = new TextBox();
-        if (Reader.class.isAssignableFrom(ref.getFieldGetter(descriptionField).getReturnType())){
-        	this.description.addClass("reader");
+    	this.hiddenField = new TextBox();
+    	this.hiddenField.setVisible(false);
+    	if (Reader.class.isAssignableFrom(ref.getFieldGetter(descriptionField).getReturnType())){
+        	addClass("reader");
         }
-        this.description.setAutocompleteServiceURL(url);
+        setAutocompleteServiceURL(url);
         setVisible(true);
         setEnabled(true);
     	setWaterMark("Enter space to see complete list");
     	setToolTip("Enter the first few characters or space to see the full list.");
-    }
-    
-    public void setVisible(boolean visible){
-    	super.setVisible(false);
-    	if (description != null){//Prevent NPE from super's constructor.
-    		description.setVisible(visible);
-    	}
     }
     
     
@@ -63,47 +57,39 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     @Override
     public void setParent(_IControl parent){
         super.setParent(parent);
-        // SHOULD NOT BE NEEDED. description.setEnabled(isEnabled());
-        parent.addControl(description);
+        parent.addControl(hiddenField);
     }    
     
-    public void setWaterMark(String watermark){
-    	if (description != null){
-    		description.setWaterMark(watermark);
-    	}
-    }
-    public void setToolTip(String watermark){
-    	if (description != null){
-    		description.setToolTip(watermark);
-    	}
-    }
-
     @Override
     public void setName(String name){
-        super.setName(name);
         int indexOfDot = name.indexOf('.');
         String autoCompleteFieldName = "_AUTO_COMPLETE_" + name;
         if (indexOfDot > 0){
         	autoCompleteFieldName = name.substring(0,indexOfDot) + "._AUTO_COMPLETE_" + name.substring(indexOfDot+1);
         }
-        description.setName(autoCompleteFieldName);
+        hiddenField.setName(name);
+        super.setName(autoCompleteFieldName);
     }
     @Override
     public void setReadOnly(final boolean readonly){
     	super.setReadOnly(readonly);
-    	description.setReadOnly(readonly);
+    	if (hiddenField != null){
+    		hiddenField.setReadOnly(readonly);
+    	}
     }
     
     public void setEnabled(final boolean enabled){
     	super.setEnabled(enabled);
-    	if (description != null){ //Prevent NPE from super's constructor.
-    		description.setEnabled(enabled);
+    	if (hiddenField != null){
+    		hiddenField.setEnabled(enabled);
     	}
     }
     
     @Override
     public void setValue(Object value){
-        super.setValue(value);
+    	if (hiddenField != null){
+    		hiddenField.setValue(value);
+    	}
         if (!ObjectUtil.isVoid(value)){
 			M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
             if (model != null) {
@@ -116,7 +102,7 @@ public class AutoCompleteText<M extends Model> extends TextBox{
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
-                description.setValue(dvalue);
+                super.setValue(dvalue);
             }
         }
     }
@@ -124,11 +110,9 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     @Override
     public void setForm(String formId){
     	super.setForm(formId);
-    	if (description != null){
-    		description.setForm(formId);
+    	if (hiddenField != null){
+    		hiddenField.setForm(formId);
     	}
     }
-    public TextBox getDescriptionField(){
-    	return description;
-    }
+    
 }

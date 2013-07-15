@@ -193,7 +193,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	sbm.setToolTip("Done with all");
 	        sbm.setName("_SUBMIT_NO_MORE");
 	        c.addControl(sbm);
-	        return;
         }else {
             c = buttonRow.createColumn(getNumColumnsPerRow());
             String label = "Save";
@@ -204,30 +203,28 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	Submit sbm = new Submit(label);
 	        sbm.setName("_SUBMIT_NO_MORE");
 	        c.addControl(sbm);
+	    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
+
+	    	
+	    	Tabs multiTab = null;
+	    	for (Class<? extends Model> childClass: childModels){
+				Path childPath = new Path(getPath().getTarget()+"/"+ LowerCaseStringCache.instance().get(Database.getTable(childClass).getTableName()) + "/index");
+	        	childPath.setRequest(getPath().getRequest());
+	        	childPath.setResponse(getPath().getResponse());
+	        	childPath.setSession(getPath().getSession());
+	        	if (childPath.canAccessControllerAction()){
+	            	Div tab = new Div();
+	            	addChildModelToTab(childPath,tab,form);
+	        		if (multiTab == null){
+	        			multiTab = new Tabs();
+	        			body.addControl(multiTab);
+	        		}
+	            	multiTab.addSection(tab,childClass.getSimpleName());
+	        	}
+	        }    
+
         }
-        
-    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
-
-    	
-    	Tabs multiTab = null;
-    	for (Class<? extends Model> childClass: childModels){
-			Path childPath = new Path(getPath().getTarget()+"/"+ LowerCaseStringCache.instance().get(Database.getTable(childClass).getTableName()) + "/index");
-        	childPath.setRequest(getPath().getRequest());
-        	childPath.setResponse(getPath().getResponse());
-        	childPath.setSession(getPath().getSession());
-        	if (childPath.canAccessControllerAction()){
-            	Div tab = new Div();
-            	addChildModelToTab(childPath,tab,form);
-        		if (multiTab == null){
-        			multiTab = new Tabs();
-        			body.addControl(multiTab);
-        		}
-            	multiTab.addSection(tab,childClass.getSimpleName());
-        	}
-        }    
-
         hiddenHashField.setValue(Encryptor.encrypt(getModelAwareness().getHashFieldValue().toString()));
-
     }
     
     protected void addChildModelToTab(Path childPath,Div tab ,Form form){

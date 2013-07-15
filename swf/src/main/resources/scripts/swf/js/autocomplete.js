@@ -110,7 +110,11 @@ $(function(){
                                               data: values(), 
                                               success: function(jsonresponse){
                                                 for (var i in jsonresponse){
-                                                    $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]); 
+                                                    if ( bIsNameIndexed ) {
+                                                      $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]); 
+                                                    }else {
+                                                      $(':input[name="' + i +  '"]').attr("value",jsonresponse[i]); 
+                                                    }
                                                     setConfirmUnload(true)
                                                 }
                                               }

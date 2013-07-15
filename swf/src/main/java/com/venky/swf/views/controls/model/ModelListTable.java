@@ -260,7 +260,7 @@ public class ModelListTable<M extends Model> extends Table{
             if (getMetaprovider().isFieldVisible(fieldName)){
                 column = row.createColumn(); 
             	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
-            	Integer currentFieldWidth = Math.min(50,control.getText().length());
+            	Integer currentFieldWidth = Math.min(80,control.getText().length());
             	if (currentMaxFieldWidth == null || currentMaxFieldWidth < currentFieldWidth){
             		maxFieldWidth.put(fieldName,currentFieldWidth);
             	}

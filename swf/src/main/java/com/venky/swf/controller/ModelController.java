@@ -511,7 +511,7 @@ public class ModelController<M extends Model> extends Controller {
     	} 
     	
     }
-    private View  saveModelFromForm(){
+    protected View  saveModelFromForm(){
     	return performPostAction(new SaveAction());
     }
     

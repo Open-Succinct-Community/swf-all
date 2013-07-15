@@ -156,6 +156,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
                     break;
             }
         }
+    
         if (control.isVisible() && control.isEnabled() && !control.isReadOnly()){
 	        WATERMARK watermark = getReflector().getAnnotation(getter, WATERMARK.class);
 	        if (watermark != null){
@@ -181,10 +182,10 @@ public class ModelAwareness implements FieldUIMetaProvider{
             	fieldValue = control.getText();
             }else if (control instanceof AutoCompleteText){
             	AutoCompleteText ac = (AutoCompleteText)control;
-            	TextBox descriptionField = ac.getDescriptionField();
-            	hashFieldValue.append(descriptionField.getName());
+            	TextBox hiddenField = ac.getHiddenField();
+            	hashFieldValue.append(hiddenField.getName());
             	hashFieldValue.append("=");
-            	hashFieldValue.append(StringUtil.valueOf(descriptionField.getValue()));
+            	hashFieldValue.append(StringUtil.valueOf(hiddenField.getValue()));
             	hashFieldValue.append(",");
             }
             
