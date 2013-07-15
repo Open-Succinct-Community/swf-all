@@ -7,7 +7,6 @@ import javax.mail.Message.RecipientType;
 import org.codemonkey.simplejavamail.Email;
 
 import com.venky.core.io.StringReader;
-import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.UserEmail;

@@ -189,7 +189,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
             	hashFieldValue.append(",");
             }
             
-        	hashFieldValue.append(controlName);
+        	hashFieldValue.append(control.getName());
         	hashFieldValue.append("=");
         	hashFieldValue.append(StringUtil.valueOf(fieldValue));
         }

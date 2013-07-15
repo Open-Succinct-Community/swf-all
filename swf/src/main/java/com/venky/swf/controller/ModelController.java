@@ -9,9 +9,7 @@ import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -20,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.logging.Level;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -478,7 +475,7 @@ public class ModelController<M extends Model> extends Controller {
     
     public class SaveAction implements Action<M>{
     	public View noAction(M m){
-    		return afterPersistDBView(m);
+    		return noActionView(m);
     	}
 		@Override
 		public void act(M m) {
@@ -512,7 +509,11 @@ public class ModelController<M extends Model> extends Controller {
     	
     }
     protected View  saveModelFromForm(){
-    	return performPostAction(new SaveAction());
+    	return performPostAction(getSaveAction());
+    }
+    
+    protected Action<M> getSaveAction(){
+    	return new SaveAction();
     }
     
     protected View performPostAction(Action<M> action){
@@ -673,14 +674,20 @@ public class ModelController<M extends Model> extends Controller {
 		return record;
 	}
 
-	protected View afterPersistDBView(M record){
+    protected View defaultActionView(M record){
     	View v = null; 
     	if (integrationAdaptor != null){
     		v = integrationAdaptor.createResponse(getPath(),record);
     	}else{
     		v = back();
     	}
-        return v;
+    	return v;
+    }
+	protected View noActionView(M record){
+        return defaultActionView(record);
+	}
+	protected View afterPersistDBView(M record){
+    	return defaultActionView(record);
     }
     private static void computeHash(StringBuilder hash, ModelReflector<? extends Model> reflector, Map<String,Object> formFields, String fieldPrefix){
     	for (String field: reflector.getFields()){
@@ -691,19 +698,20 @@ public class ModelController<M extends Model> extends Controller {
     		if (hash.length() > 0){
     			hash.append(",");
     		}
-        	String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
+    		if (fieldPrefix != null){
+    			hash.append(fieldPrefix);
+    		}
+			hash.append(field).append("=").append(StringUtil.valueOf(currentValue));
+
+			String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
         	if (formFields.containsKey(autoCompleteHelperField)){
+        		hash.append(",");
         		String autoCompleteHelperFieldValue = StringUtil.valueOf(formFields.get(autoCompleteHelperField));
         		if (fieldPrefix != null){
         			hash.append(fieldPrefix);
         		}
         		hash.append(autoCompleteHelperField).append("=").append(autoCompleteHelperFieldValue);
-        		hash.append(",");
         	}
-    		if (fieldPrefix != null){
-    			hash.append(fieldPrefix);
-    		}
-			hash.append(field).append("=").append(StringUtil.valueOf(currentValue));
         }
 
     	for (Class<? extends Model> modelClass: reflector.getChildModels(true, false)){

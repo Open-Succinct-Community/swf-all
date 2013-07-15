@@ -13,7 +13,6 @@ import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
-import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.model.FieldUIMetaProvider;
 

@@ -235,7 +235,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	excludeLinks.add(childBack); 
 
     	DashboardView view =  (DashboardView)childPath.invoke();
-    	view.createBody(tab,false,excludeLinks);
+    	view.createBody(tab,false,false,excludeLinks);
     }
     private SequenceSet<HotLink> links = null;
     @Override

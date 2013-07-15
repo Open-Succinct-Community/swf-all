@@ -37,17 +37,17 @@ public class DashboardView extends HtmlView{
         this.child = child;
     }
     @Override
-    protected void _createBody(_IControl b) {
-    	createBody(b);
+    protected void _createBody(_IControl b, boolean includeStatusMessage) {
+    	createBody(b,includeStatusMessage,true);
     }
     @Override
     protected void createBody(_IControl b) {
-    	createBody(b,true);
+    	createBody(b,false, true);
     }
-    public void createBody(_IControl b, boolean includeMenu) {
-    	createBody(b, includeMenu, new SequenceSet<HotLink>());
+    public void createBody(_IControl b, boolean includeStatusMessage, boolean includeMenu) {
+    	createBody(b, includeStatusMessage , includeMenu, new SequenceSet<HotLink>());
     }
-    public void createBody(_IControl b, boolean includeMenu,SequenceSet<HotLink> excludeLinks) {
+    public void createBody(_IControl b, boolean includeStatusMessage,boolean includeMenu,SequenceSet<HotLink> excludeLinks) {
     	if (includeMenu){
             _IMenu menu = Config.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null && !menu.getContainedControls().isEmpty()){
@@ -71,6 +71,6 @@ public class DashboardView extends HtmlView{
 	        	hotlinksCell.addControl(link);
 			}
 		}
-        child._createBody(b);
+        child._createBody(b,includeStatusMessage);
     }
 }

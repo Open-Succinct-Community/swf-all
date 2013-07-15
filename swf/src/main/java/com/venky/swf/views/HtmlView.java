@@ -88,7 +88,7 @@ public abstract class HtmlView extends View{
         html.addControl(head);
         
         Body body = new Body();
-        _createBody(body);
+        _createBody(body,true);
         html.addControl(body);
 
         Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
@@ -141,11 +141,14 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
     }
-    protected void _createBody(_IControl body){
+    /*
+     * When views are composed, includeStatusMessage is passed as false so that it may be included in parent/including view
+     */
+    protected void _createBody(_IControl body,boolean includeStatusMessage){
 		body.addControl(status);
     	createBody(body);
 		HttpSession session = getPath().getSession();
-		if (session != null){
+		if (session != null && includeStatusMessage){
 			List<String> errorMessages = getPath().getErrorMessages();
 			List<String> infoMessages = getPath().getInfoMessages();
 			
