@@ -219,7 +219,9 @@ public class Select extends SqlStatement{
         	SequenceSet<Record> result = null;
         	List<M> ret = null;
         	QueryCache cache = Database.getInstance().getCache(ref);
-        	result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
+        	if (isCacheable(ref)){
+        		result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
+        	}
         	
         	if (result == null){
 	            Timer queryTimer = startTimer(getRealSQL(), Config.instance().isTimerAdditive());

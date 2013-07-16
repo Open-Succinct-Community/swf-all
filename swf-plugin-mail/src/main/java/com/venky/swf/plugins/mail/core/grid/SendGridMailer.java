@@ -38,7 +38,7 @@ public class SendGridMailer implements Mailer{
 			if (!ObjectUtil.isVoid(mail.getText())){
 				attributes.add(new BasicNameValuePair("text", mail.getText()));
 			}else if (!ObjectUtil.isVoid(mail.getTextHTML())){
-				attributes.add(new BasicNameValuePair("html", mail.getText()));
+				attributes.add(new BasicNameValuePair("html", mail.getTextHTML()));
 			}
 			attributes.add(new BasicNameValuePair("from", Config.instance().getProperty("swf.sendmail.user")));
 			attributes.add(new BasicNameValuePair("fromname", Config.instance().getProperty("swf.sendmail.user.name")));

@@ -6,13 +6,15 @@ package com.venky.swf.views.controls.page.text;
 
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.views.controls._IControl;
-
+import com.venky.swf.sql.Select;
 /**
  *
  * @author venky
@@ -24,7 +26,8 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Class<M> modelClass; 
+	private Class<M> modelClass;
+	private ModelReflector<M> ref;
     private String descriptionField = null ;
     private TextBox hiddenField = null; 
     public AutoCompleteText(Class<M> modelClass){
@@ -34,9 +37,22 @@ public class AutoCompleteText<M extends Model> extends TextBox{
     	return hiddenField;
     }
     
+    private Integer maxDataLength = null;
+    public int getMaxDataLength(){
+    	if (maxDataLength == null){ 
+	    	List<Counts> counts  = new Select("MAX(LENGTH("+descriptionField + ")) AS COUNT").from(modelClass).execute(Counts.class);
+	    	if (counts.isEmpty()){
+	    		maxDataLength = ref.getColumnDescriptor(descriptionField).getSize(); 
+	    	}else {
+	    		maxDataLength = counts.get(0).getCount();
+	    	}
+    	}
+    	return maxDataLength;
+    }
+    
     public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
-        ModelReflector<M> ref = ModelReflector.instance(modelClass);
+        this.ref = ModelReflector.instance(modelClass);
         this.descriptionField = ref.getDescriptionField();
     	this.hiddenField = new TextBox();
     	this.hiddenField.setVisible(false);

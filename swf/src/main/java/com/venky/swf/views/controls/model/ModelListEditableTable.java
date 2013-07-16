@@ -3,7 +3,9 @@ package com.venky.swf.views.controls.model;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -43,17 +45,39 @@ public class ModelListEditableTable<M extends Model> extends ModelListTable<M>{
         
         return control;
 	}
+	protected int length(String value){
+		if (value == null){
+			return 0;
+		}
+		int length = 0; 
+		StringTokenizer tok  = new StringTokenizer(value,"\r\n",false);
+		while (tok.hasMoreTokens()){
+			String token = tok.nextToken();
+			length = Math.max(length, token.length());
+		}
+		return length;
+	}
 	protected int getDataLength(Control control){
 		int length = 0; 
-		if (ObjectUtil.isVoid(control.getValue())){
-			length = super.getDataLength(control);
-		}else {
-			length = control.getValue().length();
+		String value = null; 
+		value = control.getValue(); 
+		if (ObjectUtil.isVoid(value)){
+			value = control.getText();
 		}
-		if (control instanceof TextArea){
-			return 50 ;
-		}else {
-			return length;
+		
+		if (!ObjectUtil.isVoid(value)){
+			length = length(value);
 		}
+		if (length == 0 ){
+			if (control instanceof AutoCompleteText){
+				@SuppressWarnings("unchecked")
+				AutoCompleteText<? extends Model> act = (AutoCompleteText<? extends Model>)control;
+				length = act.getMaxDataLength();
+			}else if (control instanceof TextArea){
+				length = 50;
+			}
+		}
+		
+		return length;
 	}
 }

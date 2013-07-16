@@ -15,12 +15,14 @@ $(function(){
     var _findex = 0; 
     var tabName = GetURLParameter("_select_tab");
     var textExtractor = function(elem){
-                          var $label = $("label",elem);
                           var $input = $("input[type=text]",elem);
-                          if ($input) {
+                          var $label = $("label",elem);
+                          if ($input.length == 1) {
                             return $input.val();
-                          }else {
+                          }else if ($label.length == 1){
                             return $label.text();
+                          }else{
+                            return $(elem).text();
                           }
                         }
 
