@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.Iterator;
 import java.util.List;
 
 import com.venky.core.string.StringUtil;
@@ -42,9 +43,6 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
 		for (String field: fields){
-			if (ref.isFieldHidden(field) && !"ID".equalsIgnoreCase(field)){
-				continue;
-			}
 			Object value = ref.get(record, field);
 			if (value == null){
 				continue;
@@ -67,10 +65,15 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	private <R extends Model> void write(Class<R> referredModelClass, int id , T referredModelElement){
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,getFormatClass());
 		R referredModel = Database.getTable(referredModelClass).get(id);
-		List<String> uniqueFields = ModelReflector.instance(referredModelClass).getUniqueFields(); 
-		if (uniqueFields.isEmpty()){
-			uniqueFields.add("ID");
+		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
+		List<String> uniqueFields = referredModelReflector.getUniqueFields(); 
+		for (Iterator<String> fi = uniqueFields.iterator(); fi.hasNext();){
+			String f = fi.next();
+			if (referredModelReflector.isFieldHidden(f)){
+				fi.remove();
+			}
 		}
+		uniqueFields.add("ID");
 		writer.write(referredModel , referredModelElement, uniqueFields);
 	}
 	

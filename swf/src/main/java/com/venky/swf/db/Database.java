@@ -422,7 +422,7 @@ public class Database implements _IDatabase{
 				
 		    	String driver = Config.instance().getProperty("swf.jdbc.driver");
 				info.setProperty("driverClassName",driver);
-				info.setProperty("validationQuery", "select 1 as dbcp_connection_test");
+				info.setProperty("validationQuery",Config.instance().getProperty("swf.jdbc.validationQuery", "select 1 as dbcp_connection_test"));
 				info.setProperty("testOnBorrow", "true");
 				info.setProperty("testOnReturn", "true");
 				info.setProperty("testWhileIdle", "true");

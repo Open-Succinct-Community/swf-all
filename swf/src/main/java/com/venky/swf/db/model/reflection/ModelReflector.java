@@ -164,6 +164,9 @@ public class ModelReflector<M extends Model> {
     }
 	@SuppressWarnings("unchecked")
 	public <T> T get(Object o, String fieldName){
+		if (o == null){
+			return null;
+		}
 		Model record = null; 
 		Record rawRecord = null ;
 		if (Record.class.isInstance(o)){

@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.logging.Level;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -201,9 +202,9 @@ public class ModelController<M extends Model> extends Controller {
 				}
 				Method referredModelIdGetter = getReflector().getFieldGetter(f);
 				if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
-					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(strQuery);
+					q.append(f.substring(0,f.length()-"_ID".length())).append(":\"").append(strQuery).append("\"");
 				}else {
-					q.append(f).append(":").append(strQuery);
+					q.append(f).append(":\"").append(strQuery).append("\"");
 				}
 			}
 			try { 
@@ -816,6 +817,10 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
     private <T> View saveModelsFromRequest(){
+    	List<M> models = persistModelsFromRequest();
+    	return integrationAdaptor.createResponse(getPath(),models);
+    }
+    protected <T> List<M> persistModelsFromRequest(){
     	List<M> models = integrationAdaptor.readRequest(getPath());
     	for (M m: models){
     		try {
@@ -829,9 +834,8 @@ public class ModelController<M extends Model> extends Controller {
     			}
     		}
     	}
-    	return integrationAdaptor.createResponse(getPath(),models);
+    	return models;
     }
-    
     @SuppressWarnings("unchecked")
 	public View onAutoCompleteSelect(){
     	ensureUI();
@@ -956,5 +960,38 @@ public class ModelController<M extends Model> extends Controller {
     		}
     	};
     }
+
+    public View detail(){
+        if (!getPath().getRequest().getMethod().equalsIgnoreCase("POST")) {
+            throw new RuntimeException("Api only supports POST method");
+        }
+		IntegrationAdaptor<M, ?> integrationAdaptor = getIntegrationAdaptor();
+		if (integrationAdaptor != null) {
+			List<M> models = integrationAdaptor.readRequest(getPath());
+			for (Iterator<M> i = models.iterator(); i.hasNext() ; ){
+				M m = i.next();
+				if (m.getRawRecord().isNewRecord()){
+					i.remove();
+				}
+			}
+			return integrationAdaptor.createResponse(getPath(),models);
+		}
+		throw new AccessDeniedException("Cannot call this api from ui");
+
+    }
+
+	public View persist(){
+        if (!getPath().getRequest().getMethod().equalsIgnoreCase("POST")) {
+            throw new RuntimeException("Api only supports POST method");
+        }
+		IntegrationAdaptor<M, ?> integrationAdaptor = getIntegrationAdaptor();
+		if (integrationAdaptor != null) {
+			List<M> models = persistModelsFromRequest();
+			Config.instance().getLogger(getReflector().getModelClass().getName()).log(Level.INFO,"Persisted {0} records." , models.size());
+			return integrationAdaptor.createStatusResponse(getPath(), null);
+		}
+		throw new AccessDeniedException("Cannot call this api from ui");
+
+	}
 
 }

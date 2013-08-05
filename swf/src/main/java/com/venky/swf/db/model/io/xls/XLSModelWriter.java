@@ -85,6 +85,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		PrintSetup printSetup = sheet.getPrintSetup();
 		printSetup.setLandscape(true);
 		printSetup.setFitWidth((short)1);
+		printSetup.setPaperSize(PrintSetup.A4_PAPERSIZE);
 
 		return sheet;
 	}

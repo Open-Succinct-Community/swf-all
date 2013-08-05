@@ -219,7 +219,7 @@ public class Controller {
 	        if (reflector.getIndexedColumns().contains(columnName)){
 	        	LuceneIndexer indexer = LuceneIndexer.instance(reflector);
 	        	StringBuilder qry = new StringBuilder();
-	        	qry.append("( ").append(columnName).append(":").append(value).append("* )");
+	        	qry.append("( ").append(columnName).append(":\"").append(value).append("*\" )");
 	        	Query q = indexer.constructQuery(qry.toString());
 	        	List<Integer> topRecords = indexer.findIds(q, maxRecordsToGet);
 	        	int numRecordRetrieved = topRecords.size();

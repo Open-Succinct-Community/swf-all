@@ -58,6 +58,7 @@ public class DashboardView extends HtmlView{
             }
     	}
     	if (child == null){
+    		super.showErrorsIfAny(b, b.getContainedControls().size(),includeStatusMessage);
     		return;
     	}
     	

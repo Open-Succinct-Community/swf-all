@@ -227,6 +227,10 @@ public class ModelListTable<M extends Model> extends Table{
             if (reflector.isFieldPassword(fieldName)){
             	sValue = sValue.replaceAll(".", "\\*");
             }
+            if (reflector.isFieldValueLongForTextBox(fieldName)){
+            	//Probably html formating is better. convert hard enter to br 
+            	sValue = sValue.replaceAll("(<br/>)?\n(<br/>)?", "<br/>");
+            }
             String parentDescription = modelAwareness.getParentDescription(getter, record) ;
             if (!ObjectUtil.isVoid(parentDescription)){
             	Object parentId = value;

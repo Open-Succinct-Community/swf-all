@@ -1,5 +1,7 @@
 package com.venky.swf.controller;
 
+import java.util.Arrays;
+
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.User;
@@ -19,7 +21,11 @@ public class UsersController extends ModelController<User>{
 		u.generateApiKey();
 		StringBuilder message = new StringBuilder(); 
 		message.append("API Key for ").append(u.getName()).append(" generated: (").append(u.getApiKey()).append(")");
-		return new BytesView(getPath(), u.getApiKey().getBytes());
+		if (getIntegrationAdaptor() != null){
+			return getIntegrationAdaptor().createResponse(getPath(), u,Arrays.asList("API_KEY"));
+		}else {
+			return new BytesView(getPath(), u.getApiKey().getBytes());
+		}
 		
 	}
 }

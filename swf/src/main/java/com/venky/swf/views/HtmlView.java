@@ -145,10 +145,15 @@ public abstract class HtmlView extends View{
      * When views are composed, includeStatusMessage is passed as false so that it may be included in parent/including view
      */
     protected void _createBody(_IControl body,boolean includeStatusMessage){
-		body.addControl(status);
+    	int statusMessageIndex = body.getContainedControls().size();
     	createBody(body);
-		HttpSession session = getPath().getSession();
-		if (session != null && includeStatusMessage){
+    	showErrorsIfAny(body,statusMessageIndex, includeStatusMessage);
+    }
+    
+    protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){
+    	HttpSession session = getPath().getSession();
+    	if (session != null && includeStatusMessage){
+    		body.addControl(index,status);
 			List<String> errorMessages = getPath().getErrorMessages();
 			List<String> infoMessages = getPath().getInfoMessages();
 			

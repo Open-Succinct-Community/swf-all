@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
+import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
@@ -56,6 +59,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public List<M> readRequest(Path path){
 		try {
 			InputStream is = path.getRequest().getInputStream();
+			is = new ByteArrayInputStream(StringUtil.readBytes(is));
 			return reader.read(is);
 		}catch(IOException ex){
 			throw new RuntimeException(ex);
@@ -71,7 +75,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public View createResponse(Path path, M m, List<String> includeFields) {
 		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); 
 		T element = helper.getRoot();
-		writer.write(m, helper.getElementAttribute(modelReflector.getModelClass().getSimpleName()), getFields(includeFields));
+		writer.write(m, element , getFields(includeFields));
 		return new BytesView(path, element.toString().getBytes());
 	}
 	
@@ -79,6 +83,13 @@ public class IntegrationAdaptor<M extends Model,T> {
 		List<String> fields = includeFields;
 		if (fields == null){
 			fields = modelReflector.getFields();
+			Iterator<String> fi = fields.iterator();
+			while (fi.hasNext()){
+				String field = fi.next();
+				if (modelReflector.isFieldHidden(field) && !"ID".equalsIgnoreCase(field)){
+					fi.remove();
+				}
+			}
 		}
 		return fields;
 	}

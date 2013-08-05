@@ -639,7 +639,11 @@ public class Path implements _IPath{
             			}
             			
         				if(!isRequestAuthenticated()) {
-            				return new RedirectorView(this,"","login");
+        					if (getProtocol() == MimeType.TEXT_HTML){
+        						return new RedirectorView(this,"","login");
+        					}else {
+        						throw new RuntimeException ("Request not authenticated");
+        					}
             			}
             		}
             		ensureControllerActionAccess();
