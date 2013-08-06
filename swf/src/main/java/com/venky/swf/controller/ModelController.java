@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -202,9 +203,9 @@ public class ModelController<M extends Model> extends Controller {
 				}
 				Method referredModelIdGetter = getReflector().getFieldGetter(f);
 				if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
-					q.append(f.substring(0,f.length()-"_ID".length())).append(":\"").append(strQuery).append("\"");
+					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(QueryParser.escape(strQuery));
 				}else {
-					q.append(f).append(":\"").append(strQuery).append("\"");
+					q.append(f).append(":").append(QueryParser.escape(strQuery));
 				}
 			}
 			try { 
@@ -773,22 +774,18 @@ public class ModelController<M extends Model> extends Controller {
     		}
     		return;
 		}
+    	//In some tables that don't have description column or have non string description columns, this would have caused an issue of class cast in db..
+    	autoCompleteHelperFieldValue = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().valueOf(autoCompleteHelperFieldValue);
     	
     	//autoCompleteHelperFieldValue is not void.
-    	
-		if (Database.getJdbcTypeHelper().isVoid(currentValue)){
-			@SuppressWarnings({ "rawtypes", "unchecked" })
-			List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(new Expression(
-					referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,autoCompleteHelperFieldValue)).execute(referredModelClass,new Select.AccessibilityFilter());
-			
-			if (models.size() == 1){
-				referredModel = models.get(0);
-				currentValue = StringUtil.valueOf(referredModel.getId());
-				formFields.put(field, currentValue);
-			}
-		}else {
-			Integer id = (Integer) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter().valueOf(currentValue);
-			referredModel = Database.getTable(referredModelClass).get(id);
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(new Expression(
+				referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,autoCompleteHelperFieldValue)).execute(referredModelClass,new Select.AccessibilityFilter());
+		
+		if (models.size() == 1){
+			referredModel = models.get(0);
+			currentValue = StringUtil.valueOf(referredModel.getId());
+			formFields.put(field, currentValue);
 		}
 		
 		

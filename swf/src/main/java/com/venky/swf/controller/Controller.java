@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -219,7 +220,7 @@ public class Controller {
 	        if (reflector.getIndexedColumns().contains(columnName)){
 	        	LuceneIndexer indexer = LuceneIndexer.instance(reflector);
 	        	StringBuilder qry = new StringBuilder();
-	        	qry.append("( ").append(columnName).append(":\"").append(value).append("*\" )");
+	        	qry.append("( ").append(columnName).append(":").append(QueryParser.escape(value)).append("* )");
 	        	Query q = indexer.constructQuery(qry.toString());
 	        	List<Integer> topRecords = indexer.findIds(q, maxRecordsToGet);
 	        	int numRecordRetrieved = topRecords.size();

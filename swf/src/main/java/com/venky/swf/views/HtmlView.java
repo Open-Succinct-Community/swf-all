@@ -146,8 +146,8 @@ public abstract class HtmlView extends View{
      */
     protected void _createBody(_IControl body,boolean includeStatusMessage){
     	int statusMessageIndex = body.getContainedControls().size();
-    	createBody(body);
     	showErrorsIfAny(body,statusMessageIndex, includeStatusMessage);
+    	createBody(body);
     }
     
     protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){

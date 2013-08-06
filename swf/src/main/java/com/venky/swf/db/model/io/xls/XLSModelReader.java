@@ -61,9 +61,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
         	M m = read(row,headingIndexMap);
-        	if (m.isDirty()){
-        		records.add(m);
-        	}
+    		records.add(m);
         }
         return records;
 	}

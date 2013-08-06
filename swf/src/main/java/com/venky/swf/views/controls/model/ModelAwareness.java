@@ -253,7 +253,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
     	}
         StringBuilder sAction = new StringBuilder();
         if ("search".equals(getPath().action())){
-        	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(getPath().getFormFields().get("q"));
+        	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(StringUtil.valueOf(getPath().getFormFields().get("q")));
         }else {
         	sAction.append(getPath().controllerPath()).append("/").append(getPath().action());
         	if (!ObjectUtil.isVoid(getPath().parameter())){
