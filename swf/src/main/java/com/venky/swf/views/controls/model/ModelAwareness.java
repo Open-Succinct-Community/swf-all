@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -32,7 +33,9 @@ import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.DateBox;
 import com.venky.swf.views.controls.page.text.FileTextBox;
+import com.venky.swf.views.controls.page.text.OptionCreator;
 import com.venky.swf.views.controls.page.text.PasswordText;
+import com.venky.swf.views.controls.page.text.RadioGroup;
 import com.venky.swf.views.controls.page.text.Select;
 import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
@@ -67,14 +70,35 @@ public class ModelAwareness implements FieldUIMetaProvider{
 	/* Model Awareness */
 
     public String getFieldLiteral(String fieldName){
-        String fieldLiteral =  StringUtil.camelize(fieldName);
+        String fieldLiteral =  getLiteral(StringUtil.camelize(fieldName));
 
         Method parentModelgetter = getReflector().getReferredModelGetterFor(getReflector().getFieldGetter(fieldName));
         if (parentModelgetter != null) {
-            fieldLiteral = parentModelgetter.getName().substring("get".length()) ;
+            fieldLiteral = getLiteral(parentModelgetter.getName().substring("get".length())) ;
         }
         return fieldLiteral;
         
+    }
+    
+    public String getLiteral(String camel){
+    	
+    	List<Integer> upper = new ArrayList<Integer>();
+        byte[] bytes = camel.getBytes();
+        for (int i = 0; i < bytes.length; i++) {
+            byte b = bytes[i];
+            if (b < 97 || b > 122) {
+                upper.add(i);
+            }
+        }
+
+        StringBuilder b = new StringBuilder(camel);
+        for (int i = upper.size() - 1; i >= 0; i--) {
+            Integer index = upper.get(i);
+            if (index != 0)
+                b.insert(index, " ");
+        }
+    	
+        return b.toString();
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -124,8 +148,14 @@ public class ModelAwareness implements FieldUIMetaProvider{
             }else if (reflector.isFieldPassword(fieldName)){
                 control = new PasswordText();
             }else if (reflector.isFieldEnumeration(fieldName)){
-                Select select = new Select();
+                //Select select = new Select();
                 Enumeration enumeration = reflector.getAnnotation(reflector.getFieldGetter(fieldName),Enumeration.class) ;
+                OptionCreator select = null;
+                if (enumeration.showAs() == null || enumeration.showAs().equals(Select.class.getSimpleName())){
+                	select = new Select();
+                }else {
+                	select = new RadioGroup();
+                }
                 StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
                 
                 while (allowedValues.hasMoreTokens()){

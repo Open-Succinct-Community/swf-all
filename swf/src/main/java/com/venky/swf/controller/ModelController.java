@@ -203,9 +203,9 @@ public class ModelController<M extends Model> extends Controller {
 				}
 				Method referredModelIdGetter = getReflector().getFieldGetter(f);
 				if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
-					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(QueryParser.escape(strQuery));
+					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(QueryParser.escape(strQuery)).append("*");
 				}else {
-					q.append(f).append(":").append(QueryParser.escape(strQuery));
+					q.append(f).append(":").append(QueryParser.escape(strQuery)).append("*");
 				}
 			}
 			try { 
@@ -554,7 +554,7 @@ public class ModelController<M extends Model> extends Controller {
             String fieldName = setableFields.contains(name) && !reflector.isHouseKeepingField(name) ? name : null;
             if (fieldName != null){
             	try {
-            		validateEnteredData(fieldName, formFields);
+            		validateEnteredData(reflector,record,fieldName, formFields);
             	}catch (Exception ex){
             		dataValidationExceptions.add(ex);
             		hasUserModifiedData = true;
@@ -658,7 +658,7 @@ public class ModelController<M extends Model> extends Controller {
             String fieldName = setableFields.contains(name) && !childReflector.isHouseKeepingField(name) ? name : null;
             if (fieldName != null){
             	try {
-            		validateEnteredData(childReflector,fieldName, formFields);
+            		validateEnteredData(childReflector,record,fieldName, formFields);
             	}catch (Exception ex){
             		dataValidationExceptions.add(ex);
             	}
@@ -740,13 +740,13 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     
-    private void validateEnteredData(String field,  Map<String,Object> formFields){
-    	validateEnteredData(reflector,field, formFields);
-    }
-    private static <T extends Model> void validateEnteredData(ModelReflector<T> reflector, String field,  Map<String,Object> formFields){
+    private <T extends Model> void validateEnteredData(ModelReflector<T> reflector,T record,  String field,  Map<String,Object> formFields){
     	String autoCompleteHelperField = "_AUTO_COMPLETE_"+field;
     	if (!formFields.containsKey(autoCompleteHelperField)){
     		return ;
+    	}
+    	if (!reflector.isFieldEditable(field)){
+    		return;
     	}
     	Object autoCompleteHelperFieldValue = formFields.get(autoCompleteHelperField);
     	Object currentValue = Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter().valueOf(formFields.get(field));
@@ -778,9 +778,13 @@ public class ModelController<M extends Model> extends Controller {
     	autoCompleteHelperFieldValue = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().valueOf(autoCompleteHelperFieldValue);
     	
     	//autoCompleteHelperFieldValue is not void.
-		@SuppressWarnings({ "rawtypes", "unchecked" })
-		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(new Expression(
-				referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,autoCompleteHelperFieldValue)).execute(referredModelClass,new Select.AccessibilityFilter());
+    	Expression where = new Expression(Conjunction.AND);
+    	
+    	where.add(getAutoCompleteBaseWhere(reflector, record, field));
+    	where.add(new Expression(referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
+    			autoCompleteHelperFieldValue));
+    	@SuppressWarnings({ "rawtypes", "unchecked" })
+		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass,new Select.AccessibilityFilter());
 		
 		if (models.size() == 1){
 			referredModel = models.get(0);
@@ -920,10 +924,25 @@ public class ModelController<M extends Model> extends Controller {
 		}
 		model.getRawRecord().remove(autoCompleteFieldName);
 		
-    	Expression where = new Expression(Conjunction.AND);
     	
+    	Expression where = getAutoCompleteBaseWhere(reflector,model, autoCompleteFieldName);
+    	ModelReflector<? extends Model> autoCompleteModelReflector = getAutoCompleteModelReflector(reflector,autoCompleteFieldName);
+    	return super.autocomplete(autoCompleteModelReflector.getModelClass(), where, autoCompleteModelReflector.getDescriptionField(), value);
+    }
+    
+    private <T extends Model> Expression getAutoCompleteBaseWhere(ModelReflector<T> reflector, T model , String autoCompleteFieldName) { 
+    	Expression where = new Expression(Conjunction.AND);
+    	where.add(getAutoCompleteFieldParticipationWhere(reflector,model,autoCompleteFieldName));
+
+    	Path autoCompletePath = getAutoCompleteModelPath(reflector,autoCompleteFieldName);
+    	where.add(autoCompletePath.getWhereClause());
+    	return where;
+    }
+    
+    private <T extends Model> Expression getAutoCompleteFieldParticipationWhere(ModelReflector<T> reflector, T model, String autoCompleteFieldName){
+    	Expression where = new Expression(Conjunction.AND);
     	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
-		PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
+    	PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
 		if (participant != null){
     		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
     		if (pOptions.get(participant.value()).containsKey(autoCompleteFieldName)){
@@ -936,15 +955,24 @@ public class ModelController<M extends Model> extends Controller {
     			}
     		}
 		}
-		
-		Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
-		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass); 
-		
-		Path autoCompletePath = getPath().createRelativePath( (getPath().parameter() != null? "" : getPath().action()) +"/" + LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) +  "/index");
-		
-		where.add(autoCompletePath.getWhereClause());
-		
-        return super.autocomplete(autoCompleteModelClass, where, autoCompleteModelReflector.getDescriptionField(), value);
+		return where;
+    }
+    
+    private <T extends Model> ModelReflector<? extends Model> getAutoCompleteModelReflector(ModelReflector<T> reflector, String autoCompleteFieldName){
+    	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
+    	return getAutoCompleteModelReflector(reflector, autoCompleteFieldGetter);
+    }
+    private <T extends Model> ModelReflector<? extends Model> getAutoCompleteModelReflector(ModelReflector<T> reflector,Method autoCompleteFieldGetter){
+    	Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
+		ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass);
+		return autoCompleteModelReflector;
+    }
+    private <T extends Model> Path getAutoCompleteModelPath(ModelReflector<T> reflector,String autoCompleteFieldName){
+    	return getAutoCompleteModelPath(getAutoCompleteModelReflector(reflector,autoCompleteFieldName));
+    }
+    private Path getAutoCompleteModelPath(ModelReflector<? extends Model> autoCompleteModelReflector){
+		Path referredModelPath = getPath().createRelativePath( (getPath().parameter() != null? "" : getPath().action()) +"/" + LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) +  "/index");
+		return referredModelPath;
     }
     
     @Override

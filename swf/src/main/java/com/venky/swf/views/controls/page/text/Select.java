@@ -4,8 +4,9 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
+import com.venky.swf.views.controls.page.text.Select.Option;
 
-public class Select extends Control {
+public class Select extends OptionCreator<Option>{
 
 
 	/**
@@ -17,7 +18,7 @@ public class Select extends Control {
 		super("select");
 	}
 	
-	public Option createOption(String text, Object value){
+	public Option createOption(String text, String value){
 		Option option = new Option(text, value);
 		addControl(option);
 		return option;

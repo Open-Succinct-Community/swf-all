@@ -7,6 +7,7 @@ package com.venky.swf.db.annotations.column.validations.processors;
 import java.util.StringTokenizer;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.exceptions.MultiException;
 
@@ -18,6 +19,9 @@ public class EnumerationValidator extends FieldValidator<Enumeration> {
 
     @Override
     public boolean validate(Enumeration annotation, String humanizedFieldName, String value, MultiException ex){
+    	if (ObjectUtil.isVoid(value)){
+    		return true;
+    	}
         StringTokenizer tokens = new StringTokenizer(annotation.value(),",");
         while (tokens.hasMoreElements()){
             String token = tokens.nextToken();

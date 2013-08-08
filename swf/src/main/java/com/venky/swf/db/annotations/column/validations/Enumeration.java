@@ -17,4 +17,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Enumeration {
     public String value() default "";
+    
+    /** Choices are "RadioGroup/Select **/
+    public String showAs() default "Select";
 }

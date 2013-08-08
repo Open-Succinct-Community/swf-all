@@ -534,7 +534,12 @@ public class ModelReflector<M extends Model> {
     public boolean isFieldHidden(String fieldName){
     	Method getter = getFieldGetter(fieldName);
     	HIDDEN hidden = getAnnotation(getter,HIDDEN.class);
-    	return (hidden == null ? false : hidden.value());
+    	boolean isHidden = (hidden == null ? false : hidden.value());
+    	if (!isHidden){
+    		boolean hideHouseKeepingFields = (Boolean) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter().valueOf(Config.instance().getProperty("swf.hide.housekeeping.fields","N"));
+			isHidden = hideHouseKeepingFields && isHouseKeepingField(fieldName); 
+    	}
+    	return isHidden;
 	}
     
     public String getFieldName(final String columnOrFieldName){

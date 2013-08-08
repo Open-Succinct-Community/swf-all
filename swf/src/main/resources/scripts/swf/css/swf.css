@@ -118,7 +118,7 @@ div.tabs  .ui-helper-reset {
   font-size: 80%;
   font-weight: normal;
 }
-td .textbox,  td .autocompletetext td .datebox {
+td .textbox,  td .autocompletetext, td .datebox {
   display: block;
   height: 100%;
   width:95%;

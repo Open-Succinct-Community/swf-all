@@ -590,7 +590,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	
         	for (String referenceField: referenceFields){
 				try {
-					if (Database.getTable(childModelClass).isVirtual()){
+					if (childReflector.getRealModelClass() == null){
 						continue;
 					}
 					@SuppressWarnings("unchecked")

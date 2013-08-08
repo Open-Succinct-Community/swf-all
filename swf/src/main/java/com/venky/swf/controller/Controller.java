@@ -213,7 +213,8 @@ public class Controller {
         String columnName = fd.getName();
 
         Expression where = new Expression(Conjunction.AND);
-        where.add(baseWhereClause);
+        
+        //where.add(baseWhereClause);
         
     	int maxRecordsToGet = MAX_LIST_RECORDS;
     	if (!ObjectUtil.isVoid(value)){
@@ -237,6 +238,13 @@ public class Controller {
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());
         List<M> records = q.execute(modelClass,maxRecordsToGet,new DefaultModelFilter<M>(modelClass));
+        Iterator<M> i = records.iterator(); 
+        while (i.hasNext()){
+        	M m = i.next();
+        	if (!baseWhereClause.eval(m)){
+        		i.remove();
+        	}
+        }
         Method fieldGetter = reflector.getFieldGetter(fieldName);
         TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
         
