@@ -105,6 +105,7 @@ public class Control extends Properties implements _IControl{
     public String getTag() {
         return tag;
     }
+    
     protected void setTag(String tag){
     	this.tag = tag;
     }
@@ -132,24 +133,36 @@ public class Control extends Properties implements _IControl{
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
+        boolean closeEmptyTagMinimally = useMinimizedTagSyntax() && isTagEmpty() ;
         if (getTag() != null){
             b.append("<").append(getTag()).append(" ");
             for (Object key : keySet()) {
                 String pvalue = getProperty(key.toString());
                 b.append(key).append("=\"").append(pvalue).append("\" ");
             }
+            if (closeEmptyTagMinimally){
+            	b.append("/");
+            }
             b.append(">");
         }
-        b.append(getText());
-        for (_IControl contained : containedControls) {
-            b.append(contained);
+        if (!closeEmptyTagMinimally){
+	        b.append(getText());
+	        for (_IControl contained : containedControls) {
+	            b.append(contained);
+	        }
+	        if (getTag() != null){
+	            b.append("</").append(getTag()).append(">");
+	        }
         }
-        if (getTag() != null){
-            b.append("</").append(getTag()).append(">");
-        }
-        
         return b.toString();
     }
+    protected boolean useMinimizedTagSyntax(){
+    	return false;
+    }
+    protected boolean isTagEmpty(){
+    	return (ObjectUtil.isVoid(getText()) && getContainedControls().isEmpty());
+    }
+    
     private String text = "";
 
     public String getText() {

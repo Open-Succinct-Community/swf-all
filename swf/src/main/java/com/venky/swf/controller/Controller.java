@@ -118,9 +118,7 @@ public class Controller {
     	if (getPath().isRequestAuthenticated()){
     		return new RedirectorView(getPath(), loginSuccessful());
     	}else {
-        	HtmlView lView = createLoginView();
-        	lView.setStatus(StatusType.ERROR, "Login incorrect");
-            return lView;
+        	return createLoginView(StatusType.ERROR, "Login incorrect!");
     	}
     }
 	protected final HtmlView createLoginView(StatusType statusType, String text){
@@ -295,6 +293,7 @@ public class Controller {
 				if (table == null){
 					continue;
 				}
+    			Config.instance().getLogger(getClass().getName()).info("Importing:" + table.getTableName());
 				try {
 					modelReflectorsOfImportedTables.add(table.getReflector());
 					importxls(sheet, table.getModelClass());

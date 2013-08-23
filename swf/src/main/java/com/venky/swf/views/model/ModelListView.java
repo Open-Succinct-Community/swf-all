@@ -54,6 +54,10 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	this.modelListTable = createModelListTable(path);
         
     }
+	@Override
+	public boolean isFieldVisible(String fieldName) {
+		return getIncludedFields().contains(fieldName);
+	}
 	protected ModelListTable<M> createModelListTable(Path path){
 		return new ModelListTable<M>(path,getModelAwareness(),this);
 	}
@@ -117,7 +121,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	
     	Row header = container.createHeader();
     	Column headerColumn = header.createColumn(2);
-    	headerColumn.addControl(new Label(getModelAwareness().getReflector().getModelClass().getSimpleName()));
+    	headerColumn.addControl(new Label(getModelAwareness().getLiteral(getModelAwareness().getReflector().getModelClass().getSimpleName())));
     	boolean indexedModel = !getModelAwareness().getReflector().getIndexedFieldGetters().isEmpty();
 
     	if (indexedModel){

@@ -32,4 +32,8 @@ public class Image extends Control{
 		}
 		setProperty(urlProperty, imageUrl);
 	}
+
+	protected boolean useMinimizedTagSyntax(){
+		return "img".equalsIgnoreCase(getTag());
+	}
 }

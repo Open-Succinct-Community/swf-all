@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -102,8 +103,12 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 				value = cell.getStringCellValue();
 				break;
 		}
-		if (value != null && value instanceof String){
-			value = ((String)value).trim();
+		if (value != null) {
+			if (value instanceof String){
+				value = ((String)value).trim();
+			}else if (value instanceof java.util.Date){
+				value = new Date(((java.util.Date)value).getTime());
+			}
 		}
 		return value;
 	}

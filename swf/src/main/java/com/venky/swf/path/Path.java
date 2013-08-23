@@ -35,6 +35,7 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.LowerCaseStringCache;
@@ -70,6 +71,7 @@ import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
+import com.venky.swf.views.controls.model.ModelAwareness;
 
 /**
  *
@@ -214,9 +216,19 @@ public class Path implements _IPath{
         return request;
     }
 
+    private static final String ORIGNAL_REQUEST_KEY = "swf.original.request.uri";
     public void setRequest(HttpServletRequest request) {
         this.request = request;
+        Object originalUrl = request.getAttribute(ORIGNAL_REQUEST_KEY);
+        if (originalUrl == null){
+        	request.setAttribute(ORIGNAL_REQUEST_KEY,request.getRequestURI());
+        }
     }
+    
+    public String getOriginalRequestUrl(){
+    	return StringUtil.valueOf(request.getAttribute(ORIGNAL_REQUEST_KEY));
+    }
+    
     protected void logHeaders(){
     	if (request != null){
 	        List<String> headers = new ArrayList<String>();
@@ -235,7 +247,13 @@ public class Path implements _IPath{
     public void setResponse(HttpServletResponse response) {
         this.response = response;
     }
-    
+    public Path constructNewPath(String target){
+    	Path p = new Path(target);
+    	p.setSession(getSession());
+    	p.setRequest(getRequest());
+    	p.setResponse(getResponse());
+    	return p;
+    }
     public Path(String target) {
         this.target = target;
 
@@ -417,32 +435,40 @@ public class Path implements _IPath{
         }
         throw new RuntimeException("Controller path could not be determined!");
     }
-    
     public String getBackTarget(){
+    	return getBackTarget(true);
+    }
+    private String getBackTarget(boolean checkIfOrigRequest){
     	StringBuilder backTarget = new StringBuilder();
-    	if (controllerPathIndex > 0 && controllerPathIndex < pathelements.size()) {
-        	for (int i = 0 ; i < controllerPathIndex ; i ++  ){
-        		backTarget.append("/");
-        		backTarget.append(pathelements.get(i));
+    	if (checkIfOrigRequest && !getTarget().equals(getOriginalRequestUrl())){
+    		Path p = constructNewPath(getOriginalRequestUrl());
+    		return p.getBackTarget();
+    	}else {
+        	if (controllerPathIndex > 0 && controllerPathIndex < pathelements.size()) {
+            	for (int i = 0 ; i < controllerPathIndex ; i ++  ){
+            		backTarget.append("/");
+            		backTarget.append(pathelements.get(i));
+            	}
+        	}
+        	if (backTarget.length() == 0){
+        		backTarget.setLength(0);
+        		backTarget.append(controllerPath()).append("/index");
+        		return backTarget.toString();
         	}
     	}
-    	if (backTarget.length() == 0){
-    		backTarget.setLength(0);
-    		backTarget.append(controllerPath()).append("/index");
-    		return backTarget.toString();
-    	}
+    	
     	
     	String url = backTarget.toString();
     	
     	if (url.endsWith("/index")){ // http://host:port/..../controller/index
-    		Path backPath = new Path(url);
+    		Path backPath = constructNewPath(url);
     		if (backPath.getModelClass() != null){
-        		Path twobackPath = new Path(backPath.getBackTarget());
+        		Path twobackPath = constructNewPath(backPath.getBackTarget(false));
         		if (twobackPath.getModelClass() != null){
         			ModelReflector<? extends Model> bmr = ModelReflector.instance(twobackPath.getModelClass());
         			for (Class<? extends Model> childModel : bmr.getChildModels(true, true)){
         				if (ModelReflector.instance(childModel).reflects(backPath.getModelClass())){
-            				url = twobackPath.getTarget() + "?_select_tab="+ backPath.getModelClass().getSimpleName();
+            				url = twobackPath.getTarget() + "?_select_tab="+ StringEscapeUtils.escapeHtml4(new ModelAwareness(backPath, null).getLiteral(backPath.getModelClass().getSimpleName()));
             				break;
         				}
         			}
@@ -658,6 +684,7 @@ public class Path implements _IPath{
                         return (View)m.invoke(controller, Integer.valueOf(parameter()));
                     }
             	}catch(Exception e){
+            		e.printStackTrace();
             		if (ex == null){
             			ex = new MultiException();
             		}
@@ -800,10 +827,8 @@ public class Path implements _IPath{
     	}else {
     		relPath = relPath + toUrl;
     	}
-    	Path path = new Path(relPath);
-    	path.setRequest(getRequest());
-    	path.setResponse(getResponse());
-    	path.setSession(getSession());
+    	
+    	Path path = constructNewPath(relPath); 
     	return path;
     }
     
@@ -929,9 +954,13 @@ public class Path implements _IPath{
 	
 	public void autoInvalidateSession(){
 		if (session != null){
-			if (ObjectUtil.equals(session.getAttribute("autoInvalidate"),true)){
-				invalidateSession();
-    		}
+			try { 
+				if (ObjectUtil.equals(session.getAttribute("autoInvalidate"),true)){
+					invalidateSession();
+	    		}
+			}catch(IllegalStateException ex){
+				session = null;
+			}
 		}
 	}
 	
@@ -953,10 +982,7 @@ public class Path implements _IPath{
 		protected Path getValue(Class<? extends Model> modelClass) {
 			Path p = Path.this; 
 			if (!p.controllerPathElement().equals(getControllerPathElementName(modelClass))){
-				Path newPath = new Path("/" + getControllerPathElementName(modelClass) + "/index");
-				newPath.setSession(p.getSession());
-				newPath.setRequest(p.getRequest());
-				newPath.setResponse(p.getResponse());
+				Path newPath = constructNewPath("/" + getControllerPathElementName(modelClass) + "/index");
 				p = newPath;
 			}
 			return p;
@@ -1089,5 +1115,9 @@ public class Path implements _IPath{
 	@Override
 	public List<String> getInfoMessages() {
 		return getMessages(StatusType.INFO);
+	}
+	
+	public boolean isForwardedRequest(){
+		return !ObjectUtil.isVoid(getRequest().getAttribute("javax.servlet.forward.request_uri"));
 	}
 }

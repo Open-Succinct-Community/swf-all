@@ -30,6 +30,7 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.menu._IMenuBuilder;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
@@ -203,7 +204,7 @@ public class Router extends AbstractHandler {
     	try {
 	        HttpSession session  = request.getSession(false); 
 	        _IView view = null;
-	        _IView ev = null ;
+	        _IView ev = null ;	
 	        
 	        _IPath p = createPath(target);
 	        p.setSession(session);
@@ -231,6 +232,15 @@ public class Router extends AbstractHandler {
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
 	        		ex.printStackTrace();
+	        	}
+	        	if (p.isForwardedRequest()){
+	        		if (e instanceof RuntimeException){
+	        			throw (RuntimeException)e;
+	        		}else {
+	        			MultiException ex = new MultiException();
+	        			ex.add(e);
+	        			throw ex;
+	        		}
 	        	}
 	        	if (session != null){
 	        		p.addErrorMessage(e.getMessage());

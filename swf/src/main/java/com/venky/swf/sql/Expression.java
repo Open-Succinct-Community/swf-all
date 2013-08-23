@@ -16,6 +16,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.exceptions.MultiException;
 
 
 public class Expression {
@@ -62,13 +63,18 @@ public class Expression {
 		this.op = op ;
 		this.values = new SequenceSet<BindVariable>();
 		
-		for (int i = 0 ; i < values.length ; i ++ ){
-			if (values[i] instanceof BindVariable) {
-				this.values.add((BindVariable)values[i]);	
-			}else {
-				this.values.add(new BindVariable(values[i]));
+		try {
+			for (int i = 0 ; i < values.length ; i ++ ){
+				if (values[i] instanceof BindVariable) {
+					this.values.add((BindVariable)values[i]);	
+				}else {
+					this.values.add(new BindVariable(values[i]));
+				}
 			}
+		}catch (NullPointerException ex){
+			throw new MultiException("NPE found while creating expression for " + columnName + op.toString()  );
 		}
+		
 		setFinalized(true);
 	}
 	Conjunction conjunction = null;

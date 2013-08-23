@@ -90,6 +90,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		return sheet;
 	}
 	public void write(List<M> records, Workbook wb, List<String> fields) {
+		write(records, wb, StringUtil.pluralize(getBeanClass().getSimpleName()), fields);
+	}
+	public void write(List<M> records, Workbook wb, String sheetName, List<String> fields) {
 		Font font = createDefaultFont(wb);
 		
 		CellStyle headerStyle = wb.createCellStyle();
@@ -99,7 +102,6 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		headerStyle.setWrapText(true);
 		center(headerStyle);
 		
-		String sheetName = StringUtil.pluralize(getBeanClass().getSimpleName());
 		Sheet sheet = createSheet(wb,sheetName);
 		
     	Bucket rowNum = new Bucket(START_ROW); 

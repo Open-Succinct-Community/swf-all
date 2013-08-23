@@ -19,4 +19,9 @@ public class HorizontalLine extends Control{
 	public HorizontalLine(){
         super("hr");
     }
+
+	protected boolean useMinimizedTagSyntax(){
+		return true;
+	}
+
 }

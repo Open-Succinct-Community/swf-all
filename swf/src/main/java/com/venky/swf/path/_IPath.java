@@ -45,4 +45,6 @@ public interface _IPath {
 	boolean isGuestUserLoggedOn();
 	void invalidateSession();
 	void autoInvalidateSession();
+	boolean isForwardedRequest();
+	String getOriginalRequestUrl();
 }

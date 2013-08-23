@@ -44,8 +44,7 @@ public class LoginView extends HtmlView{
 
         Row row = table.createRow();
         row.createColumn(2).addControl(appLabel);
-        
-        
+    	
         row = table.createRow();
         row.createColumn().addControl(lbluser);
         row.createColumn().addControl(txtUser);
@@ -66,7 +65,6 @@ public class LoginView extends HtmlView{
             table.createRow().createColumn().addControl(hidden);
         }
         
-        
         Submit sbm = new Submit();
         row = table.createRow();
         Table.Column column = row.createColumn(); 
@@ -78,6 +76,9 @@ public class LoginView extends HtmlView{
         form.setMethod(Form.SubmitMethod.POST);
         form.addControl(table);
         b.addControl(form);
+        b.addControl(getStatus());
+        
+        
     }
     
 }

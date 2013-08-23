@@ -269,7 +269,10 @@ public class ModelController<M extends Model> extends Controller {
 		if (!record.isAccessibleBy(getSessionUser(),modelClass)){
 			throw new AccessDeniedException();
 		}
-		View view = null ;
+		return show(record);
+    }
+    protected View show(M record){
+    	View view = null ;
 		if (integrationAdaptor != null){
 			view = integrationAdaptor.createResponse(getPath(),record);
 		}else {

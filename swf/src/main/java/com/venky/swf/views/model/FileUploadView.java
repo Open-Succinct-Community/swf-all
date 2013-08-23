@@ -31,10 +31,9 @@ public class FileUploadView extends HtmlView{
 		Form loadForm = new Form();
 		loadForm.setMethod(SubmitMethod.POST);
 		loadForm.setProperty("enctype","multipart/form-data");
-		String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
-		loadForm.setAction(action,getPath().action());
+		String action = StringEscapeUtils.escapeHtml4(getPath().getOriginalRequestUrl());
+		loadForm.setAction(action);
 		loadForm.addControl(table);
-		
 		return loadForm;
     }
 

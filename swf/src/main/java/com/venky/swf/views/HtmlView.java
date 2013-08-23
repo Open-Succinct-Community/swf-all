@@ -149,6 +149,9 @@ public abstract class HtmlView extends View{
     	showErrorsIfAny(body,statusMessageIndex, includeStatusMessage);
     	createBody(body);
     }
+    protected Label getStatus(){
+    	return status;
+    }
     
     protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){
     	HttpSession session = getPath().getSession();

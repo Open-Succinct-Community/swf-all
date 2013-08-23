@@ -19,4 +19,9 @@ public class LineBreak extends Control{
 	public LineBreak(){
         super("br");
     }
+	
+	protected boolean useMinimizedTagSyntax(){
+		return true;
+	}
+
 }

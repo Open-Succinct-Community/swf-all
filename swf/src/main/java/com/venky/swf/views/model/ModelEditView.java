@@ -22,6 +22,7 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
+import com.venky.swf.views.controls.model.ModelAwareness;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.HotLink;
@@ -212,6 +213,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	childPath.setRequest(getPath().getRequest());
 	        	childPath.setResponse(getPath().getResponse());
 	        	childPath.setSession(getPath().getSession());
+	        	ModelAwareness childModelAwareness = new ModelAwareness(childPath, null);
 	        	if (childPath.canAccessControllerAction()){
 	            	Div tab = new Div();
 	            	addChildModelToTab(childPath,tab,form);
@@ -219,7 +221,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        			multiTab = new Tabs();
 	        			body.addControl(multiTab);
 	        		}
-	            	multiTab.addSection(tab,childClass.getSimpleName());
+	            	multiTab.addSection(tab,childModelAwareness.getLiteral(childClass.getSimpleName()));
 	        	}
 	        }    
 

@@ -13,7 +13,9 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
+import com.venky.swf.views.controls.model.ModelAwareness;
 import com.venky.swf.views.controls.page.Menu;
 
 /**
@@ -78,7 +80,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         
         if (modelAccessPath.canAccessControllerAction("index")){
         	Menu subMenu = appMenu.getSubmenu(menuName);
-            String modelName = modelClass.getSimpleName();
+            String modelName = new ModelAwareness((Path) modelAccessPath, null).getLiteral(modelClass.getSimpleName());
         	subMenu.createMenuItem(modelName, modelAccessPath.controllerPath() + "/index");
         }
     }

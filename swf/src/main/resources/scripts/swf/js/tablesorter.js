@@ -13,7 +13,7 @@ function GetURLParameter(sParam){
 
 $(function(){
     var _findex = 0; 
-    var tabName = GetURLParameter("_select_tab");
+    var tabName = unescape(GetURLParameter("_select_tab"));
     var textExtractor = function(elem){
                           var $input = $("input[type=text]",elem);
                           var $label = $("label",elem);
