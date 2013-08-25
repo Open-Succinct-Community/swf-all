@@ -122,7 +122,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
-        }else if (reflector.isFieldValueLongForTextBox(fieldName)){
+        }else if (reflector.isFieldValueALongText(fieldName)){
         	TextArea txtArea = new TextArea();
         	txtArea.setText(converter.toString(value));
         	control = txtArea;
@@ -172,22 +172,28 @@ public class ModelAwareness implements FieldUIMetaProvider{
         }
         control.setName(controlName);
 
+        
+        Kind protectionKind = metaprovider.getFieldProtection(fieldName);
+        switch(protectionKind){
+	    	case DISABLED:
+	    		control.setEnabled(false);
+	    		break;
+	    	case NON_EDITABLE:
+        		control.setReadOnly(true);
+	    	default:
+	    		if (getReflector().isFieldSettable(fieldName)) {
+	    			control.setEnabled(true);
+	    		}else {
+	    			control.setEnabled(false);
+	    		}
+	            break;
+        }
+        
         if (!metaprovider.isFieldVisible(fieldName)){
         	control.setVisible(false);
-        }else if (!metaprovider.isFieldEditable(fieldName)){
-            Kind protectionKind = metaprovider.getFieldProtection(fieldName);
-            switch(protectionKind){
-            	case NON_EDITABLE:
-            		control.setEnabled(true);
-            		control.setReadOnly(true);
-            		break;
-            	default:
-            		control.setEnabled(false);
-                    break;
-            }
         }
-    
-        if (control.isVisible() && control.isEnabled() && !control.isReadOnly()){
+        
+        if (control.isEnabled() && !control.isReadOnly()){
 	        WATERMARK watermark = getReflector().getAnnotation(getter, WATERMARK.class);
 	        if (watermark != null){
 	        	control.setWaterMark(watermark.value());
@@ -205,20 +211,18 @@ public class ModelAwareness implements FieldUIMetaProvider{
         	if (hashFieldValue.length() > 0){
         		hashFieldValue.append(",");
         	}
-        	String fieldValue = control.getValue();
+        	String fieldValue = control.getUnescapedValue();
             if (control instanceof CheckBox){
             	fieldValue = StringUtil.valueOf(((CheckBox)control).isChecked());
-            }else if  (control instanceof TextArea){
-            	fieldValue = control.getText();
             }else if (control instanceof AutoCompleteText){
             	AutoCompleteText ac = (AutoCompleteText)control;
-            	TextBox hiddenField = ac.getHiddenField();
-            	hashFieldValue.append(hiddenField.getName());
+
+            	Control hiddenIdControl = ac.getHiddenIdControl();
+            	hashFieldValue.append(hiddenIdControl.getName());
             	hashFieldValue.append("=");
-            	hashFieldValue.append(StringUtil.valueOf(hiddenField.getValue()));
+            	hashFieldValue.append(StringUtil.valueOf(hiddenIdControl.getValue()));
             	hashFieldValue.append(",");
             }
-            
         	hashFieldValue.append(control.getName());
         	hashFieldValue.append("=");
         	hashFieldValue.append(StringUtil.valueOf(fieldValue));

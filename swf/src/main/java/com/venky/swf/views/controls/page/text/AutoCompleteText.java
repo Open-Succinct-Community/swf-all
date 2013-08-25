@@ -6,20 +6,18 @@ package com.venky.swf.views.controls.page.text;
 
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.util.List;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.views.controls._IControl;
-import com.venky.swf.sql.Select;
+import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls.page.layout.Div;
 /**
  *
  * @author venky
  */
-public class AutoCompleteText<M extends Model> extends TextBox{
+public class AutoCompleteText<M extends Model> extends Div {
 	
 	
 	/**
@@ -29,53 +27,49 @@ public class AutoCompleteText<M extends Model> extends TextBox{
 	private Class<M> modelClass;
 	private ModelReflector<M> ref;
     private String descriptionField = null ;
-    private TextBox hiddenField = null; 
+    private TextBox hiddenIdControl = null;
+    private Control descriptionControl = null;
+    
     public AutoCompleteText(Class<M> modelClass){
     	this(modelClass,"");
-    }
-    public TextBox getHiddenField(){
-    	return hiddenField;
-    }
-    
-    private Integer maxDataLength = null;
-    public int getMaxDataLength(){
-    	if (maxDataLength == null){ 
-	    	List<Counts> counts  = new Select("MAX(LENGTH("+descriptionField + ")) AS COUNT").from(modelClass).execute(Counts.class);
-	    	if (counts.isEmpty()){
-	    		maxDataLength = ref.getColumnDescriptor(descriptionField).getSize(); 
-	    	}else {
-	    		maxDataLength = counts.get(0).getCount();
-	    	}
-    	}
-    	return maxDataLength;
     }
     
     public AutoCompleteText(Class<M> modelClass,String url){
         this.modelClass = modelClass;
         this.ref = ModelReflector.instance(modelClass);
         this.descriptionField = ref.getDescriptionField();
-    	this.hiddenField = new TextBox();
-    	this.hiddenField.setVisible(false);
+    	this.hiddenIdControl = new TextBox();
+    	this.hiddenIdControl.setVisible(false);
+    	if (ref.isFieldValueALongText(descriptionField)){
+    		this.descriptionControl = new TextArea();
+    	}else {
+    		this.descriptionControl = new TextBox();
+    	}
+    	
     	if (Reader.class.isAssignableFrom(ref.getFieldGetter(descriptionField).getReturnType())){
-        	addClass("reader");
+        	this.descriptionControl.addClass("reader");
         }
-        setAutocompleteServiceURL(url);
-        setVisible(true);
-        setEnabled(true);
-    	setWaterMark("Enter space to see complete list");
-    	setToolTip("Enter the first few characters or space to see the full list.");
+        
+    	((_IAutoCompleteControl)descriptionControl).setAutocompleteServiceURL(url);
+    	addControl(hiddenIdControl);
+    	addControl(descriptionControl);
+    	descriptionControl.setVisible(true);
+        descriptionControl.setEnabled(true);
+    	descriptionControl.setWaterMark("Enter space to see complete list");
+    	descriptionControl.setToolTip("Enter the first few characters or space to see the full list.");
     }
     
     
     public Class<M> getModelClass(){
         return modelClass;
     }
-    @Override
-    public void setParent(_IControl parent){
-        super.setParent(parent);
-        parent.addControl(hiddenField);
-    }    
-    
+
+    public TextBox getHiddenIdControl(){
+    	return hiddenIdControl;
+    }
+    public Control getDescriptionControl(){
+    	return descriptionControl;
+    }
     @Override
     public void setName(String name){
         int indexOfDot = name.indexOf('.');
@@ -83,52 +77,92 @@ public class AutoCompleteText<M extends Model> extends TextBox{
         if (indexOfDot > 0){
         	autoCompleteFieldName = name.substring(0,indexOfDot) + "._AUTO_COMPLETE_" + name.substring(indexOfDot+1);
         }
-        hiddenField.setName(name);
-        super.setName(autoCompleteFieldName);
+        if (hiddenIdControl != null){
+        	hiddenIdControl.setName(name);
+        }
+        if (descriptionControl != null){
+        	descriptionControl.setName(autoCompleteFieldName);
+        }
+    }
+    @Override
+    public String getName(){
+    	if (descriptionControl != null){
+    		return descriptionControl.getName();
+    	}
+    	return null;
     }
     @Override
     public void setReadOnly(final boolean readonly){
     	super.setReadOnly(readonly);
-    	if (hiddenField != null){
-    		hiddenField.setReadOnly(readonly);
+    	if (hiddenIdControl != null){
+    		hiddenIdControl.setReadOnly(readonly);
+    	}
+    	if (descriptionControl != null){
+    		descriptionControl.setReadOnly(readonly);
     	}
     }
     
+    @Override
     public void setEnabled(final boolean enabled){
     	super.setEnabled(enabled);
-    	if (hiddenField != null){
-    		hiddenField.setEnabled(enabled);
+    	if (hiddenIdControl != null){
+    		hiddenIdControl.setEnabled(enabled);
+    	}
+    	if (descriptionControl != null){
+    		descriptionControl.setEnabled(enabled);
     	}
     }
     
     @Override
     public void setValue(Object value){
-    	if (hiddenField != null){
-    		hiddenField.setValue(value);
+    	if (hiddenIdControl != null){
+    		hiddenIdControl.setValue(value);
     	}
-        if (!ObjectUtil.isVoid(value)){
-			M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
-            if (model != null) {
-                ModelReflector<M> reflector = ModelReflector.instance(modelClass);
-                Method descriptionGetter = reflector.getFieldGetter(descriptionField);
-                Object dvalue = null;
-                try {
-                    dvalue = descriptionGetter.invoke(model);
-                    dvalue = Database.getJdbcTypeHelper().getTypeRef(descriptionGetter.getReturnType()).getTypeConverter().toString(dvalue);
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-                super.setValue(dvalue);
-            }
-        }
+    	if (descriptionControl != null){
+	        if (!ObjectUtil.isVoid(value)){
+				M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
+	            if (model != null) {
+	                ModelReflector<M> reflector = ModelReflector.instance(modelClass);
+	                Method descriptionGetter = reflector.getFieldGetter(descriptionField);
+	                Object dvalue = null;
+	                try {
+	                    dvalue = descriptionGetter.invoke(model);
+	                    dvalue = Database.getJdbcTypeHelper().getTypeRef(descriptionGetter.getReturnType()).getTypeConverter().toString(dvalue);
+	                } catch (Exception ex) {
+	                    throw new RuntimeException(ex);
+	                }
+	                descriptionControl.setValue(dvalue);
+	            }
+	        }else {
+	        	descriptionControl.setValue(null);
+	        }
+    	}
+    }
+    @Override
+    public String getValue(){
+    	if (descriptionControl != null){
+    		return descriptionControl.getValue();
+    	}
+    	return null;
     }
     
     @Override
     public void setForm(String formId){
-    	super.setForm(formId);
-    	if (hiddenField != null){
-    		hiddenField.setForm(formId);
+    	if (hiddenIdControl != null){
+    		hiddenIdControl.setForm(formId);
+    	}
+    	if (descriptionControl != null){
+    		descriptionControl.setForm(formId);
     	}
     }
     
+    
+	public int getMaxDataLength() {
+		return ref.getMaxDataLength();
+	}
+	public void setOnAutoCompleteSelectProcessingUrl(String url){
+		if (descriptionControl != null){
+			((_IAutoCompleteControl)descriptionControl).setOnAutoCompleteSelectProcessingUrl(url);
+		}
+	}
 }

@@ -38,7 +38,6 @@ import com.venky.swf.views.controls.page.layout.Table.THead;
 import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
-import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
 
 /**
@@ -147,12 +146,13 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             Control fieldData = getModelAwareness().getInputControl(fieldName,fieldName, record, this);
             Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
             if (reflector.isFieldVisible(fieldName)){
-            	if (fieldData instanceof TextArea || fieldData instanceof FileTextBox){
+            	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName); 
+            	if (fieldTooLong || fieldData instanceof FileTextBox){
             		rpadLastRow(table);
             	}
                 Row r = getRow(table,true);
                 r.createColumn().addControl(fieldLabel);
-            	if (fieldData instanceof TextArea){
+            	if (fieldTooLong){
                     r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
             	}else {
             		r.createColumn().addControl(fieldData);

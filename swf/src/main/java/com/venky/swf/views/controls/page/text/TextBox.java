@@ -8,7 +8,7 @@ package com.venky.swf.views.controls.page.text;
  *
  * @author venky
  */
-public class TextBox extends Input{
+public class TextBox extends Input implements _IAutoCompleteControl{
     
     /**
 	 * 

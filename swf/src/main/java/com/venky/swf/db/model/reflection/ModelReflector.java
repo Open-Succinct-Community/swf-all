@@ -52,6 +52,7 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
+import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
@@ -62,6 +63,7 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 public class ModelReflector<M extends Model> {
     
@@ -595,14 +597,51 @@ public class ModelReflector<M extends Model> {
     	Method getter = getFieldGetter(fieldName);
     	return isAnnotationPresent(getter,Enumeration.class);
     }
-    public boolean isFieldValueLongForTextBox(String fieldName){
+
+    private Integer maxDataLength = null;
+    public int getMaxDataLength(){
+    	if (maxDataLength == null){ 
+    		ColumnDescriptor descriptionDescriptor = getColumnDescriptor(getDescriptionField());
+    		String descColumnName = descriptionDescriptor.getName();
+    		int size = descriptionDescriptor.getSize();
+    		Class<?> javaClass = getFieldGetter(getDescriptionField()).getReturnType();
+    		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
+    	    	List<Counts> counts  = new Select("MAX(LENGTH("+ descColumnName + ")) AS COUNT").from(modelClass).execute(Counts.class);
+    	    	if (!counts.isEmpty()){
+    	    		maxDataLength = counts.get(0).getCount(); 
+    	    	}    			
+    		}
+    		if (maxDataLength == null) {
+    			maxDataLength = size;
+	    	}
+    	}
+    	return maxDataLength;
+    }
+    
+
+    public boolean isFieldDisplayLongForTextBox(String fieldName){
+    	if (isFieldValueALongText(fieldName)){
+    		return true;
+    	}else {
+        	Method getter = getFieldGetter(fieldName);
+        	Method referredModelGetter = getReferredModelGetterFor(getter);
+        	if (referredModelGetter != null){
+        		Class<? extends Model> referredModelClass = getReferredModelClass(referredModelGetter);
+        		ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+        		if (referredModelReflector != this || !ObjectUtil.equals(fieldName,referredModelReflector.getDescriptionField())){
+        			return referredModelReflector.isFieldValueALongText(referredModelReflector.getDescriptionField());
+        		}
+        	}
+        	return false;
+    	}
+    }
+    public boolean isFieldValueALongText(String fieldName){
     	Method getter = getFieldGetter(fieldName);
-    	Class<?> returnType = getter.getReturnType();
+		Class<?> returnType = getter.getReturnType();
 
     	return Reader.class.isAssignableFrom(returnType) || 
     					(String.class.isAssignableFrom(returnType) && 
-    							getColumnDescriptor(fieldName).getSize() > 2 * Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ;
-
+    							getMaxDataLength() > 30) ;
     }
     private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
 		/**

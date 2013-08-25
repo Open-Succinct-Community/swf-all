@@ -227,7 +227,8 @@ public class ModelListTable<M extends Model> extends Table{
             if (reflector.isFieldPassword(fieldName)){
             	sValue = sValue.replaceAll(".", "\\*");
             }
-            if (reflector.isFieldValueLongForTextBox(fieldName)){
+            boolean fieldIsLongForTextBox = reflector.isFieldValueALongText(fieldName);
+            if (fieldIsLongForTextBox){
             	//Probably html formating is better. convert hard enter to br 
             	sValue = sValue.replaceAll("(<br/>)?\n(<br/>)?", "<br/>");
             }
@@ -237,7 +238,12 @@ public class ModelListTable<M extends Model> extends Table{
             	Class<? extends Model> parentModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(getter));
 				String tableName = LowerCaseStringCache.instance().get(Database.getTable(parentModelClass).getTableName());
             	sValue = parentDescription;
-            	
+            	ModelReflector<? extends Model> parentModelReflector = ModelReflector.instance(parentModelClass);
+
+            	if (parentModelReflector.isFieldValueALongText(parentModelReflector.getDescriptionField())){
+        			//Probably html formating is better. convert hard enter to br 
+            		sValue = sValue.replaceAll("(<br/>)?\n(<br/>)?", "<br/>");
+                }
             	_IPath parentTarget = modelAwareness.getPath().createRelativePath( modelAwareness.getPath().action() + 
             			( ObjectUtil.isVoid(modelAwareness.getPath().parameter()) ?  "" : "/" + modelAwareness.getPath().parameter() )+
             			"/" + tableName + "/show/" +  String.valueOf(parentId) );

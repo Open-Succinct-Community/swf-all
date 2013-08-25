@@ -184,7 +184,9 @@ public class Control extends Properties implements _IControl{
     public void setValue(final Object value){
         setProperty("value", StringEscapeUtils.escapeHtml4(StringUtil.valueOf(value)));
     }
-    
+    public String getUnescapedValue(){
+    	return StringEscapeUtils.unescapeHtml4(getValue());
+    }
     public String getValue(){
         return getProperty("value");
     }
@@ -219,7 +221,7 @@ public class Control extends Properties implements _IControl{
     }
 
     public boolean isVisible(){ 
-        return !getProperty("class").contains(" hidden ");
+        return !classes.contains("hidden");
     }
     
     @SuppressWarnings("unchecked")
