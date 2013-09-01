@@ -41,7 +41,7 @@ public class AutoCompleteText<M extends Model> extends Div {
     	this.hiddenIdControl = new TextBox();
     	this.hiddenIdControl.setVisible(false);
     	if (ref.isFieldValueALongText(descriptionField)){
-    		this.descriptionControl = new TextArea();
+    		this.descriptionControl = new TextArea(); 
     	}else {
     		this.descriptionControl = new TextBox();
     	}
@@ -58,6 +58,7 @@ public class AutoCompleteText<M extends Model> extends Div {
     	descriptionControl.setWaterMark("Enter space to see complete list");
     	descriptionControl.setToolTip("Enter the first few characters or space to see the full list.");
     }
+    
     
     
     public Class<M> getModelClass(){
@@ -156,13 +157,26 @@ public class AutoCompleteText<M extends Model> extends Div {
     	}
     }
     
+    public void setToolTip(String toolTip){
+    	if (descriptionControl != null){
+    		descriptionControl.setToolTip(toolTip);
+    	}
+    }
+    
+    public void setWaterMark(String watermark){
+    	if (descriptionControl != null){
+    		descriptionControl.setWaterMark(watermark);
+    	}
+    }
     
 	public int getMaxDataLength() {
-		return ref.getMaxDataLength();
+		return ref.getMaxDataLength(descriptionField);
 	}
 	public void setOnAutoCompleteSelectProcessingUrl(String url){
 		if (descriptionControl != null){
 			((_IAutoCompleteControl)descriptionControl).setOnAutoCompleteSelectProcessingUrl(url);
 		}
 	}
+	
+	
 }

@@ -575,9 +575,7 @@ public class ModelReflector<M extends Model> {
     }
 
     public boolean isFieldProtected(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-    	PROTECTION p = getAnnotation(getter,PROTECTION.class);
-    	return (p == null ? false : p.value() != Kind.EDITABLE);
+    	return (getFieldProtection(fieldName) != Kind.EDITABLE);
     }
     
     public Kind getFieldProtection(String fieldName){
@@ -598,24 +596,25 @@ public class ModelReflector<M extends Model> {
     	return isAnnotationPresent(getter,Enumeration.class);
     }
 
-    private Integer maxDataLength = null;
-    public int getMaxDataLength(){
-    	if (maxDataLength == null){ 
-    		ColumnDescriptor descriptionDescriptor = getColumnDescriptor(getDescriptionField());
-    		String descColumnName = descriptionDescriptor.getName();
-    		int size = descriptionDescriptor.getSize();
-    		Class<?> javaClass = getFieldGetter(getDescriptionField()).getReturnType();
-    		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
-    	    	List<Counts> counts  = new Select("MAX(LENGTH("+ descColumnName + ")) AS COUNT").from(modelClass).execute(Counts.class);
-    	    	if (!counts.isEmpty()){
-    	    		maxDataLength = counts.get(0).getCount(); 
-    	    	}    			
-    		}
-    		if (maxDataLength == null) {
-    			maxDataLength = size;
+    public int getMaxDataLength(String fieldName){
+		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);
+		String fieldColumnName = fieldDescriptor.getName();
+		int size = fieldDescriptor.getSize();
+		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
+		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
+	    	List<Counts> counts  = new ArrayList<Counts>();
+	    	if (!fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ){
+	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Counts.class);
+		    	if (!counts.isEmpty()){
+		    		size = counts.get(0).getCount(); 
+		    	}else {
+		    		size = MAX_DATA_LENGTH_FOR_TEXT_BOX;
+		    	}
+	    	}else {
+	    		size = fieldDescriptor.getSize(); 
 	    	}
-    	}
-    	return maxDataLength;
+		}
+    	return size;
     }
     
 
@@ -635,13 +634,15 @@ public class ModelReflector<M extends Model> {
         	return false;
     	}
     }
+    
+    private static final int MAX_DATA_LENGTH_FOR_TEXT_BOX = 50 ;
     public boolean isFieldValueALongText(String fieldName){
     	Method getter = getFieldGetter(fieldName);
 		Class<?> returnType = getter.getReturnType();
 
     	return Reader.class.isAssignableFrom(returnType) || 
     					(String.class.isAssignableFrom(returnType) && 
-    							getMaxDataLength() > 30) ;
+    							getMaxDataLength(fieldName) > MAX_DATA_LENGTH_FOR_TEXT_BOX) ;
     }
     private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
 		/**
