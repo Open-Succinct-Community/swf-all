@@ -94,7 +94,11 @@ public class Controller {
     @RequireLogin(false)
     public View login(){
         if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null ) {
-            return createLoginView();
+        	if (getPath().getRequest().getParameterMap().isEmpty()){
+                return createLoginView();
+        	}else {
+        		return authenticate();
+        	}
         }else if (getPath().getSession() != null){
         	if ( getSessionUser() == null ) {
         		return  createLoginView();

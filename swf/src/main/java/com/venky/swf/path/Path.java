@@ -572,7 +572,15 @@ public class Path implements _IPath{
     		return true;
     	}
     	User user = null;
-    	String apiKey = getRequest().getHeader("ApiKey");
+    	boolean autoInvalidate = false;
+    	
+    	String apiKey = getRequest().getHeader("ApiKey"); 
+    	
+    	if (ObjectUtil.isVoid(apiKey)){
+    		apiKey = getRequest().getParameter("ApiKey");
+    	}else {
+    		autoInvalidate = true;
+    	}
     	if (!ObjectUtil.isVoid(apiKey)){
 	        user = getUser("api_key",apiKey);
         }
@@ -587,14 +595,14 @@ public class Path implements _IPath{
 	            	
 	                String password = getRequest().getParameter("password");
 	            	if (user != null && user.authenticate(password)){
-	            		createUserSession(user,false);
+	            		createUserSession(user,autoInvalidate);
 	            	}else {
 	            		Config.instance().getLogger(Path.class.getName()).fine("Authentication Failed");
 	            	}
 	            }
         	}
         }else {
-        	createUserSession(user,true);
+        	createUserSession(user,autoInvalidate);
         }
         
         return isUserLoggedOn();
