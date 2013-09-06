@@ -33,6 +33,7 @@ import com.venky.swf.db.JdbcTypeHelper.NumericConverter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.ModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.util.WordWrapUtil;
 
 public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
 	
@@ -260,26 +261,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 	}
-	private int getNumRowsRequired(String sValue,int maxColumnLength){
-		int vlen = 0; 
-		int numRows = 1 ;
-		StringTokenizer tok = new StringTokenizer(sValue," \n",true);
-		
-		while (tok.hasMoreTokens()){
-			String token = tok.nextToken();
-			int ctl = token.length() ;
-			if (token.equals("\n")){
-				vlen = (numRows * maxColumnLength);
-			}
-			if ( vlen + ctl >= numRows * maxColumnLength) {
-				vlen = (numRows * maxColumnLength) + ctl;
-				numRows += (Math.ceil(ctl * 1.0/maxColumnLength)) ;
-			}else {
-				vlen += ctl ;
-			}
-		}
-		return numRows ;
-	}
+	
 	public Font createDefaultFont(Workbook wb){
 		Font font = wb.createFont();
 		font.setFontName("Courier New");
@@ -290,7 +272,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		int currentColumnWidth = getColumnWidth(sheet,columnNum.intValue());
 		String sValue = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter().toString(value);
 		int currentValueLength = sValue.length() ;
-		int numRowsRequiredForCurrentValue = getNumRowsRequired(sValue,maxColumnLength);
+		int numRowsRequiredForCurrentValue = WordWrapUtil.getNumRowsRequired(sValue,maxColumnLength);
 		Font font = sheet.getWorkbook().getFontAt(style.getFontIndex());
 		
 		if (currentColumnWidth < maxColumnLength * CHARACTER_WIDTH){

@@ -122,7 +122,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
-        }else if (reflector.isFieldValueALongText(fieldName)){
+        }else if (reflector.isFieldValueALongText(fieldName,value)){
         	TextArea txtArea = new TextArea();
         	txtArea.setText(converter.toString(value));
         	control = txtArea;

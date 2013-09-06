@@ -64,6 +64,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.WordWrapUtil;
 
 public class ModelReflector<M extends Model> {
     
@@ -635,15 +636,28 @@ public class ModelReflector<M extends Model> {
     	}
     }
     
-    private static final int MAX_DATA_LENGTH_FOR_TEXT_BOX = 50 ;
+    public static final int MAX_DATA_LENGTH_FOR_TEXT_BOX = 80 ;
     public boolean isFieldValueALongText(String fieldName){
-    	Method getter = getFieldGetter(fieldName);
-		Class<?> returnType = getter.getReturnType();
-
-    	return Reader.class.isAssignableFrom(returnType) || 
-    					(String.class.isAssignableFrom(returnType) && 
-    							getMaxDataLength(fieldName) > MAX_DATA_LENGTH_FOR_TEXT_BOX) ;
+    	return isFieldValueALongText(fieldName,null);
     }
+    public boolean isFieldValueALongText(String fieldName,Object fieldValue){
+		Method getter = getFieldGetter(fieldName);
+		Class<?> returnType = getter.getReturnType();
+		if (Reader.class.isAssignableFrom(returnType) || 
+    					(String.class.isAssignableFrom(returnType))){
+
+	    	int len = getMaxDataLength(fieldName);
+			if (!isFieldEditable(fieldName)){
+				len = WordWrapUtil.getNumRowsRequired(StringUtil.valueOf(fieldValue),MAX_DATA_LENGTH_FOR_TEXT_BOX) * MAX_DATA_LENGTH_FOR_TEXT_BOX;
+	    	}
+			return (len > MAX_DATA_LENGTH_FOR_TEXT_BOX) ;	
+		}
+		return false;
+    	
+    }
+    
+    
+    
     private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
 		/**
 		 * 
