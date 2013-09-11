@@ -52,12 +52,14 @@ public class MailerTask implements Task{
 			throw new RuntimeException("Plugin not configured :swf.sendmail.user" );
 		}
 		
-		UserEmail toEmail = emails.get(0);
-		
 		final Email email = new Email();
 		email.setFromAddress(userName, emailId);
 		email.setSubject(subject);
-		email.addRecipient(to.getName(), toEmail.getEmail(), RecipientType.TO);
+		StringBuilder emailString = new StringBuilder();
+		for (UserEmail toEmail:emails){
+			email.addRecipient(to.getName() + "(" + toEmail.getEmail() + ")", toEmail.getEmail(), RecipientType.TO);
+			emailString.append(toEmail.getEmail()).append(";");
+		}
 		if (isHtml){
 			email.setTextHTML(text);
 		}else {
@@ -66,7 +68,7 @@ public class MailerTask implements Task{
 		
 		SentMail mail = Database.getTable(SentMail.class).newRecord();
 		mail.setUserId(toUserId);
-		mail.setEmail(toEmail.getEmail());
+		mail.setEmail(emailString.toString());
 		mail.setSubject(subject);
 		mail.setBody(new StringReader(text));
 		mail.save();

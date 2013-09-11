@@ -30,10 +30,15 @@ public class SendGridMailer implements Mailer{
 		HttpClient client = new DefaultHttpClient();
 		HttpPost post = new HttpPost(WSURL);
 		List<NameValuePair> attributes = new ArrayList<NameValuePair>();
-		Recipient r = mail.getRecipients().get(0);
 		try {
-			attributes.add(new BasicNameValuePair("to", r.getAddress()));
-			attributes.add(new BasicNameValuePair("toname", r.getName()));
+			{
+				int i = 0 ;
+				for (Recipient r : mail.getRecipients()){
+					attributes.add(new BasicNameValuePair("to["+ i +"]", r.getAddress()));
+					attributes.add(new BasicNameValuePair("toname["+ i +"]", r.getName()));
+					i++;
+				}
+			}
 			attributes.add(new BasicNameValuePair("subject", mail.getSubject()));
 			if (!ObjectUtil.isVoid(mail.getText())){
 				attributes.add(new BasicNameValuePair("text", mail.getText()));

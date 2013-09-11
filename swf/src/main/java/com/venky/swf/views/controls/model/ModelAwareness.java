@@ -125,6 +125,10 @@ public class ModelAwareness implements FieldUIMetaProvider{
         }else if (reflector.isFieldValueALongText(fieldName,value)){
         	TextArea txtArea = new TextArea();
         	txtArea.setText(converter.toString(value));
+        	if (ObjectUtil.isVoid(value)){
+        		int maxRows = Math.min(10,reflector.getMaxDataLength(fieldName)/txtArea.getCols());
+        		txtArea.setRows(maxRows);
+        	}
         	control = txtArea;
         }else if (InputStream.class.isAssignableFrom(returnType)){
         	FileTextBox ftb = new FileTextBox();
