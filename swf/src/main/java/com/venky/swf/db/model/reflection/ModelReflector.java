@@ -50,6 +50,7 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Counts;
@@ -499,6 +500,20 @@ public class ModelReflector<M extends Model> {
 		}
     }
 
+    public boolean isFieldExportable(String fieldName){
+    	Method fieldGetter = getFieldGetter(fieldName);
+    	EXPORTABLE exportable = getAnnotation(fieldGetter,EXPORTABLE.class);
+    	if (exportable != null && !exportable.value()){
+    		return false;
+    	}
+    	if (isHouseKeepingField(fieldName)){
+    		if (getUniqueKeys().size() > 0 || !"ID".equals(fieldName)){
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+    
     public boolean isFieldCopiedWhileCloning(String fieldName){
     	Method fieldGetter = getFieldGetter(fieldName);
 		CLONING_PROTECT cloningProtect = getAnnotation(fieldGetter, CLONING_PROTECT.class);
@@ -577,6 +592,10 @@ public class ModelReflector<M extends Model> {
 
     public boolean isFieldProtected(String fieldName){
     	return (getFieldProtection(fieldName) != Kind.EDITABLE);
+    }
+
+    public boolean isFieldDisabled(String fieldName){
+    	return (getFieldProtection(fieldName) == Kind.DISABLED || !isFieldSettable(fieldName));
     }
     
     public Kind getFieldProtection(String fieldName){

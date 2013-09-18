@@ -266,6 +266,10 @@ public class ModelListTable<M extends Model> extends Table{
         for (String fieldName : getIncludedFields()) {
             Control control = getControl(getModelAwareness().getReflector().getModelClass().getSimpleName() + "["+rowIndex+"]." + fieldName,fieldName, record);
 
+            if (!control.isEnabled() && !control.isVisible()){
+            	continue;
+            }
+            
             Column column = null;
             if (getMetaprovider().isFieldVisible(fieldName)){
                 column = row.createColumn(); 

@@ -42,6 +42,14 @@ public class UserImpl extends ModelImpl<User>{
 		getProxy().save();
 	}
 	
+	public String getChangePassword(){
+		return "";
+	}
+	
+	public void setChangePassword(String password){
+		getProxy().setPassword(password);
+	}
+	
 	public boolean authenticate(String password){
 		boolean ret = false;
 		try {

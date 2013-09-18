@@ -29,6 +29,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.IncompleteDataException;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -288,9 +289,14 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 		
-		List<? extends Model> m = new Select().from(reflector.getModelClass()).where(where).execute();
+		List<? extends Model> m = new Select().from(reflector.getModelClass()).where(where).execute(reflector.getModelClass());
 		if (m.size() == 1){
-			return m.get(0);
+			Model model =  m.get(0);
+			if (model.isAccessibleBy(Database.getInstance().getCurrentUser())){
+				return model;
+			}else {
+				throw new AccessDeniedException("A reference to " + reflector.getModelClass().getSimpleName() + " identified by " + reflector.get(model, reflector.getDescriptionField()) + " cannot be made. ");
+			}
 		}else if (m.size() == 0){
 			return null;
 		}else {

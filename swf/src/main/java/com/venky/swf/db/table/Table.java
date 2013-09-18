@@ -24,6 +24,7 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Counts;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.DDL;
 import com.venky.swf.sql.DDL.AlterTable;
@@ -583,6 +584,9 @@ public class Table<M extends Model> {
 		if (fullModel == null){
 			fullModel = partiallyFilledModel;
 		}else {
+			if (!fullModel.isAccessibleBy(Database.getInstance().getCurrentUser())){
+				throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by "+ getReflector().get(fullModel,getReflector().getDescriptionField()) + " cannot be  modified.");
+			}
 			Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
 			Record rawFullRecord = fullModel.getRawRecord();
 			for (String field: rawPartiallyFilledRecord.getDirtyFields()){

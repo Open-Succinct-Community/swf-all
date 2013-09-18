@@ -10,6 +10,7 @@ import java.util.Map;
 import com.venky.cache.Cache;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
@@ -22,6 +23,7 @@ import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -49,11 +51,23 @@ public interface User extends Model{
     @IS_NULLABLE
     @UNIQUE_KEY("API")
     @HIDDEN
+    @PROTECTION
     @COLUMN_DEF(StandardDefault.NULL)
+    @EXPORTABLE(false)
     public String getApiKey();
     public void setApiKey(String key);
+
+    @IS_VIRTUAL
+    @COLUMN_SIZE(60)
+    @PASSWORD
+    public String getChangePassword();
+    @IS_VIRTUAL
+    public void setChangePassword(String password);
+    
     
     @PASSWORD
+    @HIDDEN
+    @PROTECTION
     public String getPassword();
     public void setPassword(String password);
     

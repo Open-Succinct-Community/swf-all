@@ -1,6 +1,7 @@
 package com.venky.swf.controller;
 
 import java.util.Arrays;
+import java.util.List;
 
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
@@ -8,6 +9,8 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.model.ModelListView;
+import com.venky.swf.views.model.ModelShowView;
 
 public class UsersController extends ModelController<User>{
 
@@ -28,4 +31,16 @@ public class UsersController extends ModelController<User>{
 		}
 		
 	}
+	
+    protected View constructModelListView(List<User> records){
+    	ModelListView<User> v = (ModelListView<User>) super.constructModelListView(records);
+    	v.getIncludedFields().remove("CHANGE_PASSWORD");
+    	return v;
+    }
+    protected ModelShowView<User> constructModelShowView(Path path, User record){
+    	ModelShowView<User> v = new ModelShowView<User>(path, getIncludedFields(), record);
+    	v.getIncludedFields().remove("CHANGE_PASSWORD");
+    	return v;
+    }
+
 }

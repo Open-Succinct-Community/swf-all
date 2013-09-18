@@ -144,6 +144,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             String fieldName = field.next();
             
             Control fieldData = getModelAwareness().getInputControl(fieldName,fieldName, record, this);
+            if (!fieldData.isEnabled() && !fieldData.isVisible()){
+            	continue;
+            }
             Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
             if (reflector.isFieldVisible(fieldName)){
             	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName); 

@@ -45,7 +45,6 @@ import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
-import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -696,7 +695,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     private static void computeHash(StringBuilder hash, ModelReflector<? extends Model> reflector, Map<String,Object> formFields, String fieldPrefix){
     	for (String field: reflector.getFields()){
-        	if (!formFields.containsKey(field) || !reflector.isFieldSettable(field) || reflector.getFieldProtection(field) == Kind.DISABLED){
+        	if (!formFields.containsKey(field) || reflector.isFieldDisabled(field) ){
         		continue;
         	}
     		Object currentValue = formFields.get(field);
