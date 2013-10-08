@@ -230,12 +230,9 @@ public class Controller {
 	        	if (numRecordRetrieved > 0 && numRecordRetrieved < maxRecordsToGet){
 	            	Expression idExpression = Expression.createExpression("ID", Operator.IN, topRecords.toArray());
 	            	where.add(idExpression);
-	        	}else {
-	        		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
 	        	}
-	        }else {
-	        	where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
-	        }
+        	}
+    		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
     	}
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());

@@ -128,7 +128,7 @@ public class MySqlHelper extends JdbcTypeHelper{
                     "LONGTEXT", 0, 0, true, true, new ReaderConverter()));
 
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
-                            "BLOB", 0, 0, true, true, new InputStreamConverter()));
+                            "LONGBLOB", 0, 0, true, true, new InputStreamConverter()));
             
     
     }

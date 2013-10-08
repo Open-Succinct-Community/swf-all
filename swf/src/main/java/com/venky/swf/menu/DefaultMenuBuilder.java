@@ -65,6 +65,9 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
 
     protected void addMenuItem(_IPath path,User user, Menu appMenu, Table<?> table){
     	Class<? extends Model> modelClass = table.getModelClass();
+    	if (modelClass == null){
+    		return; //Seems like some internal table of the db.
+    	}
     	ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
         MENU menu = ref.getAnnotation(MENU.class);
 

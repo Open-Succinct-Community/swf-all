@@ -103,7 +103,9 @@ public class DatabaseDirectory extends Directory {
 		if (file == null) {
 			throw new FileNotFoundException();
 		}
-		file.destroy();
+		if (!file.getRawRecord().isNewRecord() && file.getId() > 0 ) {
+			file.destroy();
+		}
 	}
 
 	@Override

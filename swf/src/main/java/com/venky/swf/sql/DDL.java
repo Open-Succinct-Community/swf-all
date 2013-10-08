@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.table.BindVariable;
+import com.venky.swf.routing.Config;
 
 public abstract class DDL extends DataManupulationStatement{
 
@@ -64,7 +66,7 @@ public abstract class DDL extends DataManupulationStatement{
 					}
 				}
 				
-				if (pk.size() > 0){
+				if (pk.size() > 0 && Database.getJdbcTypeHelper().requiresSeparatePrimaryKeyClause()){
 					query.append(" , ").append(" primary key(");
 					Iterator<String> pkColumnIterator = pk.iterator();
 					while (pkColumnIterator.hasNext()){
@@ -79,6 +81,7 @@ public abstract class DDL extends DataManupulationStatement{
 				
 				query.append(" )");
 			}
+			Config.instance().getLogger(getClass().getName()).fine(query.toString());
 		}
 		public void addColumn(String columnSpec){
 			assert asSelect == null;

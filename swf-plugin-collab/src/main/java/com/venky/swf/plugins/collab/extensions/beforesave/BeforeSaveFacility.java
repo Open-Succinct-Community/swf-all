@@ -69,8 +69,9 @@ public class BeforeSaveFacility extends BeforeModelSaveExtension<Facility>{
 	@Override
 	public void beforeSave(Facility facility) {
 		List<GeoCoder> coders = new ArrayList<GeoCoder>();
-		coders.add(new GeoCoder("yahoo"));
+		//coders.add(new GeoCoder("yahoo"));
 		coders.add(new GeoCoder("google"));
+		coders.add(new GeoCoder("openstreetmap"));
 		for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(facility.getLatitude()) || ObjectUtil.isVoid(facility.getLongitude())) ; ){
 			GeoCoder coder = i.next(); 
 			for (StringBuilder address: getAddressQueries(facility)){

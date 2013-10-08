@@ -13,18 +13,21 @@ import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLTimeoutException;
 import java.sql.SQLTransactionRollbackException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
@@ -46,6 +49,27 @@ import com.venky.swf.routing.Config;
  * @author venky
  */
 public abstract class JdbcTypeHelper {
+	public boolean isSavepointManagedByJdbc(){
+    	return true;
+    }
+	
+	public String getEstablishSavepointStatement(String name){
+		return null;
+	}
+
+	public String getReleaseSavepointStatement(String name){
+		return null;
+	}
+
+	public String getRollbackToSavepointStatement(String name){
+		return null;
+	}
+
+
+	public boolean requiresSeparatePrimaryKeyClause(){
+		return true;
+	}
+
 	public boolean isColumnNameAutoLowerCasedInDB(){
 		return false;
 	}
@@ -195,7 +219,7 @@ public abstract class JdbcTypeHelper {
             if (ObjectUtil.isVoid(s)) {
                 return false;
             }
-            return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y"));
+            return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y") || StringUtil.valueOf(s).equalsIgnoreCase("YES"));
         }
 
     	public String toString(Object m) {
@@ -348,6 +372,15 @@ public abstract class JdbcTypeHelper {
     }
 
     public class DateConverter extends TypeConverter<Date> {
+    	private DateFormat format = null;
+    	private TimeZone tz = null;
+    	public DateConverter(){
+    		this(DateUtils.APP_DATE_FORMAT,TimeZone.getDefault());
+    	}
+    	public DateConverter(DateFormat format,TimeZone tz){
+    		this.format = format;
+    		this.tz = tz;
+    	}
 
         public Date valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -362,7 +395,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object date) {
-            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getDateStr(valueOf(date)));
+            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,format));
         }
         @Override
 		public String getDisplayClassName() {
@@ -372,7 +405,14 @@ public abstract class JdbcTypeHelper {
     }
 
     public class TimeConverter extends TypeConverter<Time> {
-
+    	DateFormat format = null ;
+    	TimeZone tz  = null; 
+    	public TimeConverter(){
+    		this(DateUtils.APP_TIME_FORMAT,TimeZone.getDefault());
+    	}
+    	public TimeConverter(DateFormat format,TimeZone tz){
+    		this.format = format;
+    	}
         public Time valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return null;
@@ -384,7 +424,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object time) {
-            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimeStr(valueOf(time)));
+            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz, format));
         }
         
         @Override
@@ -395,7 +435,15 @@ public abstract class JdbcTypeHelper {
     }
 
     public class TimestampConverter extends TypeConverter<Timestamp> {
-
+    	public TimestampConverter(){
+    		this(DateUtils.APP_DATE_TIME_FORMAT,TimeZone.getDefault());
+    	}
+    	private DateFormat format;
+    	private TimeZone tz;
+    	public TimestampConverter(DateFormat format,TimeZone tz){
+    		this.format = format;
+    		this.tz = tz;
+    	}
         public Timestamp valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return null;
@@ -407,7 +455,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toString(Object ts) {
-            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts)));
+            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts),tz,format));
         }
         @Override
 		public String getDisplayClassName() {
@@ -494,7 +542,6 @@ public abstract class JdbcTypeHelper {
 		}
 
     }
-    
     private static JdbcTypeHelper _instance = null ;
     public static JdbcTypeHelper instance(Class<?> driverClass){
         if (_instance != null){
@@ -507,6 +554,8 @@ public abstract class JdbcTypeHelper {
                 _instance = new MySqlHelper();
             }else if (driverClass.getName().startsWith("org.postgresql")) {
                 _instance = new PostgresqlHelper();
+            }else if (driverClass.getName().startsWith("org.sqlite")) {
+                _instance = new SqlLiteHelper();
             }
         }
         return _instance;
@@ -609,6 +658,10 @@ public abstract class JdbcTypeHelper {
 
 	public String getLowerCaseFunction() {
 		return "LOWER";
+	}
+
+	public void setBinaryStream(PreparedStatement st, int i, ByteArrayInputStream in) throws SQLException {
+		st.setBinaryStream(i, in, in.available());
 	}
     
 }

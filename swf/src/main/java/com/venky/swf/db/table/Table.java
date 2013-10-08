@@ -19,6 +19,8 @@ import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper;
+import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
+import com.venky.swf.db.JdbcTypeHelper.IntegerConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.Counts;
@@ -401,7 +403,7 @@ public class Table<M extends Model> {
         }
         return c;
     }
-
+    /*
     public Set<String> getAutoIncrementColumns(){ 
         Set<String> columns = new IgnoreCaseSet();
         for (String name :getColumnNames()){ 
@@ -410,14 +412,15 @@ public class Table<M extends Model> {
             }
         }
         return columns;
-    }
+    }*/
+    
     public static class ColumnDescriptor extends Record{
         public ColumnDescriptor(){
             
         }
         
         public int getOrdinalPosition(){
-            Integer pos = (Integer)get("ORDINAL_POSITION");
+            Integer pos = ic.valueOf(get("ORDINAL_POSITION"));
             return (pos == null? 0 : pos);
         }
         
@@ -426,7 +429,8 @@ public class Table<M extends Model> {
         }
         
         public int getJDBCType(){ 
-            return (Integer)get("DATA_TYPE");
+        	Object dataType = get("DATA_TYPE");
+        	return ic.valueOf(dataType);
         }
         
         public void setName(String name){
@@ -438,7 +442,7 @@ public class Table<M extends Model> {
         }
 
         public int getSize(){
-            Integer ret = (Integer)get("COLUMN_SIZE");
+            Integer ret = ic.valueOf(get("COLUMN_SIZE"));
             if (ret == null){
                 return 0;
             }else {
@@ -463,7 +467,7 @@ public class Table<M extends Model> {
         }
 
         public int getScale(){
-            Integer retval = (Integer)get("DECIMAL_DIGITS");
+            Integer retval = ic.valueOf(get("DECIMAL_DIGITS"));
             if (retval == null){
                 return 0;
             }else {
@@ -471,8 +475,10 @@ public class Table<M extends Model> {
             }
         }
         
-        public boolean isNullable(){ 
-            return "YES".equals(get("IS_NULLABLE"));
+    	private BooleanConverter bc = (BooleanConverter) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter();
+    	private IntegerConverter ic = (IntegerConverter) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();
+        public boolean isNullable(){
+        	return bc.valueOf(get("IS_NULLABLE"));
         }
         
         public void setNullable(boolean nullable){
@@ -480,7 +486,7 @@ public class Table<M extends Model> {
         }
         
         public boolean isAutoIncrement(){ 
-            return "YES".equals(get("IS_AUTOINCREMENT"));
+            return bc.valueOf(get("IS_AUTOINCREMENT"));
         }
         
         public void setAutoIncrement(boolean autoincrement){
@@ -549,7 +555,7 @@ public class Table<M extends Model> {
                 }
             }
             
-            return buff.toString();
+            return buff.toString().trim();
         }
 
         @Override

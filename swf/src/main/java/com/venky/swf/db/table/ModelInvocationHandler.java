@@ -689,7 +689,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         
         
         Record generatedValues = new Record();
-        Set<String> autoIncrementColumns = table.getAutoIncrementColumns();
+        Set<String> autoIncrementColumns = reflector.getAutoIncrementColumns();
         assert (autoIncrementColumns.size() <= 1); // atmost one auto increment id column
         List<String> generatedKeys = new ArrayList<String>();
         

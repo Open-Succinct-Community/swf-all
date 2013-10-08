@@ -55,7 +55,7 @@ public class Database implements _IDatabase{
     private User currentUser ;
 	public void open(Object currentUser) {
 		if (getConnection() == null) {
-			throw new RuntimeException("Failed to open connection to database");
+			throw new RuntimeException("Failed to open connection to database: " +  getCaller());
 		}
 		this.currentUser = (User)currentUser;
 	}
@@ -111,6 +111,7 @@ public class Database implements _IDatabase{
 				if (!connection.isClosed()){
 					connection.rollback();
 					connection.close();
+					Config.instance().getLogger(Database.class.getName()).fine("Connection closed : " + getCaller());
 				}
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
@@ -120,6 +121,15 @@ public class Database implements _IDatabase{
 		}
 	}
 
+	private static StackTraceElement getCaller(){
+		StackTraceElement[] elements = new Exception().getStackTrace();
+		for (StackTraceElement element: elements){
+			if (!element.getClassName().startsWith(Database.class.getName())){
+				return element;
+			}
+		}
+		return null;
+	}
 
 
 	private Stack<Transaction> transactionStack = new Stack<Transaction>();
@@ -163,23 +173,36 @@ public class Database implements _IDatabase{
 
 		private Savepoint setSavepoint(String name){
 			try {
-				return getConnection().setSavepoint(name);
+				if (getJdbcTypeHelper().isSavepointManagedByJdbc()){
+					return getConnection().setSavepoint(name);
+				}else {
+					createStatement(getJdbcTypeHelper().getEstablishSavepointStatement(name)).execute();
+					return null;
+				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
 			
 		}
-		private void releaseSavepoint(Savepoint sp){
+		private void releaseSavepoint(Savepoint sp,String name){
 			try {
-				getConnection().releaseSavepoint(sp);
+				if (getJdbcTypeHelper().isSavepointManagedByJdbc()){
+					getConnection().releaseSavepoint(sp);
+				}else{
+					createStatement(getJdbcTypeHelper().getReleaseSavepointStatement(name)).execute();
+				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
 		}
 		
-		private void rollbackToSavePoint(Savepoint sp){
+		private void rollbackToSavePoint(Savepoint sp,String name){
 			try {
-				getConnection().rollback(sp);
+				if (getJdbcTypeHelper().isSavepointManagedByJdbc()){
+					getConnection().rollback(sp);
+				}else{
+					createStatement(getJdbcTypeHelper().getRollbackToSavepointStatement(name)).execute();
+				}
 			} catch (SQLException e) {
 				throw new RuntimeException(e);
 			}
@@ -193,8 +216,8 @@ public class Database implements _IDatabase{
 		}
 
 		public void commit() {
-			releaseSavepoint(savepoint);
-            savepoint = setSavepoint(String.valueOf(transactionStack.size()));
+			releaseSavepoint(savepoint,String.valueOf(transactionNo));
+            savepoint = setSavepoint(String.valueOf(transactionNo));
 			txnUserAttributes.commit(checkpoint);
             updateTransactionStack();
 			if (transactionStack.isEmpty()){
@@ -216,7 +239,7 @@ public class Database implements _IDatabase{
 		public void rollback(Throwable th) {
 			boolean entireTransactionIsRolledBack = getJdbcTypeHelper().hasTransactionRolledBack(th); 
 			if (!entireTransactionIsRolledBack){
-				rollbackToSavePoint(savepoint);
+				rollbackToSavePoint(savepoint,String.valueOf(transactionNo));
 			}
 			txnUserAttributes.rollback(checkpoint);
 			updateTransactionStack();
@@ -486,13 +509,14 @@ public class Database implements _IDatabase{
 		if (conn.getMetaData().supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED)) {
 			conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 		}
-
+		Config.instance().getLogger(Database.class.getName()).fine("Opened Connection:" + getCaller());
 		return conn;
 	}
 
 	public static void shutdown() {
 		try {
 			getDataSource().close();
+			Config.instance().getLogger(Database.class.getName()).fine("Datasource closed:" + getCaller());
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}

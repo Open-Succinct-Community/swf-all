@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -631,7 +632,8 @@ public class ModelReflector<M extends Model> {
 		    		size = MAX_DATA_LENGTH_FOR_TEXT_BOX;
 		    	}
 	    	}else {
-	    		size = fieldDescriptor.getSize(); 
+	    		size = fieldDescriptor.getSize();
+	    		size = size == 0 ? MAX_DATA_LENGTH_FOR_TEXT_BOX + 1 :  size;
 	    	}
 		}
     	return size;
@@ -666,7 +668,7 @@ public class ModelReflector<M extends Model> {
     					(String.class.isAssignableFrom(returnType))){
 
 	    	int len = getMaxDataLength(fieldName);
-			if (!isFieldEditable(fieldName)){
+			if (!isFieldEditable(fieldName) && String.class.isAssignableFrom(returnType)){
 				len = WordWrapUtil.getNumRowsRequired(StringUtil.valueOf(fieldValue),MAX_DATA_LENGTH_FOR_TEXT_BOX) * MAX_DATA_LENGTH_FOR_TEXT_BOX;
 	    	}
 			return (len > MAX_DATA_LENGTH_FOR_TEXT_BOX) ;	
@@ -1385,5 +1387,16 @@ public class ModelReflector<M extends Model> {
 
 	public static void dispose() {
 		ModelReflector.modelReflectorByModelClass.clear();
+	}
+
+    public Set<String> getAutoIncrementColumns() {
+    	Set<String> columns = new IgnoreCaseSet();
+	    for (String f : getFields()){
+	    	ColumnDescriptor d = getColumnDescriptor(f);
+            if (d.isAutoIncrement()){ 
+                columns.add(d.getName());
+            }
+        }
+        return columns;
 	}    
 }
