@@ -11,7 +11,6 @@ import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
-import com.venky.swf.routing.Router;
 
 public class DelayedTaskManager {
 	private PriorityQueue<DelayedTask> queue = new PriorityQueue<DelayedTask>();
@@ -69,9 +68,6 @@ public class DelayedTaskManager {
 	}
 
 	private boolean keepAlive(){
-		if (Router.instance().getLoader() != getClass().getClassLoader()){
-			return false;
-		}
 		synchronized (queue) {
 			if (shutdown){
 				return false;
@@ -162,13 +158,18 @@ public class DelayedTaskManager {
 			throw new RuntimeException("Task already delayed.");
 		}
 		try {
-			DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
-			ByteArrayOutputStream os = new ByteArrayOutputStream(); 
-			ObjectOutputStream oos = new ObjectOutputStream(os);
-			oos.writeObject(task);
-			
-			de.setData(new ByteArrayInputStream(os.toByteArray()));
-			de.save();
+			if (workers.length == 0){
+				//No Workers. So Syncronous.
+				task.execute();
+			}else {
+				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+				ByteArrayOutputStream os = new ByteArrayOutputStream(); 
+				ObjectOutputStream oos = new ObjectOutputStream(os);
+				oos.writeObject(task);
+				
+				de.setData(new ByteArrayInputStream(os.toByteArray()));
+				de.save();
+			}
 		}catch(IOException ex){
 			throw new RuntimeException(ex);
 		}

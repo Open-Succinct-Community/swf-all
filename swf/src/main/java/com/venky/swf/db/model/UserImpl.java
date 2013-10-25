@@ -47,7 +47,9 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	public void setChangePassword(String password){
-		getProxy().setPassword(password);
+		if (!ObjectUtil.isVoid(password)){ 
+			getProxy().setPassword(password);
+		}
 	}
 	
 	public boolean authenticate(String password){

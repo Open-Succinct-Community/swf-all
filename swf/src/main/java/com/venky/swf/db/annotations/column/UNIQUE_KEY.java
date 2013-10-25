@@ -10,4 +10,5 @@ import java.lang.annotation.Target;
 public @interface UNIQUE_KEY {
 	public String value() default "K1" ;
 	public boolean allowMultipleRecordsWithNull() default true;
+	public boolean exportable() default true;
 }

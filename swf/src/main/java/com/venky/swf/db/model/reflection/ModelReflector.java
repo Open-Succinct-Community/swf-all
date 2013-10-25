@@ -400,7 +400,7 @@ public class ModelReflector<M extends Model> {
         			while (keys.hasMoreTokens()){
         				String keyName = keys.nextToken();
             			UniqueKey<M> uk = uniqueKeys.get(keyName);
-            			uk.addField(fieldName,key.allowMultipleRecordsWithNull());
+            			uk.addField(fieldName,key.exportable(),key.allowMultipleRecordsWithNull());
         			}
     			}
     		}
@@ -616,7 +616,13 @@ public class ModelReflector<M extends Model> {
     	Method getter = getFieldGetter(fieldName);
     	return isAnnotationPresent(getter,Enumeration.class);
     }
-
+    public boolean isVirtual(){
+		IS_VIRTUAL isVirtual = getAnnotation(IS_VIRTUAL.class);
+    	if (isVirtual != null && isVirtual.value()) {
+    		return true;
+    	}
+    	return false;
+    }
     public int getMaxDataLength(String fieldName){
 		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);
 		String fieldColumnName = fieldDescriptor.getName();
@@ -624,7 +630,7 @@ public class ModelReflector<M extends Model> {
 		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
 		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
 	    	List<Counts> counts  = new ArrayList<Counts>();
-	    	if (!fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ){
+	    	if (!isVirtual() && !fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ){
 	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Counts.class);
 		    	if (!counts.isEmpty()){
 		    		size = counts.get(0).getCount(); 

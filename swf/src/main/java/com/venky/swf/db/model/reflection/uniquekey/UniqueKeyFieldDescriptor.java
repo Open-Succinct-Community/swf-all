@@ -41,6 +41,13 @@ public class UniqueKeyFieldDescriptor<M extends Model> {
 		return this.multipleRecordsWithNullAllowed;
 	}
 	
+	private boolean exportable = true; 
+	public boolean isExportable(){
+		return exportable;
+	}
 	
+	public void setExportable(boolean exportable){
+		this.exportable = exportable;
+	}
 	
 }

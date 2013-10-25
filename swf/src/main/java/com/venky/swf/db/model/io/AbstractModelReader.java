@@ -46,7 +46,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 				Model referredModel = ModelIOFactory.getReader(referredModelClass,getFormatClass()).read(refElement);
 				if (referredModel != null){
 					if (referredModel.getRawRecord().isNewRecord()) {
-						throw new RuntimeException("Cannot refer to data not yet pesisted.");
+						throw new RuntimeException("Cannot refer to data not yet pesisted." + refElement);
 					}
 					getReflector().set(m, getReflector().getReferenceField(referredModelGetter), referredModel.getId());
 				}else {

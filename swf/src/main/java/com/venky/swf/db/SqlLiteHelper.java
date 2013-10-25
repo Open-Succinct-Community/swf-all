@@ -123,16 +123,16 @@ public class SqlLiteHelper extends JdbcTypeHelper{
                             java.sql.Types.DECIMAL, "REAL", 0, 0, false,false,
                             new BigDecimalConverter()));// also NUMERIC
 
-            registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.REAL,
+            registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.FLOAT,
                             "REAL", 0, 0, false,false,new FloatConverter()));
-            registerjdbcSQLType(float.class, new TypeRef<Float>(java.sql.Types.REAL,
+            registerjdbcSQLType(float.class, new TypeRef<Float>(java.sql.Types.FLOAT,
                             "REAL", 0, 0, false,false,new FloatConverter()));
 
             registerjdbcSQLType(Double.class, new TypeRef<Double>(
-                            java.sql.Types.DOUBLE, "REAL", 0, 0,false,false, new DoubleConverter())); // ALSO
+                            java.sql.Types.FLOAT, "REAL", 0, 0,false,false, new DoubleConverter())); // ALSO
                                                                                                                                                             // FLOAT
             registerjdbcSQLType(double.class, new TypeRef<Double>(
-                            java.sql.Types.DOUBLE, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
+                            java.sql.Types.FLOAT, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,

@@ -28,11 +28,11 @@ public class UniqueKey<M extends Model> {
 	}
 
 	private Map<String,UniqueKeyFieldDescriptor<M>> fields = new HashMap<String, UniqueKeyFieldDescriptor<M>>();
-	public void addField(String field, boolean allowMultipleRecordsWithNull) {
+	public void addField(String field, boolean exportable, boolean allowMultipleRecordsWithNull) {
 		UniqueKeyFieldDescriptor<M> ukfd = new UniqueKeyFieldDescriptor<M>(this,field);
 		ukfd.setMultipleRecordsWithNullAllowed(allowMultipleRecordsWithNull);
+		ukfd.setExportable(exportable);
 		this.fields.put(field, ukfd);
-		
 	}
 	
 	public UniqueKeyFieldDescriptor<M> getDescriptor(String field) {

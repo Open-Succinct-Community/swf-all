@@ -29,7 +29,7 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 		for (UniqueKey<? extends Model> k : referredModelReflector.getUniqueKeys()){
 			for (UniqueKeyFieldDescriptor<? extends Model> ukf: k.getFields()){
 				if (ukf.getReferredModelReflector() == null){
-					if (referredModelReflector.isFieldExportable(ukf.getFieldName())){
+					if (ukf.isExportable() && referredModelReflector.isFieldExportable(ukf.getFieldName())){
 						fields.add(baseFieldHeading + "." +  StringUtil.camelize(ukf.getFieldName()));
 					}
 				}else {
