@@ -81,7 +81,7 @@ public class DelayedTaskManager {
 		synchronized (queue) {
 			waitIfQueueIsEmpty();
 			DelayedTask dt = null ;
-			if (!queue.isEmpty()){
+			if (keepAlive() && !queue.isEmpty()){
 				dt = queue.poll();
 				queue.notifyAll();
 			}
@@ -149,6 +149,20 @@ public class DelayedTaskManager {
 			shutdown = true;
 			queue.notifyAll();
 		}
+		while (true){
+			Config.instance().getLogger(getClass().getName()).info("Waiting for all Threads to shutdown");
+			try {
+				dtpt.join();
+				Config.instance().getLogger(getClass().getName()).info("Polling Thread has shutdown");
+				for (int i = 0 ; i < workers.length ; i ++ ){
+					workers[i].join();
+					Config.instance().getLogger(getClass().getName()).info("Worker " + i  +  " of " + workers.length + " has shutdown");
+				}
+				break;
+			} catch (InterruptedException e) {
+				//
+			}
+		}
 	}
 	
 	
@@ -158,18 +172,13 @@ public class DelayedTaskManager {
 			throw new RuntimeException("Task already delayed.");
 		}
 		try {
-			if (workers.length == 0){
-				//No Workers. So Syncronous.
-				task.execute();
-			}else {
-				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
-				ByteArrayOutputStream os = new ByteArrayOutputStream(); 
-				ObjectOutputStream oos = new ObjectOutputStream(os);
-				oos.writeObject(task);
-				
-				de.setData(new ByteArrayInputStream(os.toByteArray()));
-				de.save();
-			}
+			DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+			ByteArrayOutputStream os = new ByteArrayOutputStream(); 
+			ObjectOutputStream oos = new ObjectOutputStream(os);
+			oos.writeObject(task);
+			
+			de.setData(new ByteArrayInputStream(os.toByteArray()));
+			de.save();
 		}catch(IOException ex){
 			throw new RuntimeException(ex);
 		}

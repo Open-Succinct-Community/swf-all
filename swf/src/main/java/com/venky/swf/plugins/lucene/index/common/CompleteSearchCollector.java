@@ -1,4 +1,4 @@
-package com.venky.swf.plugins.lucene.index.background;
+package com.venky.swf.plugins.lucene.index.common;
 
 import java.io.IOException;
 import java.util.ArrayList;

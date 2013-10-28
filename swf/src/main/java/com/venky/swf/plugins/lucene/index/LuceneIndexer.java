@@ -21,6 +21,8 @@ import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Extension;
+import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -32,6 +34,14 @@ import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 
 public class LuceneIndexer {
+	static {
+    	Registry.instance().registerExtension("com.venky.swf.routing.Router.shutdown",new Extension(){
+			@Override
+			public void invoke(Object... context) {
+				dispose();
+			}
+    	});
+    }
 	private static Cache<String, LuceneIndexer> indexerCache = new Cache<String, LuceneIndexer>() {
 
 		/**

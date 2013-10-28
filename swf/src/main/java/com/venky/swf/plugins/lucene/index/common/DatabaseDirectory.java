@@ -140,11 +140,8 @@ public class DatabaseDirectory extends Directory {
 
 	@Override
 	public void sync(Collection<String> names) throws IOException {
-		try {
-			Database.getInstance().getCurrentTransaction().commit();
-		} catch (Exception e) {
-			throw new IOException(e);
-		}
+		//Db Commit. 
+		//Commit happening elsewhere. 
 	}
 
 }

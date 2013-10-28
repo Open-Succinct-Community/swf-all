@@ -595,11 +595,16 @@ public abstract class JdbcTypeHelper {
     }
 
     public List<TypeRef<?>> getTypeRefs(int jdbcType) {
-    	return jdbcTypeRefMap.get(jdbcType);
+    	List<TypeRef<?>> refs = jdbcTypeRefMap.get(jdbcType);
+    	if (refs == null){
+    		Config.instance().getLogger(getClass().getName()).warning("Cannot find ref for jdbcType:" + jdbcType);
+    	}
+    	return refs;
     }
     public TypeRef<?> getTypeRef(int jdbcType) {
     	List<TypeRef<?>> refs = getTypeRefs(jdbcType);
     	if (refs == null || refs.isEmpty()){
+    		Config.instance().getLogger(getClass().getName()).warning("Cannot find ref for jdbcType:" + jdbcType);
     		return null;
     	}else{
     		return refs.get(0);

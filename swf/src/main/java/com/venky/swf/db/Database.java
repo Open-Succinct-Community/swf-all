@@ -4,7 +4,9 @@
  */
 package com.venky.swf.db;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -37,9 +39,6 @@ import com.venky.swf.db.model.reflection.TableReflector;
 import com.venky.swf.db.platform.Platform;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.db.table.Table;
-import com.venky.swf.path.ControllerCache;
-import com.venky.swf.plugins.background.core.TaskManager;
-import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 
 /**
@@ -68,21 +67,25 @@ public class Database implements _IDatabase{
 		closeConnection();
 		currentUser = null;
 	}
-	
+
 	public static void dispose(){
-		TaskManager.instance().shutdown();
+		Registry.instance().callExtensions("com.venky.swf.db.Database.beforeClose");
 		tables.clear();
 		for (String key : configQueryCacheMap.keySet()){
 			configQueryCacheMap.get(key).clear();
 		}
 		configQueryCacheMap.clear();
+		try {
+			if (_ds != null){
+				_ds.close();
+			}
+		}catch(SQLException ex){	
+			Config.instance().getLogger(Database.class.getName()).info("Exception while closing datasource" +ex.getMessage());
+		}
 		_ds = null; 
 		_helper = null;
-		
 		ModelReflector.dispose();
 		TableReflector.dispose();
-		LuceneIndexer.dispose();
-		ControllerCache.dispose();
 	}
 
 	private Connection connection = null;
@@ -103,7 +106,7 @@ public class Database implements _IDatabase{
 		if (connection != null) {
 			try {
 				if (!transactionStack.isEmpty()){
-					Config.instance().getLogger(Database.class.getName()).warning("Not all Transactions in the application has a finally rollback block! Any way. Recovering...");
+					Config.instance().getLogger(Database.class.getName()).warning(transactionStack.size() + " Transactions not closed correctly. Recovering.");
 					transactionStack.clear();
 				}
 				txnUserAttributes.rollback(); //All check points are clear.
@@ -121,14 +124,19 @@ public class Database implements _IDatabase{
 		}
 	}
 
-	private static StackTraceElement getCaller(){
-		StackTraceElement[] elements = new Exception().getStackTrace();
-		for (StackTraceElement element: elements){
-			if (!element.getClassName().startsWith(Database.class.getName())){
-				return element;
+	private static String getCaller(){
+		StackTraceElement[] e = new Exception().getStackTrace();
+		for (int i = 0 ; i < e.length ; i ++ ){
+			StackTraceElement elem = e[i];
+			if (elem.getClassName().startsWith("com.venky.swf.db") || elem.getClassName().startsWith("com.venky.swf.sql") || elem.getClassName().startsWith("sun.") || elem.getClassName().startsWith("java.")){
+				continue;
 			}
+			return elem.toString();
 		}
-		return null;
+		
+		StringWriter w = new StringWriter();
+		new Exception().printStackTrace(new PrintWriter(w));
+		return w.toString();
 	}
 
 
@@ -213,16 +221,21 @@ public class Database implements _IDatabase{
             ex = new RuntimeException("Transaction " + transactionNo + " not completed ");
             savepoint = setSavepoint(String.valueOf(transactionNo));
             checkpoint = txnUserAttributes.createCheckpoint();
+            Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" Started : " + getCaller());
 		}
 
 		public void commit() {
+			Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" .commit : " + getCaller());
 			releaseSavepoint(savepoint,String.valueOf(transactionNo));
             savepoint = setSavepoint(String.valueOf(transactionNo));
 			txnUserAttributes.commit(checkpoint);
-            updateTransactionStack();
+		    updateTransactionStack();
 			if (transactionStack.isEmpty()){
 				try {
-					Registry.instance().callExtensions("before.commit",this);
+					transactionStack.push(this);
+					Registry.instance().callExtensions("before.commit",this);//Still part of current transaction.
+					transactionStack.pop();
+					Config.instance().getLogger(Database.class.getName()).fine("Connection.commit:" + getCaller());
 					getConnection().commit();
 					registerLockRelease();
 					Registry.instance().callExtensions("after.commit",this);
@@ -237,6 +250,7 @@ public class Database implements _IDatabase{
 			}
 		}
 		public void rollback(Throwable th) {
+			Config.instance().getLogger(Database.class.getName()).fine("Transaction :" + transactionNo + " Rollback" + ": " + getCaller());
 			boolean entireTransactionIsRolledBack = getJdbcTypeHelper().hasTransactionRolledBack(th); 
 			if (!entireTransactionIsRolledBack){
 				rollbackToSavePoint(savepoint,String.valueOf(transactionNo));
@@ -245,6 +259,7 @@ public class Database implements _IDatabase{
 			updateTransactionStack();
 			if (transactionStack.isEmpty()){
 				try {
+					Config.instance().getLogger(Database.class.getName()).fine("Connection Rollback" + ":" +  getCaller());
 					getConnection().rollback();
 				} catch (SQLException e) {
 					throw new RuntimeException(e);
@@ -295,7 +310,7 @@ public class Database implements _IDatabase{
 		public void setAttribute(String name,Object value){
 			checkpoint.getValue().put(name, value);
 			if (value != null && !(value instanceof Serializable) && !(value instanceof Cloneable)){
-				Config.instance().getLogger(getClass().getName()).warning(value.getClass().getName() + " not Serializable or Cloneable. Checkpointing in nested transactions may exhibit unexpected behaviour!");
+				Config.instance().getLogger(Database.class.getName()).warning(value.getClass().getName() + " not Serializable or Cloneable. Checkpointing in nested transactions may exhibit unexpected behaviour!");
 			}
 		}
 		

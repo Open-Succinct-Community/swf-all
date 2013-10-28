@@ -69,7 +69,7 @@ import com.venky.swf.sql.Select;
 import com.venky.swf.util.WordWrapUtil;
 
 public class ModelReflector<M extends Model> {
-    
+
 	@SuppressWarnings("rawtypes")
 	private static final Map<Class<? extends Model> , ModelReflector>  modelReflectorByModelClass = new HashMap<Class<? extends Model>, ModelReflector>();
     
@@ -194,11 +194,11 @@ public class ModelReflector<M extends Model> {
                 	ret = (T)rawRecord.get(cd.getName());
                 }
         	} 
-        	if (ret == null) {
+            Method getter = getFieldGetter(fieldName);
+        	if (ret == null || !(getter.getReturnType().isAssignableFrom(ret.getClass()))) {
             	if (record == null){
             		record = rawRecord.getAsProxy(getModelClass());
             	}
-                Method getter = getFieldGetter(fieldName);
             	ret = (T)getter.invoke(record); 
         	}
         	return ret;
@@ -1390,7 +1390,7 @@ public class ModelReflector<M extends Model> {
 		}
 		return new HashSet<String>(participatableRoles);
 	}
-
+	
 	public static void dispose() {
 		ModelReflector.modelReflectorByModelClass.clear();
 	}

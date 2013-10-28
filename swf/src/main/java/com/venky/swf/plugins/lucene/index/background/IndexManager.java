@@ -15,6 +15,9 @@ import org.apache.lucene.store.Directory;
 
 import com.venky.cache.Cache;
 import com.venky.core.util.Bucket;
+import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
+import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import com.venky.swf.sql.Select;
@@ -47,30 +50,28 @@ public class IndexManager {
 
 	};
 	
-	private Cache<String, WriterDaemon> writerDelegate = new Cache<String, WriterDaemon>() {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 104781460079060790L;
+	public Directory getDirectory(String name){ 
+		return directoryCache.get(name);
+	}
 
-		@Override
-		protected WriterDaemon getValue(String k) {
-			WriterDaemon daemon = new WriterDaemon(directoryCache.get(k));
-			daemon.setDaemon(true);
-			daemon.start();
-			return daemon;
-		}
-	};
+	private IndexTask createIndexTask(String tableName,List<Document> documents, Operation operation){
+		IndexTask task = new IndexTask();
+		task.setDirectory(tableName);
+		task.setDocuments(documents);
+		task.setOperation(operation);
+		return task;
+	}
+	
 	public void addDocuments(String tableName, List<Document> documents){
-		writerDelegate.get(tableName).addDocuments(documents);
+		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.ADD));
 	}
 
 	public void updateDocuments(String tableName, List<Document> documents) {
-		writerDelegate.get(tableName).updateDocuments(documents);
+		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.MODIFY));	
 	}
 
 	public void removeDocuments(String tableName, List<Document> documents) {
-		writerDelegate.get(tableName).removeDocuments(documents);
+		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.DELETE));
 	}
 
 	private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {

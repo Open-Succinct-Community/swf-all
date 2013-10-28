@@ -10,10 +10,10 @@ import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase._ITransaction;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 
-public class AfterCommitExtension implements Extension{
-	private static AfterCommitExtension instance = new AfterCommitExtension();
+public class BeforeCommitExtension implements Extension{
+	private static BeforeCommitExtension instance = new BeforeCommitExtension();
 	static {
-		Registry.instance().registerExtension("after.commit", instance);
+		Registry.instance().registerExtension("before.commit", instance);
 	}
 	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {

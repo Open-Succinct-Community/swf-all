@@ -52,7 +52,7 @@
 			<groupId>com.github.venkatramanm</groupId>
 			<artifactId>core</artifactId>
       <type>pom</type>
-			<version>[1.11-SNAPSHOT,)</version>
+			<version>[1.11,)</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-fileupload</groupId>

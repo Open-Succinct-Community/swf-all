@@ -3,6 +3,8 @@ package com.venky.swf.path;
 import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Extension;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.annotations.model.CONTROLLER;
 import com.venky.swf.db.model.Model;
@@ -10,6 +12,14 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
 
 public class ControllerCache extends Cache<String,String>{
+	static {
+    	Registry.instance().registerExtension("com.venky.swf.routing.Router.shutdown",new Extension(){
+			@Override
+			public void invoke(Object... context) {
+				dispose();
+			}
+    	});
+    }
 	/**
 	 * 
 	 */

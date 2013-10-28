@@ -23,7 +23,6 @@ import com.venky.cache.Cache;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
-import com.venky.swf.menu._IMenuBuilder;
 
 /**
  *
@@ -163,11 +162,15 @@ public class Config {
         return properties.getProperty(MENU_BUILDER_CLASS);
     }
     
-    _IMenuBuilder builder = null;
-    public void setMenuBuilder(_IMenuBuilder builder){
+    Object builder = null;
+    public void setMenuBuilder(Object builder){
     	this.builder = builder;
     }
-    public _IMenuBuilder getMenuBuilder(){
+    /**
+     * 
+     * @return an instance of _IMenuBuilder
+     */
+    public Object getMenuBuilder(){
     	return builder;
     }
     

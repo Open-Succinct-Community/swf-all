@@ -12,12 +12,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.TimeZone;
 
-import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -129,20 +127,65 @@ public class SqlLiteHelper extends JdbcTypeHelper{
                             "REAL", 0, 0, false,false,new FloatConverter()));
 
             registerjdbcSQLType(Double.class, new TypeRef<Double>(
-                            java.sql.Types.FLOAT, "REAL", 0, 0,false,false, new DoubleConverter())); // ALSO
+                            java.sql.Types.REAL, "REAL", 0, 0,false,false, new DoubleConverter())); // ALSO
                                                                                                                                                             // FLOAT
             registerjdbcSQLType(double.class, new TypeRef<Double>(
-                            java.sql.Types.FLOAT, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
+                            java.sql.Types.REAL, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,
-                            "TEXT", 0, 0, true,false, new DateConverter(DateUtils.ISO_DATE_FORMAT,TimeZone.getDefault())));
+                            "TEXT", 0, 0, true,false, new DateConverter(){
+            													public Date valueOf(Object o){
+            														try {
+            															return super.valueOf(o);
+            														}catch (Exception ex){
+            															try {
+            																return new Date(Long.valueOf(StringUtil.valueOf(o)));
+            															}catch (Exception e){
+            																MultiException mex = new MultiException();
+            																mex.add(ex);
+            																mex.add(e);
+            																throw mex;
+            															}
+            														}
+            													}
+            }));
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.TIME, "TEXT", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT,TimeZone.getDefault())));
+                            java.sql.Types.TIME, "TEXT", 0, 0, true ,false, new TimeConverter() {
+								public Time valueOf(Object o){
+									try {
+										return super.valueOf(o);
+									}catch (Exception ex){
+										try {
+											return new Time(Long.valueOf(StringUtil.valueOf(o)));
+										}catch(Exception e){
+											MultiException mex = new MultiException();
+											mex.add(ex);
+											mex.add(e);
+											throw mex;
+										}
+									}
+								}
+                            }));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.TIMESTAMP, "TEXT", 0, 0, true,false,
-                            new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT,TimeZone.getDefault())));
+                            new TimestampConverter(){
+                            		public Timestamp valueOf(Object o){
+                            			try {
+											return super.valueOf(o);
+										}catch (Exception ex){
+											try {
+												return new Timestamp(Long.valueOf(StringUtil.valueOf(o)));
+											}catch(Exception e){
+												MultiException mex = new MultiException();
+												mex.add(ex);
+												mex.add(e);
+												throw mex;
+											}
+										}
+                            		}
+                            }));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true,true,
