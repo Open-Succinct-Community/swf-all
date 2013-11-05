@@ -13,7 +13,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -81,6 +83,10 @@ public class Config {
         }
         return _instance;
     }
+    private List<URL> resourceBaseurls = null;
+    public List<URL> getResouceBaseUrls(){
+    	return resourceBaseurls;
+    }
     
     public String getProperty(String name){
     	return System.getProperty(name,properties.getProperty(name));
@@ -97,71 +103,35 @@ public class Config {
 		return Integer.parseInt(sValue);
     }
     
-    private static final String CONTROLLER_PACKAGE_ROOT = "swf.controller.package.root";
+    public List<String> getPackageRoots(String rootPackage){
+    	return propertyValueList.get(rootPackage);
+    }
+    
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";
-    private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";
-    private static final String EXTENSION_PACKAGE_ROOT = "swf.extn.package.root";
-    private static final String CONFIGURATION_INSTALLERS = "swf.default.configuration.installer";
-    
-    private List<String> modelPackages = null;
-    private List<String> controllerPackages = null;
-    private List<String> installers = null;
-    private List<URL> resourceBaseurls = null;
-    public List<URL> getResouceBaseUrls(){
-    	return resourceBaseurls;
-    }
-    
     public List<String> getModelPackageRoots(){
-    	if (modelPackages == null){
-    		modelPackages = getPropertyValueList(MODEL_PACKAGE_ROOT);
-    	}
-    	return modelPackages;
+    	return getPackageRoots(MODEL_PACKAGE_ROOT);
     }
-    
-    public List<String> getModelClasses(){ 
-    	List<String> modelClasses = new ArrayList<String>();
-		for (String root : Config.instance().getModelPackageRoots()) {
-			for (URL url : Config.instance().getResouceBaseUrls()) {
-        		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
-			}
-		}
-		return modelClasses;
-    }
-    
-    public List<String> getControllerPackageRoots(){
-    	if (controllerPackages == null){
-    		controllerPackages = getPropertyValueList(CONTROLLER_PACKAGE_ROOT);
-    	}
-    	return controllerPackages;
-    }
-    private List<String> extensionPackageRoots = null; 
+    private static final String EXTENSION_PACKAGE_ROOT = "swf.extn.package.root";
     public List<String> getExtensionPackageRoots(){
-    	if (extensionPackageRoots == null){
-    		extensionPackageRoots = getPropertyValueList(EXTENSION_PACKAGE_ROOT);
-    	}
-    	return extensionPackageRoots;
-    }
-    public List<String> getInstallers(){
-    	if (installers == null){
-    		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
-    		Collections.reverse(installers);// To make sure framework installers are installed first.
-    	}
-    	return installers;
+		return getPackageRoots(EXTENSION_PACKAGE_ROOT);
     }
     
-    private List<String> getPropertyValueList(String name){
-    	List<String> values = new ArrayList<String>();
-    	StringTokenizer tok = new StringTokenizer(properties.getProperty(name,""),",");
-    	while (tok.hasMoreTokens()) {
-    		values.add(tok.nextToken());
-    	}
-    	return values;
-	}
     
+    private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";
     String getMenuBuilderClassName(){
         return properties.getProperty(MENU_BUILDER_CLASS);
     }
     
+    private Map<String,Object> attributes = new HashMap<>();
+	@SuppressWarnings("unchecked")
+	public <V> V getObject(String key){
+    	return (V)attributes.get(key);
+    }
+	
+	public <V> void setObject(String key,V object){
+    	attributes.put(key,object);
+    }
+	
     Object builder = null;
     public void setMenuBuilder(Object builder){
     	this.builder = builder;
@@ -173,6 +143,46 @@ public class Config {
     public Object getMenuBuilder(){
     	return builder;
     }
+    
+    
+    public List<String> getModelClasses(){ 
+    	List<String> modelClasses = new ArrayList<String>();
+		for (String root : getModelPackageRoots()) {
+			for (URL url : getResouceBaseUrls()) {
+        		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
+			}
+		}
+		return modelClasses;
+    }
+    
+    private static final String CONFIGURATION_INSTALLERS = "swf.default.configuration.installer";
+    
+    private List<String> installers = null;
+    public List<String> getInstallers(){
+    	if (installers == null){
+    		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
+    		Collections.reverse(installers);// To make sure framework installers are installed first.
+    	}
+    	return installers;
+    }
+    
+    private Cache<String,List<String>> propertyValueList = new Cache<String, List<String>>() {
+		private static final long serialVersionUID = 4415548468945425620L;
+
+		@Override
+		protected List<String> getValue(String name) {
+	    	List<String> values = new ArrayList<String>();
+	    	StringTokenizer tok = new StringTokenizer(properties.getProperty(name,""),",");
+	    	while (tok.hasMoreTokens()) {
+	    		values.add(tok.nextToken());
+	    	}
+	    	return values;
+		}
+	};
+    
+	private List<String> getPropertyValueList(String name){
+    	return propertyValueList.get(name);
+	}
     
     public boolean isTimerEnabled(){
     	return getLogger(TimerStatistics.class.getName()).isLoggable(Level.FINE);
@@ -214,11 +224,11 @@ public class Config {
 	public void printStackTrace(Class<?> fromClazz, Throwable th){
         StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
-        if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){
+        if (isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){
             th.printStackTrace(w);
         }else {
         	w.write(th.getMessage());
         }
-		Config.instance().getLogger(fromClazz.getName()).fine(sw.toString());
+		getLogger(fromClazz.getName()).fine(sw.toString());
 	}
 }

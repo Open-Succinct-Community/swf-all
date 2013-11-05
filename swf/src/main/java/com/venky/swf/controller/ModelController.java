@@ -870,8 +870,7 @@ public class ModelController<M extends Model> extends Controller {
     		try {
 				OnLookupSelectionProcessor<M> processor = (OnLookupSelectionProcessor<M>) Class.forName(onlookup.processor()).newInstance();
 				processor.process(autoCompleteFieldName, model);
-			} catch (InstantiationException | IllegalAccessException
-					| ClassNotFoundException e) {
+			} catch (Exception e) {
 				//
 			}
     	}

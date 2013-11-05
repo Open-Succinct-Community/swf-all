@@ -1,0 +1,64 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.venkatramanm.swf-all</groupId>
+		<artifactId>swf-all</artifactId>
+		<version>2.1-SNAPSHOT</version>
+	</parent>
+  <artifactId>swf-db</artifactId>
+	<packaging>jar</packaging>
+  <name>swf-db</name>
+	<description>Succinct Web Framework</description>
+	<url>http://maven.apache.org</url>
+	<licenses>
+		<license>
+			<name>MIT</name>
+			<url>LICENSE.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:git@github.com:venkatramanm/swf-all.git</connection>
+		<developerConnection>scm:git:git@github.com:venkatramanm/swf-all.git</developerConnection>
+		<url>git@github.com:venkatramanm/swf-all.git</url>
+	</scm>
+	<developers>
+		<developer>
+			<id>venky</id>
+			<name>Venkatraman Mahadevan</name>
+			<email>venkatramanm@yahoo.com</email>
+		</developer>
+	</developers>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+  <dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.venkatramanm</groupId>
+			<artifactId>common</artifactId>
+			<version>[1.11,)</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.venkatramanm</groupId>
+			<artifactId>reflection</artifactId>
+			<version>[1.11,)</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+			<version>1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1</version>
+		</dependency>
+  </dependencies>
+</project>

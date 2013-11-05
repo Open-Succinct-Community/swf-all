@@ -42,17 +42,17 @@
 	    </plugin>
 	  </plugins>
 	</pluginManagement>
-<plugins>
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-compiler-plugin</artifactId>
-    <version>2.3.2</version>
-    <configuration>
-        <source>1.7</source>
-        <target>1.7</target>
-    </configuration>
-</plugin> 
-</plugins>
+        <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>2.3.2</version>
+            <configuration>
+                <source>1.7</source>
+                <target>1.7</target>
+            </configuration>
+        </plugin> 
+        </plugins>
   </build>
 
   <licenses>
@@ -76,6 +76,10 @@
   </developers>
 
   <modules>
+		<module>swf-db</module>
+		<module>swf-db-io-xml</module>
+		<module>swf-db-io-json</module>
+		<module>swf-db-io-xls</module>
 		<module>swf</module>
 		<module>swf-archetype</module>
 		<module>swf-plugin-archetype</module>

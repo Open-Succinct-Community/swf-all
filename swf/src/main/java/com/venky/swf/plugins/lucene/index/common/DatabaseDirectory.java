@@ -14,7 +14,6 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.SingleInstanceLockFactory;
 
 import com.venky.core.string.StringUtil;
-import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.db.model.IndexFile;

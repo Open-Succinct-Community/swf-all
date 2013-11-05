@@ -1,7 +1,6 @@
 package com.venky.swf.views.controls.model;
 
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -255,7 +254,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
 	                Object descValue = descGetter.invoke(parentModel);
 	                return Database.getJdbcTypeHelper().getTypeRef(descGetter.getReturnType()).getTypeConverter().toString(descValue);
 	            }
-        	}catch( IllegalAccessException | IllegalArgumentException | InvocationTargetException ex){
+        	}catch( Exception ex){
         		throw new RuntimeException(ex);
         	}
         }

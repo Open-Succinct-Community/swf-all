@@ -42,7 +42,7 @@
   	</dependency>
   	<dependency>
   		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf</artifactId>
+  		<artifactId>swf-db</artifactId>
       <version>${project.version}</version>
   	</dependency>
   </dependencies>

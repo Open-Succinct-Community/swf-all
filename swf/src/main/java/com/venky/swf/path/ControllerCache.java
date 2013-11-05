@@ -1,5 +1,7 @@
 package com.venky.swf.path;
 
+import java.util.List;
+
 import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -45,10 +47,16 @@ public class ControllerCache extends Cache<String,String>{
 			}
 		}
 	}
+	
+    private static final String CONTROLLER_PACKAGE_ROOT = "swf.controller.package.root";
+    public List<String> getControllerPackageRoots(){
+    	return Config.instance().getPackageRoots(CONTROLLER_PACKAGE_ROOT);
+    }
+
 	@Override
 	protected String getValue(String k) {
 		String clazzName = null;
-		for (String controllerPackageRoot: Config.instance().getControllerPackageRoots()){
+		for (String controllerPackageRoot: getControllerPackageRoots()){
             clazzName = controllerPackageRoot + "." + StringUtil.camelize(k) + "Controller";
             if (Path.getClass(clazzName) != null) {
                 break;

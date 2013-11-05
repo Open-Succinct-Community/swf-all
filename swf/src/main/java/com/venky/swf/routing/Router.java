@@ -26,12 +26,10 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
-import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.exceptions.MultiException;
-import com.venky.swf.menu._IMenuBuilder;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
 
@@ -86,7 +84,6 @@ public class Router extends AbstractHandler {
 					loadExtensions();
 					db.loadFactorySettings();
 					db.close();
-					setMenuBuilder();
 					try {
 						getPathClass();
 						getExceptionViewClass();
@@ -95,18 +92,6 @@ public class Router extends AbstractHandler {
 					}
 				}
 			}
-		}
-	}
-	private void setMenuBuilder(){
-		String className = Config.instance().getMenuBuilderClassName(); 
-		try {
-			_IMenuBuilder builder = null; 
-			if (className != null ){
-				builder = (_IMenuBuilder) (getClass(className).newInstance());
-			}
-	    	Config.instance().setMenuBuilder(builder);
-		}catch (Exception ex){
-			throw new RuntimeException(ExceptionUtil.getRootCause(ex));
 		}
 	}
 	public void clearExtensions(){

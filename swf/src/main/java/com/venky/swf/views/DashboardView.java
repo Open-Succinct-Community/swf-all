@@ -6,9 +6,8 @@ package com.venky.swf.views;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.exceptions.MultiException;
-import com.venky.swf.menu._IMenuBuilder;
+import com.venky.swf.extensions.MenuBuilderFactory;
 import com.venky.swf.path.Path;
-import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page._IMenu;
@@ -50,7 +49,7 @@ public class DashboardView extends HtmlView{
     }
     public void createBody(_IControl b, boolean includeStatusMessage,boolean includeMenu,SequenceSet<HotLink> excludeLinks) {
     	if (includeMenu){
-            _IMenu menu = ((_IMenuBuilder)Config.instance().getMenuBuilder()).createAppMenu(getPath());
+            _IMenu menu = MenuBuilderFactory.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null && !menu.getContainedControls().isEmpty()){
                 Div nav = new Div();
                 nav.setClass("nav");
