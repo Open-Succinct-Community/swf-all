@@ -36,7 +36,11 @@ public class SqlStatement {
             	StringReader reader = value.getCharacterInputStream();
             	st.setCharacterStream(i+1, reader);
             }else {
-            	st.setObject(i+1,value.getValue(), value.getJdbcType());
+            	if (value.getValue() == null){
+            		st.setNull(i+1, value.getJdbcType());
+            	}else {
+            		st.setObject(i+1,value.getValue()); //3 parameter  setObject not supported by some drivers.
+            	}
             }
         }
 
