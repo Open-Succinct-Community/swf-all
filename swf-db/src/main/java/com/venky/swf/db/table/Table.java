@@ -518,7 +518,7 @@ public class Table<M extends Model> {
             JdbcTypeHelper helper = Database.getJdbcTypeHelper();
 			TypeRef<?> ref = helper.getTypeRef(getJDBCType());
 			if (ref == null){
-				throw new RuntimeException("Unknown JDBCType" + getJDBCType());
+				throw new RuntimeException("Unknown JDBCType:" + getJDBCType() + " for column " + getName());
 			}
             if (helper.isColumnNameAutoLowerCasedInDB()){
             	buff.append(LowerCaseStringCache.instance().get(getName()));

@@ -380,7 +380,7 @@ public class Database implements _IDatabase{
 		try { 
 			Connection conn =  getInstance().getConnection();
 			DatabaseMetaData meta = conn.getMetaData();
-            ResultSet tablesResultSet = meta.getTables(null, getSchema(), null, new String[]{"TABLE"});
+            ResultSet tablesResultSet = meta.getTables(null, getSchema(), "%", new String[]{"TABLE"});
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = tables.get(tableName);

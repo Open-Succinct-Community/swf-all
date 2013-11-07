@@ -78,7 +78,7 @@ public class ConnectionManager {
 		return ds;
 	}
 	public boolean isConnectionPooled(){
-		String value = Config.instance().getProperty("com.venky.swf.db.connection.pooling", "true");
+		String value = Config.instance().getProperty("swf.jdbc.connection.pooling", "true");
 		return Boolean.valueOf(StringUtil.valueOf(Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter().valueOf(value)));
 	}
 	
