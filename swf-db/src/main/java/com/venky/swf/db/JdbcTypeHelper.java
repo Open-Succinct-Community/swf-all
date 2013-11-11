@@ -555,7 +555,7 @@ public abstract class JdbcTypeHelper {
             }else if (driverClass.getName().startsWith("org.postgresql")) {
                 _instance = new PostgresqlHelper();
             }else if (driverClass.getName().startsWith("org.sqlite") || driverClass.getName().startsWith("org.sqldroid")) {
-                _instance = new SqlLiteHelper();
+                _instance = new SQLiteHelper();
             }
         }
         return _instance;

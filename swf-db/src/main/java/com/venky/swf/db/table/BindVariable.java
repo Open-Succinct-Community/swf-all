@@ -10,6 +10,7 @@ import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 
 /**
@@ -30,6 +31,10 @@ public class BindVariable {
     	this.ref = ref;
     	if (ref.getJdbcType() == Types.VARCHAR && value != null && !value.getClass().equals(String.class)){
     		this.value = ref.getTypeConverter().toString(value); //PGSql stores Clobs as Varchar(
+    	}else if (ref.getJdbcType() == Types.REAL && value != null && !(value.getClass().equals(Double.class))){
+    		this.value = Database.getJdbcTypeHelper().getTypeRef(Double.class).getTypeConverter().valueOf(value);
+    	}else if (ref.getJdbcType() == Types.BIGINT && value != null && !(value.getClass().equals(Long.class))){
+    		this.value = Database.getJdbcTypeHelper().getTypeRef(Long.class).getTypeConverter().valueOf(value);
     	}else {
     		this.value = value;
     	}
