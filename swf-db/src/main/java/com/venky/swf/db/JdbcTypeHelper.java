@@ -297,43 +297,31 @@ public abstract class JdbcTypeHelper {
 		}
     }
     public class ShortConverter extends NumberConverter<Short> {
-
         public Short valueOf(Object o) {
-            if (ObjectUtil.isVoid(o)) {
-                return new Short((short) 0);
-            }
-            return Short.valueOf(StringUtil.valueOf(o));
+        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
+        	return dc.valueOf(o).shortValue();
         }
         
     }
 
     public class IntegerConverter extends NumberConverter<Integer> {
-
         public Integer valueOf(Object o) {
-            if (ObjectUtil.isVoid(o)) {
-                return new Integer(0);
-            }
-            return Double.valueOf(StringUtil.valueOf(o)).intValue();
+        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
+        	return dc.valueOf(o).intValue();
         }
     }
 
     public class LongConverter extends NumberConverter<Long> {
-
         public Long valueOf(Object o) {
-            if (ObjectUtil.isVoid(o)) {
-                return new Long(0);
-            }
-            return Double.valueOf(StringUtil.valueOf(o)).longValue();
+        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
+        	return dc.valueOf(o).longValue();
         }
     }
 
     public class FloatConverter extends NumericConverter<Float> {
-
         public Float valueOf(Object o) {
-            if (ObjectUtil.isVoid(o)) {
-                return new Float(0.0);
-            }
-            return Double.valueOf(StringUtil.valueOf(o)).floatValue();
+        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
+        	return dc.valueOf(o).floatValue();
         }
     }
 
@@ -342,8 +330,14 @@ public abstract class JdbcTypeHelper {
         public Double valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return new Double(0.0);
+            }else if (o instanceof Date){
+            	return new Double(((Date)o).getTime());
+            }else if (o instanceof Boolean){
+            	BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
+             	return new Double( bc.valueOf("1").equals(o)? 1 : 0);
+            }else {
+            	return Double.valueOf(StringUtil.valueOf(o));
             }
-            return Double.valueOf(StringUtil.valueOf(o));
         }
     }
 

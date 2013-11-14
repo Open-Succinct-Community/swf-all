@@ -12,10 +12,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.TimeZone;
 
+import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
-import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -30,17 +31,17 @@ public class SQLiteHelper extends JdbcTypeHelper{
 	
 	@Override
 	public String getEstablishSavepointStatement(String name){
-		return "SAVEPOINT S" + name ;
+		return "; SAVEPOINT S" + name ;
 	}
 
 	@Override
 	public String getReleaseSavepointStatement(String name){
-		return "RELEASE S" + name ;
+		return "; RELEASE S" + name ;
 	}
 
 	@Override
 	public String getRollbackToSavepointStatement(String name){
-		return "ROLLBACK TO S" + name ;
+		return "; ROLLBACK TO S" + name ;
 	}
 
 	@Override
@@ -136,14 +137,14 @@ public class SQLiteHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.VARCHAR,
-                            "TEXT", 0, 0, true,false, new DateConverter()));
+                            "TEXT", 0, 0, true,false, new DateConverter(DateUtils.ISO_DATE_FORMAT,TimeZone.getDefault())));
             
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.VARCHAR, "TEXT", 0, 0, true ,false, new TimeConverter()));
+                            java.sql.Types.VARCHAR, "TEXT", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT,TimeZone.getDefault())));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true,false,
-                            new TimestampConverter()));
+                            new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT,TimeZone.getDefault())));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true,true,

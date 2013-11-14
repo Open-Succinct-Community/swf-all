@@ -265,6 +265,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	Select  q = new Select();
     	q.from(childClass);
     	q.where(expression);
+    	q.orderBy(ModelReflector.instance(childClass).getOrderBy());
     	return q.execute(childClass);
     }
     
