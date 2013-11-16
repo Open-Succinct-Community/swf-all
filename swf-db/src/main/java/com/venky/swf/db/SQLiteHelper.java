@@ -17,6 +17,7 @@ import java.util.TimeZone;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
+import com.venky.swf.exceptions.MultiException;
 
 /**
  *
@@ -31,17 +32,17 @@ public class SQLiteHelper extends JdbcTypeHelper{
 	
 	@Override
 	public String getEstablishSavepointStatement(String name){
-		return "; SAVEPOINT S" + name ;
+		return "SAVEPOINT S" + name ;
 	}
 
 	@Override
 	public String getReleaseSavepointStatement(String name){
-		return "; RELEASE S" + name ;
+		return "RELEASE S" + name ;
 	}
 
 	@Override
 	public String getRollbackToSavepointStatement(String name){
-		return "; ROLLBACK TO S" + name ;
+		return "ROLLBACK TO S" + name ;
 	}
 
 	@Override
@@ -87,41 +88,39 @@ public class SQLiteHelper extends JdbcTypeHelper{
              * them during table creation
              */
             registerjdbcSQLType(Boolean.class, new TypeRef<Boolean>(
-                            java.sql.Types.BIGINT, "INTEGER", 0, 0, false,false,
+                            java.sql.Types.INTEGER, "INTEGER", 0, 0, false,false,
                             new BooleanConverter()));
             registerjdbcSQLType(boolean.class, new TypeRef<Boolean>(
-                            java.sql.Types.BIGINT, "INTEGER", 0, 0, false,false,
+                            java.sql.Types.INTEGER, "INTEGER", 0, 0, false,false,
                             new BooleanConverter()));
 
-            registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.BIGINT,
+            registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.INTEGER,
                             "INTEGER", 0, 0, false,false,new ByteConverter()));
 
-            registerjdbcSQLType(byte.class, new TypeRef<Byte>(java.sql.Types.BIGINT,
+            registerjdbcSQLType(byte.class, new TypeRef<Byte>(java.sql.Types.INTEGER,
                             "INTEGER", 0, 0, false,false,new ByteConverter()));
 
             registerjdbcSQLType(Short.class,
-                            new TypeRef<Short>(java.sql.Types.BIGINT, "INTEGER", 0, 0,false,false,
+                            new TypeRef<Short>(java.sql.Types.INTEGER, "INTEGER", 0, 0,false,false,
                                             new ShortConverter()));
             registerjdbcSQLType(short.class,
-                            new TypeRef<Short>(java.sql.Types.BIGINT, "INTEGER", 0, 0,false,false,
+                            new TypeRef<Short>(java.sql.Types.INTEGER, "INTEGER", 0, 0,false,false,
                                             new ShortConverter()));
 
             registerjdbcSQLType(Integer.class,
-                            new TypeRef<Integer>(java.sql.Types.BIGINT, "INTEGER", 0, 0,false,false,
+                            new TypeRef<Integer>(java.sql.Types.INTEGER, "INTEGER", 0, 0,false,false,
                                             new IntegerConverter()));
 
-            registerjdbcSQLType(int.class, new TypeRef<Integer>(java.sql.Types.BIGINT, 
+            registerjdbcSQLType(int.class, new TypeRef<Integer>(java.sql.Types.INTEGER, 
                             "INTEGER", 0, 0,false,false, new IntegerConverter()));
-            
-            registerjdbcSQLType(Long.class, new TypeRef<Long>(java.sql.Types.BIGINT,
+
+            registerjdbcSQLType(Long.class, new TypeRef<Long>(java.sql.Types.INTEGER,
                             "INTEGER", 0, 0, false,false,new LongConverter()));
-            
-            registerjdbcSQLType(long.class, new TypeRef<Long>(java.sql.Types.BIGINT,
+            registerjdbcSQLType(long.class, new TypeRef<Long>(java.sql.Types.INTEGER,
                             "INTEGER", 0, 0, false,false, new LongConverter()));
 
-            
             registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
-                            java.sql.Types.VARCHAR, "TEXT", 0, 0, false,false,
+                            java.sql.Types.REAL, "REAL", 0, 0, false,false,
                             new BigDecimalConverter()));// also NUMERIC
 
             registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.REAL,
@@ -137,7 +136,7 @@ public class SQLiteHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.VARCHAR,
-                            "TEXT", 0, 0, true,false, new DateConverter(DateUtils.ISO_DATE_FORMAT,TimeZone.getDefault())));
+                            "TEXT", 0, 0, true,false,new DateConverter(DateUtils.ISO_DATE_FORMAT,TimeZone.getDefault())));
             
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT,TimeZone.getDefault())));
