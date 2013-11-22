@@ -15,8 +15,6 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.SQLTimeoutException;
-import java.sql.SQLTransactionRollbackException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -74,8 +72,26 @@ public abstract class JdbcTypeHelper {
 		return false;
 	}
 	
+	private Class<?> getClass(String name){
+		try {
+			return Class.forName(name);
+		}catch (Exception ex){
+			return null;
+		}
+	}
+	private Class<?> sqlTransactionRollbackException(){
+		return getClass("java.sql.SQLTransactionRollbackException");
+	}
+	
+	private Class<?> queryTimeoutException(){
+		return getClass("java.sql.SQLTimeoutException");
+	}
 	public boolean hasTransactionRolledBack(Throwable ex){
-		return getEmbeddedException(ex, SQLTransactionRollbackException.class) != null  ;
+		Class<?> sqlTransactionRollBackException = sqlTransactionRollbackException();
+		if (sqlTransactionRollBackException == null){
+			return false;
+		}
+		return getEmbeddedException(ex,sqlTransactionRollBackException) != null  ;
 	}
 	
 	public boolean isQueryTimeoutSupported(){ 
@@ -94,7 +110,8 @@ public abstract class JdbcTypeHelper {
 	}
 	
 	public boolean isQueryTimeoutException(SQLException ex){
-		if (ex instanceof SQLTimeoutException){
+		Class<?> queryTimeOutException = queryTimeoutException(); 
+		if (queryTimeOutException != null && queryTimeOutException.isInstance(ex)){
 			return true;
 		}
 		return false;

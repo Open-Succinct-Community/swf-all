@@ -6,11 +6,6 @@ public class SWFTimeoutException extends RuntimeException{
 		super();
 	}
 
-	public SWFTimeoutException(String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
 	public SWFTimeoutException(String message, Throwable cause) {
 		super(message, cause);
 	}

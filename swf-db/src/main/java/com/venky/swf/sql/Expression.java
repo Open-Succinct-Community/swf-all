@@ -58,7 +58,7 @@ public class Expression {
 		return chunks;
 	}
 	
-	public <T> Expression(String columnName,Operator op, @SuppressWarnings("unchecked") T... values){
+	public <T> Expression(String columnName,Operator op, T... values){
 		this.columnName = columnName; 
 		this.op = op ;
 		this.values = new SequenceSet<BindVariable>();

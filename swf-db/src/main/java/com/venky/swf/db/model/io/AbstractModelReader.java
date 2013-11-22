@@ -22,6 +22,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 	public MimeType getMimeType(){
 		return FormatHelper.getMimeType(getFormatClass());
 	}
+	
 	@Override
 	public M read(T source) {
 		M m = createInstance();

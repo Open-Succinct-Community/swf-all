@@ -324,9 +324,7 @@ public class Select extends SqlStatement{
         } finally {
             if (st != null){
                 try {
-                    if (!st.isClosed()){
-                        st.close();
-                    }
+                    st.close();
                 } catch (SQLException ex) {
                     throw new RuntimeException(ex);
                 }

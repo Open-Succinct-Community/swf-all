@@ -484,9 +484,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         fieldValidators.add(new IntegerRangeValidator());
         modelValidators.add(new UniqueKeyValidator());
     }
-
+    
     protected boolean isModelValid(MultiException ex) {
-        List<String> fields = reflector.getFields();
+        List<String> fields = reflector.getEditableFields();
         boolean ret = true;
         for (String field : fields) {
         	MultiException fieldException = new MultiException();

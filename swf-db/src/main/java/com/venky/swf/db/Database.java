@@ -377,10 +377,11 @@ public class Database implements _IDatabase{
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static void loadTablesFromDB() {
+		ResultSet tablesResultSet = null;
 		try { 
 			Connection conn =  getInstance().getConnection();
 			DatabaseMetaData meta = conn.getMetaData();
-            ResultSet tablesResultSet = meta.getTables(null, getSchema(), "%", new String[]{"TABLE"});
+            tablesResultSet = meta.getTables(null, getSchema(), "%", new String[]{"TABLE"});
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = tables.get(tableName);
@@ -389,14 +390,29 @@ public class Database implements _IDatabase{
 					tables.put(tableName, table);
 				}
 				table.setExistingInDatabase(true);
-                ResultSet columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
-				while (columnResultSet.next()) {
-                    String columnName  = columnResultSet.getString("COLUMN_NAME");
-                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
-				}
+                ResultSet columnResultSet = null; 
+                try {
+	                columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
+					while (columnResultSet.next()) {
+	                    String columnName  = columnResultSet.getString("COLUMN_NAME");
+	                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
+					}
+                }finally {
+                	if (columnResultSet != null){
+                		columnResultSet.close();
+                	}
+                }
 			}
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);
+		}finally {
+			if (tablesResultSet != null){
+				try {
+					tablesResultSet.close();
+				} catch (SQLException ex) {
+					throw new RuntimeException(ex);
+				}
+			}
 		}
 	}
 

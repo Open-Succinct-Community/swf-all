@@ -466,7 +466,18 @@ public class ModelReflector<M extends Model> {
     	return singleColumnUniqueKeys;
     }
     
-    
+    private List<String> editableFields = null;
+    public List<String> getEditableFields(){
+    	if (editableFields == null){
+    		editableFields = new SequenceSet<String>();
+        	for (String field:getFields()){
+        		if (isFieldEditable(field)){
+        			editableFields.add(field);
+        		}
+        	}
+    	}
+    	return editableFields;
+    }
     public List<String> getRealFields(){
         return getFields(new RealFieldMatcher());
     }
