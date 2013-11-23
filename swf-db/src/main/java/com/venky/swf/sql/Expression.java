@@ -11,6 +11,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -311,8 +312,16 @@ public class Expression {
 					return true;
 				}
 			}
+			//value not null
 			if (values.size() == 1){
 				Object v = values.get(0).getValue();
+				if (v == null){
+					return false;
+				}
+				if (v.getClass() != value.getClass()){
+					value = Database.getJdbcTypeHelper().getTypeRef(v.getClass()).getTypeConverter().valueOf(value);
+					//Compare Apples and apples not apples and oranges.
+				}
 				if (op == Operator.EQ){
 					return ObjectUtil.equals(v,value);
 				}else if (value instanceof Comparable){

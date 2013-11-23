@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -108,7 +109,11 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			if (value instanceof String){
 				value = ((String)value).trim();
 			}else if (value instanceof java.util.Date){
-				value = new Date(((java.util.Date)value).getTime());
+				if (Timestamp.class.isAssignableFrom(hint)){
+					value = new Timestamp(((java.util.Date)value).getTime());
+				}else {
+					value = new Date(((java.util.Date)value).getTime());
+				}
 			}
 		}
 		return value;
