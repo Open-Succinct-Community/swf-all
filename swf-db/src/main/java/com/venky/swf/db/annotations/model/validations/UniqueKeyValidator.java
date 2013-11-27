@@ -33,7 +33,7 @@ public class UniqueKeyValidator extends ModelValidator{
 		return true;
 	}
 	
-	public class UniqueConstraintViolatedException extends RuntimeException {
+	public static class UniqueConstraintViolatedException extends RuntimeException {
 
 		/**
 		 * 

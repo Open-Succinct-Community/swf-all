@@ -219,6 +219,9 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			SequenceSet<Record> set = new SequenceSet<Record>();
 			set.add(record);
 			setCachedResult(getIdWhereClause(record),set);
+			for (Expression ukCondition: getTable().getReflector().getUniqueKeyConditions(record)){
+				setCachedResult(ukCondition, set);
+			}
 		}
 		hasLockedRecords = hasLockedRecords || record.isLocked();
 		return ret;

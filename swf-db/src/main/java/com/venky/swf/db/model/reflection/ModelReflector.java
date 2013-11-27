@@ -11,6 +11,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -408,14 +409,14 @@ public class ModelReflector<M extends Model> {
     	return uniqueKeys.values();
     }
     
-    public Collection<Expression> getUniqueKeyConditions(M m){
+    public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy){
     	List<Expression> col = new ArrayList<Expression>();
     	for (UniqueKey<M> key : getUniqueKeys() ){
 			Expression where = new Expression(Conjunction.AND);
 			boolean ignoreWhereClause = false;
 			for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
 				String fieldName = fd.getFieldName(); 
-				Object value = get(m, fieldName);
+				Object value = get(recordOrProxy, fieldName);
 				if (value != null){
 					where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
 				}else {
@@ -1406,14 +1407,17 @@ public class ModelReflector<M extends Model> {
 		ModelReflector.modelReflectorByModelClass.clear();
 	}
 
+	private Set<String> autoIncrementColumns = null; 
     public Set<String> getAutoIncrementColumns() {
-    	Set<String> columns = new IgnoreCaseSet();
-	    for (String f : getFields()){
-	    	ColumnDescriptor d = getColumnDescriptor(f);
-            if (d.isAutoIncrement()){ 
-                columns.add(d.getName());
+    	if (autoIncrementColumns == null){
+        	autoIncrementColumns = new IgnoreCaseSet();
+    	    for (String f : getFields()){
+    	    	ColumnDescriptor d = getColumnDescriptor(f);
+                if (d.isAutoIncrement()){ 
+                    autoIncrementColumns.add(d.getName());
+                }
             }
-        }
-        return columns;
+    	}
+        return Collections.unmodifiableSet(autoIncrementColumns);
 	}    
 }

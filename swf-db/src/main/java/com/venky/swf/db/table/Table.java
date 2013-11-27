@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.LowerCaseStringCache;
@@ -102,13 +103,34 @@ public class Table<M extends Model> {
     	if (modelClass == null){
     		return null;
     	}else {
-    		return tableName(modelClass.getSimpleName());
+	        return modelClassTableNameCache.get(modelClass);
     	}
     }
-    
-    public static String tableName(String modelClassSimpleName){
-        return StringUtil.underscorize(StringUtil.pluralize(modelClassSimpleName));
+    public static <M extends Model> String tableName(String modelClassSimpleName){
+    	return modelNameTableNameCache.get(modelClassSimpleName);
     }
+    
+    private static Cache<Class<? extends Model>,String> modelClassTableNameCache = new Cache<Class<? extends Model>,String>(){
+		private static final long serialVersionUID = 468418078793388786L;
+
+		@Override
+		protected String getValue(Class<? extends Model> modelClass) {
+			String modelClassSimpleName = modelClass.getSimpleName();
+			return modelNameTableNameCache.get(modelClassSimpleName);
+		}
+    	
+    };
+    
+    private static Cache<String,String> modelNameTableNameCache = new Cache<String,String>(){
+		private static final long serialVersionUID = 468418078793388786L;
+
+		@Override
+		protected String getValue(String modelClassSimpleName) {
+			return StringUtil.underscorize(StringUtil.pluralize(modelClassSimpleName));
+		}
+    	
+    };
+
     public static String getSimpleModelClassName(String tableName){
     	return StringUtil.camelize(StringUtil.singularize(tableName));
     }
