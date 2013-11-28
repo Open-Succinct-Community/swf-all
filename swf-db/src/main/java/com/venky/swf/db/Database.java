@@ -225,8 +225,10 @@ public class Database implements _IDatabase{
 					transactionStack.pop();
 					Config.instance().getLogger(Database.class.getName()).fine("Connection.commit:" + getCaller());
 					getConnection().commit();
+					txnUserAttributes.getCurrentValue().clear(); // Now restore the initial value to a clear map.
 					registerLockRelease();
 					Registry.instance().callExtensions("after.commit",this);
+					
 				} catch (SQLException e) {
 					throw new RuntimeException(e);
 				}
