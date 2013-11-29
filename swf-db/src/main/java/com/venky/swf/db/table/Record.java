@@ -50,6 +50,23 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     public Set<String> getFieldNames(){
         return fieldValues.keySet();
     }
+    private boolean equals(Object o1,Object o2){
+    	boolean ret = false ; 
+    	if (o1 == o2){
+    		ret = true;
+    	}else if (o1 != null){
+    		if (o1.equals(o2)){
+    			ret = true;
+    		}else if (o2 != null){
+    			if (o1.getClass() != o2.getClass()){
+        			BindVariable b1 = new BindVariable(o1);
+        			BindVariable b2 = new BindVariable(o2);
+        			ret = b1.getValue().equals(b2.getValue()); // May be they are equal in db terms as the underlying db types for the 2 classes are same.
+    			}
+    		}
+    	}
+    	return ret ;
+    }
     /** 
      * 
      * @param fieldName
@@ -59,10 +76,10 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     public Object put(String fieldName, Object value){
         Object oldValue =  get(fieldName); 
 
-        if (!ObjectUtil.equals(oldValue, value)){
+        if (!equals(oldValue, value)){
         	if (isFieldDirty(fieldName)){//if already dirty..
         		Object oldestValue = dirtyFields.get(fieldName);
-        		if (ObjectUtil.equals(oldestValue,value)){ // Value is rolled back.
+        		if (equals(oldestValue,value)){ // Value is rolled back.
         			dirtyFields.remove(fieldName);
         		}
     		}else {
