@@ -78,6 +78,12 @@ public interface Model extends _Identifiable {
 	public void setCreatedAt(Timestamp createdAt);
     	
     public void save();
+    /** 
+     * Provided for performance during installations. 
+     * This method is not recommended to be be used in applications generally. 
+     * @param noValidations
+     */
+    public void save(boolean noValidations);
     public void destroy();
     public void init();
     public boolean isAccessibleBy(User user);

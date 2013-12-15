@@ -98,7 +98,11 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 						value = cell.getStringCellValue();
 					}
 				}catch (IllegalStateException ex){
-					value = cell.getStringCellValue();
+					try {
+						value = cell.getStringCellValue();
+					}catch (IllegalStateException e){
+						throw new RuntimeException(cell.toString(), e);
+					}
 				}
 				break;
 			default:
