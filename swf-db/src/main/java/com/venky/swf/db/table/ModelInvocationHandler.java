@@ -448,12 +448,16 @@ public class ModelInvocationHandler implements InvocationHandler {
 	private static <M extends Model> List<Class<?>> getModelImplClasses(Class<M> modelClass){
 		return modelImplClassesCache.get(modelClass);
 	}
-
-    public void save() {
+	public void save() {
+		save(true);
+	}
+    public void save(boolean validate) {
         if (!isDirty()) {
             return;
         }
-        validate();
+        if (validate){
+        	validate();
+        }
         beforeSave();
         if (record.isNewRecord()) {
         	callExtensions("before.create");
