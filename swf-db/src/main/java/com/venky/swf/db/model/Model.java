@@ -77,13 +77,17 @@ public interface Model extends _Identifiable {
 	public Timestamp getCreatedAt();
 	public void setCreatedAt(Timestamp createdAt);
     	
+	/**
+	 * Calls {@link #save(boolean)} with true.
+	 */
     public void save();
     /** 
      * Provided for performance during installations. 
-     * This method is not recommended to be be used in applications generally. 
-     * @param noValidations
+     * This method is not recommended to be be used in applications generally.
+     * @see #save() 
+     * @param performValidations may be passed as false to bypass validations.
      */
-    public void save(boolean noValidations);
+    public void save(boolean performValidations);
     public void destroy();
     public void init();
     public boolean isAccessibleBy(User user);
