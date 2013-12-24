@@ -2,13 +2,14 @@ package com.venky.swf.extensions;
 
 import com.venky.swf.menu._IMenuBuilder;
 import com.venky.swf.routing.Config;
+import com.venky.swf.routing.Router;
 
 public class MenuBuilderFactory {
 	private MenuBuilderFactory(){
 	}
 	private static Object createObject(String className){
 		try {
-			return Class.forName(className).newInstance();
+			return Router.instance().getClass(className).newInstance();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -29,11 +30,6 @@ public class MenuBuilderFactory {
     private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";
 
 	public _IMenuBuilder getMenuBuilder(){ 
-		_IMenuBuilder b =  Config.instance().getObject(_IMenuBuilder.MENU_BUILDER_OBJECT_KEY);
-		if (b == null){
-			b = (_IMenuBuilder) createObject(Config.instance().getProperty(MENU_BUILDER_CLASS));
-			Config.instance().setObject(_IMenuBuilder.MENU_BUILDER_OBJECT_KEY,b);
-		}
-		return b;
+		return (_IMenuBuilder) createObject(Config.instance().getProperty(MENU_BUILDER_CLASS));
 	}
 }

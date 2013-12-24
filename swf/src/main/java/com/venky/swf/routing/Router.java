@@ -121,7 +121,7 @@ public class Router extends AbstractHandler {
 		}
     }
 	
-	private Class<?> getClass(String className) throws ClassNotFoundException{
+	public Class<?> getClass(String className) throws ClassNotFoundException{
 		return Class.forName(className,true,getLoader());
 	}
 	

@@ -13,9 +13,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -121,29 +119,6 @@ public class Config {
     String getMenuBuilderClassName(){
         return properties.getProperty(MENU_BUILDER_CLASS);
     }
-    
-    private Map<String,Object> attributes = new HashMap<String, Object>();
-	@SuppressWarnings("unchecked")
-	public <V> V getObject(String key){
-    	return (V)attributes.get(key);
-    }
-	
-	public <V> void setObject(String key,V object){
-    	attributes.put(key,object);
-    }
-	
-    Object builder = null;
-    public void setMenuBuilder(Object builder){
-    	this.builder = builder;
-    }
-    /**
-     * 
-     * @return an instance of _IMenuBuilder
-     */
-    public Object getMenuBuilder(){
-    	return builder;
-    }
-    
     
     public List<String> getModelClasses(){ 
     	List<String> modelClasses = new ArrayList<String>();
