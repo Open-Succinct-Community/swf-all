@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -200,19 +201,28 @@ public class ModelController<M extends Model> extends Controller {
 				if (q.length() > 0 ){
 					q.append(" OR ");
 				}
+				q.append("(");
 				Method referredModelIdGetter = getReflector().getFieldGetter(f);
-				if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
-					q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(QueryParser.escape(strQuery)).append("*");
-				}else {
-					q.append(f).append(":").append(QueryParser.escape(strQuery)).append("*");
+				for (StringTokenizer tk = new StringTokenizer(strQuery); tk.hasMoreTokens() ; ){
+					if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null){
+						q.append(f.substring(0,f.length()-"_ID".length())).append(":").append(QueryParser.escape(tk.nextToken())).append("*");
+					}else {
+						q.append(f).append(":").append(QueryParser.escape(tk.nextToken())).append("*");
+					}
+					if (tk.hasMoreTokens()){
+						q.append(" AND ");
+					}
 				}
+				q.append(")");
 			}
 			try { 
 				Integer.valueOf(strQuery);
 				if (q.length() > 0){
 					q.append(" OR ");
 				}
+				q.append("(");
 				q.append("ID:").append(strQuery);
+				q.append(")");
 			}catch (NumberFormatException ex){
 				// Nothing to do.
 			}
