@@ -180,7 +180,7 @@ public class DelayedTaskManager {
 			de.setData(new ByteArrayInputStream(os.toByteArray()));
 			de.save();
 		}catch(IOException ex){
-			throw new RuntimeException(ex);
+			throw new RuntimeException(task.getClass().getName() ,ex);
 		}
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Set;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
@@ -121,7 +122,7 @@ public class LuceneIndexer {
 				if (!ref.isBLOB()){
 					addedFields = true;
 					if (Reader.class.isAssignableFrom(ref.getJavaClass())){
-						doc.add(new Field(fieldName,(Reader)converter.valueOf(value)));
+						doc.add(new Field(fieldName,converter.toString(value),Field.Store.NO,Index.ANALYZED));
 					}else{
 						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
 						String sValue = converter.toString(value);
