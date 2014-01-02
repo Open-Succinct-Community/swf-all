@@ -100,7 +100,8 @@ public class Select extends SqlStatement{
 			for (int i = 0 ; i < orderBy.length ; i ++ ){
 				String[] split = splitOrderByColumn(orderBy[i]);
 				String column = split[0];
-				if (ref.getColumnDescriptor(ref.getFieldName(column)).isVirtual()){
+				String field = ref.getFieldName(column);
+				if (field == null || ref.getColumnDescriptor(field).isVirtual()){
 					return false;
 				}
 			}

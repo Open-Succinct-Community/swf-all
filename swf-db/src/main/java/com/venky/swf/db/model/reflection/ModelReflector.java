@@ -580,7 +580,7 @@ public class ModelReflector<M extends Model> {
 	    	//Mostly column name and fieldnames are same.
 	    	if (!fieldColumn.containsKey(columnOrFieldName)){
 		    	List<String> fields = columnFields.get(columnOrFieldName);
-		    	int numFields = fields.size();
+		    	int numFields = fields == null ? 0 : fields.size();
 		    	if (numFields == 1){
 		    		return fields.get(0); 
 		    	}else if (numFields == 0){
