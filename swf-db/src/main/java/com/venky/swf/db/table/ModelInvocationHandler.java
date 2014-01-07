@@ -42,6 +42,7 @@ import com.venky.swf.db.annotations.column.validations.processors.ExactLengthVal
 import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
 import com.venky.swf.db.annotations.column.validations.processors.IntegerRangeValidator;
 import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
+import com.venky.swf.db.annotations.column.validations.processors.MinLengthValidator;
 import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
 import com.venky.swf.db.annotations.column.validations.processors.NumericRangeValidator;
 import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
@@ -480,6 +481,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     static {
         fieldValidators.add(new ExactLengthValidator());
         fieldValidators.add(new MaxLengthValidator());
+        fieldValidators.add(new MinLengthValidator());
         fieldValidators.add(new NotNullValidator());
         fieldValidators.add(new RegExValidator());
         fieldValidators.add(new EnumerationValidator());

@@ -5,18 +5,17 @@ import java.io.IOException;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.extensions.BeforeModelSaveExtension;
-import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.extensions.AfterModelSaveExtension;
 import com.venky.swf.plugins.bugs.db.model.Issue;
 import com.venky.swf.plugins.bugs.db.model.Note;
 import com.venky.swf.plugins.mail.db.model.User;
 
-public class IssueBeforeSaveExtension extends BeforeModelSaveExtension<Issue>{
+public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 	static {
-		registerExtension(new IssueBeforeSaveExtension());
+		registerExtension(new IssueAfterSaveExtension());
 	}
 	@Override
-	public void beforeSave(Issue model) {
+	public void afterSave(Issue model) {
 		Note note = Database.getTable(Note.class).newRecord();
 		note.setIssueId(model.getId());
 		boolean persistNote = false;
