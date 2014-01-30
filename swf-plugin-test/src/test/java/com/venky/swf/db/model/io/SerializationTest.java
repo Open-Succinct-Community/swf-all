@@ -13,9 +13,11 @@ import org.junit.Test;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.sql.*;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Router;
+import com.venky.swf.db.model.User;
 import com.venky.swf.test.db.model.xml.Country;
 import com.venky.swf.test.db.model.xml.State;
 import com.venky.xml.XMLElement;
@@ -27,6 +29,7 @@ public class SerializationTest {
 	}
 	@Test
 	public void test() throws IOException {
+    Database.getInstance().open(new Select().from(User.class).execute().get(0));
 		Country c = Database.getTable(Country.class).newRecord();
 		c.setName("India");
 		c.save();
@@ -51,7 +54,8 @@ public class SerializationTest {
 		ModelReader<M,T> mr = ModelIOFactory.getReader(modelClass,formatClass);
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		mw.write(models, baos, ModelReflector.instance(modelClass).getFields());
+    
+		mw.write(models, baos, ModelReflector.instance(modelClass).getRealFields());
 		System.out.println(baos.toString());
 		List<M> deserialized = mr.read(new ByteArrayInputStream(baos.toByteArray()));
 		Assert.assertEquals(deserialized.size(),models.size());

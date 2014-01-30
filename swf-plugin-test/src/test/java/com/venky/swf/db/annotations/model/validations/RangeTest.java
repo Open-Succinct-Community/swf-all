@@ -24,7 +24,8 @@ public class RangeTest {
 				model.save();
 				Assert.fail("Save should have failed");
 			}catch (Exception e){
-				Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("RangeModelField:X Value out of Range:(0.0,1.0)"));
+          System.out.println(ExceptionUtil.getRootCause(e).getMessage());
+				Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("X must be between:(0.0,1.0)"));
 			}
 		}
 		for (double d = 0.0 ; d <= 1.0 ; d+= 0.1 ){
@@ -41,7 +42,8 @@ public class RangeTest {
 				}
 			}catch (Exception e){
 				if (y < 0 || y > 3){
-					Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("RangeModelField:Y Value out of Range:(0,3)"));
+          System.out.println(ExceptionUtil.getRootCause(e).getMessage());
+					Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("Y must be between (0,3)"));
 				}else {
 					Assert.fail("Save should have passed");
 				}
@@ -53,7 +55,8 @@ public class RangeTest {
 				model.save();
 				Assert.fail("Save should have failed");
 			}catch (Exception e){
-				Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("RangeModelField:X Value out of Range:(0.0,1.0)"));
+          System.out.println(ExceptionUtil.getRootCause(e).getMessage());
+				Assert.assertTrue(ExceptionUtil.getRootCause(e).getMessage().startsWith("X must be between:(0.0,1.0)"));
 			}
 		}
 		
