@@ -14,9 +14,9 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.Response;
-import com.venky.swf.db.model.io.AbstractModelReader;
-import com.venky.swf.db.model.io.AbstractModelWriter;
 import com.venky.swf.db.model.io.ModelIOFactory;
+import com.venky.swf.db.model.io.ModelReader;
+import com.venky.swf.db.model.io.ModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.BytesView;
@@ -24,8 +24,8 @@ import com.venky.swf.views.View;
 
 public class IntegrationAdaptor<M extends Model,T> {
 	
-	AbstractModelReader<M,T> reader ; 
-	AbstractModelWriter<M,T> writer ;  
+	ModelReader<M,T> reader ; 
+	ModelWriter<M,T> writer ;  
 	ModelReflector<M> modelReflector;  
 	Class<T> formatClass ;
 	private IntegrationAdaptor(Class<M> modelClass,Class<T> formatClass){

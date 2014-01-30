@@ -262,4 +262,7 @@ public class Router extends AbstractHandler {
     		TimerStatistics.dumpStatistics();
     	}
     }
+	public void reset() {
+		setLoader(new SWFClassLoader(getClass().getClassLoader()));
+	}
 }

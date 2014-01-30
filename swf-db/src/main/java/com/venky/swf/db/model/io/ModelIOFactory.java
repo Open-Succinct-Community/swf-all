@@ -16,11 +16,11 @@ public class ModelIOFactory {
 		writerfactories.put(formatClass,writerFactory);
 	}
 	@SuppressWarnings("unchecked")
-	public static <M extends Model, T, R extends ModelReader<M,T>> R getReader(Class<M> modelClass, Class<T> formatClass){
-		R reader = null; 
+	public static <M extends Model, T> ModelReader<M, T> getReader(Class<M> modelClass, Class<T> formatClass){
+		ModelReader<M, T> reader = null; 
 		ModelReaderFactory<T> readerFactory = (ModelReaderFactory<T>) readerfactories.get(formatClass);
 		if (readerFactory != null){
-			reader = (R) readerFactory.createModelReader(modelClass);
+			reader = (ModelReader<M, T>) readerFactory.createModelReader(modelClass);
 		}
 		
 		if (reader == null){
@@ -29,11 +29,11 @@ public class ModelIOFactory {
 		return reader;
 	}
 	@SuppressWarnings("unchecked")
-	public static <M extends Model,T , W extends ModelWriter<M,T>> W getWriter(Class<M> modelClass, Class<T> formatClass){
-		W writer = null ;
+	public static <M extends Model,T>  ModelWriter<M,T> getWriter(Class<M> modelClass, Class<T> formatClass){
+		ModelWriter<M, T> writer = null ;
 		ModelWriterFactory<T> writerFactory = (ModelWriterFactory<T>) writerfactories.get(formatClass);
 		if (writerFactory != null){
-			writer = (W)writerFactory.createModelWriter(modelClass);
+			writer = (ModelWriter<M, T>)writerFactory.createModelWriter(modelClass);
 		}
 		
 		if (writer == null){

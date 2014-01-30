@@ -169,7 +169,7 @@ public class ModelReflector<M extends Model> {
         return "ID";
     }
 	@SuppressWarnings("unchecked")
-	public <T> T get(Object o, String fieldName){
+	public <T extends Object> T get(Object o, String fieldName){
 		if (o == null){
 			return null;
 		}
@@ -778,7 +778,8 @@ public class ModelReflector<M extends Model> {
         	if (InputStream.class.isAssignableFrom(getter.getReturnType())){
 	    		String sizeFieldName = fieldName + "_CONTENT_SIZE";
 	    		if (fields.contains(sizeFieldName)){
-	    			return get(record,sizeFieldName);
+            Integer i = get(record,sizeFieldName);
+            return i;
 	    		}else {
 	    			InputStream is = get(record,fieldName);
 	    			try {

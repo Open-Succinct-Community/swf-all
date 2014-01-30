@@ -23,7 +23,6 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 		return FormatHelper.getMimeType(getFormatClass());
 	}
 	
-	@Override
 	public M read(T source) {
 		M m = createInstance();
 		FormatHelper<T> helper = FormatHelper.instance(source);
@@ -44,7 +43,9 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			
 			T refElement = helper.getElementAttribute(refElementName);
 			if (refElement != null){ 
-				Model referredModel = ModelIOFactory.getReader(referredModelClass,getFormatClass()).read(refElement);
+				Class<T> formatClass = getFormatClass();
+				ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>)ModelIOFactory.getReader(referredModelClass,formatClass);
+				Model referredModel = reader.read(refElement);
 				if (referredModel != null){
 					if (referredModel.getRawRecord().isNewRecord()) {
 						throw new RuntimeException("Cannot refer to data not yet pesisted." + refElement);

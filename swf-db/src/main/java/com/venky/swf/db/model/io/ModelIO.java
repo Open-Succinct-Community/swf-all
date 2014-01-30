@@ -12,7 +12,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.model.reflection.ModelReflector.FieldGetterMissingException;
 
-public class ModelIO<M extends Model> extends BeanIntrospector<M>{
+public class ModelIO<M extends Model> extends BeanIntrospector<M>{ 
 
 	protected ModelIO(Class<M> beanClass) {
 		super(beanClass);

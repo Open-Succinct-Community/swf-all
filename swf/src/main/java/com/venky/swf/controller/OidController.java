@@ -52,7 +52,7 @@ public class OidController extends Controller{
 	protected HtmlView createLoginView(){
 		invalidateSession();
 		HtmlView view = new HtmlView(getPath()) {
-			
+			 
 			@Override
 			protected void createBody(_IControl b) {
 				Form form = new Form();

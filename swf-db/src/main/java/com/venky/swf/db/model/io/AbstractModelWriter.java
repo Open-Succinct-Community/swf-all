@@ -38,7 +38,6 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		os.write(helper.toString().getBytes());
 	}
 
-	@Override
 	public void write(M record,T into, List<String> fields) {
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
@@ -63,7 +62,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	}
 	
 	private <R extends Model> void write(Class<R> referredModelClass, int id , T referredModelElement){
-		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,getFormatClass());
+		Class<T> formatClass = getFormatClass();
+		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
 		List<String> uniqueFields = referredModelReflector.getUniqueFields(); 

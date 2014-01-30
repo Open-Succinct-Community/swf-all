@@ -50,6 +50,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
+import com.venky.swf.routing.Router;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -91,6 +92,14 @@ public class Controller {
 		Config.instance().getLogger(StringUtil.valueOf(loggerName)).setLevel(Level.OFF);
 		return back();
     }
+    
+    public View reset_router(){
+    	if (Config.instance().isDevelopmentEnvironment()){
+        	Router.instance().reset();
+    	}
+    	return back();
+    }
+
     @RequireLogin(false)
     public View login(){
         if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null ) {
@@ -109,6 +118,7 @@ public class Controller {
 			return authenticate();
         }
     }
+    
     protected String loginSuccessful(){
 		String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
 		if (ObjectUtil.isVoid(redirectedTo)){
