@@ -55,6 +55,12 @@
   		<artifactId>swf</artifactId>
   		<version>[${archetypeVersion},)</version>
   	</dependency>
+  	<dependency>
+  		<groupId>org.apache.derby</groupId>
+  		<artifactId>derby</artifactId>
+  		<version>10.6.2.1</version>
+  	</dependency>
+    <!-- Uncomment dependencies as required
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
@@ -66,14 +72,10 @@
   		<version>5.1.10</version>
   	</dependency>
   	<dependency>
-  		<groupId>org.apache.derby</groupId>
-  		<artifactId>derby</artifactId>
-  		<version>10.6.2.1</version>
-  	</dependency>
-  	<dependency>
   		<groupId>postgresql</groupId>
   		<artifactId>postgresql</artifactId>
   		<version>9.1-901-1.jdbc4</version>
   	</dependency>
+    -->
   </dependencies>
 </project>
