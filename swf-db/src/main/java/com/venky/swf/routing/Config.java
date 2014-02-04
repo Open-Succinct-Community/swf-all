@@ -82,7 +82,7 @@ public class Config {
         return _instance;
     }
     private List<URL> resourceBaseurls = null;
-    public List<URL> getResouceBaseUrls(){
+    public List<URL> getResourceBaseUrls(){
     	return resourceBaseurls;
     }
     
@@ -123,7 +123,7 @@ public class Config {
     public List<String> getModelClasses(){ 
     	List<String> modelClasses = new ArrayList<String>();
 		for (String root : getModelPackageRoots()) {
-			for (URL url : getResouceBaseUrls()) {
+			for (URL url : getResourceBaseUrls()) {
         		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
 			}
 		}
