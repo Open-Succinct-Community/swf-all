@@ -99,7 +99,7 @@ public class Router extends AbstractHandler {
 	}
     public void loadExtensions(){
 		for (String root : Config.instance().getExtensionPackageRoots()){
-			for (URL url:Config.instance().getResouceBaseUrls()){
+			for (URL url:Config.instance().getResourceBaseUrls()){
 				for (String extnClassName : PackageUtil.getClasses(url, root.replace('.', '/'))){
 					try {
 						getClass(extnClassName);

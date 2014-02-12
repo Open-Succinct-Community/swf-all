@@ -19,7 +19,7 @@ public class SWFClassLoader extends ClassLoader {
 
 	public SWFClassLoader(ClassLoader parent) {
 		super(parent);
-		List<URL> watchedUrls = Config.instance().getResouceBaseUrls();
+		List<URL> watchedUrls = Config.instance().getResourceBaseUrls();
 		for (URL watchedUrl : watchedUrls) {
 			pathsHandled.add(getFile(watchedUrl, ""));
 		}
