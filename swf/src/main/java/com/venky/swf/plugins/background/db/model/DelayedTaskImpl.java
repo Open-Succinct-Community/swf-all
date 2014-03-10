@@ -8,8 +8,8 @@ import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
-import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.routing.Config;
 
@@ -21,19 +21,17 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public int compareTo(DelayedTask o2) {
 		int ret = 0 ;
-		Record r1 = getProxy().getRawRecord();
-		Record r2 = o2.getRawRecord();
-		
+		DelayedTask o1 = getProxy();
+		ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
 		for (String field: DelayedTask.DEFAULT_ORDER_BY_COLUMNS){
 			if (ret == 0){
-				Comparable v1 = (Comparable)r1.get(field);
-				Comparable v2 = (Comparable)r2.get(field);
-				
+				Comparable v1 = (Comparable)ref.get(o1,field);
+				Comparable v2 = (Comparable)ref.get(o2,field);
 				ret = v1.compareTo(v2);
 			}
 		}
 		
-		return 0;
+		return ret;
 	}
 	
 	public void execute(){

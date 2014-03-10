@@ -172,13 +172,17 @@ public class DelayedTaskManager {
 			throw new RuntimeException("Task already delayed.");
 		}
 		try {
-			DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
-			ByteArrayOutputStream os = new ByteArrayOutputStream(); 
-			ObjectOutputStream oos = new ObjectOutputStream(os);
-			oos.writeObject(task);
-			
-			de.setData(new ByteArrayInputStream(os.toByteArray()));
-			de.save();
+			if (workers.length == 0){
+				task.execute();
+			}else {
+				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+				ByteArrayOutputStream os = new ByteArrayOutputStream(); 
+				ObjectOutputStream oos = new ObjectOutputStream(os);
+				oos.writeObject(task);
+				
+				de.setData(new ByteArrayInputStream(os.toByteArray()));
+				de.save();
+			}
 		}catch(IOException ex){
 			throw new RuntimeException(task.getClass().getName() ,ex);
 		}
