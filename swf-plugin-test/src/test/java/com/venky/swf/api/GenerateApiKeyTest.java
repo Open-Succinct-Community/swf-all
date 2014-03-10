@@ -25,6 +25,7 @@ public class GenerateApiKeyTest {
 		menky.generateApiKey();
 		menky.save();
 		
+		Database.getInstance().getCurrentTransaction().rollback(null);
 		
 	}
 
