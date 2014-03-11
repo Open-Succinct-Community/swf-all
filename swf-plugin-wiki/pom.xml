@@ -44,12 +44,12 @@
   	<dependency>
         <groupId>${project.groupId}</groupId>
   		  <artifactId>swf</artifactId>
-        <version>${parent.version}</version>
+        <version>[2.2,)</version>
   	</dependency>
   	<dependency>
         <groupId>${project.groupId}</groupId>
   		  <artifactId>swf-plugin-collab</artifactId>
-        <version>${parent.version}</version>
+        <version>[2.2,)</version>
   	</dependency>
   	<dependency>
   		<groupId>org.pegdown</groupId>
