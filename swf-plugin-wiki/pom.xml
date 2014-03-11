@@ -9,7 +9,7 @@
   <artifactId>swf-plugin-wiki</artifactId>
   <name>swf-plugin-wiki</name>
   <description>swf-plugin-wiki</description>
-  <version>2.4-SNAPSHOT</version>
+  <version>2.3-SNAPSHOT</version>
 
   <url>http://maven.apache.org</url>
   <licenses>
