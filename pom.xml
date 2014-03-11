@@ -76,6 +76,5 @@
     <module>swf-plugin-collab</module>
     <module>swf-plugin-bugs</module>
     <module>swf-plugin-mail</module>
-    <module>swf-plugin-wiki</module>
   </modules>
 </project>
