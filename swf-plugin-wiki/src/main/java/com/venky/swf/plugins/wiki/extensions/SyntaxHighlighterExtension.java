@@ -7,8 +7,11 @@ import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.Script;
 
 public class SyntaxHighlighterExtension implements Extension{
+	
 	static {
-		Registry.instance().registerExtension("after.create.head.pages/view", new SyntaxHighlighterExtension());
+		SyntaxHighlighterExtension ext = new SyntaxHighlighterExtension();
+		Registry.instance().registerExtension("after.create.head.pages/view", ext);
+		Registry.instance().registerExtension("after.create.head.pages/show", ext);
 	}
 
 	@Override
