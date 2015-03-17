@@ -44,6 +44,7 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
@@ -972,7 +973,7 @@ public class ModelReflector<M extends Model> {
 		        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
 		        cd.setAutoIncrement(isAutoIncrement == null? false : true);
 		        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
-		        if (colDef != null){
+		        if (colDef != null && colDef.value() != StandardDefault.NONE){
 		    		cd.setColumnDefault(toDefaultKW(typeRef,colDef));
 		        }
 		        return cd;

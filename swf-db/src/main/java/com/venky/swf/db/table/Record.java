@@ -118,7 +118,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         ResultSetMetaData meta = rs.getMetaData(); 
         for (int i = 1 ; i <= meta.getColumnCount() ; i ++ ){
         	Object columnValue = rs.getObject(i);
-        	String columnName = meta.getColumnName(i);
+        	String columnName = meta.getColumnLabel(i);
         	
         	
         	int type = meta.getColumnType(i);

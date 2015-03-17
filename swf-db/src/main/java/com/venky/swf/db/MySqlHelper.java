@@ -30,11 +30,11 @@ public class MySqlHelper extends JdbcTypeHelper{
     }
     @Override
     public String getCurrentTimeStampKW(){
-    	return "0000-00-00 00:00:00";
+    	return "CURRENT_TIMESTAMP";
     }
     @Override
     public String getCurrentDateKW(){
-    	return null ;
+    	return "CURRENT_DATE" ;
     }
 	public boolean isQueryTimeoutException(SQLException ex){
 		if (!super.isQueryTimeoutException(ex)){
@@ -114,7 +114,7 @@ public class MySqlHelper extends JdbcTypeHelper{
                             java.sql.Types.TIME, "TIME", 0, 0, true, true ,new TimeConverter()));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
-                            java.sql.Types.TIMESTAMP, "TIMESTAMP", 0, 0, true, true,
+                            java.sql.Types.TIMESTAMP, "DATETIME", 0, 0, true, false,
                             new TimestampConverter()));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(

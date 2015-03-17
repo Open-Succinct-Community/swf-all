@@ -1,6 +1,7 @@
 package com.venky.swf.db.annotations.column.defaulting;
 
 public enum StandardDefault {
+	NONE,
 	NULL,
 	ZERO,
 	ONE,
