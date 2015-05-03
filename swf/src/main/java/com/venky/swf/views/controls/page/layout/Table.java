@@ -79,7 +79,7 @@ public class Table extends Control{
             addControl(c);
             if (colspan > 1){
                 colspanConsumed += colspan;
-                c.setProperty("colspan", colspan);
+                c.setColspan(colspan);
             }else {
                 colspanConsumed ++;
             }
@@ -124,6 +124,10 @@ public class Table extends Control{
 		public Column(boolean heading){
             super(heading ? "th" : "td");
         }
+		
+		public void setColspan(int colspan){
+			setProperty("colspan", colspan);
+		}
     }
     public static class THead extends Control {
 		/**

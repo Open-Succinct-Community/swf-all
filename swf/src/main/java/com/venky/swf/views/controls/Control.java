@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -66,7 +67,10 @@ public class Control extends Properties implements _IControl{
     	addClass(className);
     }
     public void removeClass(String className){
-    	classes.remove(className);
+    	StringTokenizer tok = new StringTokenizer(className);
+    	while (tok.hasMoreTokens()){
+        	classes.remove(tok.nextToken());
+    	}
     	finalizeClassAttribute();
     }
     private void finalizeClassAttribute(){
@@ -79,12 +83,14 @@ public class Control extends Properties implements _IControl{
     	setProperty("class", classNames);
     }
     public void addClass(String className){
-    	classes.add(className);
+    	StringTokenizer tok = new StringTokenizer(className);
+    	while (tok.hasMoreTokens()){
+        	classes.add(tok.nextToken());
+    	}
     	finalizeClassAttribute();
     }
-
     public void setProperty(String name, Object value) {
-        super.setProperty(name, StringUtil.valueOf(value));
+    	super.setProperty(name, StringUtil.valueOf(value));
     }
     private String tag = null;
     private _IControl parent = null;

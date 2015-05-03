@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.string.StringUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
@@ -224,7 +225,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        			multiTab = new Tabs();
 	        			body.addControl(multiTab);
 	        		}
-	            	multiTab.addSection(tab,childModelAwareness.getLiteral(childClass.getSimpleName()));
+	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
+	        		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
+	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
 	        }    
 

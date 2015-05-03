@@ -35,9 +35,8 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         return appmenu;
     }
     protected void createUserMenu(_IPath path, Menu appmenu, User user){
-    	Menu userMenu = userMenu(path,user);
+    	Menu userMenu = userMenu(path,appmenu,user);
         userMenu.createMenuItem("Signout", "/logout");
-        appmenu.createMenuItem(user.getName(), userMenu);
     }
 
     protected void createApplicationMenu(_IPath path,Menu appmenu, User user){
@@ -49,8 +48,8 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         return ;
     }
 
-    protected Menu userMenu(_IPath path, User user){
-        Menu userMenu = new Menu();
+    protected Menu userMenu(_IPath path, Menu appmenu, User user){
+        Menu userMenu = appmenu.getSubmenu(user.getName());
         _IPath userPath = path.getModelAccessPath(User.class);
         
         if (userPath.canAccessControllerAction("edit", String.valueOf(user.getId()))){

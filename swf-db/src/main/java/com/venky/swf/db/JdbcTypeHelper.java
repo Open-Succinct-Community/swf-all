@@ -294,7 +294,7 @@ public abstract class JdbcTypeHelper {
     public abstract class NumberConverter<N extends Number> extends TypeConverter<N> {
 		@Override
 		public String getDisplayClassName() {
-			return "number";
+			return "number text-right";
 		}
     }
  

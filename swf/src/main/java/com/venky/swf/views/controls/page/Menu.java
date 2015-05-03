@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls.page.layout.Span;
 
 /**
  *
@@ -19,8 +20,17 @@ public class Menu extends Control implements _IMenu{
 	 */
 	private static final long serialVersionUID = 1L;
 	public Menu(){
-        super("ul");
+		this(true);
     }
+	private Menu(boolean isMainmenu){
+		super("ul");
+		if (isMainmenu){
+			addClass("nav navbar-nav");
+		}else {
+			addClass("dropdown-menu");
+			setProperty("role", "menu");
+		}
+	}
     
 	public boolean isEmpty(){
 		return getContainedControls().isEmpty();
@@ -35,12 +45,15 @@ public class Menu extends Control implements _IMenu{
 	    return mi;
 	}
 	private transient Map<String,Menu> subMenuMap = new HashMap<String, Menu>();
-    public MenuItem createMenuItem(String text,Menu subMenu){
+    
+	public MenuItem createMenuItem(String text,Menu subMenu){
         MenuItem mi = new MenuItem(text, subMenu) ;
+        mi.addClass("dropdown");
         addControl(mi);
         subMenuMap.put(text, subMenu);
         return mi;
     }
+    
     public static class MenuItem extends Control { 
         /**
 		 * 
@@ -61,14 +74,28 @@ public class Menu extends Control implements _IMenu{
         }
         public MenuItem(String text,Menu submenu){
             super("li");
-            setText(text);
+            addClass("dropdown");
+            
+            Link link = new Link();
+            link.setUrl("#");
+            link.setText(text);
+            link.addClass("dropdown-toggle");
+            link.setProperty("data-toggle", "dropdown");
+            link.setProperty("role", "button");
+            link.setProperty("aria-expanded", false);
+            
+            Span s = new Span();
+            s.addClass("caret");
+            
+            link.addControl(s);
+            addControl(link);
             addControl(submenu);
         }
     }
 	public Menu getSubmenu(String menuName) {
 		Menu subMenu = subMenuMap.get(menuName);
 		if (subMenu == null){
-			subMenu = new Menu();
+			subMenu = new Menu(false);
 			createMenuItem(menuName, subMenu);
 		}
 		return subMenu;

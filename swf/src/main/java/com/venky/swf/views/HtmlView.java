@@ -99,12 +99,12 @@ public abstract class HtmlView extends View{
     	
     	ERROR(){
     		public String toString(){
-    			return "error";
+    			return "error alert alert-warning";
     		}
     	},
     	INFO() {
     		public String toString(){
-    			return "info";
+    			return "info alert alert-success";
     		}
     	};
     	public String getSessionKey(){
@@ -127,18 +127,20 @@ public abstract class HtmlView extends View{
 	}
     
     protected void createHead(Head head){
-        head.addControl(new Css("/resources/scripts/jquery-ui/css/ui-lightness/jquery-ui-1.10.0.custom.css"));
-        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-1.9.0.js"));
-        head.addControl(new Script("/resources/scripts/jquery-ui/js/jquery-ui-1.10.0.custom.min.js"));
+        head.addControl(new Script("/resources/scripts/jquery/js/jquery.min.js"));
+
+        head.addControl(new Css("/resources/scripts/bootstrap/css/bootstrap.min.css"));
+        head.addControl(new Script("/resources/scripts/bootstrap/js/bootstrap.min.js"));
+
+        head.addControl(new Css("/resources/scripts/jquery.tablesorter/css/theme.bootstrap.min.css"));
+        head.addControl(new Script("/resources/scripts/jquery.tablesorter/js/jquery.tablesorter.min.js"));
+        head.addControl(new Script("/resources/scripts/jquery.tablesorter/js/jquery.tablesorter.widgets.min.js"));
+
         
-        head.addControl(new Css("/resources/scripts/jquery.tablesorter/themes/blue/style.css"));
-        head.addControl(new Script("/resources/scripts/jquery.tablesorter/jquery.tablesorter.js"));
-        head.addControl(new Script("/resources/scripts/jquery.tablesorter/addons/pager/jquery.tablesorter.pager.js"));
+        head.addControl(new Script("/resources/scripts/bootstrap-ajax-typeahead/js/bootstrap-typeahead.min.js"));
         
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
-        head.addControl(new Script("/resources/scripts/swf/js/autocomplete.js"));
-        head.addControl(new Script("/resources/scripts/swf/js/datepicker.js"));
-        head.addControl(new Script("/resources/scripts/swf/js/tablesorter.js"));
+        head.addControl(new Script("/resources/scripts/swf/js/swf.js"));
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
     }
     /*
