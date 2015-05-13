@@ -17,5 +17,7 @@ public class LinkedImage extends Link{
 			XMLDocument svg = XMLDocument.getDocumentFor(getClass().getResourceAsStream(imageSource.substring("/resources".length())));
 			setText(svg.toString());
 		}
+		addClass("btn");
 	}
+	
 }

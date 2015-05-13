@@ -184,9 +184,9 @@ public class ModelController<M extends Model> extends Controller {
 					.add(new Expression("ID",Operator.IN,ids.toArray()))
 					.add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
 				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter<M>(getModelClass()));
-				return list(records);
+				return list(records,maxRecords == 0 || records.size() < maxRecords);
 			}else {
-				return list(new ArrayList<M>());
+				return list(new ArrayList<M>(),true);
 			}
 		}
 		return list(maxRecords);
@@ -238,18 +238,15 @@ public class ModelController<M extends Model> extends Controller {
     private View list(int maxRecords) {
         Select q = new Select().from(modelClass);
         List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>(getModelClass()));
-        if (maxRecords > 0 && records.size() ==  maxRecords){
-        	getPath().addInfoMessage("Refine your search if the record you are looking for is not listed.");
-        }
-        return list(records);
+        return list(records, maxRecords == 0 || records.size() < maxRecords);
     }
     
-    protected View list(List<M> records){
+    protected View list(List<M> records,boolean isCompleteList){
     	View v = null;
     	if (integrationAdaptor != null){
     		v = integrationAdaptor.createResponse(getPath(),records);
     	}else {
-    		View lv = constructModelListView(records);
+    		View lv = constructModelListView(records,isCompleteList);
     		if (lv instanceof HtmlView){
         		v = dashboard((HtmlView)lv); 
     		}else {
@@ -260,8 +257,8 @@ public class ModelController<M extends Model> extends Controller {
     	return v;
     }
     
-    protected View constructModelListView(List<M> records){
-    	return new ModelListView<M>(getPath(), getIncludedFields(), records);
+    protected View constructModelListView(List<M> records, boolean isCompleteList){
+    	return new ModelListView<M>(getPath(), getIncludedFields(), records, isCompleteList);
     }
     
     protected String[] getIncludedFields(){
@@ -271,7 +268,7 @@ public class ModelController<M extends Model> extends Controller {
 		return modelClass;
 	}
 
-    @SingleRecordAction(icon="/resources/images/show.png")
+    @SingleRecordAction(icon="glyphicon-eye-open",tooltip="See this record")
     @Depends("index")
     public View show(int id) {
     	M record = Database.getTable(modelClass).get(id);
@@ -352,7 +349,7 @@ public class ModelController<M extends Model> extends Controller {
     	return getSuccessView();
     }
     
-    @SingleRecordAction(icon="/resources/images/edit.png")
+    @SingleRecordAction(icon="glyphicon-edit")
     @Depends("save,index")
     public View edit(int id) {
     	ensureUI();
@@ -376,7 +373,7 @@ public class ModelController<M extends Model> extends Controller {
     	return new ModelEditView<M>(path, getIncludedFields(), record,formAction);
     }
 
-    @SingleRecordAction(icon="/resources/images/clone.png")
+    @SingleRecordAction(icon="glyphicon-duplicate",tooltip="Duplicate")
     @Depends("save,index")
     public View clone(int id){
     	M record = Database.getTable(modelClass).get(id);
@@ -407,6 +404,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     protected View blank(M record) {
+    	record.defaultFields();
     	getPath().fillDefaultsForReferenceFields(record,getModelClass());
 		record.setCreatorUserId(getSessionUser().getId());
 		record.setUpdaterUserId(getSessionUser().getId());
@@ -444,7 +442,7 @@ public class ModelController<M extends Model> extends Controller {
         return back();
     }
 
-    @SingleRecordAction(icon="/resources/images/destroy.png")
+    @SingleRecordAction(icon="glyphicon-trash")
     @Depends("index")
     public View destroy(int id){ 
 		M record = Database.getTable(modelClass).get(id);
@@ -933,6 +931,7 @@ public class ModelController<M extends Model> extends Controller {
 				value = StringUtil.valueOf(formData.get(fieldName));
 			}
 		}
+		Config.instance().getLogger(getClass().getName()).info(autoCompleteFieldName + "=" + value);
 		model.getRawRecord().remove(autoCompleteFieldName);
 		
     	

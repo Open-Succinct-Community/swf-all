@@ -12,16 +12,11 @@ public class Tabs extends Div{
 	public Tabs(){
 		super();
 		addControl(ul);
-		ul.addClass("nav nav-tabs");
 		addControl(content);
+		ul.addClass("nav nav-tabs");
 		content.addClass("tab-content");
 	}
-	int numTabsPopulated = 0; 
-	private void addSection(Div tabpane,String tabName){
-		addSection(tabpane, tabName, numTabsPopulated == 0);
-	}
-	public void addSection(Div tabpane,String tabName, boolean makeActive){
-		
+	public void addSection(Div tabpane,String tabName,boolean makeActive){
 		tabpane.addClass("tab-pane fade");
 		Link link = new Link("#"+tabpane.getProperty("id"));
 		link.setText(tabName);
@@ -35,8 +30,6 @@ public class Tabs extends Div{
 			li.addClass("active");
 			tabpane.addClass("in active");
 		}
-		
-		numTabsPopulated ++;
 	}
 	
 

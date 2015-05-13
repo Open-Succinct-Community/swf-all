@@ -12,8 +12,14 @@ import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.LinkedImage;
 import com.venky.swf.views.controls.page.buttons.Submit;
-import com.venky.swf.views.controls.page.layout.Table;
-import com.venky.swf.views.controls.page.layout.Table.Row;
+import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
+import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
+import com.venky.swf.views.controls.page.layout.Glyphicon;
+import com.venky.swf.views.controls.page.layout.Span;
+import com.venky.swf.views.controls.page.text.CheckBox;
+import com.venky.swf.views.controls.page.text.DateBox;
+import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
@@ -28,57 +34,137 @@ public class LoginView extends HtmlView{
     }
     @Override
     protected void createBody(_IControl b) {
-        String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
 
-    	b.addControl(new LinkedImage("/resources/images/oid.png","/oid/login" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to)));
+    	String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
+
+    	FluidContainer loginPanel = new FluidContainer();
+    	loginPanel.addClass("application-pannel");
+    	b.addControl(loginPanel);
     	
+    	Column applicationDescPannel = loginPanel.createRow().createColumn(3,6);
+    	applicationDescPannel.addClass("text-center");
+    	
+
     	String applicationName = Config.instance().getProperty("swf.application.name", "Application Login");
     	Label appLabel = new Label(applicationName);
-    	
-        Table table = new Table();
-        table.addClass("login");
+    	appLabel.addClass("application-title");
+        appLabel.addControl(new LinkedImage("/resources/images/oid.png","/oid/login" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to)));
 
-        Label lbluser = new Label("User: ");
-        TextBox txtUser = new TextBox();
-        txtUser.setProperty("name", "name");
+        applicationDescPannel.addControl(appLabel);
+        
+        Form form = new Form();
+        form.setAction(getPath().controllerPath(),"login");
+        form.setMethod(Form.SubmitMethod.POST);
+        
+        loginPanel.addControl(form);
+        loginPanel.addControl(getStatus());
 
-        Row row = table.createRow();
-        row.createColumn(2).addControl(appLabel);
+        FormGroup fg = new FormGroup();
+    	fg.createTextBox("User", "name",false);
+    	form.addControl(fg);
     	
-        row = table.createRow();
-        row.createColumn().addControl(lbluser);
-        row.createColumn().addControl(txtUser);
-        
-        Label lblPassword = new Label("Password: ");
-        PasswordText txtPassword = new PasswordText();
-        txtPassword.setProperty("name", "password");
-        
-        row = table.createRow();
-        row.createColumn().addControl(lblPassword);
-        row.createColumn().addControl(txtPassword);
-        
+        fg = new FormGroup();
+    	fg.createTextBox("Password", "password",true);
+    	form.addControl(fg);
+
         if (!ObjectUtil.isVoid(_redirect_to)){
             TextBox hidden = new TextBox();
             hidden.setVisible(false);
             hidden.setName("_redirect_to");
             hidden.setValue(_redirect_to);
-            table.createRow().createColumn().addControl(hidden);
+            form.addControl(hidden);
         }
         
-        Submit sbm = new Submit();
-        row = table.createRow();
-        Table.Column column = row.createColumn(); 
-        column.addControl(sbm);
-        column.setProperty("colspan", "2");
-        
-        Form form = new Form();
-        form.setAction(getPath().controllerPath(),"login");
-        form.setMethod(Form.SubmitMethod.POST);
-        form.addControl(table);
-        b.addControl(form);
-        b.addControl(getStatus());
-        
+        fg = new FormGroup();
+        fg.createSubmit("Login");
+        form.addControl(fg);
         
     }
-    
+
+    private class FormGroup extends Div{
+    	public FormGroup(){
+    		addClass("row");
+    	}
+
+    	/**
+    	 * 
+    	 */
+    	private static final long serialVersionUID = 4813631487870819257L;
+
+    	
+    	public Input createTextBox(String label, String fieldName , boolean password){
+    		Input box = password ? new PasswordText() : new TextBox();
+    		
+    		box.setName(fieldName);
+    		box.addClass("form-control");
+    			
+    		Label lbl = new Label(label);
+    		lbl.setProperty("for", box.getId());
+    		lbl.addClass("control-label");
+    		lbl.addClass("col-sm-offset-3 col-sm-1");
+    		
+    		Div div = new Div();
+    		div.addClass("col-sm-4");
+    		div.addControl(box);
+    		
+    		addControl(lbl);
+    		addControl(div);
+    		return box;
+    	}
+    	
+    	public CheckBox createCheckBox(String label, String fieldName) {
+    		Div div = new Div();
+    		div.addClass("col-sm-offset-4 col-sm-4");
+    		addControl(div);
+    		
+    		Div divcb = new Div();
+    		divcb.addClass("checkbox");
+    		div.addControl(divcb);
+    		
+    		Label lblCheckBox = new Label(label);
+    		CheckBox cb = new CheckBox();
+    		lblCheckBox.addControl(cb);
+    		divcb.addControl(lblCheckBox);
+    		
+    		cb.setName(fieldName);
+    		return cb;
+    	}
+
+    	public Submit createSubmit(String label){
+    		Div div = new Div();
+    		div.addClass("col-sm-offset-4 col-sm-4");
+    		addControl(div);
+    		
+    		Submit submit = new Submit(label);
+    		div.addControl(submit);
+    		return submit;
+    	}
+    	
+    	public DateBox createDateBox(String label,String fieldName){
+    		DateBox box = new DateBox();
+    		
+    		box.setName(fieldName);
+    		box.addClass("form-control");
+    			
+    		Label lbl = new Label(label);
+    		lbl.setProperty("for", box.getId());
+    		lbl.addClass("control-label");
+    		lbl.addClass("col-sm-offset-3 col-sm-1");
+    		
+    		Span span = new Span();
+    		span.addClass("input-group-addon");
+    		span.addControl(new Glyphicon("glyphicon-calendar","Open Calendar"));
+    		
+    		Div div = new Div();
+    		div.addClass("col-sm-4 input-group date ");
+    		div.addControl(box);
+    		div.addControl(span);
+    		
+    		
+    		addControl(lbl);
+    		addControl(div);
+    		return box;
+    	}
+    }
+
 }

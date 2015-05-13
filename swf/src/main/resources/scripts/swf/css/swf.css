@@ -11,3 +11,42 @@
     margin-right:auto;
 }
 
+.application-title { 
+  font-size:25px;
+}
+.application-panel { 
+  padding:25px;
+}
+
+@media (min-width:768px){
+  .form-group .control-label{
+    padding-top:7px;
+    margin-bottom:0;
+    text-align:right
+  }
+}
+
+.form-group .check-box { 
+  margin-top:10px;
+}
+
+.tablesorter thead th {
+  white-space: nowrap;
+}
+.tablesorter tbody td {
+  white-space: nowrap;
+}
+
+.panel-heading span.glyphicon , thead th span.glyphicon{ 
+  padding-left : 7px;
+}
+
+div.empty-row { 
+  padding: 1em ;
+}
+.hot-link { 
+  padding-left: 7px;
+}
+.hot-link .glyphicon {
+  font-size: 20px
+}

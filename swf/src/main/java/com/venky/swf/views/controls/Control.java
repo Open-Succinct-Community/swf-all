@@ -51,14 +51,16 @@ public class Control extends Properties implements _IControl{
     		remove("title");
     	}
     }
-
+    protected final String getDefaultCssClass(){
+    	return LowerCaseStringCache.instance().get(
+    			StringUtil.underscorize(getClass().getSimpleName()).replace('_','-'));
+    }
     public Control(String tag, String... pairs) {
         this.tag = tag;
-        addClass(LowerCaseStringCache.instance().get(getClass().getSimpleName()));
         setProperty("id", String.valueOf(nextId()));
-
         Properties p = ObjectUtil.createProperties(true, pairs);
         putAll(p);
+        addClass(getDefaultCssClass());
     }
     
     SequenceSet<String> classes = new SequenceSet<String>();
@@ -79,8 +81,12 @@ public class Control extends Properties implements _IControl{
     		classNames.append(cn);
     		classNames.append(" ");
     	}
-    	classNames.setLength(classNames.length()-1);
-    	setProperty("class", classNames);
+    	if (classNames.length() > 0) {
+    		classNames.setLength(classNames.length()-1);
+        	setProperty("class", classNames);
+    	}else {
+    		remove("class");
+    	}
     }
     public void addClass(String className){
     	StringTokenizer tok = new StringTokenizer(className);

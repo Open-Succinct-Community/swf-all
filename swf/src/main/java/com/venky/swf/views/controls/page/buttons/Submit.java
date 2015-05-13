@@ -20,5 +20,6 @@ public class Submit extends Button{
         super();
         setProperty("type", "submit");
         setProperty("value", label);
+        addClass("btn btn-primary");
     }
 }

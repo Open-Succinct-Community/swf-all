@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -25,12 +26,16 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.model.ModelAwareness.OrderBy;
 import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.Table;
+import com.venky.swf.views.controls.page.layout.Table.Column;
+import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.model.FieldUIMetaProvider;
 
-public class ModelListTable<M extends Model> extends Table{
+public class ModelListTable<M extends Model> extends Div{
 
 	private static final long serialVersionUID = 3569299125414888353L;
 
@@ -46,15 +51,18 @@ public class ModelListTable<M extends Model> extends Table{
 		return modelAwareness;
 	}
 
+	private Table table = new Table();
 	public ModelListTable(Path path, ModelAwareness modelAwareness, FieldUIMetaProvider metaProvider) {
-		addClass("hfill");
-		addClass("tablesorter");
+		addControl(table);
+		addClass("table-responsive");
+		table.addClass("table-fixedheader");
+		table.addClass("tablesorter");
 		this.modelAwareness = modelAwareness;
 		this.metaprovider = metaProvider;
 	}
 	
 	public void addRecords(List<M> records){
-        Row header = createHeader();
+        Row header = table.createHeader();
         BitSet showAction = addHeadingsForLineLevelActions(header);
         
         addHeadings(header);
@@ -67,7 +75,7 @@ public class ModelListTable<M extends Model> extends Table{
         int numActions = getSingleRecordActions().size();
         for (int i = 0 ; i < numActions ; i ++ ){
         	if (!showAction.get(i)){
-        		removeColumn(i-numActionsRemoved);
+        		table.removeColumn(i-numActionsRemoved);
         		numActionsRemoved ++; // Once a column is removed the indexes are shifted left. 
         	}
         }
@@ -109,6 +117,7 @@ public class ModelListTable<M extends Model> extends Table{
         	column.setText(literal);
         	if (indexedFields.contains(fieldName)){
             	column.addClass("indexed");
+            	column.addControl(new Glyphicon("glyphicon-search","Search would include this column."));
         	}
         	Integer currentMaxFieldWidth = maxFieldWidth.get(fieldName);
         	if (currentMaxFieldWidth == null || currentMaxFieldWidth < literal.length()){
@@ -146,12 +155,21 @@ public class ModelListTable<M extends Model> extends Table{
     	}
     	
     	
-    	for (String field: getIncludedFields()){
+    	Bucket pctTotalSoFar = new Bucket();
+    	pctTotalSoFar.increment(numActions);
+    	for (Iterator<String> fieldIterator = getIncludedFields().iterator(); fieldIterator.hasNext() ;){
+    		String field = fieldIterator.next();
     		if (!getMetaprovider().isFieldVisible(field)){
     			continue;
     		}
     		int currentFieldWidth = fieldWidthMap.get(field) + fieldOffset;
+    		long pctRemaining = 100 - pctTotalSoFar.longValue();
     		long pctWidth = (long)Math.ceil((currentFieldWidth * 100.0) / total.doubleValue() );
+    		if (!fieldIterator.hasNext()){
+    			pctWidth = Math.max(pctWidth, pctRemaining);
+    			//When no more fields max it out.
+    		}
+    		pctTotalSoFar.increment(pctWidth);
     		Column column = columns.get(i);
     		column.setProperty("width",  pctWidth +"%");
     		i++;
@@ -258,6 +276,7 @@ public class ModelListTable<M extends Model> extends Table{
                 control.addClass(converter.getDisplayClassName());
             }
         }
+        control.setProperty("width", "100%");
         
         return control;
 	}
@@ -315,7 +334,7 @@ public class ModelListTable<M extends Model> extends Table{
     	}finally {
     		checkingIndexActionAccessibility.stop();
     	}
-        Row row = createRow();
+        Row row = table.createRow();
         addLineLevelActions(row, record, showAction);
         addFields(row, record);
     }

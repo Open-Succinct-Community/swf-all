@@ -108,4 +108,6 @@ public interface Model extends _Identifiable {
     @IS_VIRTUAL
     @HIDDEN
     public boolean isDirty();
+    
+    public void defaultFields();
 }

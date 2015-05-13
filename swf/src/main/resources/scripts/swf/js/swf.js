@@ -39,9 +39,6 @@ $(function(){
         }
         var hidden_field_name = name.replace("_AUTO_COMPLETE_","");
 
-
-
-
         var values = (function(){
                 var v = {} ;
 
@@ -53,7 +50,6 @@ $(function(){
                 }
 
 
-                //:not([name^="_AUTO"])')
                 $inputs.each(function() { 
                   if (this.name == name || 
                       this.name.indexOf("_AUTO_COMPLETE_") < 0 ){
@@ -105,22 +101,30 @@ $(function(){
                             });
 
                     }
-                  }
+                  },
+                  matcher:function(item){
+                        return ~item.toLowerCase().indexOf(this.query.toLowerCase()) || ~item.toLowerCase().indexOf(this.query.toLowerCase().replace("%","")) 
+                                || ~item.toLowerCase().indexOf(this.query.toLowerCase().replace("*","")) 
+                  },
                   ajax : { 
                       url: autocompleteurl ,//+ request.term ,
                       method: "get",
                       triggerLength : 1,
                       loadingClass: "loading-circle",
                       preDispatch : function(query){ 
-                            showLoadingMask(true);
-                            return { search : values() }
-                          }
-                      preProcess :  function(xmlresponse){ 
-                                    response( $('entry',xmlresponse).map(function(){ 
-                                        return { label: $(this).attr("name"), value:  $(this).attr("name") , id: $(this).attr("id") };
-                                    }));}
-                      }
-                  }) ;
+                            if (query == "*" || query == "%" ) {
+                              field = $(':input[name="'+name+'"]'); 
+                              field.val("");
+                            }
+                            return  values();
+                          },
+                      preProcess :  function(json){ 
+                                      return json.entries;
+                                    }
+                  }
+
+        }) ;
+    });
 });
 
 /* Focus on first editable field. */
@@ -138,8 +142,8 @@ $(function() {
 
 /* Set DatePicker for dateboxes */
 $(function(){
-    $(".datebox").each(function(index){
-        $(this).datetimepicker({format: 'DD/MM/YY'});
+    $(".date-box").each(function(index){
+        $(this).datetimepicker({format: 'DD/MM/YYYY'});
     });
 });
 
@@ -168,15 +172,28 @@ $(function(){
 
             if (!column){
                     $(this)
-                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , 
+                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller'] , 
+                                    widgetOptions: { 
+                                          zebra : [ "odd", "even" ] ,
+                                          scroller_rowHighlight : 'hover',
+                                          scroller_height : 300
+                                    },
+                                    headerTemplate: '{content} {icon}',
                                       textExtraction: textExtractor
                              });
             } else {
                     $(this)
-                      .tablesorter({ widthFixed: true, dateFormat: 'uk', widgets: ['zebra'] , sortList: [[column,order]] ,
-                                      textExtraction: textExtractor});
+                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller' ] , 
+                                    widgetOptions: { 
+                                          zebra : [ "odd", "even" ] ,
+                                          scroller_rowHighlight : 'hover',
+                                          scroller_height : 300
+                                    },
+                                      headerTemplate: '{content} {icon}',
+                                      sortList: [[column,order]] , textExtraction: textExtractor});
             }
     });
 
 });
+
 

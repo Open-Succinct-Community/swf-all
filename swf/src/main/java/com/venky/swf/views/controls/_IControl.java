@@ -8,4 +8,5 @@ public interface _IControl {
 	public void setParent (_IControl parent);
 	public List<_IControl> getContainedControls();
 	public String getTag();
+	public boolean isVisible();
 }

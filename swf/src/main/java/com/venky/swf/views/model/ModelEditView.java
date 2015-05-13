@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
@@ -27,15 +28,13 @@ import com.venky.swf.views.controls.model.ModelAwareness;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.HotLink;
-import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
-import com.venky.swf.views.controls.page.layout.Table;
-import com.venky.swf.views.controls.page.layout.Table.Column;
-import com.venky.swf.views.controls.page.layout.Table.Row;
-import com.venky.swf.views.controls.page.layout.Table.TBody;
-import com.venky.swf.views.controls.page.layout.Table.THead;
+import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
+import com.venky.swf.views.controls.page.layout.FluidContainer.Row;
+import com.venky.swf.views.controls.page.layout.FluidTable;
+import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
@@ -75,33 +74,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     public int getNumColumnsPerRow(){ 
         return 2 * getNumFieldsPerRow();
     }
-    private Row getRow(Table table,boolean newRowIfFull){
-        Row row = null;
-        if (table.getContainedControls().isEmpty()){
-            row = table.createRow();
-        }else {
-            List<_IControl> rows = table.getContainedControls();
-            _IControl c = rows.get(rows.size()-1);
-            if (c instanceof Row) {
-            	row = (Row)c;
-            }else if (c instanceof TBody || c instanceof THead){
-            	rows = c.getContainedControls();
-            	if (rows.isEmpty()){
-            		if (c instanceof TBody) {
-            			row = table.createRow();
-            		}else {
-            			row = table.createHeader();
-            		}
-            	}else {
-            		row =  (Row)rows.get(rows.size() - 1);
-            	}
-        	}
-        }
-        if (row.numColumns() >= getNumColumnsPerRow() && newRowIfFull){
-            row = table.createRow();
-        }
-        return row;
-    }
 
     protected String getFormAction(){ 
     	if (getPath().canAccessControllerAction(formAction) || (getRecord().getRawRecord().isNewRecord() && getPath().canAccessControllerAction(formAction, null))){
@@ -110,29 +82,23 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     		return "back";
     	}
     }
-    private Row rpadLastRow(Table table){
-        Row r = getRow(table, false);
-        if (r.numColumns() < getNumColumnsPerRow()){
-        	r.createColumn(getNumColumnsPerRow() - r.numColumns());
-        }
-        return r;
-    }
     
     @Override
     protected void createBody(_IControl body) {
     	ModelReflector<M> reflector = getModelAwareness().getReflector();
-    	Form form = new Form();
-    	body.addControl(form);
+    	Form form =  new Form();
+    	
+    	final int NUM_COLUMNS_PER_ROW = 2; 
+    	FluidTable table = new FluidTable(NUM_COLUMNS_PER_ROW, form);
+    	
+    	
+    	body.addControl(table);
     	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
     	Config.instance().getLogger(getClass().getName()).fine("action:" + action);
     	
         form.setAction(action, getFormAction());
         form.setMethod(SubmitMethod.POST);
         
-    	Table table = new Table();
-        form.addControl(table);
-        
-
         Iterator<String> field = getIncludedFields().iterator();
         List<Control> hiddenFields = new ArrayList<Control>();
         
@@ -148,58 +114,67 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             if (!fieldData.isEnabled() && !fieldData.isVisible()){
             	continue;
             }
-            Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
+            
             if (reflector.isFieldVisible(fieldName)){
-            	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName); 
+                FluidTable tmp = new FluidTable(6);
+                Div fg = new Div();
+                fg.addClass("form-group");
+                
+                Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
+                fieldLabel.addClass("control-label");
+
+                boolean forceNewRow = false;
+            	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName);
             	if (fieldTooLong || fieldData instanceof FileTextBox){
-            		rpadLastRow(table);
+            		forceNewRow = true;
             	}
-                Row r = getRow(table,true);
-                r.createColumn().addControl(fieldLabel);
+
+            	tmp.addControl(fieldLabel, forceNewRow, 0, forceNewRow ? NUM_COLUMNS_PER_ROW : 2);
             	if (fieldTooLong){
-                    r.createColumn(getNumColumnsPerRow()-r.numColumns()).addControl(fieldData);
+                    tmp.addControl(fieldData,forceNewRow, 0,  forceNewRow ? NUM_COLUMNS_PER_ROW : 3);
             	}else {
-            		r.createColumn().addControl(fieldData);
+            		tmp.addControl(fieldData,false,0,3);
             	}
-            	r.getLastColumn().addClass("data");
+            	for (_IControl c : tmp.getContainedControls()){
+                	fg.addControl(c);
+            	}
+            	
+            	table.addControl(fg,forceNewRow,0,forceNewRow? NUM_COLUMNS_PER_ROW :1);
             }else {
                 hiddenFields.add(fieldData);
             }
             
             if (fieldData instanceof FileTextBox){
-            	rpadLastRow(table);
             	form.setProperty("enctype","multipart/form-data");
             	FileTextBox ftb = (FileTextBox)fieldData;
             	if (reflector.getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
-                    Row streamRow = table.createRow();
-                    Column streamColumn = streamRow.createColumn(getNumColumnsPerRow());
-                    streamColumn.addControl(ftb.getStreamLink());
+                    table.addControl(ftb.getStreamLink(), true, 0, NUM_COLUMNS_PER_ROW);
             	}
             }
         }
         
-        Row r = rpadLastRow(table);
-        Column c = r.getLastColumn();
+        Row fg = new Row();
+        fg.addClass("form-group");
+        fg.setVisible(false);
         for (Control hiddenField: hiddenFields){
-            c.addControl(hiddenField);
+            fg.addControl(hiddenField);
         }
-        
-        Row buttonRow = table.createRow();
+        table.addControl(fg);
+        Column column = table.addControl(new Div(), true, 0, 4); // Blank row.
+        column.addClass("empty-row");
         
         if (getRecord().getRawRecord().isNewRecord()) {
-            c = buttonRow.createColumn(getNumFieldsPerRow());
             Submit sbm = new Submit("Save & More");
             sbm.setToolTip("Done with this but more to go");
             sbm.setName("_SUBMIT_MORE");
-            c.addControl(sbm);
-
-            c = buttonRow.createColumn(getNumFieldsPerRow());
-        	sbm = new Submit("Done");
+            column = table.addControl(sbm,true,0,1);
+            column.addClass("text-right");
+            sbm = new Submit("Done");
         	sbm.setToolTip("Done with all");
 	        sbm.setName("_SUBMIT_NO_MORE");
-	        c.addControl(sbm);
+	        column = table.addControl(sbm,false,0,1);
+	        column.addClass("text-left");
         }else {
-            c = buttonRow.createColumn(getNumColumnsPerRow());
             String label = "Save";
             if (getFormAction().equals("back")){
             	label = "Close";
@@ -207,12 +182,15 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             
         	Submit sbm = new Submit(label);
 	        sbm.setName("_SUBMIT_NO_MORE");
-	        c.addControl(sbm);
+	        column = table.addControl(sbm,true,0,2);
+	        column.addClass("text-center");
 	    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
 
 	    	
 	    	Tabs multiTab = null;
-	    	for (Class<? extends Model> childClass: childModels){
+    		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
+    		
+    		for (Class<? extends Model> childClass: childModels){
 				Path childPath = new Path(getPath().getTarget()+"/"+ LowerCaseStringCache.instance().get(Database.getTable(childClass).getTableName()) + "/index");
 	        	childPath.setRequest(getPath().getRequest());
 	        	childPath.setResponse(getPath().getResponse());
@@ -226,7 +204,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        			body.addControl(multiTab);
 	        		}
 	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
-	        		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
+	        		if (ObjectUtil.isVoid(selectedTab)){
+	        			selectedTab = tabName;
+	        		}
 	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
 	        }    
@@ -253,14 +233,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     		
             if (!getFormAction().equals("back")){
                 HotLink sbm = new HotLink("#save");
-                sbm.addControl(new Image("/resources/images/save.png","Submit"));
+                sbm.addControl(new Glyphicon("glyph-icon-floppy-disk","Submit"));
                 sbm.setName("_SUBMIT_NO_MORE");
     	        links.add(sbm);
             }
 
 	        if (getRecord().getRawRecord().isNewRecord()) {
                 HotLink sbm = new HotLink("#save_and_move_to_next");
-                sbm.addControl(new Image("/resources/images/next.png","Save & use as template for next."));
+                sbm.addControl(new Glyphicon("glyphicon-forward","Save & use as template for next."));
                 sbm.setName("_SUBMIT_MORE");
                 links.add(sbm);
             }

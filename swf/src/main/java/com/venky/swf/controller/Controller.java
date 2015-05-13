@@ -28,6 +28,7 @@ import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.json.simple.JSONObject;
 
 import com.venky.core.date.DateUtils;
 import com.venky.core.log.TimerStatistics.Timer;
@@ -47,6 +48,7 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
@@ -63,8 +65,6 @@ import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.model.FileUploadView;
-import com.venky.xml.XMLDocument;
-import com.venky.xml.XMLElement;
 
 /**
  *
@@ -216,9 +216,10 @@ public class Controller {
         p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
         return new BytesView(getPath(), baos.toByteArray(),MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
-    public <M extends Model> XMLDocument autocompleteXML(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
-        XMLDocument doc = new XMLDocument("entries");
-        XMLElement root = doc.getDocumentRoot();
+    public <M extends Model> JSONObject autocompleteJSON(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
+    	FormatHelper<JSONObject> fh = FormatHelper.instance(MimeType.APPLICATION_JSON, "entries", true);
+    	
+        
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
 
@@ -259,7 +260,7 @@ public class Controller {
         
         for (M record:records){
             try {
-            	createEntry(root,converter.toString(fieldGetter.invoke(record)),record.getId());
+            	createEntry(fh,converter.toString(fieldGetter.invoke(record)),record.getId());
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             } catch (IllegalArgumentException ex) {
@@ -268,16 +269,18 @@ public class Controller {
                 throw new RuntimeException(ex);
             }
         }
-        return doc;
+        return fh.getRoot();
     }
     public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName ,String value){
-    	XMLDocument doc = autocompleteXML(modelClass, baseWhereClause, fieldName, value);
+    	JSONObject doc = autocompleteJSON(modelClass, baseWhereClause, fieldName, value);
+    	Config.instance().getLogger(getClass().getName()).info(doc.toString());
         return new BytesView(path, String.valueOf(doc).getBytes());
     }
-    private void createEntry(XMLElement root,Object name, Object id){
-        XMLElement elem = root.createChildElement("entry");
-        elem.setAttribute("name", name);
-        elem.setAttribute("id", id);
+    private void createEntry(FormatHelper<JSONObject> doc,Object name, Object id){
+        JSONObject elem = doc.createChildElement("entry");
+        FormatHelper<JSONObject> elemHelper = FormatHelper.instance(elem);
+        elemHelper.setAttribute("name", Database.getJdbcTypeHelper().getTypeRef(name.getClass()).getTypeConverter().toString(name));
+        elemHelper.setAttribute("id", Database.getJdbcTypeHelper().getTypeRef(id.getClass()).getTypeConverter().toString(id));
     }
 
     protected Map<String,Object> getFormFields(){

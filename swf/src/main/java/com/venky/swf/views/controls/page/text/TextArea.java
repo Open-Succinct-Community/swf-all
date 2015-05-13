@@ -11,6 +11,7 @@ public class TextArea extends Control implements _IAutoCompleteControl{
 
 	public TextArea() {
 		super("textarea", new String[]{"rows","1","cols",String.valueOf(ModelReflector.MAX_DATA_LENGTH_FOR_TEXT_BOX)});
+		addClass("form-control");
 	}
 	
 	@Override

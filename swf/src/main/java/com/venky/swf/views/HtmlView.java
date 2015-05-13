@@ -25,10 +25,13 @@ import com.venky.swf.views.controls.page.Css;
 import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page.Html;
-import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Script;
+import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
+import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
+import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.LineBreak;
-import com.venky.swf.views.controls.page.text.Label;
+import com.venky.swf.views.controls.page.layout.Paragraph;
 
 /**
  *
@@ -45,12 +48,12 @@ public abstract class HtmlView extends View{
     	    links = new SequenceSet<HotLink>();
         	HotLink home = new HotLink("/dashboard");
         	home.addClass("home");
-        	home.addControl(new Image("/resources/images/home.png","Home"));
+        	home.addControl(new Glyphicon("glyphicon-home","Home"));
         	links.add(home);
 
         	HotLink back = new HotLink(getPath().controllerPath() + "/back");
         	back.addClass("back");
-        	back.addControl(new Image("/resources/images/back.png","Back"));
+        	back.addControl(new Glyphicon("glyphicon-arrow-left","Back"));
 	        links.add(back);
     	}
     	return links;
@@ -94,7 +97,8 @@ public abstract class HtmlView extends View{
         Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
     }
     
-    private Label status = new Label(); 
+    private Paragraph status = new Paragraph();
+    
     public static enum StatusType {
     	
     	ERROR(){
@@ -139,6 +143,12 @@ public abstract class HtmlView extends View{
         
         head.addControl(new Script("/resources/scripts/bootstrap-ajax-typeahead/js/bootstrap-typeahead.min.js"));
         
+        head.addControl(new Script("/resources/scripts/moment/js/moment.min.js"));
+        head.addControl(new Css("/resources/scripts/eonasdan-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css"));
+        head.addControl(new Script("/resources/scripts/eonasdan-bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"));
+        
+        
+        
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
         head.addControl(new Script("/resources/scripts/swf/js/swf.js"));
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
@@ -151,14 +161,18 @@ public abstract class HtmlView extends View{
     	showErrorsIfAny(body,statusMessageIndex, includeStatusMessage);
     	createBody(body);
     }
-    protected Label getStatus(){
-    	return status;
+    protected Div getStatus(){
+    	FluidContainer container = new FluidContainer();
+    	Column column = container.createRow().createColumn(0, 12);
+    	column.addControl(status);
+    	return container;
     }
     
-    protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){
+    @SuppressWarnings("unchecked")
+	protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){
     	HttpSession session = getPath().getSession();
     	if (session != null && includeStatusMessage){
-    		body.addControl(index,status);
+    		body.addControl(index,getStatus());
 			List<String> errorMessages = getPath().getErrorMessages();
 			List<String> infoMessages = getPath().getInfoMessages();
 			

@@ -21,6 +21,7 @@ public class CheckBox extends Input{
 	public CheckBox(){
         super();
         setValue(true);
+        removeClass("form-control");
     }
 
     @Override

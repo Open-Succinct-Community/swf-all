@@ -32,9 +32,9 @@ public class UsersController extends ModelController<User>{
 		
 	}
 	
-    protected View constructModelListView(List<User> records){
+    protected View constructModelListView(List<User> records, boolean isCompleteList){
     	@SuppressWarnings("unchecked")
-		ModelListView<User> v = (ModelListView<User>) super.constructModelListView(records);
+		ModelListView<User> v = (ModelListView<User>) super.constructModelListView(records, isCompleteList);
     	v.getIncludedFields().remove("CHANGE_PASSWORD");
     	return v;
     }

@@ -49,7 +49,7 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     }
 
     protected Menu userMenu(_IPath path, Menu appmenu, User user){
-        Menu userMenu = appmenu.getSubmenu(user.getName());
+        Menu userMenu = appmenu.getSubmenu(user.getLongName());
         _IPath userPath = path.getModelAccessPath(User.class);
         
         if (userPath.canAccessControllerAction("edit", String.valueOf(user.getId()))){

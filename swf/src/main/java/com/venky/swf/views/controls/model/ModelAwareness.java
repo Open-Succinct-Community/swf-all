@@ -26,8 +26,8 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
 import com.venky.swf.views.controls.page.text.DateBox;
@@ -278,7 +278,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
     		return null;
     	}
     	Link actionLink = new Link();
-    	String icon = "/resources/images/show.png" ; 
+    	String icon = "glyphicon-asterisk" ; 
     	String tooltip = StringUtil.camelize(actionName);
     	if (sra != null) {
     		if (!ObjectUtil.isVoid(sra.icon())){
@@ -301,7 +301,8 @@ public class ModelAwareness implements FieldUIMetaProvider{
     	sAction.append("/").append(actionName).append("/").append(record.getId());
     	actionLink.setUrl(sAction.toString());
 
-    	actionLink.addControl(new Image(icon,tooltip));
+    	actionLink.addControl(new Glyphicon(icon,tooltip));
+    	//actionLink.addClass("btn");
 
     	return actionLink;
     }

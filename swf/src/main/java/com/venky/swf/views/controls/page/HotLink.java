@@ -21,7 +21,7 @@ public class HotLink extends Link{
 			addControl(c);
 		}
 	}
-	
+    
 	public HotLink(String tag, String url) {
 		super(tag, url);
 	}

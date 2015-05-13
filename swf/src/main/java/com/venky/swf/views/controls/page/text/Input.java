@@ -22,6 +22,7 @@ public abstract class Input extends Control{
         super("input",pairs);
         setVisible(true);
         setEnabled(true);
+        addClass("form-control");
     }
     
     public void setVisible(final boolean visible){

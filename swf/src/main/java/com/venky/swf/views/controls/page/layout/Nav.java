@@ -16,7 +16,7 @@ public class Nav extends Control{
 		addControl(fluidContainer);
 		
 		ul.addClass("nav navbar-nav");
-		addControl(ul);
+		fluidContainer.addControl(ul);
 		
 	}
 	

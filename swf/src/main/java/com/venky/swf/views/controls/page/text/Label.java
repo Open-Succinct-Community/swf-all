@@ -4,13 +4,13 @@
  */
 package com.venky.swf.views.controls.page.text;
 
-import com.venky.swf.views.controls.Control;
+import com.venky.swf.views.controls.page.layout.Div;
 
 /**
  *
  * @author venky
  */
-public class Label extends Control {
+public class Label extends Div {
     
     /**
 	 * 
@@ -21,6 +21,8 @@ public class Label extends Control {
         this.setText(label);
     }
     public Label(){
-        super("label");
+        super();
+        removeClass(getDefaultCssClass());
     }
+    
 }

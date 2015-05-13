@@ -11,10 +11,9 @@ import com.venky.swf.path.Path;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page._IMenu;
-import com.venky.swf.views.controls.page.layout.LineBreak;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
+import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
 import com.venky.swf.views.controls.page.layout.Nav;
-import com.venky.swf.views.controls.page.layout.Table;
-import com.venky.swf.views.controls.page.layout.Table.Column;
 
 /**
  *
@@ -56,21 +55,25 @@ public class DashboardView extends HtmlView{
                 b.addControl(nav);
             }
     	}
+    	
     	if (child == null){
     		super.showErrorsIfAny(b, b.getContainedControls().size(),includeStatusMessage);
     		return;
     	}
     	
-    	Table hotlinks = new Table();
+    	
+    	
+    	FluidContainer hotlinks = new FluidContainer();
     	hotlinks.addClass("hotlinks");
-    	Column hotlinksCell = hotlinks.createRow().createColumn();
     	b.addControl(hotlinks);
-    	b.addControl(new LineBreak());
-		for (_IControl link : child.getHotLinks()){
+    	
+    	Column hotlinksCell = hotlinks.createRow().createColumn(0,12);
+    	for (_IControl link : child.getHotLinks()){
 			if (!excludeLinks.contains(link)){
 	        	hotlinksCell.addControl(link);
 			}
 		}
+    	
         child._createBody(b,includeStatusMessage);
     }
 }

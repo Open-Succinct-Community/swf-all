@@ -39,7 +39,7 @@ public class Menu extends Control implements _IMenu{
 	public MenuItem createMenuItem(String text,String url){
 		return createMenuItem(text, url,null); 
     }
-	public MenuItem createMenuItem(String text,String url,Image img){
+	public MenuItem createMenuItem(String text,String url,Icon img){
 	    MenuItem mi = new MenuItem(text, url,img) ;
 	    addControl(mi);
 	    return mi;
@@ -62,7 +62,7 @@ public class Menu extends Control implements _IMenu{
 		public MenuItem(String text,String url){
             this(text,url,null);
         }
-		public MenuItem(String text,String url,Image img){
+		public MenuItem(String text,String url,Icon img){
             super("li");
             Link link = new Link();
             link.setUrl(url);

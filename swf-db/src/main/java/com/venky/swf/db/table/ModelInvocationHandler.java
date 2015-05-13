@@ -550,7 +550,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	defaultFields();
     	callExtensions("before.validate");
     }
-    protected void defaultFields(){
+    public void defaultFields(){
         if (!record.isNewRecord()){
         	proxy.setUpdatedAt(null);
         	proxy.setUpdaterUserId(null);
