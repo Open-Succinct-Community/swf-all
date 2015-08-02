@@ -20,7 +20,7 @@ $(function(){
 });
 
 $(function(){
-    $("[autocompleteurl]").each(function(index,element){
+    $("[autocompleteurl]:not([readonly])").each(function(index,element){
         var autocompleteurl = $(this).attr("autocompleteurl");
         var onAutoCompleteSelectUrl = $(this).attr("onAutoCompleteSelectUrl");
 
@@ -129,7 +129,7 @@ $(function(){
 
 /* Focus on first editable field. */
 $(function() {
-  $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):first').focus();
+  $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
 
 
   $("a[name='_SUBMIT_NO_MORE']").click(function (){ 
@@ -196,4 +196,22 @@ $(function(){
 
 });
 
-
+/* File upload button as bootstrap */
+$(document).on('change', '.btn-file :file', function () {
+    var input = $(this), numFiles = input.get(0).files ? input.get(0).files.length : 1, label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+    input.trigger('fileselect', [
+        numFiles,
+        label
+    ]);
+});
+$(document).ready(function () {
+    $('.btn-file :file').on('fileselect', function (event, numFiles, label) {
+        var input = $(this).parents('.input-group').find(':text'), log = numFiles > 1 ? numFiles + ' files selected' : label;
+        if (input.length) {
+            input.val(log);
+        } else {
+            if (log)
+                alert(log);
+        }
+    });
+});

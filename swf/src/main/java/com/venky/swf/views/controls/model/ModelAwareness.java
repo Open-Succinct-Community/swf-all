@@ -1,6 +1,7 @@
 package com.venky.swf.views.controls.model;
 
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.text.AutoCompleteText;
 import com.venky.swf.views.controls.page.text.CheckBox;
@@ -117,7 +119,10 @@ public class ModelAwareness implements FieldUIMetaProvider{
         Class<?> returnType = getter.getReturnType();
         TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
         Control control = null;
-        if (boolean.class.isAssignableFrom(returnType) || Boolean.class.isAssignableFrom(returnType)) {
+        if (!reflector.isFieldSettable(fieldName) && (String.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType))){
+        	control = new Div();
+        	control.setText(converter.toString(value));
+        }else if (boolean.class.isAssignableFrom(returnType) || Boolean.class.isAssignableFrom(returnType)) {
             CheckBox cb = new CheckBox();
             cb.setChecked(converter.toString(value));
             control = cb;
@@ -183,11 +188,12 @@ public class ModelAwareness implements FieldUIMetaProvider{
 	    		break;
 	    	case NON_EDITABLE:
         		control.setReadOnly(true);
+        		break;
 	    	default:
 	    		if (getReflector().isFieldSettable(fieldName)) {
-	    			control.setEnabled(true);
+	    			control.setReadOnly(false);
 	    		}else {
-	    			control.setEnabled(false);
+	    			control.setReadOnly(true);
 	    		}
 	            break;
         }

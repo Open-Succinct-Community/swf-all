@@ -24,7 +24,7 @@ public class ModelShowView<M extends Model> extends ModelEditView<M> {
         return false;
     }
     public Kind getFieldProtection(String fieldName){
-    	return Kind.DISABLED;
+    	return Kind.NON_EDITABLE;
     }
     @Override
     protected String getFormAction(){

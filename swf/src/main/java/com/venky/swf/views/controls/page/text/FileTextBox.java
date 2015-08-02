@@ -3,7 +3,9 @@ package com.venky.swf.views.controls.page.text;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.views.controls.page.Image;
+import com.venky.swf.views.controls.page.InputGroup;
 import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.layout.Span;
 
 
 public class FileTextBox extends Input{
@@ -12,7 +14,10 @@ public class FileTextBox extends Input{
 	 * 
 	 */
 	private static final long serialVersionUID = -3299839129375841151L;
-	
+	public FileTextBox() {
+		super();
+		removeClass("form-control");
+	}
 	@Override
 	protected String getInputType() {
 		return "file";
@@ -49,4 +54,27 @@ public class FileTextBox extends Input{
 		return link;
 	}
 	
+	public InputGroup getStylishVersion(){ 
+		if (this.getParent() != null){ 
+			throw new RuntimeException("Must call before adding to another control");
+		}
+		InputGroup ig = new InputGroup();
+		Span fakeButtonGroup = new Span();
+		fakeButtonGroup.addClass("input-group-btn");
+		ig.addControl(fakeButtonGroup);
+		
+		Span fakeButton = new Span();
+		fakeButton.addClass("btn btn-default btn-file");
+		fakeButton.setText("Browse...");
+		fakeButtonGroup.addControl(fakeButton);
+		fakeButton.addControl(this);
+		fakeButton.setEnabled(this.isEnabled());
+		
+		TextBox faketextBox =  new TextBox();
+		faketextBox.setReadOnly(true);
+		faketextBox.setEnabled(this.isEnabled());
+		
+		ig.addControl(faketextBox);
+		return ig;
+	}
 }

@@ -191,6 +191,22 @@ public abstract class HtmlView extends View{
             setStatus(hasError ? StatusType.ERROR : StatusType.INFO , message.toString());
 		}
     }
+    public static void addHotLinks(_IControl b,  SequenceSet<HotLink> links, SequenceSet<HotLink> excludeLinks){
+    	addHotLinks(b, b.getContainedControls().size(), links, excludeLinks);
+    }
+    public static void addHotLinks(_IControl b, int index, SequenceSet<HotLink> links, SequenceSet<HotLink> excludeLinks){
+    	FluidContainer hotlinks = new FluidContainer();
+    	hotlinks.addClass("hotlinks");
+    	b.addControl(index,hotlinks);
+    	
+    	Column hotlinksCell = hotlinks.createRow().createColumn(0,12);
+    	for (_IControl link : links){
+			if (!excludeLinks.contains(link)){
+	        	hotlinksCell.addControl(link);
+			}
+		}
+    	
+    }
     protected abstract void createBody(_IControl b);
     
 }

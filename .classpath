@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="swf-archetype/target/test-classes/projects/basic/project/basic/src/main/java"/>
+	<classpathentry kind="src" path="swf-db-io-json/src/main/java"/>
+	<classpathentry kind="src" path="swf-db-io-xls/src/main/java"/>
+	<classpathentry kind="src" path="swf-db-io-xml/src/main/java"/>
+	<classpathentry kind="src" path="swf-db/src/main/java"/>
+	<classpathentry kind="src" path="swf-maven-plugin/src/main/java"/>
+	<classpathentry kind="src" path="swf-plugin-archetype/target/test-classes/projects/basic/project/basic/src/main/java"/>
+	<classpathentry kind="src" path="swf-plugin-bugs/src/main/java"/>
+	<classpathentry kind="src" path="swf-plugin-collab/src/main/java"/>
+	<classpathentry kind="src" path="swf-plugin-mail/src/main/java"/>
+	<classpathentry kind="src" path="swf-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="swf/src/main/java"/>
+	<classpathentry kind="src" path="swf/src/test/java"/>
+	<classpathentry kind="lib" path="swf-archetype/target/swf-archetype-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-db-io-json/target/swf-db-io-json-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-db-io-xls/target/swf-db-io-xls-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-db-io-xml/target/swf-db-io-xml-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-db/target/swf-db-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-maven-plugin/target/swf-maven-plugin-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-plugin-archetype/target/swf-plugin-archetype-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-plugin-bugs/target/swf-plugin-bugs-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-plugin-collab/target/swf-plugin-collab-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf-plugin-mail/target/swf-plugin-mail-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="swf/target/swf-2.3-SNAPSHOT.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="swf-plugin-mail/target/classes"/>
+</classpath>

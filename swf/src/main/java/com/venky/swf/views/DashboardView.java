@@ -63,17 +63,9 @@ public class DashboardView extends HtmlView{
     	
     	
     	
-    	FluidContainer hotlinks = new FluidContainer();
-    	hotlinks.addClass("hotlinks");
-    	b.addControl(hotlinks);
-    	
-    	Column hotlinksCell = hotlinks.createRow().createColumn(0,12);
-    	for (_IControl link : child.getHotLinks()){
-			if (!excludeLinks.contains(link)){
-	        	hotlinksCell.addControl(link);
-			}
-		}
-    	
+    	addHotLinks(b, child.getHotLinks(), excludeLinks);
         child._createBody(b,includeStatusMessage);
     }
+    
+    
 }

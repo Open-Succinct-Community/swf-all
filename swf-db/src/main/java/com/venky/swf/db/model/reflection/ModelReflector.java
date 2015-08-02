@@ -117,7 +117,7 @@ public class ModelReflector<M extends Model> {
 	};
 	
 	/** 
-	 * Find extension points of the form prefix.<modelClass.getSimpleName()>.suffix for all relevant models in the right sequence.
+	 * Find extension points of the form prefix.<i>modelClass.getSimpleName()</i>.suffix for all relevant models in the right sequence.
 	 * @param prefix
 	 * @param suffix
 	 * @return

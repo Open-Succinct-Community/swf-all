@@ -19,8 +19,9 @@ public class IssuesController extends ModelController<Issue>{
 	public IssuesController(Path path) {
 		super(path);
 	}
-	protected HtmlView constructModelListView(List<Issue> records){
-		return new ModelListView<Issue>(getPath(), new String[]{"ID","TITLE","PRIORITY","STATUS","ASSIGNED_TO_ID","RESOLUTION","CREATOR_USER_ID"}, records);
+	@Override
+	protected HtmlView constructModelListView(List<Issue> records,boolean isCompleteList){
+		return new ModelListView<Issue>(getPath(), new String[]{"ID","TITLE","PRIORITY","STATUS","ASSIGNED_TO_ID","RESOLUTION","CREATOR_USER_ID"}, records, isCompleteList);
     }
 	
 	@Override

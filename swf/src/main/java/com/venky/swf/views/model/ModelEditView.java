@@ -33,8 +33,10 @@ import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Row;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidTable;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
+import com.venky.swf.views.controls.page.layout.Span;
 import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
@@ -86,13 +88,21 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     @Override
     protected void createBody(_IControl body) {
     	ModelReflector<M> reflector = getModelAwareness().getReflector();
+
+    	Tabs multiTab = new Tabs();
+		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
+		if (ObjectUtil.isVoid(selectedTab)){
+			selectedTab = "Detail";
+		}
+		body.addControl(multiTab);
+
     	Form form =  new Form();
     	
     	final int NUM_COLUMNS_PER_ROW = 2; 
     	FluidTable table = new FluidTable(NUM_COLUMNS_PER_ROW, form);
+    	multiTab.addSection(table,"Detail",StringUtil.equals("Detail", selectedTab));
     	
-    	
-    	body.addControl(table);
+    	addHotLinks(table, 0, getTabLinks(), new SequenceSet<HotLink>());
     	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
     	Config.instance().getLogger(getClass().getName()).fine("action:" + action);
     	
@@ -116,24 +126,29 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             }
             
             if (reflector.isFieldVisible(fieldName)){
-                FluidTable tmp = new FluidTable(6);
-                Div fg = new Div();
-                fg.addClass("form-group");
-                
-                Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
-                fieldLabel.addClass("control-label");
-
                 boolean forceNewRow = false;
             	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName);
             	if (fieldTooLong || fieldData instanceof FileTextBox){
             		forceNewRow = true;
             	}
 
-            	tmp.addControl(fieldLabel, forceNewRow, 0, forceNewRow ? NUM_COLUMNS_PER_ROW : 2);
+            	FluidTable tmp = new FluidTable(12);
+                Div fg = new Div();
+                fg.addClass("form-group");
+                
+                Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
+                fieldLabel.addClass("control-label");
+
+            	tmp.addControl(fieldLabel, forceNewRow, 0, forceNewRow ? 2 : 4);
+            	Control fieldControl = fieldData; 
+            	if (fieldControl instanceof FileTextBox){
+            		fieldControl = ((FileTextBox)fieldData).getStylishVersion();
+            	}
+            	
             	if (fieldTooLong){
-                    tmp.addControl(fieldData,forceNewRow, 0,  forceNewRow ? NUM_COLUMNS_PER_ROW : 3);
+                    tmp.addControl(fieldControl,true, 0,  12);
             	}else {
-            		tmp.addControl(fieldData,false,0,3);
+            		tmp.addControl(fieldControl,false,0,forceNewRow? 4 : 8);
             	}
             	for (_IControl c : tmp.getContainedControls()){
                 	fg.addControl(c);
@@ -148,7 +163,8 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	form.setProperty("enctype","multipart/form-data");
             	FileTextBox ftb = (FileTextBox)fieldData;
             	if (reflector.getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
-                    table.addControl(ftb.getStreamLink(), true, 0, NUM_COLUMNS_PER_ROW);
+                    Column column = table.addControl(ftb.getStreamLink(), true, 0, NUM_COLUMNS_PER_ROW);
+                    column.addClass("text-center");
             	}
             }
         }
@@ -187,9 +203,6 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
 
 	    	
-	    	Tabs multiTab = null;
-    		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
-    		
     		for (Class<? extends Model> childClass: childModels){
 				Path childPath = new Path(getPath().getTarget()+"/"+ LowerCaseStringCache.instance().get(Database.getTable(childClass).getTableName()) + "/index");
 	        	childPath.setRequest(getPath().getRequest());
@@ -197,16 +210,9 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	childPath.setSession(getPath().getSession());
 	        	ModelAwareness childModelAwareness = new ModelAwareness(childPath, null);
 	        	if (childPath.canAccessControllerAction()){
-	            	Div tab = new Div();
-	            	addChildModelToTab(childPath,tab,form);
-	        		if (multiTab == null){
-	        			multiTab = new Tabs();
-	        			body.addControl(multiTab);
-	        		}
+	            	FluidContainer tab = new FluidContainer();
+	            	addChildModelToTab(childPath,tab);
 	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
-	        		if (ObjectUtil.isVoid(selectedTab)){
-	        			selectedTab = tabName;
-	        		}
 	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
 	        }    
@@ -215,7 +221,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         hiddenHashField.setValue(Encryptor.encrypt(getModelAwareness().getHashFieldValue().toString()));
     }
     
-    protected void addChildModelToTab(Path childPath,Div tab ,Form form){
+    protected final void addChildModelToTab(Path childPath,Div tab){
     	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
     	excludeLinks.addAll(getHotLinks());
     	//Exclude back link on included child as it is a redundant link to the record in focus currently.
@@ -226,21 +232,22 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	view.createBody(tab,true,false,excludeLinks);
     }
     private SequenceSet<HotLink> links = null;
-    @Override
-    public SequenceSet<HotLink> getHotLinks(){
+    
+    
+    public SequenceSet<HotLink> getTabLinks(){
     	if (links == null){
-    		links = super.getHotLinks();
+    		links = new SequenceSet<HotLink>();
     		
             if (!getFormAction().equals("back")){
                 HotLink sbm = new HotLink("#save");
-                sbm.addControl(new Glyphicon("glyph-icon-floppy-disk","Submit"));
+                sbm.addControl(new Glyphicon("glyphicon-floppy-disk","Submit"));
                 sbm.setName("_SUBMIT_NO_MORE");
     	        links.add(sbm);
             }
 
 	        if (getRecord().getRawRecord().isNewRecord()) {
                 HotLink sbm = new HotLink("#save_and_move_to_next");
-                sbm.addControl(new Glyphicon("glyphicon-forward","Save & use as template for next."));
+                sbm.addControl(new Glyphicon("glyphicon-duplicate","Save & use as template for next."));
                 sbm.setName("_SUBMIT_MORE");
                 links.add(sbm);
             }

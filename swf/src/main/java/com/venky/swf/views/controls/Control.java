@@ -133,6 +133,10 @@ public class Control extends Properties implements _IControl{
     public void addControl(_IControl control) {
         addControl(containedControls.size(), control);
     }
+    public void removeControl(_IControl control){
+    	containedControls.remove(control);
+    	control.setParent(null);
+    }
 
     public List<_IControl> getContainedControls() {
         return Collections.unmodifiableList(containedControls);

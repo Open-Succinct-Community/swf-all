@@ -102,7 +102,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		return new ModelListTable<M>(path,getModelAwareness(),this);
 	}
     
-    static void createSearchForm(_IPath path, Div container){
+    public static void createSearchForm(_IPath path, Div container){
     	Row row = new Row();
     	container.addControl(row);
     	Column col = row.createColumn(0, 12);

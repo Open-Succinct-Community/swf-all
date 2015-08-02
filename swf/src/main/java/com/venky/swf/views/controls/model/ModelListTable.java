@@ -283,6 +283,7 @@ public class ModelListTable<M extends Model> extends Div{
 	protected void _addFields(Row row, M record){
 		int rowIndex = row.getParent().getContainedControls().size();
         for (String fieldName : getIncludedFields()) {
+        	
             Control control = getControl(getModelAwareness().getReflector().getModelClass().getSimpleName() + "["+rowIndex+"]." + fieldName,fieldName, record);
 
             if (!control.isEnabled() && !control.isVisible()){
@@ -299,6 +300,7 @@ public class ModelListTable<M extends Model> extends Div{
             	}
     		}else {
     			column = row.getLastColumn();
+    			control.setVisible(false);
     		}
             column.addControl(control);
 

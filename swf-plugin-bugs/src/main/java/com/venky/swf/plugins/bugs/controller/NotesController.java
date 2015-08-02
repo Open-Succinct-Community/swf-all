@@ -14,8 +14,8 @@ public class NotesController extends ModelController<Note> {
 		super(path);
 	}
 	
-    protected HtmlView constructModelListView(List<Note> records){
-    	return new ModelListView<Note>(getPath(), new String[]{"UPDATED_AT","NOTES","ATTACHMENT","CREATOR_USER_ID"},records);
+    protected HtmlView constructModelListView(List<Note> records,boolean isCompleteList){
+    	return new ModelListView<Note>(getPath(), new String[]{"UPDATED_AT","NOTES","ATTACHMENT","CREATOR_USER_ID"},records,isCompleteList);
     }
 
     

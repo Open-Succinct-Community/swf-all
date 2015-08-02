@@ -55,8 +55,8 @@ public class AutoCompleteText<M extends Model> extends Div {
     	addControl(descriptionControl);
     	descriptionControl.setVisible(true);
         descriptionControl.setEnabled(true);
-    	descriptionControl.setWaterMark("Enter space to see complete list");
-    	descriptionControl.setToolTip("Enter the first few characters or space to see the full list.");
+    	descriptionControl.setWaterMark("Enter * to see complete list");
+    	descriptionControl.setToolTip("Enter the first few characters or * to see the full list.");
     }
     
     
