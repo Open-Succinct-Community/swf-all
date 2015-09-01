@@ -54,9 +54,6 @@ public class SendGridMailer implements Mailer{
 			attributes.add(new BasicNameValuePair("api_user",sendGridAccountUserName));
 			attributes.add(new BasicNameValuePair("api_key",sendGridAccountPassword));
 			
-			// sendgrid.com/api/mail.send.json?to=venky%40shipx.in&toname=Venky&
-			// from=threesixtyperf%40succinct.in&fromname=ThreesixtyPerf&subject=Test&text=Test%20Mail%20Text&
-			// html=Text%20Mail%20%3Cb%3EHtml%3C%2Fb%3E&api_user=venkatramanm&api_key=succinct12
 			post.setEntity(new UrlEncodedFormEntity(attributes));
 			HttpResponse response = client.execute(post);
 			String sResponse = StringUtil.read(response.getEntity().getContent());
