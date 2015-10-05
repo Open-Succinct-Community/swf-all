@@ -75,6 +75,8 @@ public class StandardDefaulter {
 			case SOME_VALUE:
 				ret = args;
 				break;
+			case NONE:
+				break;
 		}
 		return ret;
 	}

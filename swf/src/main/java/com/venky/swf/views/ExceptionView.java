@@ -10,7 +10,7 @@ import java.io.StringWriter;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.model.Response;
+import com.venky.swf.db.model.HttpResponse;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
@@ -50,7 +50,7 @@ public class ExceptionView extends View{
 				}
 			}.write();
     	}else {
-    		IntegrationAdaptor<Response, ?> responseAdaptor = IntegrationAdaptor.instance(Response.class, FormatHelper.getFormatClass(p.getProtocol()));
+    		IntegrationAdaptor<HttpResponse, ?> responseAdaptor = IntegrationAdaptor.instance(HttpResponse.class, FormatHelper.getFormatClass(p.getProtocol()));
     		responseAdaptor.createStatusResponse((Path) getPath(), th).write();
     	}
 		

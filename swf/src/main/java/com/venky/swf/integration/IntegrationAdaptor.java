@@ -13,7 +13,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.Response;
+import com.venky.swf.db.model.HttpResponse;
 import com.venky.swf.db.model.io.ModelIOFactory;
 import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.io.ModelWriter;
@@ -117,8 +117,8 @@ public class IntegrationAdaptor<M extends Model,T> {
 	
 	
 	public View createStatusResponse(Path path, Throwable th){
-		IntegrationAdaptor<Response,T> respAdaptor = IntegrationAdaptor.instance(Response.class, getFormatClass());
-		Response response = Database.getTable(Response.class).newRecord();
+		IntegrationAdaptor<HttpResponse,T> respAdaptor = IntegrationAdaptor.instance(HttpResponse.class, getFormatClass());
+		HttpResponse response = Database.getTable(HttpResponse.class).newRecord();
 		if (th == null){
 			response.setStatus("OK");
 			return respAdaptor.createResponse(path,response,Arrays.asList("STATUS"));

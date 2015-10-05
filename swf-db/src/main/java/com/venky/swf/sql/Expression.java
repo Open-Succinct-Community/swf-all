@@ -58,6 +58,7 @@ public class Expression {
 		return chunks;
 	}
 	
+	@SafeVarargs
 	public <T> Expression(String columnName,Operator op, T... values){
 		this.columnName = columnName; 
 		this.op = op ;

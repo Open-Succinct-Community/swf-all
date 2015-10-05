@@ -634,7 +634,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        	throw new RecordNotFoundException();
 	        }
 	        
-			Database.getInstance().getCache(getReflector()).registerDestroy(getProxy());
+			Database.getInstance().getCache(getReflector()).registerDestroy((Model)getProxy());
 			Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
 	        afterDestroy();
 		}finally{
@@ -675,7 +675,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	//Do only for transaction tables as config cache would need to be reset to false after commit. This is just to avoid that unwanted loop over config records cached.
         }
 
-		Database.getInstance().getCache(getReflector()).registerUpdate(getProxy());
+		Database.getInstance().getCache(getReflector()).registerUpdate((Model)getProxy());
 		Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
     }
 
@@ -724,7 +724,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	record.setLocked(true);
         }
         
-    	Database.getInstance().getCache(getReflector()).registerInsert(getProxy());
+    	Database.getInstance().getCache(getReflector()).registerInsert((Model)getProxy());
     	Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
 	}
     
