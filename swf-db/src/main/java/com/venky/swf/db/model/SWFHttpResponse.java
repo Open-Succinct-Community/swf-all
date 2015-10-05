@@ -3,7 +3,7 @@ package com.venky.swf.db.model;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 
 @IS_VIRTUAL
-public interface HttpResponse extends Model{
+public interface SWFHttpResponse extends Model{
 	public void setStatus(String status);
 	public String getStatus();
 	
