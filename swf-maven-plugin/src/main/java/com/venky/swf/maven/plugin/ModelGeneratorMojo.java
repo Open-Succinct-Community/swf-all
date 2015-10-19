@@ -21,6 +21,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
@@ -182,11 +183,12 @@ public class ModelGeneratorMojo extends AbstractMojo {
     				imports.add(StandardDefault.class.getName());
     				code.add("\t"+toAppDefaultStr(helper, ref, cd.getColumnDefault()));	
                 }
-                /*
-    			imports.add(COLUMN_NAME.class.getName());
-    			code.add("\t@COLUMN_NAME(\""+ cd.getName() + "\")");
-    			Column name not required as name derived from getter we are putting is going to be the same any way.
-    			*/
+                if (!StringUtil.underscorize(camelfieldName).equals(columnName.toUpperCase())){
+        			imports.add(COLUMN_NAME.class.getName());
+        			code.add("\t@COLUMN_NAME(\""+ cd.getName().toUpperCase() + "\")");
+                }
+                
+          
     			code.add("\tpublic "+ ref.getJavaClass().getSimpleName() + " " + getterPrefix +  camelfieldName + "();");
     			code.add("\tpublic void set" + camelfieldName + "("+ ref.getJavaClass().getSimpleName() + " " + StringUtil.camelize(columnName,false) + ");");
     			if (camelfieldName.endsWith("Id")) {

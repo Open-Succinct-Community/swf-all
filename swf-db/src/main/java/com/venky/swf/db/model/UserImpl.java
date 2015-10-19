@@ -53,7 +53,7 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	public boolean authenticate(String password){
-		boolean ret = false;
+		boolean ret = true;
 		try {
 			User user = getProxy();
 			if (Registry.instance().hasExtensions(User.USER_AUTHENTICATE)){
