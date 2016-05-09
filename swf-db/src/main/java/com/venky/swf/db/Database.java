@@ -391,19 +391,21 @@ public class Database implements _IDatabase{
 					table = new Table(tableName);
 					tables.put(tableName, table);
 				}
-				table.setExistingInDatabase(true);
-                ResultSet columnResultSet = null; 
-                try {
-	                columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
-					while (columnResultSet.next()) {
-	                    String columnName  = columnResultSet.getString("COLUMN_NAME");
-	                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
-					}
-                }finally {
-                	if (columnResultSet != null){
-                		columnResultSet.close();
-                	}
-                }
+				if (table.isReal()){
+					table.setExistingInDatabase(true);
+	                ResultSet columnResultSet = null; 
+	                try {
+		                columnResultSet = meta.getColumns(null,getSchema(), tableName, null);
+						while (columnResultSet.next()) {
+		                    String columnName  = columnResultSet.getString("COLUMN_NAME");
+		                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
+						}
+	                }finally {
+	                	if (columnResultSet != null){
+	                		columnResultSet.close();
+	                	}
+	                }
+				}
 			}
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);

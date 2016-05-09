@@ -100,7 +100,14 @@ public class Config {
     	String sValue = getProperty(name, String.valueOf(defaultValue));
 		return Integer.parseInt(sValue);
     }
-    
+    public boolean getBooleanProperty(String name){
+    	String sValue = getProperty(name);
+    	return Boolean.parseBoolean(sValue);
+    }
+    public boolean getBooleanProperty(String name, boolean defaultValue){
+    	String sValue = getProperty(name,String.valueOf(defaultValue));
+    	return Boolean.parseBoolean(sValue);
+    }
     public List<String> getPackageRoots(String rootPackage){
     	return propertyValueList.get(rootPackage);
     }

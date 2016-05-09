@@ -104,7 +104,9 @@ public class ConnectionManager {
 				Config.instance().getLogger(getClass().getName()).info("Closed Data Source");
 			} catch (Exception e) {
 				Config.instance().getLogger(getClass().getName()).info("DataSource not closed " + e.getMessage());
-			}
+			}finally {
+        ds = null;
+      }
 		}
 	}
 	

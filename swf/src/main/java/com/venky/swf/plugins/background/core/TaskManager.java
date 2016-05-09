@@ -7,7 +7,7 @@ import com.venky.swf.routing.Config;
 
 public class TaskManager{
 	static {
-    	Registry.instance().registerExtension("com.venky.swf.db.Database.beforeClose",new Extension(){
+    	Registry.instance().registerExtension("com.venky.swf.routing.Router.shutdown",new Extension(){
 			@Override
 			public void invoke(Object... context) {
 				Config.instance().getLogger(TaskManager.class.getName()).info("Shutdown Task manager");

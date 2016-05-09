@@ -209,6 +209,10 @@ public class Router extends AbstractHandler {
 	        try {
 	        	db = getDatabase(); 
 	            view = p.invoke();
+				if (db != getDatabase()){
+					// If Class Loader is reset.
+					db = getDatabase();
+				}
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
 	            }
@@ -220,7 +224,8 @@ public class Router extends AbstractHandler {
 	            }
 	            db.getCurrentTransaction().commit();
 	        }catch(Exception e){
-	        	try { 
+	        	try {
+					e.printStackTrace();
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
 	        		ex.printStackTrace();

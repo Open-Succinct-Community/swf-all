@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.openid4java:openid4java:0.9.7">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openid4java/openid4java/0.9.7/openid4java-0.9.7.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openid4java/openid4java/0.9.7/openid4java-0.9.7-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/openid4java/openid4java/0.9.7/openid4java-0.9.7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

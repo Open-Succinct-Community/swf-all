@@ -30,7 +30,6 @@ public class ExceptionView extends View{
         this.th = th;
     }
 
-	@Override
 	public void write() throws IOException {
         final StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);

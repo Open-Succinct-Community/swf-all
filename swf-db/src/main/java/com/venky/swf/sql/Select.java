@@ -143,11 +143,14 @@ public class Select extends SqlStatement{
 		}
 		
 		if (lock){
-			builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
-
-			if (!wait && Database.getJdbcTypeHelper().isNoWaitSupported()){
+			if (wait){
+				builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
+			}else if (!wait && Database.getJdbcTypeHelper().isNoWaitSupported()){
+				builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
 				builder.append(Database.getJdbcTypeHelper().getNoWaitLiteral());
-			}
+			}//else {
+				//Just rely on Optimistic locking. 
+			//}
 			
 		}
 		

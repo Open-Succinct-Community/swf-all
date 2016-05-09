@@ -17,6 +17,7 @@ import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper;
@@ -400,10 +401,10 @@ public class Table<M extends Model> {
     private Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();
     
     public  Map<String,ColumnDescriptor> columnDescriptors(){
-    	if (isReal()){
+    	if (isReal() || ObjectUtil.equals(getRealTableName(), getTableName())){
     		return columnDescriptors; 
     	}else {
-			return Database.getTable(getRealTableName()).columnDescriptors();
+			  return Database.getTable(getRealTableName()).columnDescriptors();
     	}
     }
     
