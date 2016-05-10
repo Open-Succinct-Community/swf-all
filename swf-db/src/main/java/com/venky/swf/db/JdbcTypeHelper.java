@@ -4,29 +4,6 @@
  */
 package com.venky.swf.db;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
@@ -41,6 +18,18 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.sql.*;
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.util.*;
+
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 /**
  * 
@@ -226,6 +215,7 @@ public abstract class JdbcTypeHelper {
         public String toString(Object m) {
         	return StringUtil.valueOf(m);
         }
+        public String toStringISO(Object m) { return toString(m) ; }
         
         public abstract String getDisplayClassName();
     }
@@ -408,6 +398,9 @@ public abstract class JdbcTypeHelper {
         public String toString(Object date) {
             return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,format));
         }
+        public String toStringISO(Object date) {
+            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,DateUtils.ISO_DATE_FORMAT));
+        }
         @Override
 		public String getDisplayClassName() {
 			return "date";
@@ -437,7 +430,9 @@ public abstract class JdbcTypeHelper {
         public String toString(Object time) {
             return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz, format));
         }
-        
+        public String toStringISO(Object time) {
+            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz,DateUtils.ISO_TIME_FORMAT));
+        }
         @Override
 		public String getDisplayClassName() {
 			return "time";
@@ -467,6 +462,10 @@ public abstract class JdbcTypeHelper {
 
         public String toString(Object ts) {
             return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts),tz,format));
+        }
+
+        public String toStringISO(Object ts) {
+            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts),tz,DateUtils.ISO_DATE_TIME_FORMAT));
         }
         @Override
 		public String getDisplayClassName() {

@@ -225,7 +225,7 @@ public class ModelReflector<M extends Model> {
                 setter.invoke(record, getter.getReturnType().cast(null));
         	}
         } catch (Exception e1) {
-            throw new RuntimeException(e1);
+            throw new RuntimeException(fieldName +":" + value , e1);
         } finally {
         	timer.stop();
         }
