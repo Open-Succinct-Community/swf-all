@@ -3,11 +3,13 @@ package com.venky.swf.integration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.venky.swf.db.model.io.json.JSONFormatter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -110,7 +112,14 @@ public class JSON extends FormatHelper<JSONObject>{
 	}
 	
 	public String toString(){
-		return root.toString();
+		StringWriter w =  new StringWriter();
+		JSONFormatter formatter  = new JSONFormatter();
+		try {
+			formatter.writePrettyJson(root, w);
+		}catch(IOException ex){
+			throw new RuntimeException(ex);
+		}
+		return w.toString();
 	}
 
 	

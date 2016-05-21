@@ -22,19 +22,16 @@ public class JSONRegistrar {
 		FormatHelper.registerFormat(MimeType.APPLICATION_JSON,
 				JSONObject.class, new FormatHelperBuilder<JSONObject>() {
 
-					@Override
 					public FormatHelper<JSONObject> constructFormatHelper(
 							InputStream in) {
 						return new JSON(in);
 					}
 
-					@Override
 					public FormatHelper<JSONObject> constructFormatHelper(
 							String root, boolean isPlural) {
 						return new JSON(root, isPlural);
 					}
 
-					@Override
 					public FormatHelper<JSONObject> constructFormatHelper(
 							JSONObject rootElement) {
 						return new JSON(rootElement);
@@ -45,14 +42,12 @@ public class JSONRegistrar {
 		ModelIOFactory.registerIOFactories(JSONObject.class,
 				new ModelReaderFactory<JSONObject>() {
 
-					@Override
 					public <M extends Model> ModelReader<M, JSONObject> createModelReader(
 							Class<M> modelClass) {
 						return new JSONModelReader<M>(modelClass);
 					}
 				}, new ModelWriterFactory<JSONObject>() {
 
-					@Override
 					public <M extends Model> ModelWriter<M, JSONObject> createModelWriter(
 							Class<M> modelClass) {
 						return new JSONModelWriter<M>(modelClass);

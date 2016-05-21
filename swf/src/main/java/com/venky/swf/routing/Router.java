@@ -194,12 +194,11 @@ public class Router extends AbstractHandler {
 		
     	Timer timer = startTimer("handleRequest",true);
     	try {
-	        HttpSession session  = request.getSession(false); 
 	        _IView view = null;
 	        _IView ev = null ;	
 	        
 	        _IPath p = createPath(target);
-	        p.setSession(session);
+	        p.setSession(request.getSession(false));
 	        p.setRequest(request);
 	        p.setResponse(response);
 	        
@@ -239,7 +238,7 @@ public class Router extends AbstractHandler {
 	        			throw ex;
 	        		}
 	        	}
-	        	if (session != null){
+	        	if (p.getSession() != null){
 	        		p.addErrorMessage(e.getMessage());
 	        		Logger logger = Config.instance().getLogger(getClass().getName());
 	        		if (logger.isLoggable(Level.FINE)){
