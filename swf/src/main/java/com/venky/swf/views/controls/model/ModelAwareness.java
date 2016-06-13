@@ -117,7 +117,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
         }
 
         Class<?> returnType = getter.getReturnType();
-        TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(returnType).getTypeConverter();
+        TypeConverter<?> converter = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(returnType).getTypeConverter();
         Control control = null;
         if (!reflector.isFieldSettable(fieldName) && (String.class.isAssignableFrom(returnType) || Reader.class.isAssignableFrom(returnType))){
         	control = new Div();
@@ -258,7 +258,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
 	                String descriptionColumn = parentModelReflector.getDescriptionField();
 	                Method descGetter = parentModelReflector.getFieldGetter(descriptionColumn);
 	                Object descValue = descGetter.invoke(parentModel);
-	                return Database.getJdbcTypeHelper().getTypeRef(descGetter.getReturnType()).getTypeConverter().toString(descValue);
+	                return Database.getJdbcTypeHelper(parentModelReflector.getPool()).getTypeRef(descGetter.getReturnType()).getTypeConverter().toString(descValue);
 	            }
         	}catch( Exception ex){
         		throw new RuntimeException(ex);

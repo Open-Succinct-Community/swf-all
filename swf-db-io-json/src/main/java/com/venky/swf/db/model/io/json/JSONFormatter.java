@@ -1,6 +1,9 @@
 package com.venky.swf.db.model.io.json;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -53,10 +56,19 @@ public class JSONFormatter  {
     	
     }
 	private void writeAttributes(JSONObject obj, Writer w) throws IOException {
-		for (Object k : obj.keySet()){
+		boolean first = true;
+		List<String> keys = new ArrayList<>();
+		keys.addAll(obj.keySet());
+		Collections.sort(keys);
+		for (Object k : keys){
 			Object v = obj.get(k);
             w.append("\n");
             indent(w);
+            if (!first) {
+                w.append(",");
+            }else {
+                first=false;
+            }
 			w.append("\"").append(JSONObject.escape(k.toString())).append("\" : ");
 			if (v instanceof JSONObject){
 				writePrettyJson((JSONObject)v, w);

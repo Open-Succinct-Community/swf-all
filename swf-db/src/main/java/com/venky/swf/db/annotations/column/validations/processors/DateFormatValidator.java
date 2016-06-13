@@ -10,6 +10,10 @@ import com.venky.swf.exceptions.MultiException;
 
 public class DateFormatValidator extends FieldValidator<COLUMN_DEF> {
 
+	public DateFormatValidator(String pool) {
+		super(pool);
+	}
+
 	@Override
 	public boolean validate(COLUMN_DEF annotation, String humanizedFieldName, String value, MultiException ex){
 		if (ObjectUtil.isVoid(value)){

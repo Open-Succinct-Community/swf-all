@@ -15,9 +15,10 @@ public class Insert extends DataManupulationStatement{
 	private SortedSet<String> keys = new TreeSet<String>();
 	
 	public <M extends Model> Insert(ModelReflector<M> ref){
-		this(ref.getTableName());
+		this(ref.getPool(),ref.getTableName());
 	}
-	public Insert(String table){
+	public Insert(String pool,String table){
+		super(pool);
 		this.table = table;
 	}
 	

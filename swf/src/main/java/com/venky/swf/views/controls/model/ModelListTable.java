@@ -221,7 +221,7 @@ public class ModelListTable<M extends Model> extends Div{
 	protected Control getControl(String controlName, String fieldName, M record){
 		ModelReflector<M> reflector = modelAwareness.getReflector();
     	Method getter = reflector.getFieldGetter(fieldName);
-		TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
+		TypeConverter<?> converter = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(getter.getReturnType()).getTypeConverter();
         Control control = null;
         
         if (InputStream.class.isAssignableFrom(getter.getReturnType())){

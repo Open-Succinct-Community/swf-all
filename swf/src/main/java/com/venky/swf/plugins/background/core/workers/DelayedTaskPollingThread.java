@@ -13,6 +13,7 @@ import com.venky.swf.sql.Select;
 
 public class DelayedTaskPollingThread extends Thread{
 	private final DelayedTaskManager manager ;
+	private final ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
 	public DelayedTaskPollingThread(DelayedTaskManager manager){
 		super("DelayedTaskPollingThread");
 		setDaemon(false);
@@ -20,16 +21,16 @@ public class DelayedTaskPollingThread extends Thread{
 	}
 	
 	private Expression getWhereClause(DelayedTask lastRecord){
-		Expression where = new Expression(Conjunction.OR);
+		Expression where = new Expression(ref.getPool(),Conjunction.OR);
 		for (int i = 0 ; i < DelayedTask.DEFAULT_ORDER_BY_COLUMNS.length ; i++ ){
 			String gtF = DelayedTask.DEFAULT_ORDER_BY_COLUMNS[i];
-			Expression part = new Expression(Conjunction.AND);
+			Expression part = new Expression(ref.getPool(),Conjunction.AND);
 			for (int j = 0 ; j < i  ; j ++){
 				String f = DelayedTask.DEFAULT_ORDER_BY_COLUMNS[j];
-				part.add(new Expression(f, Operator.GE, lastRecord.getRawRecord().get(f)));
+				part.add(new Expression(ref.getPool(),f, Operator.GE, lastRecord.getRawRecord().get(f)));
 			}
 			
-			part.add(new Expression(gtF, Operator.GT, lastRecord.getRawRecord().get(gtF)));
+			part.add(new Expression(ref.getPool(),gtF, Operator.GT, lastRecord.getRawRecord().get(gtF)));
 			where.add(part);
 		}
 		return where;
@@ -37,14 +38,13 @@ public class DelayedTaskPollingThread extends Thread{
 	
 	@Override
 	public void run(){
-		ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
 		DelayedTask lastRecord = null;
 		Database db = null ;
 		while (manager.needMoreTasks()){
 			try {
 				Config.instance().getLogger(getClass().getName()).finest("Checking for Tasks...");
-				Expression where = new Expression(Conjunction.AND);
-				where.add(new Expression(ref.getColumnDescriptor("NUM_ATTEMPTS").getName(), Operator.LT , 10 ));
+				Expression where = new Expression(ref.getPool(),Conjunction.AND);
+				where.add(new Expression(ref.getPool(),ref.getColumnDescriptor("NUM_ATTEMPTS").getName(), Operator.LT , 10 ));
 				if (lastRecord != null){
 					where.add(getWhereClause(lastRecord));
 				}

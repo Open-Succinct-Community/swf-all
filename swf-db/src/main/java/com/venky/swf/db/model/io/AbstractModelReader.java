@@ -31,7 +31,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			Object attrValue = helper.getAttribute(attributeName);
 			if (fieldName != null) {
 				Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
-				Object value = Database.getJdbcTypeHelper().getTypeRef(valueClass).getTypeConverter().valueOf(attrValue); 
+				Object value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
 				if (value != null){
 					getReflector().set(m, fieldName, value);
 				}

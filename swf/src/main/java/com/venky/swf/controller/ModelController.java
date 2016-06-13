@@ -180,8 +180,8 @@ public class ModelController<M extends Model> extends Controller {
 			
 			List<Integer> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
 			if (!ids.isEmpty()) {
-				Select sel = new Select().from(getModelClass()).where(new Expression(Conjunction.AND)
-					.add(new Expression("ID",Operator.IN,ids.toArray()))
+				Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(),Conjunction.AND)
+					.add(new Expression(getReflector().getPool(),"ID",Operator.IN,ids.toArray()))
 					.add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
 				List<M> records = sel.execute(getModelClass(),maxRecords,new DefaultModelFilter<M>(getModelClass()));
 				return list(records,maxRecords == 0 || records.size() < maxRecords);
@@ -500,7 +500,7 @@ public class ModelController<M extends Model> extends Controller {
 			for (String f : childReflector.getReferenceFields(getModelClass())){
 				if (childReflector.isFieldSettable(f)){
 					Object oldValue = childReflector.get(c, f);
-					if (Database.getJdbcTypeHelper().isVoid(oldValue)){
+					if (Database.getJdbcTypeHelper(childReflector.getPool()).isVoid(oldValue)){
 						childReflector.set(c, f, parent.getId());
 					}
 				}
@@ -759,7 +759,7 @@ public class ModelController<M extends Model> extends Controller {
     		return;
     	}
     	Object autoCompleteHelperFieldValue = formFields.get(autoCompleteHelperField);
-    	Object currentValue = Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter().valueOf(formFields.get(field));
+    	Object currentValue = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Integer.class).getTypeConverter().valueOf(formFields.get(field));
 
 		Method referredModelIdGetter = reflector.getFieldGetter(field);
 		Method referredModelGetter = referredModelIdGetter == null ? null : reflector.getReferredModelGetterFor(referredModelIdGetter);
@@ -778,20 +778,20 @@ public class ModelController<M extends Model> extends Controller {
 
     	String fieldLiteral = referredModelGetter.getName().substring("get".length());
     	
-    	if (Database.getJdbcTypeHelper().isVoid(autoCompleteHelperFieldValue)) {
-    		if (!Database.getJdbcTypeHelper().isVoid(currentValue)){
+    	if (Database.getJdbcTypeHelper(referredModelReflector.getPool()).isVoid(autoCompleteHelperFieldValue)) {
+    		if (!Database.getJdbcTypeHelper(referredModelReflector.getPool()).isVoid(currentValue)){
     			formFields.put(field, "");
     		}
     		return;
 		}
     	//In some tables that don't have description column or have non string description columns, this would have caused an issue of class cast in db..
-    	autoCompleteHelperFieldValue = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().valueOf(autoCompleteHelperFieldValue);
+    	autoCompleteHelperFieldValue = Database.getJdbcTypeHelper(referredModelReflector.getPool()).getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().valueOf(autoCompleteHelperFieldValue);
     	
     	//autoCompleteHelperFieldValue is not void.
-    	Expression where = new Expression(Conjunction.AND);
+    	Expression where = new Expression(referredModelReflector.getPool(),Conjunction.AND);
     	
     	where.add(getAutoCompleteBaseWhere(reflector, record, field));
-    	where.add(new Expression(referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
+    	where.add(new Expression(referredModelReflector.getPool(),referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
     			autoCompleteHelperFieldValue));
     	@SuppressWarnings({ "rawtypes", "unchecked" })
 		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass,new Select.AccessibilityFilter());
@@ -808,8 +808,8 @@ public class ModelController<M extends Model> extends Controller {
 		}else {
 			Object descriptionValue = referredModelReflector.get(referredModel, descriptionField);
 			
-			String sDescriptionValue = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(descriptionValue);
-			String sAutoCompleteFieldDesc = Database.getJdbcTypeHelper().getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(autoCompleteHelperFieldValue);
+			String sDescriptionValue = Database.getJdbcTypeHelper(referredModelReflector.getPool()).getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(descriptionValue);
+			String sAutoCompleteFieldDesc = Database.getJdbcTypeHelper(referredModelReflector.getPool()).getTypeRef(descriptionFieldGetter.getReturnType()).getTypeConverter().toString(autoCompleteHelperFieldValue);
 			if (!ObjectUtil.equals(sDescriptionValue, sAutoCompleteFieldDesc)){
 				throw new RuntimeException("Please choose " + fieldLiteral + " from lookup." );
 			}
@@ -882,7 +882,7 @@ public class ModelController<M extends Model> extends Controller {
 				//
 			}
     	}
-    	TypeConverter<Integer> integerTypeConverter = (TypeConverter<Integer>) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();
+    	TypeConverter<Integer> integerTypeConverter = (TypeConverter<Integer>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Integer.class).getTypeConverter();
     	
     	JSONObject obj = new JSONObject();
     	Record record = model.getRawRecord();
@@ -941,7 +941,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     private <T extends Model> Expression getAutoCompleteBaseWhere(ModelReflector<T> reflector, T model , String autoCompleteFieldName) { 
-    	Expression where = new Expression(Conjunction.AND);
+    	Expression where = new Expression(reflector.getPool(),Conjunction.AND);
     	where.add(getAutoCompleteFieldParticipationWhere(reflector,model,autoCompleteFieldName));
 
     	Path autoCompletePath = getAutoCompleteModelPath(reflector,autoCompleteFieldName);
@@ -950,7 +950,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     private <T extends Model> Expression getAutoCompleteFieldParticipationWhere(ModelReflector<T> reflector, T model, String autoCompleteFieldName){
-    	Expression where = new Expression(Conjunction.AND);
+    	Expression where = new Expression(reflector.getPool(),Conjunction.AND);
     	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
     	PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
 		if (participant != null){
@@ -959,9 +959,9 @@ public class ModelController<M extends Model> extends Controller {
     			List<Integer> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
     				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
-    				where.add(Expression.createExpression("ID",Operator.IN,autoCompleteFieldValues.toArray()));
+    				where.add(Expression.createExpression(reflector.getPool(),"ID",Operator.IN,autoCompleteFieldValues.toArray()));
     			}else {
-    				where.add(new Expression("ID",Operator.EQ));
+    				where.add(new Expression(reflector.getPool(),"ID",Operator.EQ));
     			}
     		}
 		}

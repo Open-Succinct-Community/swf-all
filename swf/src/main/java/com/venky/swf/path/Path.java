@@ -629,7 +629,7 @@ public class Path implements _IPath{
     protected User getUser(String fieldName, String fieldValue){
         Select q = new Select().from(User.class);
         String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor(fieldName).getName();
-        q.where(new Expression(nameColumn,Operator.EQ,new BindVariable(fieldValue)));
+        q.where(new Expression(q.getPool(),nameColumn,Operator.EQ,new BindVariable(q.getPool(),fieldValue)));
         
         List<? extends User> users  = q.execute(User.class);
         if (users.size() == 1){
@@ -641,7 +641,8 @@ public class Path implements _IPath{
     public User getGuestUser(){
         String guestUserName = Config.instance().getProperty("swf.guest.user");
         if (!ObjectUtil.isVoid(guestUserName)){
-            List<User> guests = new Select().from(User.class).where(new Expression("NAME",Operator.EQ,guestUserName)).execute(User.class);
+        	Select userSelect = new Select().from(User.class);
+            List<User> guests = userSelect.where(new Expression(userSelect.getPool(),"NAME",Operator.EQ,guestUserName)).execute(User.class);
             if (guests.size() == 1){
                 return guests.get(0);
             }                            
@@ -850,9 +851,9 @@ public class Path implements _IPath{
         return getWhereClause(getModelClass());
     }
     public Expression getWhereClause(Class<? extends Model> modelClass){
-        Expression where = new Expression(Conjunction.AND);
         Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
         ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
+        Expression where = new Expression(reflector.getPool(),Conjunction.AND);
         
         for (Method referredModelGetter : reflector.getReferredModelGetters()){
             @SuppressWarnings("unchecked")
@@ -895,8 +896,8 @@ public class Path implements _IPath{
             }
             modelElementProcessed.add(ref.getTableName());
             
-            Expression referredModelWhere = new Expression(Conjunction.AND);
-            Expression referredModelWhereChoices = new Expression(Conjunction.OR);
+            Expression referredModelWhere = new Expression(ref.getPool(),Conjunction.AND);
+            Expression referredModelWhereChoices = new Expression(ref.getPool(),Conjunction.OR);
 
             ModelReflector<?> referredModelReflector = ref;
             for (Method childGetter : referredModelReflector.getChildGetters()){
@@ -908,11 +909,11 @@ public class Path implements _IPath{
                             String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
                             String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
 
-                            referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(controllerInfo.getId())));
+                            referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
                         }
                     }else {
                         String referredModelIdColumnName = join.value();
-                        referredModelWhereChoices.add(new Expression(referredModelIdColumnName,Operator.EQ,new BindVariable(controllerInfo.getId())));
+                        referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
                         if (!ObjectUtil.isVoid(join.additional_join())){
                             SQLExpressionParser parser = new SQLExpressionParser(modelClass);
                             Expression expression = parser.parse(join.additional_join());
@@ -1013,7 +1014,7 @@ public class Path implements _IPath{
             
             try {
                 Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
-                if (!Database.getJdbcTypeHelper().isVoid(oldValue)){
+                if (!Database.getJdbcTypeHelper(reflector.getPool()).isVoid(oldValue)){
                     continue;
                 }
                 Integer valueToSet = null;

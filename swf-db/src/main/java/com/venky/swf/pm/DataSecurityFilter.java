@@ -43,15 +43,16 @@ public class DataSecurityFilter {
 		return getRecordsAccessible(modelClass, by, condition, Select.MAX_RECORDS_ALL_RECORDS);
 	}
 	public static <M extends Model> List<M> getRecordsAccessible(Class<M> modelClass, User by, Expression condition,int maxRecords){
+		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
+
 		Cache<String,Map<String,List<Integer>>> pOptions = by.getParticipationOptions(modelClass);
-		Expression where = new Expression(Conjunction.AND);
+		Expression where = new Expression(ref.getPool(),Conjunction.AND);
 		
 		if (condition != null){
 			where.add(condition);
 		}
 		
 		Select s = new Select().from(modelClass);
-		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 		Set<String> fields = new HashSet<String>();
 		for (String g : pOptions.keySet()){
 			fields.addAll(pOptions.get(g).keySet());

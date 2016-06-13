@@ -25,6 +25,7 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
+import com.venky.swf.plugins.security.db.model.Role;
 import com.venky.swf.plugins.security.db.model.RolePermission;
 import com.venky.swf.plugins.security.db.model.UserRole;
 import com.venky.swf.pm.DataSecurityFilter;
@@ -151,12 +152,13 @@ public class ParticipantControllerAccessExtension implements Extension{
 		
 		Timer preparingPermissionQuery = startTimer("Preparing Permission query",Config.instance().isTimerAdditive());
 
-		Expression permissionQueryWhere = new Expression(Conjunction.AND);
+		ModelReflector<RolePermission> permissionRef = ModelReflector.instance(RolePermission.class);
+		Expression permissionQueryWhere = new Expression(permissionRef.getPool(),Conjunction.AND);
 
-		Expression participationWhere = new Expression(Conjunction.OR);
-		participationWhere.add(new Expression("participation",Operator.EQ));
+		Expression participationWhere = new Expression(permissionRef.getPool(),Conjunction.OR);
+		participationWhere.add(new Expression(permissionRef.getPool(),"participation",Operator.EQ));
 		for (String participatingRole:participantingRoles){
-			participationWhere.add(new Expression("participation",Operator.EQ,new BindVariable(participatingRole)));
+			participationWhere.add(new Expression(permissionRef.getPool(),"participation",Operator.EQ,new BindVariable(permissionRef.getPool(),participatingRole)));
 		}
 		permissionQueryWhere.add(participationWhere);
 		
@@ -165,42 +167,45 @@ public class ParticipantControllerAccessExtension implements Extension{
 			defaultController = true;
 		}
 		
-		Expression controllerActionWhere = new Expression(Conjunction.OR);
-		controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
-														.add(new Expression("action_path_element_name",Operator.EQ)));
+		Expression controllerActionWhere = new Expression(permissionRef.getPool(),Conjunction.OR);
+		controllerActionWhere.add(new Expression(permissionRef.getPool(),Conjunction.AND).add(new Expression(permissionRef.getPool(),"controller_path_element_name",Operator.EQ))
+														.add(new Expression(permissionRef.getPool(),"action_path_element_name",Operator.EQ)));
 		
 		if (defaultController){
-			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
-														.add(new Expression("action_path_element_name",Operator.EQ)));
+			controllerActionWhere.add(new Expression(permissionRef.getPool(),Conjunction.AND).add(new Expression(permissionRef.getPool(),"controller_path_element_name",Operator.EQ))
+														.add(new Expression(permissionRef.getPool(),"action_path_element_name",Operator.EQ)));
 		}else {
-			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,controllerPathElementName))
-					.add(new Expression("action_path_element_name",Operator.EQ)));
+			controllerActionWhere.add(new Expression(permissionRef.getPool(),Conjunction.AND).add(new Expression(permissionRef.getPool(),"controller_path_element_name",Operator.EQ,controllerPathElementName))
+					.add(new Expression(permissionRef.getPool(),"action_path_element_name",Operator.EQ)));
 		}
 		if (defaultController){
-			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ))
-					.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+			controllerActionWhere.add(new Expression(permissionRef.getPool(),Conjunction.AND).add(new Expression(permissionRef.getPool(),"controller_path_element_name",Operator.EQ))
+					.add(new Expression(permissionRef.getPool(),"action_path_element_name",Operator.EQ,new BindVariable(permissionRef.getPool(),actionPathElementName))));
 		}else {
-			controllerActionWhere.add(new Expression(Conjunction.AND).add(new Expression("controller_path_element_name",Operator.EQ,controllerPathElementName))
-					.add(new Expression("action_path_element_name",Operator.EQ,new BindVariable(actionPathElementName))));
+			controllerActionWhere.add(new Expression(permissionRef.getPool(),Conjunction.AND).add(new Expression(permissionRef.getPool(),"controller_path_element_name",Operator.EQ,controllerPathElementName))
+					.add(new Expression(permissionRef.getPool(),"action_path_element_name",Operator.EQ,new BindVariable(permissionRef.getPool(),actionPathElementName))));
 		}
 		permissionQueryWhere.add(controllerActionWhere);
 
 		preparingPermissionQuery.stop(); 
 		
 		Timer selectingUserRole = startTimer("Selecting user Roles",Config.instance().isTimerAdditive());
-		Select userRoleQuery = new Select().from(UserRole.class).where(new Expression("user_id",Operator.EQ,new BindVariable(user.getId())));
+		Select userRoleQuery = new Select().from(UserRole.class);
+		userRoleQuery.where(new Expression(userRoleQuery.getPool(),"user_id",Operator.EQ,new BindVariable(userRoleQuery.getPool(),user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute(UserRole.class);
 		selectingUserRole.stop();
 		
 		Timer preparingRoleWhere = startTimer("Preparing role Where clause",Config.instance().isTimerAdditive());
 		List<Integer> userRoleIds = new ArrayList<Integer>();
-		Expression roleWhere = new Expression(Conjunction.OR);
-		roleWhere.add(new Expression("role_id",Operator.EQ));
+		
+		ModelReflector<Role> roleRef = ModelReflector.instance(Role.class);
+		Expression roleWhere = new Expression(roleRef.getPool(),Conjunction.OR);
+		roleWhere.add(new Expression(roleRef.getPool(),"role_id",Operator.EQ));
 		if (!userRoles.isEmpty()){
 			for (UserRole ur:userRoles){
 				userRoleIds.add(ur.getRoleId());
 			}
-			roleWhere.add(new Expression("role_id",Operator.IN,userRoleIds.toArray()));
+			roleWhere.add(new Expression(userRoleQuery.getPool(),"role_id",Operator.IN,userRoleIds.toArray()));
 		}
 		preparingRoleWhere.stop();
 		

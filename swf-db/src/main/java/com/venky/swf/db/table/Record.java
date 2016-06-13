@@ -30,13 +30,20 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     private IgnoreCaseMap<Object> fieldValues = new IgnoreCaseMap<Object>();
     private IgnoreCaseMap<Object> dirtyFields = new IgnoreCaseMap<Object>();
 
+	private String pool;
+	public Record(String pool){
+		this.pool = pool;
+	}
+	public String getPool(){
+		return pool;
+	}
     @Override
     public Record clone(){
     	Record r;
 		try {
 			r = (Record)super.clone();
-			r.fieldValues = (IgnoreCaseMap<Object>)fieldValues.clone();
-			r.dirtyFields = (IgnoreCaseMap<Object>)dirtyFields.clone(); 
+			r.fieldValues = fieldValues.clone();
+			r.dirtyFields = dirtyFields.clone();
 			r.proxyCache = new ProxyCache(r);
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException("Should have not happened",e);
@@ -59,8 +66,8 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     			ret = true;
     		}else if (o2 != null){
     			if (o1.getClass() != o2.getClass()){
-        			BindVariable b1 = new BindVariable(o1);
-        			BindVariable b2 = new BindVariable(o2);
+        			BindVariable b1 = new BindVariable(getPool(),o1);
+        			BindVariable b2 = new BindVariable(getPool(),o2);
         			ret = b1.getValue().equals(b2.getValue()); // May be they are equal in db terms as the underlying db types for the 2 classes are same.
     			}
     		}
@@ -123,14 +130,14 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         	
         	int type = meta.getColumnType(i);
         	if (JdbcTypeHelper.isLOB(type)){
-				columnValue = Database.getJdbcTypeHelper().getTypeRef(type).getTypeConverter().valueOf(columnValue);
+				columnValue = Database.getJdbcTypeHelper(getPool()).getTypeRef(type).getTypeConverter().valueOf(columnValue);
         	}else if (columnValue != null && reflector != null && type != Types.VARCHAR){ //SQLParser has similar code.
-        		List<TypeRef<?>> refs = Database.getJdbcTypeHelper().getTypeRefs(type);
+        		List<TypeRef<?>> refs = Database.getJdbcTypeHelper(getPool()).getTypeRefs(type);
         		TypeRef<?> ref = null;
         		if (refs.size() == 1){
         			ref = refs.get(0);
         		}else  {
-        			ref = Database.getJdbcTypeHelper().getTypeRef(reflector.getFieldGetter(reflector.getFieldName(columnName)).getReturnType());
+        			ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(reflector.getFieldGetter(reflector.getFieldName(columnName)).getReturnType());
         		}
         		columnValue = ref.getTypeConverter().valueOf(columnValue);
         	}

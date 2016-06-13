@@ -25,7 +25,10 @@ import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.model.DBPOOL;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
@@ -61,12 +64,14 @@ public class ModelGeneratorMojo extends AbstractMojo {
 	
     public void generateModels(File directory) throws MojoExecutionException{
         Database.loadTables(true);
-        for (Table<?> table: Database.getTables().values()){
-            generateModelClass(table, directory);
+        for (String pool : ConnectionManager.instance().getPools()){
+            for (Table<?> table: Database.getTables(pool).values()){
+                generateModelClass(table, directory,pool);
+            }
         }
     }
     
-    private void generateModelClass(Table<?> table,File directory) throws MojoExecutionException{
+    private void generateModelClass(Table<?> table,File directory,String pool) throws MojoExecutionException{
     	String simpleModelClassName = Table.getSimpleModelClassName(table.getTableName());
     	String fQModelClassName = null; 
     	StringBuilder packageName = new StringBuilder(Config.instance().getModelPackageRoots().get(0));
@@ -83,15 +88,15 @@ public class ModelGeneratorMojo extends AbstractMojo {
 		String srcFileName = directory.getPath() + "/" + fQModelClassName.replace('.', '/')+".java";
     	File srcFile = new File(srcFileName);
 		srcFile.getParentFile().mkdirs(); //Create all directories in the path.
-		if (!table.isExistingInDatabase()) {
-			if (srcFile.exists()) {
+		if (srcFile.exists()){
+			if (!table.isExistingInDatabase() && !table.isVirtual()){
 				getLog().info("Manually remove " + srcFileName + " to drop model");
 			}
-		}else if (!srcFile.exists()){
+		}else if (table.getReflector() == null){
 			OutputStreamWriter wr = null;
 			try {
 				wr = new OutputStreamWriter(new FileOutputStream(srcFile),encoding);
-				writeFile(wr,table, packageName.toString());
+				writeFile(wr,table, packageName.toString(),pool);
 			} catch (Exception e) {
 				throw new MojoExecutionException(e.getMessage(),e);
 			}finally { 
@@ -103,12 +108,10 @@ public class ModelGeneratorMojo extends AbstractMojo {
 					}
 				}
 			}
-		}else {
-			getLog().info("Manually remove " + srcFileName + " to regenerate");
 		}
     }
-    private void writeFile(OutputStreamWriter osw,Table<?> table,String packageName){
-    	JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+    private void writeFile(OutputStreamWriter osw,Table<?> table,String packageName, String pool){
+    	JdbcTypeHelper helper = Database.getJdbcTypeHelper(pool);
 		Set<String> columnsPresentInFrameworkModel = new IgnoreCaseSet();
 		columnsPresentInFrameworkModel.addAll(ModelReflector.instance(Model.class).getRealColumns());
 		
@@ -128,12 +131,21 @@ public class ModelGeneratorMojo extends AbstractMojo {
         		columnsPresentInFrameworkModel.addAll(table.getReflector().getRealColumns());
     		}
     	}
+    	if (!ObjectUtil.isVoid(pool)){
+    		imports.add(DBPOOL.class.getName());
+    		code.add("@DBPOOL(\"" + pool + "\")");
+    	}
+    	imports.add(IS_VIRTUAL.class.getName());
+    	code.add("@IS_VIRTUAL");
     	code.add("public interface " + Table.getSimpleModelClassName(table.getTableName()) + " extends " + extendingClass + "{");
-		
 		
     	for (ColumnDescriptor cd:table.getColumnDescriptors()){
     		List<TypeRef<?>> refs = helper.getTypeRefs(cd.getJDBCType());
     		TypeRef<?> ref = null; 
+    		if (refs == null){
+    			getLog().error("cannot find jdbc type with helper for pool" + pool + " with helper " + helper.getClass().getName()); 
+    			throw new NullPointerException("cannot find jdbc type for column " + cd );
+    		}
     		for (TypeRef<?>r :refs){
 				ref = r;
     			if (cd.isNullable() ){

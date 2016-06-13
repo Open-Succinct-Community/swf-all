@@ -15,6 +15,10 @@ import com.venky.swf.exceptions.MultiException;
 public class ExactLengthValidator extends FieldValidator<ExactLength>{
 
 
+    public ExactLengthValidator(String pool) {
+        super(pool);
+    }
+
     @Override
     public boolean validate(ExactLength annotation, String humanizedFieldName, String value, MultiException ex){
         if (ObjectUtil.isVoid(value) || annotation.value() == value.length()){

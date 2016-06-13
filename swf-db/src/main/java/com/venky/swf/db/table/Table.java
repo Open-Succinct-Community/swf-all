@@ -19,13 +19,14 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.Database.Transaction;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
 import com.venky.swf.db.JdbcTypeHelper.IntegerConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
-import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.annotations.model.TABLE_NAME;
+import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -51,6 +52,7 @@ public class Table<M extends Model> {
     private final String tableName ;
     private final Class<M> modelClass;
     private final ModelReflector<M> reflector;
+    private final String pool;
     public ModelReflector<M> getReflector() {
 		return reflector;
 	}
@@ -69,6 +71,9 @@ public class Table<M extends Model> {
     public boolean isVirtual(){
     	return !isReal();
     }
+    public String getPool(){
+    	return pool;
+    }
 
 	private boolean existingInDatabase = false;
 
@@ -81,23 +86,28 @@ public class Table<M extends Model> {
     }
     
     @SuppressWarnings("unchecked")
-	public Table(String tableName){
-        this(tableName, (Class<M>)modelClass(tableName));
+	public Table(String tableName,String pool){
+        this(tableName, (Class<M>)modelClass(tableName), pool);
     }
     public Table(Class<M> modelClass){
-        this(tableName(modelClass),modelClass);
+        this(tableName(modelClass),modelClass, null);
     }
-    
-    private Table(String tableName, Class<M> modelClass){
+    private Table(String tableName, Class<M> modelClass,String pool){
         this.tableName = tableName; 
         this.modelClass = modelClass;
         if (modelClass != null){
         	this.reflector = ModelReflector.instance(modelClass);
         	this.realTableName = reflector.getTableName();
+        	if (pool != null ) {
+        		this.pool = pool;
+        	}else {
+        		this.pool = reflector.getPool();
+        	}	
         }else {
         	this.reflector = null;
         	this.realTableName = this.tableName;
-        } 
+        	this.pool = pool;
+        }
     }
     
     public static <M extends Model> String tableName(Class<M> modelClass){
@@ -117,6 +127,11 @@ public class Table<M extends Model> {
 		@Override
 		protected String getValue(Class<? extends Model> modelClass) {
 			String modelClassSimpleName = modelClass.getSimpleName();
+    		TABLE_NAME name = modelClass.getAnnotation(TABLE_NAME.class);
+    		if (name != null) {
+    			modelNameTableNameCache.put(modelClassSimpleName, name.value());
+    		}
+
 			return modelNameTableNameCache.get(modelClassSimpleName);
 		}
     	
@@ -136,13 +151,7 @@ public class Table<M extends Model> {
     	return StringUtil.camelize(StringUtil.singularize(tableName));
     }
     public static Class<?> modelClass(String tableName){
-        for (String root : Config.instance().getModelPackageRoots()){
-            String className = root ; 
-            if (!root.endsWith(".")){
-                className += "."; 
-            }
-            className += getSimpleModelClassName(tableName);
-            
+        for (String className : Config.instance().getModelClasses(getSimpleModelClassName(tableName))){
             try {
                 return Class.forName(className);
             } catch (ClassNotFoundException ex) {
@@ -167,7 +176,7 @@ public class Table<M extends Model> {
     
     public void dropTable(){
         Transaction txn = Database.getInstance().getCurrentTransaction();
-        DDL.DropTable q = new DDL.DropTable(getRealTableName());
+        DDL.DropTable q = new DDL.DropTable(getPool(),getRealTableName());
         q.executeUpdate();
         txn.commit();
     }
@@ -181,7 +190,7 @@ public class Table<M extends Model> {
     	return createTableQuery(getRealTableName());
     }
     private CreateTable createTableQuery(String tableName){
-    	CreateTable q = new CreateTable(tableName);
+    	CreateTable q = new CreateTable(getPool(),tableName);
         createFields(q);
         if (getReflector().getRealFields().contains("id")){
             q.addPrimaryKeyColumn(getReflector().getColumnDescriptor("id").getName());
@@ -246,14 +255,14 @@ public class Table<M extends Model> {
         
         Transaction txn = Database.getInstance().getCurrentTransaction();
         for (String columnName:droppedColumns){
-            AlterTable q = new AlterTable(getRealTableName());
+            AlterTable q = new AlterTable(getPool(),getRealTableName());
             q.dropColumn(columnName);
             q.executeUpdate();
         }
 
         boolean dropAndReCreateTable = false;
         for (String fieldName:addedFields){
-            AlterTable q = new AlterTable(getRealTableName());
+            AlterTable q = new AlterTable(getPool(),getRealTableName());
         	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
             q.addColumn(cd.toString());
             q.executeUpdate();
@@ -265,32 +274,32 @@ public class Table<M extends Model> {
         		continue;
         	}
         	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
-        	if (!cd.isNullable() && Database.getJdbcTypeHelper().isVoid(cd.getColumnDefault())){
+        	if (!cd.isNullable() && Database.getJdbcTypeHelper(getPool()).isVoid(cd.getColumnDefault())){
         		dropAndReCreateTable = true;
         		continue;
         	}
         	String columnName = cd.getName();
-        	AlterTable q = new AlterTable(getRealTableName());
+        	AlterTable q = new AlterTable(getPool(),getRealTableName());
         	q.addColumn("NEW_"+cd.toString());
             q.executeUpdate();
             
-        	Update u = new Update(getRealTableName());
+        	Update u = new Update(getPool(),getRealTableName());
         	u.setUnBounded("NEW_"+columnName, columnName);
         	u.executeUpdate();
         	
-        	q = new AlterTable(getRealTableName());
+        	q = new AlterTable(getPool(),getRealTableName());
         	q.dropColumn(columnName);
             q.executeUpdate();
             
-            q = new AlterTable(getRealTableName());
+            q = new AlterTable(getPool(),getRealTableName());
             q.addColumn(cd.toString());
             q.executeUpdate();
             
-            u = new Update(getRealTableName());
+            u = new Update(getPool(),getRealTableName());
         	u.setUnBounded(columnName,"NEW_" + columnName);
         	u.executeUpdate();
             
-            q = new AlterTable(getRealTableName());
+            q = new AlterTable(getPool(),getRealTableName());
         	q.dropColumn("NEW_" + columnName);
             q.executeUpdate();
         }
@@ -304,7 +313,7 @@ public class Table<M extends Model> {
         	SequenceSet<String> columns = new SequenceSet<String>(); 
         	columns.addAll(reflector.getRealColumns());
         	
-        	DataManupulationStatement insert = new DataManupulationStatement();
+        	DataManupulationStatement insert = new DataManupulationStatement(getPool());
             insert.add("insert into ").add(tmpTable).add("(");
             Iterator<String> columnIterator = columns.iterator();
             while (columnIterator.hasNext()){
@@ -319,13 +328,13 @@ public class Table<M extends Model> {
             insert.executeUpdate();
             
         	
-            DropTable drop = new DropTable(getRealTableName());
+            DropTable drop = new DropTable(getPool(),getRealTableName());
             drop.executeUpdate();
             
             create = createTableQuery();
             create.executeUpdate();
             
-            insert = new DataManupulationStatement();
+            insert = new DataManupulationStatement(getPool());
             insert.add("insert into ").add(getRealTableName()).add("(");
             columnIterator = columns.iterator();
             while (columnIterator.hasNext()){
@@ -339,7 +348,7 @@ public class Table<M extends Model> {
             insert.add(" from temp_" + getRealTableName());
             insert.executeUpdate();
             
-            drop = new DropTable("temp_"+getRealTableName());
+            drop = new DropTable(getPool(),"temp_"+getRealTableName());
             drop.executeUpdate();
         }
         txn.commit();
@@ -348,7 +357,7 @@ public class Table<M extends Model> {
 
     public int recordCount(){
     	Select sel = new Select("COUNT(1) AS COUNT").from(getModelClass());
-    	Counts count = sel.execute(Counts.class).get(0); // number of records would be one.!!
+    	Count count = sel.execute(Count.class).get(0); // number of records would be one.!!
     	return count.getCount();
     }
     
@@ -370,7 +379,7 @@ public class Table<M extends Model> {
 
 	    	String idColumn = getReflector().getColumnDescriptor("id").getName();
 	    	Timer createWhereTimer = Timer.startTimer(null, Config.instance().isTimerAdditive());
-	        q.where(new Expression(idColumn,Operator.EQ,new BindVariable(id)));
+	        q.where(new Expression(q.getPool(),idColumn,Operator.EQ,new BindVariable(getPool(),id)));
 	        createWhereTimer.stop();
 	        
 	        List<M> result = q.execute(getModelClass());
@@ -395,7 +404,7 @@ public class Table<M extends Model> {
     }
     
     public M newRecord(){
-        return ModelInvocationHandler.getProxy(modelClass,new Record());
+        return ModelInvocationHandler.getProxy(modelClass,new Record(getPool()));
     }
 
     private Map<String,ColumnDescriptor> columnDescriptors = new IgnoreCaseMap<ColumnDescriptor>();
@@ -420,8 +429,8 @@ public class Table<M extends Model> {
     public ColumnDescriptor getColumnDescriptor(String columnName,boolean createIfRequired){
 		Map<String,ColumnDescriptor> cds = columnDescriptors();
         ColumnDescriptor c = cds.get(columnName);
-        if (c == null && createIfRequired){
-            c = new ColumnDescriptor();
+        if (c == null && createIfRequired ){ 
+            c = new ColumnDescriptor(getPool());
             cds.put(columnName, c);
         }
         return c;
@@ -438,8 +447,9 @@ public class Table<M extends Model> {
     }*/
     
     public static class ColumnDescriptor extends Record{
-        public ColumnDescriptor(){
-            
+        public ColumnDescriptor(String pool){
+            super(pool);
+
         }
         
         public int getOrdinalPosition(){
@@ -498,8 +508,9 @@ public class Table<M extends Model> {
             }
         }
         
-    	private BooleanConverter bc = (BooleanConverter) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter();
-    	private IntegerConverter ic = (IntegerConverter) Database.getJdbcTypeHelper().getTypeRef(Integer.class).getTypeConverter();
+    	private BooleanConverter bc = (BooleanConverter) Database.getJdbcTypeHelper(getPool()).getTypeRef(Boolean.class).getTypeConverter();
+    	private IntegerConverter ic =  (IntegerConverter) Database.getJdbcTypeHelper(getPool()).getTypeRef(Integer.class).getTypeConverter();
+
         public boolean isNullable(){
         	return bc.valueOf(get("IS_NULLABLE"));
         }
@@ -538,7 +549,7 @@ public class Table<M extends Model> {
 		@Override
         public String toString(){
             StringBuilder buff = new StringBuilder();
-            JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+            JdbcTypeHelper helper = Database.getJdbcTypeHelper(getPool());
 			TypeRef<?> ref = helper.getTypeRef(getJDBCType());
 			if (ref == null){
 				throw new RuntimeException("Unknown JDBCType:" + getJDBCType() + " for column " + getName());

@@ -39,6 +39,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.io.xls.XLSModelReader;
@@ -225,7 +226,7 @@ public class Controller {
 
         String columnName = fd.getName();
 
-        Expression where = new Expression(Conjunction.AND);
+        Expression where = new Expression(reflector.getPool(),Conjunction.AND);
         
         //where.add(baseWhereClause);
         
@@ -239,11 +240,11 @@ public class Controller {
 	        	List<Integer> topRecords = indexer.findIds(q, maxRecordsToGet);
 	        	int numRecordRetrieved = topRecords.size();
 	        	if (numRecordRetrieved > 0 && numRecordRetrieved < maxRecordsToGet){
-	            	Expression idExpression = Expression.createExpression("ID", Operator.IN, topRecords.toArray());
+	            	Expression idExpression = Expression.createExpression(reflector.getPool(),"ID", Operator.IN, topRecords.toArray());
 	            	where.add(idExpression);
 	        	}
         	}
-    		where.add(new Expression(columnName,Operator.LK,new BindVariable("%"+value+"%")));
+    		where.add(new Expression(reflector.getPool(),columnName,Operator.LK,new BindVariable(reflector.getPool(),"%"+value+"%")));
     	}
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());
@@ -256,11 +257,11 @@ public class Controller {
         	}
         }
         Method fieldGetter = reflector.getFieldGetter(fieldName);
-        TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
+        TypeConverter<?> converter = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter();
         
         for (M record:records){
             try {
-            	createEntry(fh,converter.toString(fieldGetter.invoke(record)),record.getId());
+            	createEntry(reflector,fh,converter.toString(fieldGetter.invoke(record)),record.getId());
             } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             } catch (IllegalArgumentException ex) {
@@ -276,11 +277,11 @@ public class Controller {
     	Config.instance().getLogger(getClass().getName()).info(doc.toString());
         return new BytesView(path, String.valueOf(doc).getBytes());
     }
-    private void createEntry(FormatHelper<JSONObject> doc,Object name, Object id){
+    private void createEntry(ModelReflector<? extends Model> reflector,FormatHelper<JSONObject> doc,Object name, Object id){
         JSONObject elem = doc.createChildElement("entry");
         FormatHelper<JSONObject> elemHelper = FormatHelper.instance(elem);
-        elemHelper.setAttribute("name", Database.getJdbcTypeHelper().getTypeRef(name.getClass()).getTypeConverter().toString(name));
-        elemHelper.setAttribute("id", Database.getJdbcTypeHelper().getTypeRef(id.getClass()).getTypeConverter().toString(id));
+        elemHelper.setAttribute("name", Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(name.getClass()).getTypeConverter().toString(name));
+        elemHelper.setAttribute("id", Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(id.getClass()).getTypeConverter().toString(id));
     }
 
     protected Map<String,Object> getFormFields(){
@@ -403,15 +404,17 @@ public class Controller {
 
 
     public View exportxls(){
-    	Map<String,Table<? extends Model>> tables = Database.getTables();
     	Workbook wb = new HSSFWorkbook();
-    	for (String tableName: tables.keySet()){
-    		Table<? extends Model> table = tables.get(tableName); 
-    		EXPORTABLE exportable = table.getReflector().getAnnotation(EXPORTABLE.class);
-    		if (table.isReal() && (exportable == null || exportable.value())) {
-    			Config.instance().getLogger(getClass().getName()).info("Exporting:" + table.getTableName());
-    			exportxls(table.getModelClass(), wb);
-    		}
+    	for (String pool: ConnectionManager.instance().getPools()){
+    		Map<String,Table<? extends Model>> tables = Database.getTables(pool);
+        	for (String tableName: tables.keySet()){
+        		Table<? extends Model> table = tables.get(tableName); 
+        		EXPORTABLE exportable = table.getReflector().getAnnotation(EXPORTABLE.class);
+        		if (table.isReal() && (exportable == null || exportable.value())) {
+        			Config.instance().getLogger(getClass().getName()).info("Exporting:" + table.getTableName());
+        			exportxls(table.getModelClass(), wb);
+        		}
+        	}
     	}
     	try {
     		String baseFileName =  "db"+ new SimpleDateFormat("yyyyMMddHHmm").format(new java.util.Date(System.currentTimeMillis())) ;
@@ -428,6 +431,7 @@ public class Controller {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	
     }
     
     protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {

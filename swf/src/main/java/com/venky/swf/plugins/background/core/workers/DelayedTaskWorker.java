@@ -3,7 +3,7 @@ package com.venky.swf.plugins.background.core.workers;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 

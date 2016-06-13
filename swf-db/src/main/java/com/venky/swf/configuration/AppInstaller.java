@@ -21,7 +21,7 @@ public class AppInstaller implements Installer {
 		ModelReflector<User> ref = ModelReflector.instance(User.class);
 		String nameColumn = ref.getColumnDescriptor("long_name").getName();
 
-		List<User> users = q.where(new Expression(nameColumn,Operator.EQ)).execute();
+		List<User> users = q.where(new Expression(ref.getPool(),nameColumn,Operator.EQ)).execute();
 		for (User user: users){
 			user.setLongName(user.getName());
 		}
@@ -35,7 +35,7 @@ public class AppInstaller implements Installer {
 		String nameColumn = ref.getColumnDescriptor("name").getName();
 		
 		
-		List<User> users = q.where(new Expression(nameColumn,Operator.EQ,new BindVariable("root"))).execute(User.class);
+		List<User> users = q.where(new Expression(ref.getPool(),nameColumn,Operator.EQ,new BindVariable(ref.getPool(),"root"))).execute(User.class);
 		
 		if (users.isEmpty()){
 			User u = USER.newRecord();

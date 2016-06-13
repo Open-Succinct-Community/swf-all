@@ -4,6 +4,7 @@
  */
 package com.venky.swf.db;
 
+import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
@@ -15,6 +16,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -61,14 +63,14 @@ public abstract class JdbcTypeHelper {
 		return false;
 	}
 	
-	private Class<?> getClass(String name){
+	private static Class<?> getClass(String name){
 		try {
 			return Class.forName(name);
 		}catch (Exception ex){
 			return null;
 		}
 	}
-	private Class<?> sqlTransactionRollbackException(){
+	private static Class<?> sqlTransactionRollbackException(){
 		return getClass("java.sql.SQLTransactionRollbackException");
 	}
 	
@@ -552,25 +554,31 @@ public abstract class JdbcTypeHelper {
 		}
 
     }
-    private static JdbcTypeHelper _instance = null ;
-    public static JdbcTypeHelper instance(Class<?> driverClass){
-        if (_instance != null){
-            return _instance;
-        }
-        synchronized(JdbcTypeHelper.class){
+    private static Cache<Class<?>,JdbcTypeHelper> _instance = new Cache<Class<?>, JdbcTypeHelper>() {
+		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3456286258113436179L;
+
+		@Override
+		protected JdbcTypeHelper getValue(Class<?> driverClass) {
             if (driverClass.getName().startsWith("org.apache.derby.")){
-                _instance = new DerbyHelper();
+            	return new DerbyHelper();
             }else if (driverClass.getName().startsWith("com.mysql")) {
-                _instance = new MySqlHelper();
+                return new MySqlHelper();
             }else if (driverClass.getName().startsWith("org.postgresql")) {
-                _instance = new PostgresqlHelper();
+            	return new PostgresqlHelper();
             }else if (driverClass.getName().startsWith("org.sqlite")){ 
-                _instance = new SQLiteHelper();
+            	return new SQLiteHelper();
             }else if (driverClass.getName().startsWith("org.sqldroid")) {
-            	_instance = new SQLDroidHelper();
+            	return new SQLDroidHelper();
             }
-        }
-        return _instance;
+            return null;
+		}
+	};
+    public static JdbcTypeHelper instance(Class<?> driverClass){
+        return _instance.get(driverClass);
     }
 
     private final Map<Class<?>, TypeRef<?>> javaTypeRefMap = new HashMap<Class<?>, TypeRef<?>>();
@@ -653,7 +661,7 @@ public abstract class JdbcTypeHelper {
     	}
     }
 
-  	public Throwable getEmbeddedException(Throwable in, Class<?> instanceOfThisClass){
+  	public static Throwable getEmbeddedException(Throwable in, Class<?> instanceOfThisClass){
   		return ExceptionUtil.getEmbeddedException(in, instanceOfThisClass);
   	}
   	
@@ -662,11 +670,13 @@ public abstract class JdbcTypeHelper {
   	}
   	
   	public void resetIdGeneration(){
-    	for (Table<? extends Model> table : Database.getTables().values()){
-    		if (table.isReal() && table.isExistingInDatabase()){
-    			updateSequence(table); 
-    		}
-    	}
+        for (String pool : ConnectionManager.instance().getPools()){
+            for (Table<? extends Model> table : Database.getTables(pool).values()){
+                if (table.isReal() && table.isExistingInDatabase()){
+                    updateSequence(table);
+                }
+            }
+        }
     }
   	
   	protected <M extends Model> void updateSequence(Table<M> table){

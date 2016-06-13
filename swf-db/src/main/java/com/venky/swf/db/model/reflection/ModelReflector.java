@@ -53,10 +53,11 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
+import com.venky.swf.db.annotations.model.DBPOOL;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
-import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
 import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
@@ -217,7 +218,7 @@ public class ModelReflector<M extends Model> {
         try {
             Method getter = getFieldGetter(fieldName);
             Method setter = getFieldSetter(fieldName);
-    		TypeRef<?> typeRef = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType());
+    		TypeRef<?> typeRef = Database.getJdbcTypeHelper(getPool()).getTypeRef(getter.getReturnType());
 
         	if (!ObjectUtil.isVoid(value) || getter.getReturnType().isPrimitive() ){
                 setter.invoke(record, typeRef.getTypeConverter().valueOf(value));
@@ -413,16 +414,16 @@ public class ModelReflector<M extends Model> {
     public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy){
     	List<Expression> col = new ArrayList<Expression>();
     	for (UniqueKey<M> key : getUniqueKeys() ){
-			Expression where = new Expression(Conjunction.AND);
+			Expression where = new Expression(getPool(),Conjunction.AND);
 			boolean ignoreWhereClause = false;
 			for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
 				String fieldName = fd.getFieldName(); 
 				Object value = get(recordOrProxy, fieldName);
 				if (value != null){
-					where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
+					where.add(new Expression(getPool(),getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
 				}else {
 					if (!fd.isMultipleRecordsWithNullAllowed()){
-						where.add(new Expression(getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ));
+						where.add(new Expression(getPool(),getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ));
 					}else {
 						ignoreWhereClause = true;
 						break;
@@ -568,7 +569,7 @@ public class ModelReflector<M extends Model> {
     	HIDDEN hidden = getAnnotation(getter,HIDDEN.class);
     	boolean isHidden = (hidden == null ? false : hidden.value());
     	if (!isHidden){
-    		boolean hideHouseKeepingFields = (Boolean) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter().valueOf(Config.instance().getProperty("swf.hide.housekeeping.fields","N"));
+    		boolean hideHouseKeepingFields = (Boolean) Database.getJdbcTypeHelper(getPool()).getTypeRef(Boolean.class).getTypeConverter().valueOf(Config.instance().getProperty("swf.hide.housekeeping.fields","N"));
 			isHidden = hideHouseKeepingFields && isHouseKeepingField(fieldName); 
     	}
     	return isHidden;
@@ -636,15 +637,23 @@ public class ModelReflector<M extends Model> {
     	}
     	return false;
     }
+	public String getPool(){
+		String pool = null ;
+		DBPOOL dbpool = getAnnotation(DBPOOL.class);
+		if (dbpool != null){
+			pool = dbpool.value();
+		}
+		return pool != null ? pool : ""  ;
+	}
     public int getMaxDataLength(String fieldName){
 		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);
 		String fieldColumnName = fieldDescriptor.getName();
 		int size = fieldDescriptor.getSize();
 		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
 		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
-	    	List<Counts> counts  = new ArrayList<Counts>();
-	    	if (!isVirtual() && !fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper().getTypeRef(String.class).getSize()) ){
-	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Counts.class);
+	    	List<Count> counts  = new ArrayList<Count>();
+	    	if (!isVirtual() && !fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper(getPool()).getTypeRef(String.class).getSize()) ){
+	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Count.class);
 		    	if (!counts.isEmpty()){
 		    		size = counts.get(0).getCount(); 
 		    	}else {
@@ -962,9 +971,9 @@ public class ModelReflector<M extends Model> {
 		        IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
 		        COLUMN_DEF colDef = (COLUMN_DEF)map.get(COLUMN_DEF.class);
 		        
-		        ColumnDescriptor cd = new ColumnDescriptor();
+		        ColumnDescriptor cd = new ColumnDescriptor(getPool());
 		        cd.setName(columnName);
-		        JdbcTypeHelper helper = Database.getJdbcTypeHelper();
+		        JdbcTypeHelper helper = Database.getJdbcTypeHelper(getPool());
 				TypeRef<?> typeRef = helper.getTypeRef(fieldGetter.getReturnType());
 		        assert typeRef != null;
 		        cd.setJDBCType(type == null ? typeRef.getJdbcType() : type.value());
@@ -993,7 +1002,7 @@ public class ModelReflector<M extends Model> {
     }
 
     private String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
-    	return Database.getJdbcTypeHelper().toDefaultKW(ref,def);
+    	return Database.getJdbcTypeHelper(getPool()).toDefaultKW(ref,def);
     }
 
     public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){
@@ -1266,14 +1275,14 @@ public class ModelReflector<M extends Model> {
 		}
 	}
 
-    public static class FieldGetterMatcher extends GetterMatcher{ 
+    public class FieldGetterMatcher extends GetterMatcher{
         @Override
         public boolean matches(Method method){
     		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         	try {
     			if (super.matches(method) && 
                         !Model.class.isAssignableFrom(method.getReturnType()) &&
-                        Database.getJdbcTypeHelper().getTypeRef(method.getReturnType()) != null){
+                        Database.getJdbcTypeHelper(getPool()).getTypeRef(method.getReturnType()) != null){
                      return true;
                 }
                 return false;
@@ -1283,7 +1292,7 @@ public class ModelReflector<M extends Model> {
         }
     }
 
-    public static class SetterMatcher implements MethodMatcher{
+    public class SetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
         	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
         	try {
@@ -1306,13 +1315,13 @@ public class ModelReflector<M extends Model> {
         return fieldSetterMatcher;
     }
 
-    public static class FieldSetterMatcher extends SetterMatcher{ 
+    public class FieldSetterMatcher extends SetterMatcher{
         @Override
         public boolean matches(Method method){
         	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
 			try {
 				if (super.matches(method)
-						&& Database.getJdbcTypeHelper().getTypeRef(
+						&& Database.getJdbcTypeHelper(getPool()).getTypeRef(
 								method.getParameterTypes()[0]) != null) {
 					return true;
 				}

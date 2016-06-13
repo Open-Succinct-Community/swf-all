@@ -210,7 +210,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		if (!ObjectUtil.isVoid(value)){
 			Class<?> colClass = value.getClass();
 			if (isNumeric(colClass)){
-				if (NumericConverter.class.isAssignableFrom(Database.getJdbcTypeHelper().getTypeRef(colClass).getTypeConverter().getClass())){
+				if (NumericConverter.class.isAssignableFrom(Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(colClass).getTypeConverter().getClass())){
 					cell = createCell(r.getSheet(),r,columnNum,value,decimalStyle);
 				}else {
 					cell = createCell(r.getSheet(),r,columnNum,value,integerStyle);
@@ -269,7 +269,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	private void fixCellDimensions(Sheet sheet,Row row,Bucket columnNum,CellStyle style, Object value, int maxColumnLength){
 		int currentColumnWidth = getColumnWidth(sheet,columnNum.intValue());
-		String sValue = Database.getJdbcTypeHelper().getTypeRef(value.getClass()).getTypeConverter().toString(value);
+		String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(value.getClass()).getTypeConverter().toString(value);
 		int currentValueLength = sValue.length() ;
 		int numRowsRequiredForCurrentValue = WordWrapUtil.getNumRowsRequired(sValue,maxColumnLength);
 		Font font = sheet.getWorkbook().getFontAt(style.getFontIndex());
@@ -305,7 +305,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			}else if (isBoolean(colClass)){
 				cell.setCellValue(Boolean.valueOf(String.valueOf(value)));
 			}else {
-				cell.setCellValue(Database.getJdbcTypeHelper().getTypeRef(colClass).getTypeConverter().toString(value));
+				cell.setCellValue(Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(colClass).getTypeConverter().toString(value));
 			}
 		}
 		columnNum.increment();

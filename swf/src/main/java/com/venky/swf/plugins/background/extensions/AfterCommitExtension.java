@@ -2,7 +2,7 @@ package com.venky.swf.plugins.background.extensions;
 
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
-import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;

@@ -33,7 +33,7 @@ public class ModelListEditableTable<M extends Model> extends ModelListTable<M>{
 		ModelAwareness helper = getModelAwareness();
 		ModelReflector<M> reflector = helper.getReflector();
     	Method getter = reflector.getFieldGetter(fieldName);
-		TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter();
+		TypeConverter<?> converter = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(getter.getReturnType()).getTypeConverter();
         
 		Control control = helper.getInputControl(controlName, fieldName, record, getMetaprovider());
         

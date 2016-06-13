@@ -16,9 +16,10 @@ public class BeforeUserEmailSave extends BeforeModelSaveExtension<UserEmail> {
 	}
 	@Override
 	public void beforeSave(UserEmail model) {
-		Expression expression = new Expression(Conjunction.AND);
-		expression.add(new Expression("email",Operator.IN, model.getEmail()));
-		expression.add(new Expression("user_id",Operator.NE,model.getUserId()));
+
+		Expression expression = new Expression(getPool(),Conjunction.AND);
+		expression.add(new Expression(getPool(),"email",Operator.IN, model.getEmail()));
+		expression.add(new Expression(getPool(),"user_id",Operator.NE,model.getUserId()));
 		Select select = new Select().from(UserEmail.class).where(expression);
 		List<UserEmail> r = select.execute(UserEmail.class);
 		if (!r.isEmpty()){

@@ -17,7 +17,7 @@ public class CompanySpecificImpl<M extends Model>  extends ModelImpl<M>{
 			cs = (CompanySpecific)getProxy();
 		}
 				
-		if (cs != null && !Database.getJdbcTypeHelper().isVoid(cs.getCompanyId())) {
+		if (cs != null && !Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(cs.getCompanyId())) {
 			return cs.getCompany().getCreatorUserId();
 		}
 		return null; //root

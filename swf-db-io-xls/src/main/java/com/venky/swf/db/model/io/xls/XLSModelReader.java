@@ -259,7 +259,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 
 	private Model getModel(ModelReflector<? extends Model> reflector, Map<String, Cell> headingValues) {
-		Expression where = new Expression(Conjunction.AND);
+		Expression where = new Expression(reflector.getPool(),Conjunction.AND);
 
 		Cache<String,Map<String,Cell>> newHeadingValues = new Cache<String, Map<String,Cell>>(){
 
@@ -287,14 +287,14 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 				String fieldName = StringUtil.underscorize(heading);
 				Object value = getCellValue(headingValues.get(heading),reflector.getFieldGetter(fieldName).getReturnType());
 				String columnName = reflector.getColumnDescriptor(fieldName).getName();
-				where.add(new Expression(columnName,Operator.EQ,value));
+				where.add(new Expression(reflector.getPool(),columnName,Operator.EQ,value));
 			}
 		}
 		for (String referenceFieldName: newHeadingValues.keySet()){
 			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(reflector.getFieldGetter(referenceFieldName)));
 			Model referred = getModel(ModelReflector.instance(referredModelClass), newHeadingValues.get(referenceFieldName));
 			if (referred != null){
-				where.add(new Expression(reflector.getColumnDescriptor(referenceFieldName).getName(),Operator.EQ,referred.getId()));
+				where.add(new Expression(reflector.getPool(),reflector.getColumnDescriptor(referenceFieldName).getName(),Operator.EQ,referred.getId()));
 			}
 		}
 		

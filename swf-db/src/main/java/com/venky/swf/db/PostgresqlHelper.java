@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.venky.core.util.ExceptionUtil;
-import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.sql.Select;
@@ -159,9 +159,9 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     }
     @Override
     protected <M extends Model> void updateSequence(Table<M> table){
-    	List<Counts> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Counts.class);
-    	Counts count = counts.get(0);
+    	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
+    	Count count = counts.get(0);
     	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1) +") AS COUNT").from();
-    	updateSequence.execute(Counts.class);
+    	updateSequence.execute(Count.class);
     }
 }

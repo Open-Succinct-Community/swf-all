@@ -54,7 +54,7 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 			if (fieldPartTokenizer.hasMoreTokens()){
 				String referenceFieldName = StringUtil.underscorize(nextToken + "Id");
 				Integer value = ref.get(current, referenceFieldName);
-				if (Database.getJdbcTypeHelper().isVoid(value)){
+				if (Database.getJdbcTypeHelper(ref.getPool()).isVoid(value)){
 					break;
 				}
 				Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(ref.getFieldGetter(referenceFieldName)));

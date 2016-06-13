@@ -11,8 +11,9 @@ public class Platform {
 		Registry.instance().registerExtension(DETECT_PLATFORM_DB, new CloudFoundryPlatform());
 		Registry.instance().registerExtension(DETECT_PLATFORM_DB, new SWFLocalPlatform());
 	}
-	public static Properties getConnectionProperties() {
+	public static Properties getConnectionProperties(String pool) {
 		Properties props = new Properties();
+		props.put("pool",pool);
 		Registry.instance().callExtensions(DETECT_PLATFORM_DB, props);
 		return props;
 	}

@@ -19,21 +19,21 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 public class BindVariable {
     private final TypeRef<?> ref;
     private final Object value;
-    public BindVariable(Object value){
-        this(value,Database.getJdbcTypeHelper().getTypeRef(value.getClass()));
+    public BindVariable(String pool, Object value){
+        this(pool,value,Database.getJdbcTypeHelper(pool).getTypeRef(value.getClass()));
     }
-    public BindVariable(Object value,int jdbcType){
-    	this(value,Database.getJdbcTypeHelper().getTypeRef(jdbcType));
+    public BindVariable(String pool,Object value,int jdbcType){
+    	this(pool,value,Database.getJdbcTypeHelper(pool).getTypeRef(jdbcType));
     }
     
-    public BindVariable(Object value, TypeRef<?> ref){
+    public BindVariable(String pool,Object value, TypeRef<?> ref){
     	this.ref = ref;
     	if (ref.getJdbcType() == Types.VARCHAR && value != null && !value.getClass().equals(String.class)){
     		this.value = ref.getTypeConverter().toString(value); //PGSql stores Clobs as Varchar(
-    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper().getTypeRef(Double.class).getJdbcType() && value != null && !(value.getClass().equals(Double.class))){
-    		this.value = Database.getJdbcTypeHelper().getTypeRef(Double.class).getTypeConverter().valueOf(value);
-    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper().getTypeRef(Long.class).getJdbcType() && value != null && !(value.getClass().equals(Long.class))){
-    		this.value = Database.getJdbcTypeHelper().getTypeRef(Long.class).getTypeConverter().valueOf(value);
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getJdbcType() && value != null && !(value.getClass().equals(Double.class))){
+    		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getTypeConverter().valueOf(value);
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getJdbcType() && value != null && !(value.getClass().equals(Long.class))){
+    		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getTypeConverter().valueOf(value);
     	}else {
     		this.value = value;
     	}

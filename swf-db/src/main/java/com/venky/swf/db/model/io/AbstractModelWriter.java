@@ -4,16 +4,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TimeZone;
 
-import com.venky.core.date.DateUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -59,7 +54,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				write(ref.getReferredModelClass(referredModelGetter) , ((Number)value).intValue(),refElement);
 			}else {
 				String attributeName = getAttributeName(field);
-                String sValue = Database.getJdbcTypeHelper().getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
+                String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
 				formatHelper.setAttribute(attributeName, sValue);
 			}
 		}

@@ -34,9 +34,9 @@ public class XMLExpressionParser {
 		Expression e = null;
 		if (elem.getNodeName().equals(Conjunction.AND.toString()) || elem.getNodeName().equals(Conjunction.OR.toString())){
 			if (elem.getNodeName().equals(Conjunction.AND.toString())){
-				e = new Expression(Conjunction.AND);
+				e = new Expression(table.getReflector().getPool(),Conjunction.AND);
 			}else {
-				e = new Expression(Conjunction.OR);
+				e = new Expression(table.getReflector().getPool(),Conjunction.OR);
 			}
 			for (Iterator<XMLElement> childIter = elem.getChildElements() ; childIter.hasNext() ;){
 				XMLElement child = childIter.next();
@@ -58,7 +58,7 @@ public class XMLExpressionParser {
 				XMLElement eValue = elem.getChildElement("Value");
 				addBindVariable(bvalues, columnType, eValue);
 			}
-			e = new Expression(columnName.getNodeValue(),op,bvalues.toArray());
+			e = new Expression(table.getReflector().getPool(),columnName.getNodeValue(),op,bvalues.toArray());
 		}
 			
 		return e;
@@ -90,9 +90,9 @@ public class XMLExpressionParser {
 		
 		Object value = sValue; 
 		if (columnType != Types.VARCHAR){
-			value = Database.getJdbcTypeHelper().getTypeRef(columnType).getTypeConverter().valueOf(sValue);
+			value = Database.getJdbcTypeHelper(table.getReflector().getPool()).getTypeRef(columnType).getTypeConverter().valueOf(sValue);
 		}
-		bValues.add(new BindVariable(value,columnType));
+		bValues.add(new BindVariable(table.getReflector().getPool(),value,columnType));
 
 	}
 }

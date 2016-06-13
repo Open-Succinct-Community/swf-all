@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
 import com.venky.core.log.TimerStatistics;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 
@@ -109,7 +110,7 @@ public class Config {
     	return Boolean.parseBoolean(sValue);
     }
     public List<String> getPackageRoots(String rootPackage){
-    	return propertyValueList.get(rootPackage);
+    	return getPropertyValueList(rootPackage);
     }
     
     private static final String MODEL_PACKAGE_ROOT = "swf.db.model.package.root";
@@ -120,19 +121,57 @@ public class Config {
     public List<String> getExtensionPackageRoots(){
 		return getPackageRoots(EXTENSION_PACKAGE_ROOT);
     }
-    
+
+	public List<String> getPropertyKeys(String regEx){
+		List<String> keys = new ArrayList<String>();
+		for (Object key: properties.keySet()){
+			String sKey = StringUtil.valueOf(key);
+			if (sKey.matches(regEx)) {
+				keys.add(sKey);
+			}
+		}
+		return keys;
+	}
     
     private static final String MENU_BUILDER_CLASS = "swf.menu.builder.class";
     String getMenuBuilderClassName(){
         return properties.getProperty(MENU_BUILDER_CLASS);
     }
     
-    public List<String> getModelClasses(){ 
-    	List<String> modelClasses = new ArrayList<String>();
+    private Cache<String,List<String>> sNToFQNs = new Cache<String, List<String>>(Cache.MAX_ENTRIES_UNLIMITED,Cache.PRUNE_FACTOR_DEFAULT) {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8286215452116271529L;
+
+		@Override
+		protected List<String> getValue(String k) {
+			return new ArrayList<String>();
+		}
+	};
+	
+	private void loadModelClasses(){
+		if (sNToFQNs.size() > 0){
+			return ;
+		}
 		for (String root : getModelPackageRoots()) {
 			for (URL url : getResourceBaseUrls()) {
-        		modelClasses.addAll(PackageUtil.getClasses(url, root.replace('.', '/')));
+        		for (String cn: PackageUtil.getClasses(url, root.replace('.', '/'))){
+        			sNToFQNs.get(cn.substring(cn.lastIndexOf('.')+1)).add(cn);
+        		}
 			}
+		}
+	}
+	public List<String> getModelClasses(String simpleModelName){
+		loadModelClasses();
+		return sNToFQNs.get(simpleModelName);
+	}
+    public List<String> getModelClasses(){
+    	loadModelClasses();
+    	List<String> modelClasses = new ArrayList<String>();
+		for (List<String> fQNs : sNToFQNs.values()) {
+    		modelClasses.addAll(fQNs);
 		}
 		return modelClasses;
     }

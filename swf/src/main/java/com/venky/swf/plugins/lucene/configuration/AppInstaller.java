@@ -41,7 +41,7 @@ public class AppInstaller implements Installer{
 	private boolean mkdir(String tableName){
 		boolean created = false;
 		ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
-		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute();
+		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute();
 		if (dirs.isEmpty()){
 			IndexDirectory rec = Database.getTable(IndexDirectory.class).newRecord();
 			rec.setName(tableName);

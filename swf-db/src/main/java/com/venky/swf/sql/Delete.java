@@ -8,10 +8,11 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 public class Delete extends DataManupulationStatement {
 	private String table ;
 	public <M extends Model> Delete(ModelReflector<M> ref){
-		this(ref.getTableName());
+		this(ref.getPool(),ref.getTableName());
 	}
 	
-	public Delete(String table){
+	public Delete(String pool,String table){
+		super(pool);
 		this.table = table;
 	}
 	@Override

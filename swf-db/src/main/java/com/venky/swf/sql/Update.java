@@ -17,10 +17,11 @@ public class Update extends DataManupulationStatement{
 	private SortedSet<String> keys = new TreeSet<String>();
 	
 	public <M extends Model> Update(ModelReflector<M> ref){
-		this(ref.getTableName());
+		this(ref.getPool(),ref.getTableName());
 	}
 	
-	public Update(String table){
+	public Update(String pool,String table){
+		super(pool);
 		this.table = table;
 	}
 	public Update setUnBounded(String name,String value){

@@ -21,13 +21,13 @@ public class FacilityParticipantExtension extends CompanySpecificParticipantExte
 		if (fieldName.equals("COUNTRY_ID")){
 			return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
 		}else if (fieldName.equals("STATE_ID")){
-			if (!Database.getJdbcTypeHelper().isVoid(partiallyFilledModel.getCountryId())){
+			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getCountryId())){
 				return DataSecurityFilter.getIds(partiallyFilledModel.getCountry().getStates());
 			}else {
 				return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(State.class, user));
 			}
 		}else if (fieldName.equals("CITY_ID")){
-			if (!Database.getJdbcTypeHelper().isVoid(partiallyFilledModel.getStateId())){
+			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getStateId())){
 				return DataSecurityFilter.getIds(partiallyFilledModel.getState().getCities());
 			}else {
 				return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(City.class, user));

@@ -11,7 +11,7 @@ public class UserEmailImpl extends CompanySpecificImpl<UserEmail> {
 	
 	public Integer getCompanyId(){
 		UserEmail ur = getProxy();
-		if (!Database.getJdbcTypeHelper().isVoid(ur.getUserId())){
+		if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(ur.getUserId())){
 			User u = (User)ur.getUser();
 			if (u != null) {
 				return u.getCompanyId();

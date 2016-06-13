@@ -128,7 +128,7 @@ public class AutoCompleteText<M extends Model> extends Div {
 	                Object dvalue = null;
 	                try {
 	                    dvalue = descriptionGetter.invoke(model);
-	                    dvalue = Database.getJdbcTypeHelper().getTypeRef(descriptionGetter.getReturnType()).getTypeConverter().toString(dvalue);
+	                    dvalue = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(descriptionGetter.getReturnType()).getTypeConverter().toString(dvalue);
 	                } catch (Exception ex) {
 	                    throw new RuntimeException(ex);
 	                }

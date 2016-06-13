@@ -13,7 +13,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 
-import com.venky.swf.db.model.Counts;
+import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.sql.DataManupulationStatement;
@@ -135,9 +135,9 @@ public class MySqlHelper extends JdbcTypeHelper{
 
     @Override
     protected <M extends Model> void updateSequence(Table<M> table){
-    	List<Counts> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Counts.class);
-    	Counts count = counts.get(0);
-    	DataManupulationStatement ddl = new DataManupulationStatement();
+    	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
+    	Count count = counts.get(0);
+    	DataManupulationStatement ddl = new DataManupulationStatement(table.getReflector().getPool());
     	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf(count.getCount() + 1) );
     	ddl.executeUpdate();
     }

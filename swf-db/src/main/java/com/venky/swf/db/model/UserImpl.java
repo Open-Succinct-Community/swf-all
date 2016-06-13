@@ -240,11 +240,11 @@ public class UserImpl extends ModelImpl<User>{
 		return getDataSecurityWhereClause(ref, participatingOptions);
 	}
 	public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Integer>>> participatingGroupOptions){
-		Expression dswMandatory = new Expression(Conjunction.AND);
+		Expression dswMandatory = new Expression(getPool(),Conjunction.AND);
 		
 		Map<String,Expression> optionalWhere = new HashMap<String, Expression>();
 		for (String participantRoleGroup: participatingGroupOptions.keySet()){
-			Expression dswOptional = new Expression(Conjunction.OR);
+			Expression dswOptional = new Expression(getPool(),Conjunction.OR);
 			optionalWhere.put(participantRoleGroup, dswOptional);
 			dswMandatory.add(dswOptional);
 		}
@@ -265,16 +265,16 @@ public class UserImpl extends ModelImpl<User>{
 		    	Expression dsw = optionalWhere.get(participantRoleGroup);
 				
 		    	if (values.isEmpty()){
-		    		dsw.add(new Expression(cd.getName(),Operator.EQ));
+		    		dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ));
 		    	}else if (values.size() == 1){
 		    		Integer value = values.get(0);
 		    		if (value == null){
-		    			dsw.add(new Expression(cd.getName(),Operator.EQ));
+		    			dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ));
 		    		}else {
-		    			dsw.add(new Expression(cd.getName(),Operator.EQ, values.get(0)));
+		    			dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ, values.get(0)));
 		    		}
 		    	}else {
-	    			dsw.add(Expression.createExpression(cd.getName(),Operator.IN, values.toArray()));
+	    			dsw.add(Expression.createExpression(getPool(),cd.getName(),Operator.IN, values.toArray()));
 		    	}
 			}
 		}

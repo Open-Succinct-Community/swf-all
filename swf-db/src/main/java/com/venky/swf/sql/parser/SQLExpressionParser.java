@@ -44,7 +44,7 @@ public class SQLExpressionParser {
 		Expression ret = null; 
 		if (rule.match(expression) && expression.length() == rule.getMatch().length()){
 			Element e = rule.getMatch();
-			ret = new Expression(Conjunction.AND);
+			ret = new Expression(table.getReflector().getPool(),Conjunction.AND);
 			parse(e,ret);
 		}
 		return ret;
@@ -74,9 +74,9 @@ public class SQLExpressionParser {
 		}else {
 			Expression ex = null;
 			if (e.getRule().getClass() == And.class){
-				ex = new Expression(Conjunction.AND);
+				ex = new Expression(table.getReflector().getPool(),Conjunction.AND);
 			}else if (e.getRule().getClass() == Or.class){
-				ex = new Expression(Conjunction.OR);
+				ex = new Expression(table.getReflector().getPool(),Conjunction.OR);
 			}
 			if (ex != null){
 				parentExpression.add(ex);
@@ -95,10 +95,10 @@ public class SQLExpressionParser {
 			throw new RuntimeException(table.getRealTableName() + " does not have column " + columnName);
 		}
 		if (e.getRule().getClass() == ISNULL.class || e.getRule().getClass() == IS_NOTNULL.class){
-			return new Expression(columnName,op);
+			return new Expression(table.getReflector().getPool(),columnName,op);
 		}else { 
 			List<BindVariable> columnValues = columnValues(e,cd);
-			return new Expression(columnName,op,columnValues.toArray());
+			return new Expression(table.getReflector().getPool(),columnName,op,columnValues.toArray());
 		}
 	}
 	private String columnName(Element e){
@@ -120,18 +120,18 @@ public class SQLExpressionParser {
 			if (cd != null){
 				int jdbcType = cd.getJDBCType();
 				if (jdbcType != Types.VARCHAR){
-					List<TypeRef<?>> refs = Database.getJdbcTypeHelper().getTypeRefs(jdbcType);
+					List<TypeRef<?>> refs = Database.getJdbcTypeHelper(table.getReflector().getPool()).getTypeRefs(jdbcType);
 					TypeRef<?> ref = null;
 					if (refs.size() == 1){
 						ref = refs.get(0);
 					}else {
 						String field = this.table.getReflector().getFieldName(cd.getName());
-						ref = Database.getJdbcTypeHelper().getTypeRef(this.table.getReflector().getFieldGetter(field).getReturnType());
+						ref = Database.getJdbcTypeHelper(table.getReflector().getPool()).getTypeRef(this.table.getReflector().getFieldGetter(field).getReturnType());
 					}
 					value = ref.getTypeConverter().valueOf(sValue);
 				}
 			}
-			values.add(new BindVariable(value));
+			values.add(new BindVariable(table.getReflector().getPool(),value));
 		}
 		return values;
 	}

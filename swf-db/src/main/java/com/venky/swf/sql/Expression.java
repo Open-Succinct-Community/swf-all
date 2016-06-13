@@ -25,11 +25,11 @@ public class Expression {
 	Operator op = null;
 	public static final int CHUNK_SIZE = 30; 
 	
-	public static Expression createExpression(String columnName, Operator op, Object... values){
+	public static Expression createExpression(String pool,String columnName, Operator op, Object... values){
 		List<List<Object>> chunks = getValueChunks(Arrays.asList(values));
-		Expression e = new Expression(Conjunction.OR);
+		Expression e = new Expression(pool,Conjunction.OR);
 		for (List<Object> chunk : chunks){
-			e.add(new Expression(columnName,op,chunk.toArray()));
+			e.add(new Expression(pool,columnName,op,chunk.toArray()));
 		}
 		return e;
 	}
@@ -57,19 +57,21 @@ public class Expression {
 		}
 		return chunks;
 	}
-	
+
+	String pool = null;
 	@SafeVarargs
-	public <T> Expression(String columnName,Operator op, T... values){
+	public <T> Expression(String pool,String columnName,Operator op, T... values){
 		this.columnName = columnName; 
 		this.op = op ;
 		this.values = new SequenceSet<BindVariable>();
+		this.pool = pool;
 		
 		try {
 			for (int i = 0 ; i < values.length ; i ++ ){
 				if (values[i] instanceof BindVariable) {
 					this.values.add((BindVariable)values[i]);	
 				}else {
-					this.values.add(new BindVariable(values[i]));
+					this.values.add(new BindVariable(pool,values[i]));
 				}
 			}
 		}catch (NullPointerException ex){
@@ -79,7 +81,8 @@ public class Expression {
 		setFinalized(true);
 	}
 	Conjunction conjunction = null;
-	public Expression(Conjunction conjunction){
+	public Expression(String pool,Conjunction conjunction){
+		this.pool = pool;
 		this.conjunction = conjunction;
 		this.values = new ArrayList<BindVariable>();
 	}
@@ -154,7 +157,7 @@ public class Expression {
 		while (index >= 0) {
 			BindVariable parameter = parameters.get(p);
 			String pStr = StringUtil.valueOf(parameter.getValue()) ;
-			if (Database.getJdbcTypeHelper().getTypeRef(parameter.getJdbcType()).isQuotedWhenUnbounded()){
+			if (Database.getJdbcTypeHelper(pool).getTypeRef(parameter.getJdbcType()).isQuotedWhenUnbounded()){
 				pStr = "'" + pStr + "'";
 			}
 			builder.replace(index, index+1, pStr);
@@ -319,7 +322,7 @@ public class Expression {
 					return false;
 				}
 				if (v.getClass() != value.getClass()){
-					value = Database.getJdbcTypeHelper().getTypeRef(v.getClass()).getTypeConverter().valueOf(value);
+					value = Database.getJdbcTypeHelper(pool).getTypeRef(v.getClass()).getTypeConverter().valueOf(value);
 					//Compare Apples and apples not apples and oranges.
 				}
 				if (op == Operator.EQ){
@@ -342,7 +345,7 @@ public class Expression {
 				}
 			}
 			if (op == Operator.IN){
-				if (values.contains(new BindVariable(value))){
+				if (values.contains(new BindVariable(pool,value))){
 					return true;
 				}
 			}

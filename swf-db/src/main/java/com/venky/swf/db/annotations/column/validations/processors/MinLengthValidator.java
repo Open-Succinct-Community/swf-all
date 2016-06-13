@@ -13,6 +13,10 @@ import com.venky.swf.exceptions.MultiException;
  */
 public class MinLengthValidator extends FieldValidator<MinLength>{
 
+    public MinLengthValidator(String pool) {
+        super(pool);
+    }
+
     @Override
     public boolean validate(MinLength rule, String humanizedFieldName, String value, MultiException ex){
         if (rule.value() <= value.length() ){

@@ -192,7 +192,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 
 	private Expression getIdWhereClause(int id) {
-		return new Expression("ID", Operator.EQ, id);
+		return new Expression(getTable().getReflector().getPool(),"ID", Operator.EQ, id);
 	}
 
 	private Expression getIdWhereClause(Record record) {
@@ -207,9 +207,9 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private Expression getIndexWhereClause(Record record, String column) {
 		Object value = record.get(column);
 		if (value != null){
-			return new Expression(column,Operator.EQ,value);
+			return new Expression(getTable().getReflector().getPool(),column,Operator.EQ,value);
 		}else {
-			return new Expression(column,Operator.EQ);
+			return new Expression(getTable().getReflector().getPool(),column,Operator.EQ);
 		}
 	}
 	private boolean hasLockedRecords = false; 

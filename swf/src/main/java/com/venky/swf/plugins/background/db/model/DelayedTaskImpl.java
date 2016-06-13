@@ -7,7 +7,7 @@ import java.io.StringWriter;
 import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.plugins.background.core.Task;
@@ -36,7 +36,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 	
 	public void execute(){
 		DelayedTask o = getProxy();
-		Transaction parentTxn = Database.getInstance().createTransaction();
+		Transaction parentTxn = Database.getInstance().getTransactionManager().createTransaction();
 		try { 
 			DelayedTask locked = Database.getTable(DelayedTask.class).lock(o.getId(),false);
 			if (locked != null) {
@@ -45,7 +45,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 				try {
 					ObjectInputStream is = new ObjectInputStream(locked.getData());
 					Task task = (Task)is.readObject();
-					txn = Database.getInstance().createTransaction();
+					txn = Database.getInstance().getTransactionManager().createTransaction();
 					task.execute();
 					txn.commit();
 					success = true;
@@ -74,6 +74,4 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 			parentTxn.rollback(ex);
 		}
 	}
-	
-
 }

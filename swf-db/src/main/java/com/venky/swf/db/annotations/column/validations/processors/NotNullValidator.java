@@ -13,6 +13,10 @@ import com.venky.swf.exceptions.MultiException;
  */
 public class NotNullValidator extends FieldValidator<IS_NULLABLE> {
 
+    public NotNullValidator(String pool) {
+        super(pool);
+    }
+
     @Override
     public boolean validate(IS_NULLABLE annotation,String humanizedFieldName,  String value,MultiException ex) {
         if (!annotation.value() && value.trim().length() == 0 ){

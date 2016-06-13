@@ -44,7 +44,17 @@ public class Select extends SqlStatement{
 		this.wait = wait;
 		this.columnNames = columnNames;
 	}
-	
+
+	private List<String> pools = new ArrayList<String>();
+	public String getPool(){
+		if (pools.size() == 0){
+			throw new RuntimeException("Cannot determine db Pool");
+		}else if (pools.size() > 1){
+			throw new RuntimeException("Cannot select across db pools in a single select statement");
+		}else{
+			return  pools.get(0);
+		}
+	}
 	@SuppressWarnings("unchecked")
 	public Select from(Class<?>... models){
 		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
@@ -56,6 +66,7 @@ public class Select extends SqlStatement{
 				}
 				ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)models[i]);
 				tables[i] = ref.getTableName();
+				pools.add(ref.getPool());
 			}
 			return from(tables);
 		}finally{
@@ -96,15 +107,15 @@ public class Select extends SqlStatement{
 				return false;
 			}
 			ModelReflector<M> ref = ModelReflector.instance(modelClass);
-			
-			for (int i = 0 ; i < orderBy.length ; i ++ ){
-				String[] split = splitOrderByColumn(orderBy[i]);
-				String column = split[0];
-				String field = ref.getFieldName(column);
-				if (field == null || ref.getColumnDescriptor(field).isVirtual()){
-					return false;
-				}
-			}
+
+            for (String anOrderBy : orderBy) {
+                String[] split = splitOrderByColumn(anOrderBy);
+                String column = split[0];
+                String field = ref.getFieldName(column);
+                if (field == null || ref.getColumnDescriptor(field).isVirtual()) {
+                    return false;
+                }
+            }
 			return true;
 		}finally{
 			timer.stop();
@@ -144,10 +155,10 @@ public class Select extends SqlStatement{
 		
 		if (lock){
 			if (wait){
-				builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
-			}else if (!wait && Database.getJdbcTypeHelper().isNoWaitSupported()){
-				builder.append(Database.getJdbcTypeHelper().getForUpdateLiteral());
-				builder.append(Database.getJdbcTypeHelper().getNoWaitLiteral());
+				builder.append(Database.getJdbcTypeHelper(getPool()).getForUpdateLiteral());
+			}else if (!wait && Database.getJdbcTypeHelper(getPool()).isNoWaitSupported()){
+				builder.append(Database.getJdbcTypeHelper(getPool()).getForUpdateLiteral());
+				builder.append(Database.getJdbcTypeHelper(getPool()).getNoWaitLiteral());
 			}//else {
 				//Just rely on Optimistic locking. 
 			//}
@@ -235,7 +246,7 @@ public class Select extends SqlStatement{
 		            if (this.orderBy != null){
 		            	sortResults = false;
 		            }
-	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper().isNoWaitSupported())) && Database.getJdbcTypeHelper().isQueryTimeoutSupported()){
+	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper(getPool()).isNoWaitSupported())) && Database.getJdbcTypeHelper(getPool()).isQueryTimeoutSupported()){
 	            		Config.instance().getLogger(getClass().getName()).fine("Setting Statement Time out");
 	            		st.setQueryTimeout(10);
 	            	}
@@ -244,7 +255,7 @@ public class Select extends SqlStatement{
 		            if (st.execute()){
 		                ResultSet rs = st.getResultSet();
 		                while (rs.next() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords + 1)){
-		                    Record r = new Record();
+		                    Record r = new Record(getPool());
 		                    r.load(rs,ref);
 		                    r.setLocked(locked);
 
@@ -276,7 +287,7 @@ public class Select extends SqlStatement{
 		            	ret.remove(ret.size()-1); // Remove the last extra one.!!
 		            }
 	            }catch (SQLException ex){
-	            	if (Database.getJdbcTypeHelper().isQueryTimeoutException(ex)){
+	            	if (Database.getJdbcTypeHelper(getPool()).isQueryTimeoutException(ex)){
 	            		throw new SWFTimeoutException(ex);
 	            	}else {
 	            		throw ex;
@@ -295,7 +306,7 @@ public class Select extends SqlStatement{
     							String[] orderByColumnSplit = splitOrderByColumn(orderByPassed[i]);
     							String fieldName = orderByColumnSplit[0];
     							Class<?> fieldType = ref.getFieldGetter(fieldName).getReturnType();
-    							TypeConverter<?> converter = Database.getJdbcTypeHelper().getTypeRef(fieldType).getTypeConverter();
+    							TypeConverter<?> converter = Database.getJdbcTypeHelper(getPool()).getTypeRef(fieldType).getTypeConverter();
     							
     							Comparable v1  = (Comparable)(converter.valueOf(r1.get(orderByColumnSplit[0])));
     							Comparable v2  = (Comparable)(converter.valueOf(r2.get(orderByColumnSplit[0])));

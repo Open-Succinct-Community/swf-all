@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 
 public abstract class BeforeModelSaveExtension<M extends Model> implements Extension{
 	protected static <M extends Model> void registerExtension(BeforeModelSaveExtension<M> instance){
@@ -16,7 +17,9 @@ public abstract class BeforeModelSaveExtension<M extends Model> implements Exten
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
-	
+	public String getPool(){
+		return ModelReflector.instance(getModelClass(this)).getPool();
+	}
 	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		M model = (M)context[0];

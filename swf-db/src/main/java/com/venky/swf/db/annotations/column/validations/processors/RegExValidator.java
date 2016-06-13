@@ -16,7 +16,11 @@ import java.util.regex.Pattern;
  */
 public class RegExValidator extends FieldValidator<RegEx>{
 
-    
+
+    public RegExValidator(String pool) {
+        super(pool);
+    }
+
     @Override
     public boolean validate(RegEx annotation, String humanizedFieldName, String value, MultiException ex){
         Pattern pattern = Pattern.compile(annotation.value());

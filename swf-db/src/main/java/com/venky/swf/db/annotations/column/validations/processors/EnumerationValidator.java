@@ -17,6 +17,10 @@ import com.venky.swf.exceptions.MultiException;
  */
 public class EnumerationValidator extends FieldValidator<Enumeration> {
 
+    public EnumerationValidator(String pool) {
+        super(pool);
+    }
+
     @Override
     public boolean validate(Enumeration annotation, String humanizedFieldName, String value, MultiException ex){
     	if (ObjectUtil.isVoid(value)){

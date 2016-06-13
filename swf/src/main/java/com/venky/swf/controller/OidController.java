@@ -23,7 +23,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.Database.Transaction;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.path.Path;
@@ -249,7 +249,8 @@ public class OidController extends Controller{
 		    		String name = getFullName(fetchResp);
 
 		    		User u = null;
-	    			Select select = new Select().from(UserEmail.class).where(new Expression("email",Operator.IN, emails.toArray()));
+	    			Select select = new Select().from(UserEmail.class);
+	    			select.where(new Expression(select.getPool(),"email",Operator.IN, emails.toArray()));
 	    			List<UserEmail> oids = select.execute(UserEmail.class);
 	    			int numOids = oids.size();
 	    			
@@ -265,7 +266,7 @@ public class OidController extends Controller{
 	    			}
 	    			
 	    			if (u == null){
-		    			Transaction txn = Database.getInstance().createTransaction();
+		    			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
 						u = Database.getTable(User.class).newRecord();
 		    			u.setName(name);
 		    			u.setPassword(null);

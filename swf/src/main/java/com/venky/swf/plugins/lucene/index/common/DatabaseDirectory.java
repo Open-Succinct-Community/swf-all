@@ -30,7 +30,7 @@ public class DatabaseDirectory extends Directory {
 	public DatabaseDirectory(String tableName) throws IOException{
 		super();
 		ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
-		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute(IndexDirectory.class);
+		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute(IndexDirectory.class);
 		if (dirs.size() == 1){
 			directory = dirs.get(0);
 		}

@@ -86,7 +86,9 @@ public class ModelInvocationHandler implements InvocationHandler {
 		return modelName;
 	}
 	
-
+	public String getPool(){
+		return getReflector().getPool();
+	}
 	public ModelInvocationHandler(Class<? extends Model> modelClass, Record record) {
         this.record = record;
         this.reflector = ModelReflector.instance(modelClass);
@@ -109,7 +111,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
                 Object value = record.get(columnName);
 
-				TypeRef<?> ref =Database.getJdbcTypeHelper().getTypeRef(retType);
+				TypeRef<?> ref =Database.getJdbcTypeHelper(getPool()).getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (value == null) {
                 	Object defaultValue = null;
@@ -228,7 +230,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	Class<? extends Model> modelClass = getReflector().getModelClass();
-    	Expression expression = new Expression(Conjunction.OR);
+    	Expression expression = new Expression(getPool(),Conjunction.OR);
     	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
         for (String fieldName: childReflector.getFields()){
         	if (fieldName.endsWith("_ID")){
@@ -236,7 +238,7 @@ public class ModelInvocationHandler implements InvocationHandler {
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
             	if (referredModelGetter != null && referredModelGetter.getReturnType().isAssignableFrom(modelClass)){
             		String columnName = childReflector.getColumnDescriptor(fieldName).getName();
-            		expression.add(new Expression(columnName,Operator.EQ,proxy.getId()));
+            		expression.add(new Expression(getPool(),columnName,Operator.EQ,proxy.getId()));
             	}
         	}
         }
@@ -253,8 +255,8 @@ public class ModelInvocationHandler implements InvocationHandler {
     	int parentId = proxy.getId();
     	ModelReflector<C> childReflector = ModelReflector.instance(childClass);
     	String parentIdColumnName = childReflector.getColumnDescriptor(parentIdFieldName).getName();
-    	Expression where = new Expression(Conjunction.AND);
-    	where.add(new Expression(parentIdColumnName,Operator.EQ,new BindVariable(parentId)));
+    	Expression where = new Expression(getPool(),Conjunction.AND);
+    	where.add(new Expression(getPool(),parentIdColumnName,Operator.EQ,new BindVariable(getPool(),parentId)));
     	if (!ObjectUtil.isVoid(addnl_condition)){
     		Expression addnl = new SQLExpressionParser(childClass).parse(addnl_condition);
         	where.add(addnl);
@@ -475,19 +477,30 @@ public class ModelInvocationHandler implements InvocationHandler {
     public void init(){
     	
     }
-    private final static List<FieldValidator<? extends Annotation>> fieldValidators = new ArrayList<FieldValidator<? extends Annotation>>();
+    private static final Cache<String,List<FieldValidator<? extends Annotation>>> _fieldValidators = new Cache<String, List<FieldValidator<? extends Annotation>>>() {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -8174150221673158116L;
 
-    private final static List<ModelValidator> modelValidators = new ArrayList<ModelValidator>();
-    static {
-        fieldValidators.add(new ExactLengthValidator());
-        fieldValidators.add(new MaxLengthValidator());
-        fieldValidators.add(new MinLengthValidator());
-        fieldValidators.add(new NotNullValidator());
-        fieldValidators.add(new RegExValidator());
-        fieldValidators.add(new EnumerationValidator());
-        fieldValidators.add(new DateFormatValidator());
-        fieldValidators.add(new NumericRangeValidator());
-        fieldValidators.add(new IntegerRangeValidator());
+		@Override
+        protected List<FieldValidator<? extends Annotation>> getValue(String pool) {
+            List<FieldValidator<? extends Annotation>> fieldValidators = new ArrayList<FieldValidator<? extends Annotation>>();
+            fieldValidators.add(new ExactLengthValidator(pool));
+            fieldValidators.add(new MaxLengthValidator(pool));
+            fieldValidators.add(new MinLengthValidator(pool));
+            fieldValidators.add(new NotNullValidator(pool));
+            fieldValidators.add(new RegExValidator(pool));
+            fieldValidators.add(new EnumerationValidator(pool));
+            fieldValidators.add(new DateFormatValidator(pool));
+            fieldValidators.add(new NumericRangeValidator(pool));
+            fieldValidators.add(new IntegerRangeValidator(pool));
+            return fieldValidators;
+        }
+    };
+
+    private static final List<ModelValidator> modelValidators = new ArrayList<ModelValidator>();
+    static{
         modelValidators.add(new UniqueKeyValidator());
     }
     
@@ -511,7 +524,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     protected boolean isFieldValid(String field, MultiException fieldException) {
         boolean ret = true;
-        Iterator<FieldValidator<? extends Annotation>> i = fieldValidators.iterator();
+        Iterator<FieldValidator<? extends Annotation>> i = _fieldValidators.get(getPool()).iterator();
         while (i.hasNext()) {
             FieldValidator<? extends Annotation> v = i.next();
             ret = v.isValid(getProxy(), field, fieldException) && ret;
@@ -626,9 +639,9 @@ public class ModelInvocationHandler implements InvocationHandler {
 	    	destroyCascade();
 	
 	    	Delete q = new Delete(getReflector());
-	        Expression condition = new Expression(Conjunction.AND);
-	        condition.add(new Expression(getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(proxy.getId())));
-	        condition.add(new Expression(getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(proxy.getLockId())));
+	        Expression condition = new Expression(getPool(),Conjunction.AND);
+	        condition.add(new Expression(getPool(),getReflector().getColumnDescriptor("id").getName(),Operator.EQ,new BindVariable(getPool(),proxy.getId())));
+	        condition.add(new Expression(getPool(),getReflector().getColumnDescriptor("lock_id").getName(),Operator.EQ,new BindVariable(getPool(),proxy.getLockId())));
 	        q.where(condition);
 	        if (q.executeUpdate() <= 0){
 	        	throw new RecordNotFoundException();
@@ -651,17 +664,17 @@ public class ModelInvocationHandler implements InvocationHandler {
         while (fI.hasNext()) {
             String columnName = fI.next();
             String fieldName =  getReflector().getFieldName(columnName);
-            TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
-            q.set(columnName,new BindVariable(record.get(columnName), ref));
+            TypeRef<?> ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
+            q.set(columnName,new BindVariable(getPool(),record.get(columnName), ref));
         }
         
         String idColumn = getReflector().getColumnDescriptor("id").getName();
         String lockidColumn = getReflector().getColumnDescriptor("lock_id").getName();
-        q.set(lockidColumn,new BindVariable(newLockId));
+        q.set(lockidColumn,new BindVariable(getPool(),newLockId));
         
-        Expression condition = new Expression(Conjunction.AND);
-        condition.add(new Expression(idColumn,Operator.EQ,new BindVariable(proxy.getId())));
-        condition.add(new Expression(lockidColumn,Operator.EQ,new BindVariable(oldLockId)));
+        Expression condition = new Expression(getPool(),Conjunction.AND);
+        condition.add(new Expression(getPool(),idColumn,Operator.EQ,new BindVariable(getPool(),proxy.getId())));
+        condition.add(new Expression(getPool(),lockidColumn,Operator.EQ,new BindVariable(getPool(),oldLockId)));
 
         q.where(condition);
         
@@ -689,19 +702,19 @@ public class ModelInvocationHandler implements InvocationHandler {
         while (columnIterator.hasNext()) {
             String columnName = columnIterator.next();
             String fieldName =  getReflector().getFieldName(columnName);
-            TypeRef<?> ref = Database.getJdbcTypeHelper().getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
-            values.put(columnName,new BindVariable(record.get(columnName), ref));
+            TypeRef<?> ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
+            values.put(columnName,new BindVariable(getPool(),record.get(columnName), ref));
         }
         insertSQL.values(values);
         
         
-        Record generatedValues = new Record();
+        Record generatedValues = new Record(getPool());
         Set<String> autoIncrementColumns = reflector.getAutoIncrementColumns();
         assert (autoIncrementColumns.size() <= 1); // atmost one auto increment id column
         List<String> generatedKeys = new ArrayList<String>();
         
         for (String anAutoIncrementColumn:autoIncrementColumns){
-			if ( Database.getJdbcTypeHelper().isColumnNameAutoLowerCasedInDB() ){
+			if ( Database.getJdbcTypeHelper(getPool()).isColumnNameAutoLowerCasedInDB() ){
         		generatedKeys.add(LowerCaseStringCache.instance().get(anAutoIncrementColumn));
         	}else {
         		generatedKeys.add(anAutoIncrementColumn);

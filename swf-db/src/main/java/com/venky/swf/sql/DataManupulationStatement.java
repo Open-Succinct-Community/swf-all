@@ -10,9 +10,13 @@ import com.venky.swf.routing.Config;
 
 public class DataManupulationStatement extends SqlStatement{
 	protected Level level = Level.FINE;
-	public DataManupulationStatement(){
-		
+    private String pool = null;
+	public DataManupulationStatement(String pool){
+		this.pool = pool;
 	}
+    public String getPool(){
+        return pool;
+    }
 	
 	public int executeUpdate(){
         return executeUpdate(null);

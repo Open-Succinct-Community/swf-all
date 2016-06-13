@@ -21,6 +21,14 @@ import com.venky.swf.exceptions.MultiException;
  * @author venky
  */
 public abstract class FieldValidator<T extends Annotation>  {
+
+	private String pool;
+	public FieldValidator(String pool){
+		this.pool = pool;
+	}
+	public String getPool(){
+		return pool;
+	}
 	@SuppressWarnings("unchecked")
 	public Class<T> getAnnotationClass(){
 		ParameterizedType pt = (ParameterizedType)this.getClass().getGenericSuperclass();

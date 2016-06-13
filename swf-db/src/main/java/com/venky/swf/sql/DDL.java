@@ -12,8 +12,8 @@ public abstract class DDL extends DataManupulationStatement{
 
 	protected List<BindVariable> values = new ArrayList<BindVariable>();
 	protected String table ;
-
-	protected DDL(String table){
+	protected DDL(String pool,String table){
+		super(pool);
 		this.table = table;
 	}
 
@@ -26,8 +26,8 @@ public abstract class DDL extends DataManupulationStatement{
 	}
 
 	public static final class DropTable extends DDL {
-		public DropTable(String table){
-			super(table);
+		public DropTable(String pool,String table){
+			super(pool,table);
 			getQuery().append("drop table ").append(table);
 		}
 	}
@@ -35,8 +35,8 @@ public abstract class DDL extends DataManupulationStatement{
 	public static final class CreateTable extends DDL {
 		List<String> columnsSpec = new ArrayList<String>();
 		List<String> pk = new ArrayList<String>();
-		public CreateTable(String table){
-			super(table);
+		public CreateTable(String pool,String table){
+			super(pool,table);
 		}
 
 		String asSelect = null;
@@ -66,7 +66,7 @@ public abstract class DDL extends DataManupulationStatement{
 					}
 				}
 				
-				if (pk.size() > 0 && Database.getJdbcTypeHelper().requiresSeparatePrimaryKeyClause()){
+				if (pk.size() > 0 && Database.getJdbcTypeHelper(getPool()).requiresSeparatePrimaryKeyClause()){
 					query.append(" , ").append(" primary key(");
 					Iterator<String> pkColumnIterator = pk.iterator();
 					while (pkColumnIterator.hasNext()){
@@ -95,8 +95,8 @@ public abstract class DDL extends DataManupulationStatement{
 	}
 	
 	public static final class AlterTable extends DDL {
-		public AlterTable(String table){
-			super(table);
+		public AlterTable(String pool,String table){
+			super(pool,table);
 		}
 		private String alterSpec = null ;
 		public void dropColumn(String columnName){

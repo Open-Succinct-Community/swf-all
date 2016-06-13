@@ -12,14 +12,14 @@ import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.table.BindVariable;
 
-public class SqlStatement {
-	
-	protected PreparedStatement prepare(String... columnNames) throws SQLException{
+public abstract class SqlStatement {
+    public abstract String getPool();
+    protected PreparedStatement prepare(String... columnNames) throws SQLException{
         PreparedStatement st = null;
         if (columnNames == null || columnNames.length == 0){
-            st = Database.getInstance().getCurrentTransaction().createStatement(getParameterizedSQL());
+            st = Database.getInstance().createStatement(getPool(),getParameterizedSQL());
         }else {
-            st = Database.getInstance().getCurrentTransaction().createStatement(getParameterizedSQL(),columnNames);
+            st = Database.getInstance().createStatement(getPool(),getParameterizedSQL(),columnNames);
         }
         
         List<BindVariable> parameters = getValues();
@@ -28,7 +28,7 @@ public class SqlStatement {
             if (value.getJdbcType() == Types.BLOB || value.getJdbcType() == Types.LONGVARBINARY || value.getJdbcType() == Types.BINARY){
             	ByteArrayInputStream in = value.getBinaryInputStream();
             	if (in != null){
-            		Database.getJdbcTypeHelper().setBinaryStream(st,i+1,in);
+            		Database.getJdbcTypeHelper(getPool()).setBinaryStream(st,i+1,in);
             	}else {
             		st.setNull(i+1, value.getJdbcType());
             	}

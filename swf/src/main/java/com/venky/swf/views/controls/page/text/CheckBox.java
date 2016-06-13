@@ -31,7 +31,7 @@ public class CheckBox extends Input{
      
     public void setChecked(Object value){
     	@SuppressWarnings("unchecked")
-		TypeConverter<Boolean> converter = (TypeConverter<Boolean>) Database.getJdbcTypeHelper().getTypeRef(Boolean.class).getTypeConverter();
+		TypeConverter<Boolean> converter = (TypeConverter<Boolean>) Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter();
         if (converter.valueOf(String.valueOf(value))){
             super.setProperty("checked", value);
         }else {
