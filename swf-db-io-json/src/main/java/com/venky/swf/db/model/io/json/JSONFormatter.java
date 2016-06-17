@@ -57,7 +57,7 @@ public class JSONFormatter  {
     }
 	private void writeAttributes(JSONObject obj, Writer w) throws IOException {
 		boolean first = true;
-		List<String> keys = new ArrayList<>();
+		List<String> keys = new ArrayList<String>();
 		keys.addAll(obj.keySet());
 		Collections.sort(keys);
 		for (Object k : keys){

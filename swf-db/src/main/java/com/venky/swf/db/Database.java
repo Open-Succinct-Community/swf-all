@@ -191,10 +191,13 @@ public class Database implements _IDatabase{
 		boolean dbModified = false;
 		loadTables(dbModified);
         for (String pool: tablesInPool.keySet()) {
+            if (ConnectionManager.instance().isPoolReadOnly(pool)) {
+                continue;
+            }
             for (Table<?> table : tablesInPool.get(pool).values()) {
-                if (table.isVirtual()) {
-                    continue;
-                }
+            	if (table.isVirtual()){
+            		continue;
+            	}
                 Config.instance().getLogger(Database.class.getName()).info("Table " + table.getRealTableName() + " :" + pool + "Model " + table.getModelClass()    + " :" + table.getPool());
                 if (!table.isExistingInDatabase() && ObjectUtil.equals(table.getReflector().getPool(),pool)) {
                     table.createTable();
@@ -258,25 +261,26 @@ public class Database implements _IDatabase{
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);
-				if (table == null){
+				if (ConnectionManager.instance().isPoolReadOnly(pool) && table == null){
+					continue;
+				}
+				if (table == null){ //
 					table = new Table(tableName,pool);
                     getTables(pool).put(tableName, table);
 				}
-				if (table.isReal()){
-					table.setExistingInDatabase(true);
-	                ResultSet columnResultSet = null; 
-	                try {
-		                columnResultSet = meta.getColumns(null,getSchema(pool), tableName, null);
-						while (columnResultSet.next()) {
-		                    String columnName  = columnResultSet.getString("COLUMN_NAME");
-		                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
-						}
-	                }finally {
-	                	if (columnResultSet != null){
-	                		columnResultSet.close();
-	                	}
-	                }
-				}
+				table.setExistingInDatabase(true);
+                ResultSet columnResultSet = null; 
+                try {
+	                columnResultSet = meta.getColumns(null,getSchema(pool), tableName, null);
+					while (columnResultSet.next()) {
+	                    String columnName  = columnResultSet.getString("COLUMN_NAME");
+	                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
+					}
+                }finally {
+                	if (columnResultSet != null){
+                		columnResultSet.close();
+                	}
+                }
 			}
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);

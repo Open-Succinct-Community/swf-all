@@ -51,6 +51,11 @@ public class ModelGeneratorMojo extends AbstractMojo {
 	File srcDir;
 	
 	/**
+	 * @parameter expression="${pool}" default-value = "" 
+	 */
+	String pool;
+	
+	/**
 	 * @parameter expression="${project.build.sourceEncoding}"
 	 */
 	String encoding;
@@ -64,10 +69,17 @@ public class ModelGeneratorMojo extends AbstractMojo {
 	
     public void generateModels(File directory) throws MojoExecutionException{
         Database.loadTables(true);
-        for (String pool : ConnectionManager.instance().getPools()){
-            for (Table<?> table: Database.getTables(pool).values()){
-                generateModelClass(table, directory,pool);
-            }
+        if (!ObjectUtil.isVoid(this.pool)){
+        	generateModelClass(directory, pool);
+        }else {
+	        for (String pool : ConnectionManager.instance().getPools()){
+	        	generateModelClass(directory, pool);
+	        }
+        }
+    }
+    private void generateModelClass(File directory, String pool) throws MojoExecutionException {
+        for (Table<?> table: Database.getTables(pool).values()){
+            generateModelClass(table, directory,pool);
         }
     }
     

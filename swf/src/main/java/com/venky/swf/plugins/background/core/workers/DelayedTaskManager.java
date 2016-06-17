@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.PriorityQueue;
 
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.util.Bucket;
 import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
@@ -32,12 +33,15 @@ public class DelayedTaskManager {
 		this(Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1));
 	}
 	
+	private Bucket numWorkersWorking = new Bucket();
+	
 	private DelayedTaskManager(int numWorkerThreads){
 		super();
 		workers = new DelayedTaskWorker[numWorkerThreads];
 		for (int i = 0 ; i < workers.length; i ++){
 			workers[i] = new DelayedTaskWorker(this);
 			workers[i].start();
+			incrementWorkerCount();
 		}
 		dtpt = new DelayedTaskPollingThread(this);
 		dtpt.start();
@@ -78,32 +82,25 @@ public class DelayedTaskManager {
 	}
 
 	public DelayedTask next(){
+		decrementWorkerCount();
+		waitIfQueueIsEmpty();
+		DelayedTask dt = null ;
 		synchronized (queue) {
-			waitIfQueueIsEmpty();
-			DelayedTask dt = null ;
 			if (keepAlive() && !queue.isEmpty()){
 				dt = queue.poll();
 				queue.notifyAll();
 			}
-			return dt;
 		}
+		if (dt != null) {
+			incrementWorkerCount();
+		}
+		return dt;
 	}
 	
 	public boolean needMoreTasks(){
-		synchronized (queue) {
-			if (queue.isEmpty()){
-				try {
-					Config.instance().getLogger(getClass().getName()).finest("Daemon going to sleep to 1 minute.");
-					queue.wait(60*1000); //1 minute;
-				}catch (InterruptedException ex){
-					//
-					Config.instance().getLogger(getClass().getName()).finest("Daemon Woke up");
-				}
-			}
-			waitIfQueueIsNotEmpty();
-			return keepAlive();
-			
-		}
+		waitIfQueueIsNotEmpty();
+		waitTillWorkersFinish();
+		return keepAlive();
 	}
 
 	public void waitIfQueueIsEmpty(){
@@ -111,10 +108,36 @@ public class DelayedTaskManager {
 			while (queue.isEmpty() && keepAlive()){
 				try {
 					Config.instance().getLogger(getClass().getName()).finest("Worker: going back to sleep as there is no work to be done.");
-					queue.wait();
+					queue.wait(10000);
 				}catch (InterruptedException ex){
 					Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
 					//
+				}
+			}
+		}
+	}
+	public void decrementWorkerCount(){
+		synchronized (numWorkersWorking) {
+			numWorkersWorking.decrement();
+			numWorkersWorking.notifyAll();
+			Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
+		}
+	}
+	public void incrementWorkerCount(){
+		synchronized (numWorkersWorking) {
+			numWorkersWorking.increment();
+			numWorkersWorking.notifyAll();
+			Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
+		}
+	}
+	public void waitTillWorkersFinish(){
+		synchronized (numWorkersWorking) {
+			while (numWorkersWorking.intValue() != 0){
+				try {
+					Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
+					numWorkersWorking.wait(10000);
+				}catch(InterruptedException ex){
+					
 				}
 			}
 		}
@@ -139,7 +162,6 @@ public class DelayedTaskManager {
 					initialSize = newSize;
 				}
 			}
-			Config.instance().getLogger(getClass().getName()).finest("Daemon waking up since all pending tasks are complete.");
 		}
 	}
 	

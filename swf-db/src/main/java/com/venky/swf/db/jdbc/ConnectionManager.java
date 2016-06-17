@@ -130,6 +130,9 @@ public class ConnectionManager {
 			throw new RuntimeException(e);
 		}
 	}
+	public boolean isPoolReadOnly(String pool){
+		return Config.instance().getBooleanProperty(getNormalizedPropertyName("swf.jdbc."+pool+".readOnly"),false);
+	}
 	public void close() {
         List<String> allPools = new ArrayList<String>(dsCache.keySet());
         for (String pool : allPools) {
