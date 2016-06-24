@@ -75,7 +75,11 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public View createResponse(Path path, M m, List<String> includeFields) {
 		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); 
 		T element = helper.getRoot();
-		writer.write(m, element , getFields(includeFields));
+		T elementAttribute = helper.getElementAttribute(modelReflector.getModelClass().getSimpleName());
+		if (elementAttribute == null) {
+			elementAttribute = element;
+		}
+		writer.write(m, elementAttribute , getFields(includeFields));
 		return new BytesView(path, element.toString().getBytes());
 	}
 	
