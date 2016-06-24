@@ -203,7 +203,6 @@ public class Router extends AbstractHandler {
 	        p.setResponse(response);
 	        
 	        
-	        baseRequest.setHandled(true);
 	        _IDatabase db = null ;
 	        try {
 	        	db = getDatabase(); 
@@ -264,6 +263,7 @@ public class Router extends AbstractHandler {
     	}finally{
     		timer.stop();
     		TimerStatistics.dumpStatistics();
+	        baseRequest.setHandled(true);
     	}
     }
 	public void reset() {

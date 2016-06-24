@@ -2,7 +2,6 @@ package com.venky.swf.db.annotations.column.defaulting;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -40,7 +39,7 @@ public class StandardDefaulter {
 					Date date = new Date(System.currentTimeMillis());
 					String format = args;
 					if (!ObjectUtil.isVoid(format)){
-						ret = DateUtils.getTimestampStr(date, TimeZone.getDefault(), new SimpleDateFormat(format));
+						ret = DateUtils.getTimestampStr(date, TimeZone.getDefault(), format);
 					}else {
 						ret = new Date(DateUtils.getStartOfDay(date).getTime());
 					}
@@ -51,7 +50,7 @@ public class StandardDefaulter {
 					Timestamp ts = new Timestamp(System.currentTimeMillis());
 					String format = args;
 					if (!ObjectUtil.isVoid(format)){
-						ret = DateUtils.getTimestampStr(ts, TimeZone.getDefault(), new SimpleDateFormat(format));
+						ret = DateUtils.getTimestampStr(ts, TimeZone.getDefault(), format);
 					}else {
 						ret = ts;
 					}

@@ -13,6 +13,9 @@ import java.util.StringTokenizer;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
@@ -38,26 +41,18 @@ import com.venky.swf.routing.Config;
 /**
  * Goal which generates models from database a.k.a reverse engineering.
  * 
- * @goal generate-model
- * 
- * @phase generate-sources
  */
+@Mojo(defaultPhase=LifecyclePhase.COMPILE,name="generate-model")
+
 public class ModelGeneratorMojo extends AbstractMojo {
 	
-	/**
-	 * Source directory. 
-	 * @parameter expression="${generate-model.srcdir}" default-value="src/main/java"
-	 */
+	@Parameter(property="generate-model.srcdir",defaultValue="src/main/java")
 	File srcDir;
 	
-	/**
-	 * @parameter expression="${pool}" default-value = "" 
-	 */
+	@Parameter(property="pool",defaultValue="")
 	String pool;
 	
-	/**
-	 * @parameter expression="${project.build.sourceEncoding}"
-	 */
+	@Parameter(property="project.build.sourceEncoding",defaultValue="UTF-8")
 	String encoding;
 	
 	

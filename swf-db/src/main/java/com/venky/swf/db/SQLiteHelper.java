@@ -135,14 +135,14 @@ public class SQLiteHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.VARCHAR,
-                            "TEXT", 0, 0, true,false,new DateConverter(DateUtils.ISO_DATE_FORMAT,TimeZone.getDefault())));
+                            "TEXT", 0, 0, true,false,new DateConverter(DateUtils.ISO_DATE_FORMAT_STR,TimeZone.getDefault())));
             
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.VARCHAR, "TEXT", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT,TimeZone.getDefault())));
+                            java.sql.Types.VARCHAR, "TEXT", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT_STR,TimeZone.getDefault())));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true,false,
-                            new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT,TimeZone.getDefault())));
+                            new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT_STR,TimeZone.getDefault())));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(
                             java.sql.Types.VARCHAR, "TEXT", 0, 0, true,true,

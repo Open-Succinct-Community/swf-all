@@ -30,7 +30,6 @@ import com.venky.core.util.PackageUtil;
  * @author venky
  */
 public class Config {
-
 	private Config(){
         properties = new Properties();
 
@@ -82,6 +81,12 @@ public class Config {
         }
         return _instance;
     }
+	public static void reset(){
+		synchronized (Config.class) {
+			_instance =null;
+		}
+	}	
+
     private List<URL> resourceBaseurls = null;
     public List<URL> getResourceBaseUrls(){
     	return resourceBaseurls;
@@ -252,4 +257,5 @@ public class Config {
         }
 		getLogger(fromClazz.getName()).fine(sw.toString());
 	}
+
 }

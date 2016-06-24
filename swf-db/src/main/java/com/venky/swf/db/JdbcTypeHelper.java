@@ -4,6 +4,28 @@
  */
 package com.venky.swf.db;
 
+import static com.venky.core.log.TimerStatistics.Timer.startTimer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
@@ -20,18 +42,6 @@ import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.sql.Date;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.util.*;
-
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 /**
  * 
@@ -375,12 +385,12 @@ public abstract class JdbcTypeHelper {
     }
 
     public class DateConverter extends TypeConverter<Date> {
-    	private DateFormat format = null;
+    	private String format = null;
     	private TimeZone tz = null;
     	public DateConverter(){
-    		this(DateUtils.APP_DATE_FORMAT,TimeZone.getDefault());
+    		this(DateUtils.APP_DATE_FORMAT_STR,TimeZone.getDefault());
     	}
-    	public DateConverter(DateFormat format,TimeZone tz){
+    	public DateConverter(String format,TimeZone tz){
     		this.format = format;
     		this.tz = tz;
     	}
@@ -401,7 +411,7 @@ public abstract class JdbcTypeHelper {
             return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,format));
         }
         public String toStringISO(Object date) {
-            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,DateUtils.ISO_DATE_FORMAT));
+            return date == null ? "" : (date instanceof String ? (String)date : DateUtils.getTimestampStr(valueOf(date),tz,DateUtils.ISO_DATE_FORMAT_STR));
         }
         @Override
 		public String getDisplayClassName() {
@@ -411,12 +421,12 @@ public abstract class JdbcTypeHelper {
     }
 
     public class TimeConverter extends TypeConverter<Time> {
-    	DateFormat format = null ;
+    	String format = null ;
     	TimeZone tz  = null; 
     	public TimeConverter(){
-    		this(DateUtils.APP_TIME_FORMAT,TimeZone.getDefault());
+    		this(DateUtils.APP_TIME_FORMAT_STR,TimeZone.getDefault());
     	}
-    	public TimeConverter(DateFormat format,TimeZone tz){
+    	public TimeConverter(String format,TimeZone tz){
     		this.format = format;
     	}
         public Time valueOf(Object o) {
@@ -433,7 +443,7 @@ public abstract class JdbcTypeHelper {
             return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz, format));
         }
         public String toStringISO(Object time) {
-            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz,DateUtils.ISO_TIME_FORMAT));
+            return time == null ? "" : (time instanceof String ? (String)time : DateUtils.getTimestampStr(valueOf(time),tz,DateUtils.ISO_DATE_TIME_FORMAT_STR));
         }
         @Override
 		public String getDisplayClassName() {
@@ -444,11 +454,11 @@ public abstract class JdbcTypeHelper {
 
     public class TimestampConverter extends TypeConverter<Timestamp> {
     	public TimestampConverter(){
-    		this(DateUtils.APP_DATE_TIME_FORMAT,TimeZone.getDefault());
+    		this(DateUtils.APP_DATE_TIME_FORMAT_STR,TimeZone.getDefault());
     	}
-    	private DateFormat format;
+    	private String format;
     	private TimeZone tz;
-    	public TimestampConverter(DateFormat format,TimeZone tz){
+    	public TimestampConverter(String format,TimeZone tz){
     		this.format = format;
     		this.tz = tz;
     	}
@@ -467,7 +477,7 @@ public abstract class JdbcTypeHelper {
         }
 
         public String toStringISO(Object ts) {
-            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts),tz,DateUtils.ISO_DATE_TIME_FORMAT));
+            return ts == null ? "" : (ts instanceof String ? (String)ts : DateUtils.getTimestampStr(valueOf(ts),tz,DateUtils.ISO_DATE_TIME_FORMAT_STR));
         }
         @Override
 		public String getDisplayClassName() {

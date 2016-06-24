@@ -11,6 +11,7 @@
   <name>swf-maven-plugin Maven Mojo</name>
   <description>Plugin to reverse engineer SWF models from an existing DB</description>
 
+
   <url>http://maven.apache.org</url>
   <licenses>
     <license>
@@ -40,7 +41,7 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>2.0</version>
+      <version>3.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -53,11 +54,16 @@
     	<artifactId>swf</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+    	<groupId>org.apache.maven.plugin-tools</groupId>
+    	<artifactId>maven-plugin-annotations</artifactId>
+    	<version>3.4</version>
+    </dependency>
   </dependencies>
   <build>
   	<pluginManagement>
-  		<plugins>
-  			<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+    <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
   			<plugin>
   				<groupId>org.eclipse.m2e</groupId>
   				<artifactId>lifecycle-mapping</artifactId>
@@ -78,6 +84,7 @@
   									</versionRange>
   									<goals>
   										<goal>descriptor</goal>
+  										<goal>helpmojo</goal>
   									</goals>
   								</pluginExecutionFilter>
   								<action>
@@ -88,7 +95,24 @@
   					</lifecycleMappingMetadata>
   				</configuration>
   			</plugin>
-  		</plugins>
+        <plugin>
+	        <groupId>org.apache.maven.plugins</groupId>
+	        <artifactId>maven-plugin-plugin</artifactId>
+	        <version>3.4</version>
+	        <executions>
+	          <execution>
+	            <id>default-descriptor</id>
+	            <phase>process-classes</phase>
+	          </execution>
+	          <execution>
+	            <id>help-goal</id>
+	            <goals>
+	              <goal>helpmojo</goal>
+	            </goals>
+	          </execution>
+	        </executions>
+	      </plugin>
+    </plugins>
   	</pluginManagement>
   </build>
 </project>
