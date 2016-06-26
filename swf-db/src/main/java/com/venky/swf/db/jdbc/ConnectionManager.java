@@ -98,9 +98,7 @@ public class ConnectionManager {
             info.setProperty("validationQuery",Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".validationQuery"), "select 1 as dbcp_connection_test"));
             info.setProperty("testOnBorrow", "true");
             info.setProperty("testOnReturn", "true");
-            info.setProperty("testWhileIdle", "true");
-            info.setProperty("timeBetweenEvictionRunsMillis",String.valueOf(1000*60*2));
-            info.setProperty("minEvictableIdleTimeMillis",String.valueOf(1000*60));
+            info.setProperty("testWhileIdle", "false");
             try {
                 Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
                 Method m = c.getMethod("createDataSource", Properties.class);
