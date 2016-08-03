@@ -38,7 +38,6 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
-import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -51,6 +50,9 @@ public abstract class JdbcTypeHelper {
 	public boolean isSavepointManagedByJdbc(){
     	return true;
     }
+	public boolean isAutoCommitOnDDL(){
+		return false;
+	}
 	
 	public String getEstablishSavepointStatement(String name){
 		return null;
@@ -583,6 +585,8 @@ public abstract class JdbcTypeHelper {
             	return new SQLiteHelper();
             }else if (driverClass.getName().startsWith("org.sqldroid")) {
             	return new SQLDroidHelper();
+            }else if (driverClass.getName().startsWith("org.h2")) {
+            	return new H2Helper();
             }
             return null;
 		}
@@ -679,15 +683,6 @@ public abstract class JdbcTypeHelper {
   		return o == null || ObjectUtil.equals(getTypeRef(o.getClass()).getTypeConverter().valueOf(null),o);
   	}
   	
-  	public void resetIdGeneration(){
-        for (String pool : ConnectionManager.instance().getPools()){
-            for (Table<? extends Model> table : Database.getTables(pool).values()){
-                if (table.isReal() && table.isExistingInDatabase()){
-                    updateSequence(table);
-                }
-            }
-        }
-    }
   	
   	protected <M extends Model> void updateSequence(Table<M> table){
   		Config.instance().getLogger(getClass().getName()).warning("updateSequence not implemented in " + getClass().getName() );

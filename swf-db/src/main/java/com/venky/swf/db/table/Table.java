@@ -87,7 +87,7 @@ public class Table<M extends Model> {
     
     @SuppressWarnings("unchecked")
 	public Table(String tableName,String pool){
-        this(tableName, (Class<M>)modelClass(tableName), pool);
+        this(tableName, (Class<M>)modelClass(tableName,pool), pool);
     }
     public Table(Class<M> modelClass){
         this(tableName(modelClass),modelClass, null);
@@ -150,10 +150,14 @@ public class Table<M extends Model> {
     public static String getSimpleModelClassName(String tableName){
     	return StringUtil.camelize(StringUtil.singularize(tableName));
     }
-    public static Class<?> modelClass(String tableName){
+    public  static <M extends Model> Class<M> modelClass(String tableName,String pool){
         for (String className : Config.instance().getModelClasses(getSimpleModelClassName(tableName))){
             try {
-                return Class.forName(className);
+                @SuppressWarnings("unchecked")
+				Class<M> modelClass = (Class<M>) Class.forName(className);
+                if (ObjectUtil.equals(ModelReflector.instance(modelClass).getPool(),pool)){
+                    return modelClass;
+                }
             } catch (ClassNotFoundException ex) {
                 //
             }
@@ -175,16 +179,24 @@ public class Table<M extends Model> {
     }
     
     public void dropTable(){
-        Transaction txn = Database.getInstance().getCurrentTransaction();
+    	Transaction txn = Database.getInstance().getCurrentTransaction();
         DDL.DropTable q = new DDL.DropTable(getPool(),getRealTableName());
         q.executeUpdate();
-        txn.commit();
+        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
+        	txn.registerCommit();
+        }else {
+        	txn.commit();
+        }
     }
     public void createTable() {
         Transaction txn = Database.getInstance().getCurrentTransaction();
         CreateTable q = createTableQuery();
         q.executeUpdate();
-        txn.commit();
+        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
+        	txn.registerCommit();
+        }else {
+        	txn.commit();
+        }
     }
     private CreateTable createTableQuery(){
     	return createTableQuery(getRealTableName());
@@ -351,7 +363,11 @@ public class Table<M extends Model> {
             drop = new DropTable(getPool(),"temp_"+getRealTableName());
             drop.executeUpdate();
         }
-        txn.commit();
+        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
+        	txn.registerCommit();
+        }else {
+        	txn.commit();
+        }
         return true;
     }
 
@@ -382,7 +398,7 @@ public class Table<M extends Model> {
 	        q.where(new Expression(q.getPool(),idColumn,Operator.EQ,new BindVariable(getPool(),id)));
 	        createWhereTimer.stop();
 	        
-	        List<M> result = q.execute(getModelClass());
+	        List<M> result = q.execute(getModelClass(),1);
 	        if (result.isEmpty()){
 	            return null;
 	        }else {
@@ -572,7 +588,6 @@ public class Table<M extends Model> {
                     buff.append(")");
                 }
                 if (!isNullable()){
-                    buff.append(" NOT NULL ");
                     String def = getColumnDefault();
                     if (def != null){
                     	buff.append(" DEFAULT " );
@@ -586,6 +601,7 @@ public class Table<M extends Model> {
                     		buff.append(def);
                     	}
                     }
+                    buff.append(" NOT NULL ");
                 }
             }
             
@@ -612,7 +628,7 @@ public class Table<M extends Model> {
 		if (partiallyFilledModel.getId() > 0) {
 			fullModel = Database.getTable(getModelClass()).get(partiallyFilledModel.getId());
 		}else {
-			for (Expression where : getReflector().getUniqueKeyConditions(partiallyFilledModel)){
+			for (Expression where : getReflector().getUniqueKeyConditions(partiallyFilledModel,false)){
 				List<M> recordsMatchingUK = new Select().from(getModelClass()).where(where).execute();
 				if (recordsMatchingUK.size() == 1){
 					fullModel = recordsMatchingUK.get(0);

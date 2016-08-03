@@ -39,7 +39,7 @@ public class DelayedTaskManager {
 		super();
 		workers = new DelayedTaskWorker[numWorkerThreads];
 		for (int i = 0 ; i < workers.length; i ++){
-			workers[i] = new DelayedTaskWorker(this);
+			workers[i] = new DelayedTaskWorker(this,i);
 			workers[i].start();
 			incrementWorkerCount();
 		}
@@ -98,6 +98,16 @@ public class DelayedTaskManager {
 	}
 	
 	public boolean needMoreTasks(){
+		synchronized (queue) {
+			if (queue.isEmpty()) {
+				//No Tasks Found!! Simply Sleep.
+				try {
+					queue.wait();
+				} catch (InterruptedException e) {
+					//
+				}
+			}
+		}
 		waitIfQueueIsNotEmpty();
 		waitTillWorkersFinish();
 		return keepAlive();

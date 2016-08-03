@@ -41,6 +41,7 @@ public class DelayedTaskPollingThread extends Thread{
 		DelayedTask lastRecord = null;
 		Database db = null ;
 		while (manager.needMoreTasks()){
+			List<DelayedTask> jobs = null;
 			try {
 				Config.instance().getLogger(getClass().getName()).finest("Checking for Tasks...");
 				Expression where = new Expression(ref.getPool(),Conjunction.AND);
@@ -53,11 +54,10 @@ public class DelayedTaskPollingThread extends Thread{
 				Select select = new Select().from(DelayedTask.class).
 						where(where).
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
-				List<DelayedTask> jobs = select.execute(DelayedTask.class,100);
+				jobs = select.execute(DelayedTask.class,100);
 				
 				Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
-				manager.addDelayedTasks(jobs);
 				db.getCurrentTransaction().commit();
 				if (jobs.size() < 100){
 					lastRecord = null;
@@ -77,6 +77,9 @@ public class DelayedTaskPollingThread extends Thread{
 				if (db != null){
 					db.close();
 					db = null;
+				}
+				if (jobs != null){
+					manager.addDelayedTasks(jobs);
 				}
 			}
 		}

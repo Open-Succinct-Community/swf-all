@@ -5,6 +5,8 @@ import java.util.logging.Level;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKey;
+import com.venky.swf.db.model.reflection.uniquekey.UniqueKeyFieldDescriptor;
 import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -17,7 +19,7 @@ public class UniqueKeyValidator extends ModelValidator{
 
 	@Override
 	protected <M extends Model> boolean isValid(ModelReflector<M> reflector, M m,MultiException modelValidationException) {
-		for (Expression where : reflector.getUniqueKeyConditions(m)){
+		for (Expression where : reflector.getUniqueKeyConditions(m,true)){
 			Expression countWhere = new Expression(reflector.getPool(),Conjunction.AND);
 			countWhere.add(where);
 			if (m.getId() > 0){

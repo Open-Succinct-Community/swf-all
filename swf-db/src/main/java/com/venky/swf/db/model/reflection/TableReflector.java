@@ -16,6 +16,7 @@ import com.venky.reflection.MethodSignatureCache;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.model.DBPOOL;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -40,14 +41,17 @@ public class TableReflector {
     	}
     	
     	String tableName = Table.tableName(realModelClass);
-
-    	TableReflector reflector = tableReflectorByTableName.get(tableName);
+    	DBPOOL dbpool = realModelClass.getAnnotation(DBPOOL.class);
+    	String pool = dbpool == null ? "" : dbpool.value();
+    	String tableKey = pool + "." + tableName;
+    	
+    	TableReflector reflector = tableReflectorByTableName.get(tableKey);
         if (reflector == null){
 	        synchronized(tableReflectorByTableName){
-	            reflector = tableReflectorByTableName.get(tableName);
+	            reflector = tableReflectorByTableName.get(tableKey);
 	            if (reflector == null){
-	                reflector = new TableReflector(tableName);
-	                tableReflectorByTableName.put(tableName, reflector);
+	                reflector = new TableReflector(tableName,pool);
+	                tableReflectorByTableName.put(tableKey, reflector);
 	            }
 	        }
         }
@@ -110,12 +114,17 @@ public class TableReflector {
     	return (Class<U>) lastRealClass;
     }
     
-    private final String tableName; 
-    private TableReflector(String tableName){
-    	this.tableName = tableName;
-    }
+    private final String tableName;
+    private final String pool ; 
     
-    public String getTableName(){
+    private TableReflector(String tableName, String pool) {
+    	this.tableName = tableName;
+    	this.pool = pool;
+    }
+    public String getPool(){
+    	return pool;
+    }
+	public String getTableName(){
     	return tableName;
     }
     

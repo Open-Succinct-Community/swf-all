@@ -12,7 +12,7 @@ public class VirtualTableTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void test() {
-		Class<? extends Model> modelClass = (Class<? extends Model>) Table.modelClass("COUNTS");
+		Class<? extends Model> modelClass = (Class<? extends Model>) Table.modelClass("COUNTS","");
 		ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>) modelClass);
 		assertTrue("modelClass is null",ref != null);
 		

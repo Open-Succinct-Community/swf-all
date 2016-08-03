@@ -28,7 +28,10 @@ public class CheckBox extends Input{
     protected String getInputType() {
         return "checkbox";
     }
-     
+    public void setReadOnly(final boolean readonly){
+    	super.setReadOnly(readonly);
+    	super.setEnabled(!readonly);
+    }
     public void setChecked(Object value){
     	@SuppressWarnings("unchecked")
 		TypeConverter<Boolean> converter = (TypeConverter<Boolean>) Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter();

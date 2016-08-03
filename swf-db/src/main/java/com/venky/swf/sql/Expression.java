@@ -75,7 +75,9 @@ public class Expression {
 				}
 			}
 		}catch (NullPointerException ex){
-			throw new MultiException("NPE found while creating expression for " + columnName + op.toString()  );
+			MultiException mex =  new MultiException("NPE found while creating expression for " + columnName + op.toString()  );
+			mex.add(ex);
+			throw mex;
 		}
 		
 		setFinalized(true);

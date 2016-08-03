@@ -45,7 +45,7 @@ public class AppInstaller implements Installer {
 			u.save();
 			if (u.getId() != 1){
 				u.setId(1);
-				u.save();
+				u.save(false);
 			}
 		}
 	}

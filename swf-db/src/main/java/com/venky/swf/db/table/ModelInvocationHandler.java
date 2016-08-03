@@ -230,15 +230,15 @@ public class ModelInvocationHandler implements InvocationHandler {
     
     public <C extends Model> List<C> getChildren(Class<C> childClass){
     	Class<? extends Model> modelClass = getReflector().getModelClass();
-    	Expression expression = new Expression(getPool(),Conjunction.OR);
     	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
-        for (String fieldName: childReflector.getFields()){
+    	Expression expression = new Expression(childReflector.getPool(),Conjunction.OR);
+    	for (String fieldName: childReflector.getFields()){
         	if (fieldName.endsWith("_ID")){
             	Method fieldGetter = childReflector.getFieldGetter(fieldName);
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
             	if (referredModelGetter != null && referredModelGetter.getReturnType().isAssignableFrom(modelClass)){
             		String columnName = childReflector.getColumnDescriptor(fieldName).getName();
-            		expression.add(new Expression(getPool(),columnName,Operator.EQ,proxy.getId()));
+            		expression.add(new Expression(childReflector.getPool(),columnName,Operator.EQ,proxy.getId()));
             	}
         	}
         }

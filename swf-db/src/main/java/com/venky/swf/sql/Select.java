@@ -8,8 +8,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.venky.core.collections.SequenceSet;
@@ -45,15 +47,18 @@ public class Select extends SqlStatement{
 		this.columnNames = columnNames;
 	}
 
-	private List<String> pools = new ArrayList<String>();
+	private Set<String> pools = new HashSet<String>();
 	public String getPool(){
 		if (pools.size() == 0){
 			throw new RuntimeException("Cannot determine db Pool");
 		}else if (pools.size() > 1){
 			throw new RuntimeException("Cannot select across db pools in a single select statement");
 		}else{
-			return  pools.get(0);
+			return  pools.iterator().next();
 		}
+	}
+	public void addPool(String pool){
+		pools.add(pool);
 	}
 	@SuppressWarnings("unchecked")
 	public Select from(Class<?>... models){
@@ -243,6 +248,9 @@ public class Select extends SqlStatement{
 	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();
+		            if (maxRecords != Select.MAX_RECORDS_ALL_RECORDS ) { 
+		            	st.setMaxRows(maxRecords + 1);
+		            }
 		            if (this.orderBy != null){
 		            	sortResults = false;
 		            }

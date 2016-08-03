@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
@@ -53,7 +54,6 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
-import com.venky.swf.db.annotations.model.DBPOOL;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
@@ -83,10 +83,7 @@ public class ModelReflector<M extends Model> {
     		synchronized (modelReflectorByModelClass) {
 				ref = modelReflectorByModelClass.get(modelClass);
 				if (ref == null){
-					TableReflector tr = TableReflector.instance(modelClass);
-					if (tr != null){
-						ref = new ModelReflector<M>(modelClass, tr );
-					}
+					ref = new ModelReflector<M>(modelClass, TableReflector.instance(modelClass)) ;
 					modelReflectorByModelClass.put(modelClass, ref);
 				}
 			}
@@ -132,6 +129,7 @@ public class ModelReflector<M extends Model> {
 	private ModelReflector(Class<M> modelClass,TableReflector reflector){
 		this.modelClass = modelClass;
 		this.reflector = reflector;
+		this.cat = Config.instance().getLogger(modelClass.getName());
 	}
 
 	public Class<M> getModelClass(){
@@ -410,14 +408,33 @@ public class ModelReflector<M extends Model> {
     	}
     	return uniqueKeys.values();
     }
-    
-    public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy){
+    public <T> boolean isDirty(T recordOrProxy,String fieldName) {
+    	Model record = null; 
+		Record rawRecord = null ;
+		if (Record.class.isInstance(recordOrProxy)){
+			rawRecord = (Record)recordOrProxy;
+		}else if (Proxy.isProxyClass(recordOrProxy.getClass()) && (recordOrProxy instanceof Model)){
+			record = (Model)recordOrProxy;
+		}else {
+			throw new RuntimeException ("Don't know how to get " + fieldName );
+		}
+		if (rawRecord == null){
+			rawRecord = record.getRawRecord();
+		}
+		return rawRecord.isFieldDirty(fieldName);
+    }
+    public <T> Collection<Expression> sgetUniqueKeyConditions(T recordOrProxy){
+    	return getUniqueKeyConditions(recordOrProxy, false);
+    }
+    public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy,boolean onlyIfContainsDirtyFields){
     	List<Expression> col = new ArrayList<Expression>();
     	for (UniqueKey<M> key : getUniqueKeys() ){
 			Expression where = new Expression(getPool(),Conjunction.AND);
 			boolean ignoreWhereClause = false;
+			boolean ret = false;
 			for (UniqueKeyFieldDescriptor<M> fd: key.getFields()){
-				String fieldName = fd.getFieldName(); 
+				String fieldName = fd.getFieldName();
+				ret = ret || !onlyIfContainsDirtyFields || isDirty(recordOrProxy,fieldName); 
 				Object value = get(recordOrProxy, fieldName);
 				if (value != null){
 					where.add(new Expression(getPool(),getColumnDescriptor(fd.getFieldName()).getName(),Operator.EQ, value));
@@ -430,7 +447,7 @@ public class ModelReflector<M extends Model> {
 					}
 				}
 			}
-			if (!ignoreWhereClause){
+			if (!ignoreWhereClause && ret){
 				col.add(where);
 			}
 		}
@@ -586,6 +603,7 @@ public class ModelReflector<M extends Model> {
 		    	if (numFields == 1){
 		    		return fields.get(0); 
 		    	}else if (numFields == 0){
+		    		cat.info("Field not found for Column " + columnOrFieldName + " in " + getTableName() + ", Model Is " + getModelClass().getName());
 		    		return null;
 		    	}
 	    	}
@@ -594,6 +612,7 @@ public class ModelReflector<M extends Model> {
     		timer.stop();
     	}
     }
+    private Logger cat = null;
     
     public boolean isHouseKeepingField(String fieldName){
     	Method getter = getFieldGetter(fieldName);
@@ -638,12 +657,7 @@ public class ModelReflector<M extends Model> {
     	return false;
     }
 	public String getPool(){
-		String pool = null ;
-		DBPOOL dbpool = getAnnotation(DBPOOL.class);
-		if (dbpool != null){
-			pool = dbpool.value();
-		}
-		return pool != null ? pool : ""  ;
+		return reflector.getPool();
 	}
     public int getMaxDataLength(String fieldName){
 		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);

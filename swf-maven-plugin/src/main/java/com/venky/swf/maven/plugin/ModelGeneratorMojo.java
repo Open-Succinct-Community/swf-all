@@ -28,7 +28,6 @@ import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
-import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.model.DBPOOL;
 import com.venky.swf.db.jdbc.ConnectionManager;
@@ -142,8 +141,6 @@ public class ModelGeneratorMojo extends AbstractMojo {
     		imports.add(DBPOOL.class.getName());
     		code.add("@DBPOOL(\"" + pool + "\")");
     	}
-    	imports.add(IS_VIRTUAL.class.getName());
-    	code.add("@IS_VIRTUAL");
     	code.add("public interface " + Table.getSimpleModelClassName(table.getTableName()) + " extends " + extendingClass + "{");
 		
     	for (ColumnDescriptor cd:table.getColumnDescriptors()){

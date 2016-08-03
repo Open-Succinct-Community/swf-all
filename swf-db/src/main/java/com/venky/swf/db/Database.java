@@ -112,8 +112,26 @@ public class Database implements _IDatabase{
             }
         }
     };
+    public Set<String> getActivePools(){
+    	return connectionCache.keySet();
+    }
+    
+    private boolean registeringActivePool = false; // Prevent Recursion from createTransaction , setSavePoint calling getConnection.
     public Connection getConnection(String pool){
-        return connectionCache.get(pool);
+    	return getConnection(pool,true);
+    }
+    public Connection getConnection(String pool,boolean registerActivePool){
+    	Connection conn = connectionCache.get(pool);
+		
+    	if (registerActivePool && !registeringActivePool){
+        	registeringActivePool = true;
+        	try {
+            	getCurrentTransaction().registerActivePool(pool);
+        	}finally {
+        		registeringActivePool = false;
+        	}
+    	}
+        return conn;
     }
 
     public void registerLockRelease(){
@@ -419,6 +437,16 @@ public class Database implements _IDatabase{
         return w.toString();
     }
 
-
+    public void resetIdGeneration(){
+        for (String pool : ConnectionManager.instance().getPools()){
+        	JdbcTypeHelper helper = getJdbcTypeHelper(pool);
+            for (Table<? extends Model> table : Database.getTables(pool).values()){
+                if (table.isReal() && table.isExistingInDatabase()){
+                   helper.updateSequence(table);
+                }
+            }
+        }
+    }
+  	
 
 }

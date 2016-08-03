@@ -9,8 +9,8 @@ import com.venky.swf.routing.Config;
 
 public class DelayedTaskWorker extends Thread {
 	private final DelayedTaskManager manager ; 
-	public DelayedTaskWorker(DelayedTaskManager manager){
-		super("DelayedTaskWorker");
+	public DelayedTaskWorker(DelayedTaskManager manager,int instanceNumber){
+		super("DelayedTaskWorker:" + instanceNumber);
 		setDaemon(false);
 		this.manager = manager;
 	}

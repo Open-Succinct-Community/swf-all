@@ -20,6 +20,9 @@ public class TransactionManager {
         transactionStack.push(transaction);
         return transaction;
     }
+    public boolean isActiveTransactionPresent(){
+    	return !transactionStack.isEmpty();
+    }
 
     public Transaction getCurrentTransaction(){
         if (transactionStack.isEmpty()) {
@@ -40,18 +43,18 @@ public class TransactionManager {
     public void rollback(Transaction transaction, Throwable th) {
 
         boolean entireTransactionIsRolledBack = false;
-        for (String pool : ConnectionManager.instance().getPools()){
+        for (String pool : transaction.getActivePools()){
             entireTransactionIsRolledBack = entireTransactionIsRolledBack || Database.getJdbcTypeHelper(pool).hasTransactionRolledBack(th);
         }
         if (!entireTransactionIsRolledBack){
-            transaction.rollbackToSavePoint(transaction.getSavepoint(),String.valueOf(transaction.getTransactionNo()));
+            transaction.rollbackToSavePoint();
         }
         txnUserAttributes.rollback(transaction.getCheckpoint());
         updateTransactionStack(transaction);
         if (transactionStack.isEmpty()){
             try {
                 Config.instance().getLogger(Database.class.getName()).fine("Connection Rollback" + ":" +  Database.getCaller());
-                for (String pool : ConnectionManager.instance().getPools()){
+                for (String pool : transaction.getActivePools()){
                     Database.getInstance().getConnection(pool).rollback();
                 }
             } catch (SQLException e) {
@@ -69,10 +72,12 @@ public class TransactionManager {
 
     }
     public void commit(Transaction transaction){
-        transaction.releaseSavepoint(transaction.getSavepoint(),String.valueOf(transaction.getTransactionNo()));
-        transaction.setSavepoint(String.valueOf(transaction.getTransactionNo()));
-
-        txnUserAttributes.commit(transaction.getCheckpoint());
+        transaction.releaseSavepoint();
+        transaction.setSavepoint();
+        registerCommit(transaction);
+    }
+    public void registerCommit(Transaction transaction) {
+		txnUserAttributes.commit(transaction.getCheckpoint());
         updateTransactionStack(transaction);
         if (transactionStack.isEmpty()){
             try {
@@ -80,8 +85,8 @@ public class TransactionManager {
                 Registry.instance().callExtensions("before.commit",transaction);//Still part of current transaction.
                 transactionStack.pop();
                 Config.instance().getLogger(Database.class.getName()).fine("Connection.commit:" + Database.getCaller());
-                for (String pool : ConnectionManager.instance().getPools()) {
-                    Database.getInstance().getConnection(pool).commit();
+                for (String pool : transaction.getActivePools()) {
+                    Database.getInstance().getConnection(pool,false).commit();
                 }
                 txnUserAttributes.getCurrentValue().clear(); // Now restore the initial value to a clear map.
                 Database.getInstance().registerLockRelease();
@@ -91,8 +96,7 @@ public class TransactionManager {
                 throw new RuntimeException(e);
             }
         }
-    }
-
+	}
     private void updateTransactionStack(Transaction transaction) {
         Transaction completedTransaction = getCurrentTransaction();
         if (completedTransaction != transaction) {
@@ -104,5 +108,6 @@ public class TransactionManager {
 
 
     private Checkpointed<MergeableMap<String,Object>> txnUserAttributes = new Checkpointed<MergeableMap<String,Object>>(new MergeableMap<String, Object>());
+	
 
 }

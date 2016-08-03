@@ -1,19 +1,17 @@
 package com.venky.swf.db;
 
+import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.venky.core.checkpoint.Checkpoint;
 import com.venky.core.checkpoint.MergeableMap;
-import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.jdbc.SWFSavepoint;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.QueryCache;
 import com.venky.swf.routing.Config;
-
-import java.io.Serializable;
-import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Transaction implements _IDatabase._ITransaction {
     public SWFSavepoint getSavepoint() {
@@ -27,7 +25,8 @@ public class Transaction implements _IDatabase._ITransaction {
     public Transaction(int transactionNo, Checkpoint<MergeableMap<String,Object>> cp) {
         this.transactionNo = transactionNo;
         checkpoint = cp;
-        setSavepoint(String.valueOf(transactionNo));
+        savepoint = new SWFSavepoint(String.valueOf(transactionNo));
+        setSavepoint();
         Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" Started : " + Database.getCaller());
     }
 
@@ -38,51 +37,39 @@ public class Transaction implements _IDatabase._ITransaction {
         return checkpoint;
     }
 
-    public void setSavepoint(String name){
+    public void setSavepoint(){
         try {
-            savepoint = new SWFSavepoint(name);
-            for (String pool : ConnectionManager.instance().getPools()){ //Set in all pools
-                if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()){
-                    Savepoint pt = Database.getInstance().getConnection(pool).setSavepoint(name);
-                    savepoint.addSavepoint(pool,pt);
-                }else {
-                    Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getEstablishSavepointStatement(name)).execute();
-                    savepoint.addSavepoint(pool,null);
-                }
+            for (String pool : getActivePools()){ //Set in all pools
+            	savepoint.addSavepoint(pool);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void releaseSavepoint(SWFSavepoint sp,String name){
+    public void releaseSavepoint(){
         try {
-            for (String pool : ConnectionManager.instance().getPools()) {
-                if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()) {
-                    Database.getInstance().getConnection(pool).releaseSavepoint(sp.removeSavepoint(pool));
-                } else {
-                    Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getReleaseSavepointStatement(name)).execute();
-                }
+        	for (String pool :getActivePools()) {
+               savepoint.removeSavepoint(pool);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void rollbackToSavePoint(SWFSavepoint sp,String name){
+    public void rollbackToSavePoint(){
         try {
-            for (String pool : ConnectionManager.instance().getPools()) {
-                if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()) {
-                    Database.getInstance().getConnection(pool).rollback(sp.removeSavepoint(pool));
-                } else {
-                    Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getRollbackToSavepointStatement(name)).execute();
-                }
+        	for (String pool : getActivePools()) {
+                savepoint.rollback(pool);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
+    public void registerCommit() { 
+    	Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" .registerCommit : " + Database.getCaller());
+        Database.getInstance().getTransactionManager().registerCommit(this);
+    }
     public void commit() {
         Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" .commit : " + Database.getCaller());
         Database.getInstance().getTransactionManager().commit(this);
@@ -119,6 +106,23 @@ public class Transaction implements _IDatabase._ITransaction {
         return (A)checkpoint.getValue().get(name);
     }
 
+    public Set<String> getActivePools(){
+    	Set<String> activePools = getAttribute("active.connection.pools");
+    	if (activePools == null){
+    		activePools = new HashSet<String>(10);
+    		setAttribute("active.connection.pools", activePools);
+    	}
+    	return activePools;
+    }
+    public void registerActivePool(String pool){
+    	getActivePools().add(pool);
+    	try {
+			savepoint.addSavepoint(pool);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+    }
+    
     public void registerTableDataChanged(String tableName){
         getTablesChanged().add(tableName);
     }

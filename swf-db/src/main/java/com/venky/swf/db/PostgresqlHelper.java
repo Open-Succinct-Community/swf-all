@@ -162,6 +162,7 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
     	Count count = counts.get(0);
     	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1) +") AS COUNT").from();
+    	updateSequence.addPool(table.getPool());
     	updateSequence.execute(Count.class);
     }
 }
