@@ -69,6 +69,9 @@ public class Database implements _IDatabase{
     public Transaction getCurrentTransaction() {
         return getTransactionManager().getCurrentTransaction();
     }
+    public boolean isActiveTransactionPresent(){ 
+    	return getTransactionManager().isActiveTransactionPresent();
+    }
 
     public void close() {
 		closeConnections();

@@ -8,6 +8,7 @@ public interface _IDatabase extends  _ICloseable{
 	public void open(Object user);
 	public _ITransaction getCurrentTransaction() throws SQLException;
 	public void loadFactorySettings();
+	public boolean isActiveTransactionPresent();
 	public interface _ITransaction {
 		public void commit() ;
 		public void rollback(Throwable th) ;

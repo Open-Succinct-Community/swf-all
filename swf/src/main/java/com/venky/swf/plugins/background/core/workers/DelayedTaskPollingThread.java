@@ -27,7 +27,7 @@ public class DelayedTaskPollingThread extends Thread{
 			Expression part = new Expression(ref.getPool(),Conjunction.AND);
 			for (int j = 0 ; j < i  ; j ++){
 				String f = DelayedTask.DEFAULT_ORDER_BY_COLUMNS[j];
-				part.add(new Expression(ref.getPool(),f, Operator.GE, lastRecord.getRawRecord().get(f)));
+				part.add(new Expression(ref.getPool(),f, Operator.EQ, lastRecord.getRawRecord().get(f)));
 			}
 			
 			part.add(new Expression(ref.getPool(),gtF, Operator.GT, lastRecord.getRawRecord().get(gtF)));
@@ -36,6 +36,7 @@ public class DelayedTaskPollingThread extends Thread{
 		return where;
 	}
 	
+	public static final int MAX_TASKS_TO_BUFFER = 10000;
 	@Override
 	public void run(){
 		DelayedTask lastRecord = null;
@@ -54,12 +55,12 @@ public class DelayedTaskPollingThread extends Thread{
 				Select select = new Select().from(DelayedTask.class).
 						where(where).
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
-				jobs = select.execute(DelayedTask.class,100);
+				jobs = select.execute(DelayedTask.class,MAX_TASKS_TO_BUFFER);
 				
 				Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
 				db.getCurrentTransaction().commit();
-				if (jobs.size() < 100){
+				if (jobs.size() < MAX_TASKS_TO_BUFFER){
 					lastRecord = null;
 				}else {
 					lastRecord = jobs.get(jobs.size()-1);

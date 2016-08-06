@@ -48,6 +48,13 @@ public class H2Helper extends JdbcTypeHelper{
     public boolean isQueryTimeoutSupported(){ 
 		return true;
 	}
+    public boolean isNoWaitSupported(){
+		return false;
+	}
+	public String getNoWaitLiteral(){
+		return "";
+	}
+    
     
     @Override
 	public String getDefaultKW(TypeRef<?> ref, Object value) {

@@ -28,4 +28,18 @@ public interface DelayedTask extends Task, Model, Comparable<DelayedTask>{
 	public void execute();
 	public static final String[] DEFAULT_ORDER_BY_COLUMNS = new String[] {"PRIORITY", "NUM_ATTEMPTS", "UPDATED_AT", "ID"}; //Field and column names are same.
 
+	
+	public static enum Priority {
+		HIGH(-1),
+		DEFAULT(0),
+		LOW(1);
+		private final int value; 
+
+		Priority(final int newValue) {
+            value = newValue;
+        }
+
+        public int getValue() { return value; }
+		
+	}
 }

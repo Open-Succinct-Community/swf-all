@@ -11,6 +11,7 @@ import com.venky.core.util.Bucket;
 import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
+import com.venky.swf.plugins.background.db.model.DelayedTask.Priority;
 import com.venky.swf.routing.Config;
 
 public class DelayedTaskManager {
@@ -99,7 +100,7 @@ public class DelayedTaskManager {
 	
 	public boolean needMoreTasks(){
 		synchronized (queue) {
-			if (queue.isEmpty()) {
+				if (queue.isEmpty()) {
 				//No Tasks Found!! Simply Sleep.
 				try {
 					queue.wait();
@@ -109,7 +110,7 @@ public class DelayedTaskManager {
 			}
 		}
 		waitIfQueueIsNotEmpty();
-		waitTillWorkersFinish();
+		//waitTillWorkersFinish(); Not required as this is just idle waiting for workers!
 		return keepAlive();
 	}
 
@@ -199,7 +200,7 @@ public class DelayedTaskManager {
 	
 	
 	
-	public void execute(Task task){
+	public void execute(Priority priority, Task task){
 		if (task instanceof DelayedTask){
 			throw new RuntimeException("Task already delayed.");
 		}
@@ -211,7 +212,7 @@ public class DelayedTaskManager {
 				ByteArrayOutputStream os = new ByteArrayOutputStream(); 
 				ObjectOutputStream oos = new ObjectOutputStream(os);
 				oos.writeObject(task);
-				
+				de.setPriority(priority.getValue());
 				de.setData(new ByteArrayInputStream(os.toByteArray()));
 				de.save();
 			}

@@ -3,6 +3,7 @@ package com.venky.swf.plugins.background.core;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.plugins.background.core.workers.DelayedTaskManager;
+import com.venky.swf.plugins.background.db.model.DelayedTask.Priority;
 import com.venky.swf.routing.Config;
 
 public class TaskManager{
@@ -24,7 +25,10 @@ public class TaskManager{
 		task.execute();
 	}
 	public void executeDelayed(Task task){
-		DelayedTaskManager.instance().execute(task);
+		executeDelayed(Priority.DEFAULT, task);
+	}
+	public void executeDelayed(Priority priority, Task task){
+		DelayedTaskManager.instance().execute(priority,task);
 	}
 	
 	public void shutdown(){

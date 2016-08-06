@@ -6,7 +6,7 @@ import com.venky.swf.plugins.background.core.workers.DelayedTaskManager;
 public class AppInstaller implements Installer{
 
   public void install() {
-    TaskManager.instance().wakeUp(); //Bring up the daemon
+    //TaskManager.instance().wakeUp(); //Bring up the daemon only on commit
   }
 }
 

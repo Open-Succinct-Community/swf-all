@@ -159,15 +159,10 @@ public class Select extends SqlStatement{
 		}
 		
 		if (lock){
-			if (wait){
-				builder.append(Database.getJdbcTypeHelper(getPool()).getForUpdateLiteral());
-			}else if (!wait && Database.getJdbcTypeHelper(getPool()).isNoWaitSupported()){
-				builder.append(Database.getJdbcTypeHelper(getPool()).getForUpdateLiteral());
+			builder.append(Database.getJdbcTypeHelper(getPool()).getForUpdateLiteral());
+			if (!wait && Database.getJdbcTypeHelper(getPool()).isNoWaitSupported()){
 				builder.append(Database.getJdbcTypeHelper(getPool()).getNoWaitLiteral());
-			}//else {
-				//Just rely on Optimistic locking. 
-			//}
-			
+			}
 		}
 		
 	}

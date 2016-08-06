@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.venky.core.checkpoint.Checkpoint;
 import com.venky.core.checkpoint.MergeableMap;
@@ -37,9 +38,11 @@ public class Transaction implements _IDatabase._ITransaction {
         return checkpoint;
     }
 
+    Logger cat = Config.instance().getLogger(getClass().getName());
     public void setSavepoint(){
         try {
             for (String pool : getActivePools()){ //Set in all pools
+            	cat.fine("Set Save point on pool " + pool );
             	savepoint.addSavepoint(pool);
             }
         } catch (SQLException e) {
