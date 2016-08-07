@@ -35,15 +35,17 @@ public class DelayedTaskManager {
 	}
 	
 	private Bucket numWorkersWorking = new Bucket();
+	private Bucket numPollingThreadsWorking = new Bucket();
 	
 	private DelayedTaskManager(int numWorkerThreads){
 		super();
 		workers = new DelayedTaskWorker[numWorkerThreads];
 		for (int i = 0 ; i < workers.length; i ++){
+			incrementWorkerCount();
 			workers[i] = new DelayedTaskWorker(this,i);
 			workers[i].start();
-			incrementWorkerCount();
 		}
+		incrementPollerCount();
 		dtpt = new DelayedTaskPollingThread(this);
 		dtpt.start();
 	}
@@ -99,6 +101,7 @@ public class DelayedTaskManager {
 	}
 	
 	public boolean needMoreTasks(){
+		decrementPollerCount();
 		synchronized (queue) {
 				if (queue.isEmpty()) {
 				//No Tasks Found!! Simply Sleep.
@@ -111,7 +114,11 @@ public class DelayedTaskManager {
 		}
 		waitIfQueueIsNotEmpty();
 		//waitTillWorkersFinish(); Not required as this is just idle waiting for workers!
-		return keepAlive();
+		boolean keepAlive = keepAlive();
+		if (keepAlive) {
+			incrementPollerCount();
+		}
+		return keepAlive;
 	}
 
 	public void waitIfQueueIsEmpty(){
@@ -133,6 +140,8 @@ public class DelayedTaskManager {
 			numWorkersWorking.notifyAll();
 			Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
 		}
+		waitTillPollersFinish(); // If Poller is working and get doesn't find work then it would halt. But if woken up  it may find new work.
+		wakeUp();
 	}
 	public void incrementWorkerCount(){
 		synchronized (numWorkersWorking) {
@@ -152,6 +161,35 @@ public class DelayedTaskManager {
 				}
 			}
 		}
+	}
+	
+	public void decrementPollerCount(){
+		synchronized (numPollingThreadsWorking) {
+			numPollingThreadsWorking.decrement();
+			numPollingThreadsWorking.notifyAll();
+			Config.instance().getLogger(getClass().getName()).info("Number of pollers working "  + numPollingThreadsWorking.intValue());
+		}
+	}
+	public void incrementPollerCount(){
+		synchronized (numPollingThreadsWorking) {
+			numPollingThreadsWorking.increment();
+			numPollingThreadsWorking.notifyAll();
+			Config.instance().getLogger(getClass().getName()).info("Number of pollers working "  + numPollingThreadsWorking.intValue());
+		}
+	}
+	
+	public void waitTillPollersFinish(){
+		synchronized (numPollingThreadsWorking) {
+			while (numPollingThreadsWorking.intValue() != 0){
+				try {
+					Config.instance().getLogger(getClass().getName()).info("Number of pollers working "  + numPollingThreadsWorking.intValue());
+					numPollingThreadsWorking.wait(10000);
+				}catch(InterruptedException ex){
+					
+				}
+			}
+		}
+		
 	}
 	public void waitIfQueueIsNotEmpty(){
 		synchronized (queue) {

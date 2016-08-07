@@ -52,7 +52,10 @@ public class DelayedTaskPollingThread extends Thread{
 				}
 				
 				db = Database.getInstance();
-				Select select = new Select().from(DelayedTask.class).
+				List<String> realColumns = ref.getRealColumns();
+				realColumns.remove("DATA");
+				realColumns.remove("LAST_ERROR"); //Remove Clob and Blob Columns.
+				Select select = new Select(realColumns.toArray(new String[]{})).from(DelayedTask.class).
 						where(where).
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
 				jobs = select.execute(DelayedTask.class,MAX_TASKS_TO_BUFFER);
