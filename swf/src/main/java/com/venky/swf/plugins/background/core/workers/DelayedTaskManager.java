@@ -3,6 +3,7 @@ package com.venky.swf.plugins.background.core.workers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.StringReader;
 import java.util.Collection;
 import java.util.PriorityQueue;
 
@@ -252,6 +253,7 @@ public class DelayedTaskManager {
 				oos.writeObject(task);
 				de.setPriority(priority.getValue());
 				de.setData(new ByteArrayInputStream(os.toByteArray()));
+				de.setLastError(new StringReader("Debug Message: Class is " + task.getClass().getName() ));
 				de.save();
 			}
 		}catch(IOException ex){
