@@ -141,8 +141,14 @@ public class H2Helper extends JdbcTypeHelper{
             registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.CLOB,
                             "CLOB", 0, 0, true , true,new ReaderConverter()));
 
+            registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.VARBINARY,
+                            "VARBINARY",16384 , 0, true , true,new InputStreamConverter()));
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
-                            "BLOB", 0, 0, true , true,new InputStreamConverter()));
+                    "VARBINARY",16384 , 0, true , true,new InputStreamConverter()));
+            registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BINARY,
+                    "VARBINARY",16384 , 0, true , true,new InputStreamConverter()));
+            registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
+                    "VARBINARY",16384 , 0, true , true,new InputStreamConverter()));
 
     }
 }

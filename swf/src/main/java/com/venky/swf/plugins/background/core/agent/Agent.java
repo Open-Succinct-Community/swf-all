@@ -41,6 +41,7 @@ public class Agent {
 			try {
 				is = new ObjectInputStream(dt.getData());
 				Task task = (Task)is.readObject();
+				is.close();
 				if (AgentSeederTask.class.isInstance(task)){
 					AgentSeederTask ast = (AgentSeederTask)task;
 					agentStatus.get(ast.getAgentName()).setRunning(true);

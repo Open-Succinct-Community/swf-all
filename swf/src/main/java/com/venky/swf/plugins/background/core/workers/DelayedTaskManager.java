@@ -30,6 +30,9 @@ public class DelayedTaskManager {
 		}
 		return _instance;
 	}
+	public  int getNumWorkerThreads(){
+		return workers.length;
+	}
 	
 	private DelayedTaskManager(){
 		this(Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1));
@@ -52,6 +55,7 @@ public class DelayedTaskManager {
 	}
 	
 	public void wakeUp(){
+		waitTillPollersFinish();
 		synchronized (queue) {
 			queue.notifyAll();
 			Config.instance().getLogger(getClass().getName()).finest("Waking up Daemon.");
@@ -102,8 +106,8 @@ public class DelayedTaskManager {
 	}
 	
 	public boolean needMoreTasks(){
-		decrementPollerCount();
 		synchronized (queue) {
+				decrementPollerCount();
 				if (queue.isEmpty()) {
 				//No Tasks Found!! Simply Sleep.
 				try {
@@ -114,7 +118,6 @@ public class DelayedTaskManager {
 			}
 		}
 		waitIfQueueIsNotEmpty();
-		//waitTillWorkersFinish(); Not required as this is just idle waiting for workers!
 		boolean keepAlive = keepAlive();
 		if (keepAlive) {
 			incrementPollerCount();
@@ -127,7 +130,7 @@ public class DelayedTaskManager {
 			while (queue.isEmpty() && keepAlive()){
 				try {
 					Config.instance().getLogger(getClass().getName()).finest("Worker: going back to sleep as there is no work to be done.");
-					queue.wait(10000);
+					queue.wait();
 				}catch (InterruptedException ex){
 					Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
 					//
@@ -141,7 +144,6 @@ public class DelayedTaskManager {
 			numWorkersWorking.notifyAll();
 			Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
 		}
-		waitTillPollersFinish(); // If Poller is working and get doesn't find work then it would halt. But if woken up  it may find new work.
 		wakeUp();
 	}
 	public void incrementWorkerCount(){
@@ -156,7 +158,7 @@ public class DelayedTaskManager {
 			while (numWorkersWorking.intValue() != 0){
 				try {
 					Config.instance().getLogger(getClass().getName()).info("Number of workers working "  + numWorkersWorking.intValue());
-					numWorkersWorking.wait(10000);
+					numWorkersWorking.wait();
 				}catch(InterruptedException ex){
 					
 				}
@@ -184,7 +186,7 @@ public class DelayedTaskManager {
 			while (numPollingThreadsWorking.intValue() != 0){
 				try {
 					Config.instance().getLogger(getClass().getName()).info("Number of pollers working "  + numPollingThreadsWorking.intValue());
-					numPollingThreadsWorking.wait(10000);
+					numPollingThreadsWorking.wait();
 				}catch(InterruptedException ex){
 					
 				}
@@ -243,20 +245,27 @@ public class DelayedTaskManager {
 		if (task instanceof DelayedTask){
 			throw new RuntimeException("Task already delayed.");
 		}
+		if (workers.length == 0){
+			task.execute();
+		}else {
+			createDelayedTask(priority,task);
+		}
+	}
+	public DelayedTask createDelayedTask(Priority priority,Task task) { 
+		if (task instanceof DelayedTask){
+			return (DelayedTask)task;
+		}
 		try {
-			if (workers.length == 0){
-				task.execute();
-			}else {
-				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
-				ByteArrayOutputStream os = new ByteArrayOutputStream(); 
-				ObjectOutputStream oos = new ObjectOutputStream(os);
-				oos.writeObject(task);
-				de.setPriority(priority.getValue());
-				de.setData(new ByteArrayInputStream(os.toByteArray()));
-				de.setLastError(new StringReader("Debug Message: Class is " + task.getClass().getName() ));
-				de.save();
-			}
-		}catch(IOException ex){
+			DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+			ByteArrayOutputStream os = new ByteArrayOutputStream(); 
+			ObjectOutputStream oos = new ObjectOutputStream(os);
+			oos.writeObject(task);
+			de.setPriority(priority.getValue());
+			de.setData(new ByteArrayInputStream(os.toByteArray()));
+			de.setLastError(new StringReader("Debug Message: Class is " + task.getClass().getName() ));
+			de.save();
+			return de;
+		} catch (IOException ex) {
 			throw new RuntimeException(task.getClass().getName() ,ex);
 		}
 	}

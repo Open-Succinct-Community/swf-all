@@ -84,8 +84,13 @@ public class Database implements _IDatabase{
             Connection connection = connectionCache.get(pool);
             try {
                 if (!connection.isClosed()){
-                    connection.rollback();
-                    connection.close();
+                	try {
+                		connection.rollback();
+                	}catch (SQLException ex){
+                        Config.instance().getLogger(Database.class.getName()).fine("Rollback Failed!! Closing anyway to release locks " + getCaller());
+                	}finally {
+                		connection.close();
+                	}
                     Config.instance().getLogger(Database.class.getName()).fine("Connection closed : " + getCaller());
                 }
             } catch (SQLException ex) {

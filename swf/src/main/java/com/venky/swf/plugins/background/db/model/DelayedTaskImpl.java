@@ -45,6 +45,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 				try {
 					ObjectInputStream is = new ObjectInputStream(locked.getData());
 					Task task = (Task)is.readObject();
+					is.close();
 					Config.instance().getLogger(getClass().getName()).info("Executing " + task.getClass().getName() + " : DelayedTask#" + o.getId() );
 					txn = Database.getInstance().getTransactionManager().createTransaction();
 					task.execute();

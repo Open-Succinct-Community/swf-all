@@ -99,6 +99,7 @@ public class ConnectionManager {
             info.setProperty("testOnBorrow", "true");
             info.setProperty("testOnReturn", "true");
             info.setProperty("testWhileIdle", "false");
+            info.setProperty("maxActive", "-1");
             try {
                 Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
                 Method m = c.getMethod("createDataSource", Properties.class);

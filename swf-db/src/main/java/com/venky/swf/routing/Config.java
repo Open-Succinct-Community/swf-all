@@ -40,6 +40,7 @@ public class Config {
 			throw new RuntimeException(e);
 		}
 		
+		
 	    resourceBaseurls = new ArrayList<URL>();
 	    while(propertyFileUrls.hasMoreElements()){
 	    	URL url = propertyFileUrls.nextElement();
@@ -66,6 +67,8 @@ public class Config {
             }
             resourceBaseurls.add(url);
 	    }
+	    properties.putAll(System.getProperties());
+	    properties.putAll(System.getenv());
     }
     private Properties properties;
     private static Config _instance ;
@@ -93,10 +96,10 @@ public class Config {
     }
     
     public String getProperty(String name){
-    	return System.getProperty(name,properties.getProperty(name));
+    	return getProperty(name,null); 
     }
     public String getProperty(String name,String defaultValue){
-    	return System.getProperty(name,properties.getProperty(name, defaultValue));
+    	return properties.getProperty(name, defaultValue);
     }
     public int getIntProperty(String name){
     	String sValue = getProperty(name);

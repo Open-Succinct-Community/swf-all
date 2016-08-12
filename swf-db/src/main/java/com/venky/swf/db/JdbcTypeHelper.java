@@ -195,7 +195,7 @@ public abstract class JdbcTypeHelper {
     	Arrays.sort(CLOBTYPES);
     }
     
-    private static int[] BLOBTYPES = new int[] {Types.BLOB , Types.LONGVARBINARY , Types.BINARY} ;
+    private static int[] BLOBTYPES = new int[] {Types.BLOB , Types.LONGVARBINARY , Types.BINARY, Types.VARBINARY} ;
     static {
     	Arrays.sort(BLOBTYPES);
     }

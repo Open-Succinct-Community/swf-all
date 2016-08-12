@@ -1,10 +1,14 @@
 package com.venky.swf.plugins.background.core.workers;
 
+import java.io.ObjectInputStream;
 import java.util.List;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.plugins.background.core.WakeupTask;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
+import com.venky.swf.plugins.background.db.model.DelayedTask.Priority;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -18,6 +22,7 @@ public class DelayedTaskPollingThread extends Thread{
 		super("DelayedTaskPollingThread");
 		setDaemon(false);
 		this.manager = manager;
+		this.maxTasksToBuffer = Math.max(10, manager.getNumWorkerThreads() * 2);
 	}
 	
 	private Expression getWhereClause(DelayedTask lastRecord){
@@ -36,7 +41,11 @@ public class DelayedTaskPollingThread extends Thread{
 		return where;
 	}
 	
-	public static final int MAX_TASKS_TO_BUFFER = 10000;
+	private int maxTasksToBuffer = 1 ;
+	public int getMaxTasksToBuffer(){
+		return maxTasksToBuffer;
+	}
+	
 	@Override
 	public void run(){
 		DelayedTask lastRecord = null;
@@ -58,15 +67,18 @@ public class DelayedTaskPollingThread extends Thread{
 				Select select = new Select(realColumns.toArray(new String[]{})).from(DelayedTask.class).
 						where(where).
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
-				jobs = select.execute(DelayedTask.class,MAX_TASKS_TO_BUFFER);
+				jobs = select.execute(DelayedTask.class,getMaxTasksToBuffer());
 				
 				Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
-				db.getCurrentTransaction().commit();
-				if (jobs.size() < MAX_TASKS_TO_BUFFER){
+				if (jobs.isEmpty()){
 					lastRecord = null;
 				}else {
 					lastRecord = jobs.get(jobs.size()-1);
+				}
+				db.getCurrentTransaction().commit();
+				if (jobs != null){
+					manager.addDelayedTasks(jobs);
 				}
 			}catch (Exception e){
 				if (db != null){
@@ -81,9 +93,6 @@ public class DelayedTaskPollingThread extends Thread{
 				if (db != null){
 					db.close();
 					db = null;
-				}
-				if (jobs != null){
-					manager.addDelayedTasks(jobs);
 				}
 			}
 		}
