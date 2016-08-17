@@ -261,11 +261,12 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			record = updatedRecord;
 		}
 		for (Expression cacheKey: queryCache.keySet()){
-			Set<Record> keyedRecords = queryCache.get(cacheKey);
-			if (cacheKey == null || cacheKey.eval(record)){
-				keyedRecords.add(record); // Will not be added if already exists.
-			}else {
-				keyedRecords.remove(record);
+			if (recordInCache == null){
+				if (cacheKey == null || cacheKey.eval(record)){
+					queryCache.get(cacheKey).add(record); // Will not be added if already exists.
+				}	
+			}else if (cacheKey != null && !cacheKey.eval(record)){
+				queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
 			}
 		}
 		if (recordInCache == null){

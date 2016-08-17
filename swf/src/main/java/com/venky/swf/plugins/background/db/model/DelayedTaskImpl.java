@@ -52,8 +52,6 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 					txn.commit();
 					success = true;
 				}catch(Exception ex){
-					txn.rollback(ex);
-					
 					StringWriter sw = new StringWriter();
 					PrintWriter w = new PrintWriter(sw);
 					if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(ex.getMessage())){
@@ -62,6 +60,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparabl
 			        	w.write(ex.getMessage());
 			        }
 					Config.instance().getLogger(getClass().getName()).info(sw.toString());
+
+					txn.rollback(ex);
 					locked.setLastError(new StringReader(sw.toString()));
 					locked.setNumAttempts(locked.getNumAttempts()+1);
 				}

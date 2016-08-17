@@ -91,14 +91,7 @@ public class DelayedTaskManager {
 
 	public DelayedTask next(){
 		decrementWorkerCount();
-		waitIfQueueIsEmpty();
-		DelayedTask dt = null ;
-		synchronized (queue) {
-			if (keepAlive() && !queue.isEmpty()){
-				dt = queue.poll();
-				queue.notifyAll();
-			}
-		}
+		DelayedTask dt = waitUntilNextTask();
 		if (dt != null) {
 			incrementWorkerCount();
 		}
@@ -107,17 +100,18 @@ public class DelayedTaskManager {
 	
 	public boolean needMoreTasks(){
 		synchronized (queue) {
-				decrementPollerCount();
-				if (queue.isEmpty()) {
+			decrementPollerCount();
+			if (queue.isEmpty()) {
 				//No Tasks Found!! Simply Sleep.
 				try {
-					queue.wait();
+					queue.wait(2*60*1000); // Max of 2 minutes.
 				} catch (InterruptedException e) {
 					//
 				}
 			}
 		}
 		waitIfQueueIsNotEmpty();
+		waitTillWorkersFinish(); // Avoid Locking with Workers.
 		boolean keepAlive = keepAlive();
 		if (keepAlive) {
 			incrementPollerCount();
@@ -125,7 +119,8 @@ public class DelayedTaskManager {
 		return keepAlive;
 	}
 
-	public void waitIfQueueIsEmpty(){
+	public DelayedTask waitUntilNextTask(){
+		DelayedTask dt = null ;
 		synchronized (queue) {
 			while (queue.isEmpty() && keepAlive()){
 				try {
@@ -136,7 +131,12 @@ public class DelayedTaskManager {
 					//
 				}
 			}
+			if (keepAlive() && !queue.isEmpty()){
+				dt = queue.poll();
+				queue.notifyAll();
+			}
 		}
+		return dt;
 	}
 	public void decrementWorkerCount(){
 		synchronized (numWorkersWorking) {

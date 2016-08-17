@@ -4,6 +4,7 @@ import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 
@@ -20,23 +21,35 @@ public class DelayedTaskWorker extends Thread {
 		while ((task = manager.next()) != null ){
 			TimerStatistics.setEnabled(Config.instance().isTimerEnabled());
 			Config.instance().getLogger(getClass().getName()).info("Started Task:" + task.getId());
-			Database db = Database.getInstance();
-			db.open(task.getCreatorUser());
-			Transaction txn = db.getCurrentTransaction();
+			Database db = null; 
+			Transaction txn = null;
 			try {
+				db = Database.getInstance();
+				db.open(task.getCreatorUser());
+				txn = db.getCurrentTransaction();
 				task.execute();
 				txn.commit();
 			}catch (Throwable e){
 				Config.instance().getLogger(getClass().getName()).info("Worker thread Rolling back due to exception " + ExceptionUtil.getRootCause(e).toString());
 				try {
-					txn.rollback(e);
+					if (txn != null) {
+						txn.rollback(e);
+					}
 				}catch (Exception ex){
 					ex.printStackTrace();
 				}
 			}finally{
-				Config.instance().getLogger(getClass().getName()).info("Completed Task:" + task.getId());
-				db.close();
-				TimerStatistics.dumpStatistics();
+				try {
+					Config.instance().getLogger(getClass().getName()).info("Completed Task:" + task.getId());
+					if (db != null) {
+						db.close();
+					}
+					TimerStatistics.dumpStatistics();
+				}catch(Exception ex) {
+					MultiException m = new MultiException("Error while closing connections");
+					m.add(ex);
+					m.printStackTrace();
+				}
 			}
 		}
 	}

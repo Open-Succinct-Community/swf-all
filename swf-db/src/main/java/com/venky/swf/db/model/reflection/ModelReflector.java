@@ -240,39 +240,69 @@ public class ModelReflector<M extends Model> {
 		}
 	}
 
-    private SequenceSet<Method> fieldGetters = new SequenceSet<Method>(); 
+    private SequenceSet<Method> fieldGetters = null; 
     public List<Method> getFieldGetters(){
-    	loadMethods(fieldGetters, getFieldGetterMatcher());
+    	if (fieldGetters == null){
+	    	synchronized (this) {
+	    		if (fieldGetters == null){
+		    		fieldGetters = new SequenceSet<Method>();
+		        	loadMethods(fieldGetters, getFieldGetterMatcher());
+	    		}
+			}
+    	}
     	return fieldGetters;
     }
     
-    private SequenceSet<String> fieldGetterSignatures = new SequenceSet<String>();
+    private SequenceSet<String> fieldGetterSignatures = null;
     public List<String> getFieldGetterSignatures(){
-    	if (fieldGetterSignatures.isEmpty()){
-    		for (Method m : getFieldGetters()){
-    			fieldGetterSignatures.add(getSignature(m));
-    		}
+    	if (fieldGetterSignatures == null){
+    		synchronized (this) {
+    			if (fieldGetterSignatures == null ){ 
+    				fieldGetterSignatures = new SequenceSet<String>();
+            		for (Method m : getFieldGetters()){
+            			fieldGetterSignatures.add(getSignature(m));
+            		}
+    			}
+			}
     	}
     	return fieldGetterSignatures;
     }
     
-    private SequenceSet<Method> indexedFieldGetters = new SequenceSet<Method>();
+    private SequenceSet<Method> indexedFieldGetters = null;
     public List<Method> getIndexedFieldGetters(){
-    	loadMethods(indexedFieldGetters, getIndexedFieldGetterMatcher());
+    	if (indexedFieldGetters == null) {
+        	synchronized (this) {
+        		if (indexedFieldGetters == null){
+        			indexedFieldGetters =  new SequenceSet<Method>();
+                	loadMethods(indexedFieldGetters, getIndexedFieldGetterMatcher());
+        		}
+    		}
+    	}
     	return indexedFieldGetters;
     }
     
-    private SequenceSet<Method> fieldSetters = new SequenceSet<Method>() ;
+    private SequenceSet<Method> fieldSetters = null;
     public List<Method> getFieldSetters(){
-    	loadMethods(fieldSetters, getFieldSetterMatcher());
+    	if (fieldSetters == null) {
+    		synchronized (this) {
+    			if (fieldSetters == null) {
+    				fieldSetters =  new SequenceSet<Method>() ;
+    		    	loadMethods(fieldSetters, getFieldSetterMatcher());
+    			}
+			}
+    	}
     	return fieldSetters;
     }
     
     private SequenceSet<Method> referredModelGetters = null;
     public List<Method> getReferredModelGetters(){ 
     	if (referredModelGetters == null ){
-    		referredModelGetters = new SequenceSet<Method>();
-        	loadMethods(referredModelGetters, getReferredModelGetterMatcher());
+    		synchronized (this) {
+    			if (referredModelGetters == null) {
+	        		referredModelGetters = new SequenceSet<Method>();
+	            	loadMethods(referredModelGetters, getReferredModelGetterMatcher());
+    			}
+			}
     	}
     	return referredModelGetters;
     }
@@ -280,8 +310,12 @@ public class ModelReflector<M extends Model> {
     private SequenceSet<Method> participantModelGetters = null ;
     public List<Method> getParticipantModelGetters(){
     	if (participantModelGetters == null){
-    		participantModelGetters = new SequenceSet<Method>();
-        	loadMethods(participantModelGetters, getParticipantModelGetterMatcher());
+    		synchronized (this) {
+    			if (participantModelGetters == null){
+	        		participantModelGetters = new SequenceSet<Method>();
+	            	loadMethods(participantModelGetters, getParticipantModelGetterMatcher());
+    			}
+			}
     	}
     	return participantModelGetters;
     }
@@ -289,8 +323,12 @@ public class ModelReflector<M extends Model> {
     private SequenceSet<Method> childModelGetters = null ;
     public List<Method> getChildGetters(){
     	if (childModelGetters == null){
-    		childModelGetters = new SequenceSet<Method>();
-        	loadMethods(childModelGetters,getChildrenGetterMatcher());
+    		synchronized (this) {
+				if (childModelGetters == null) {
+		    		childModelGetters = new SequenceSet<Method>();
+		        	loadMethods(childModelGetters,getChildrenGetterMatcher());
+				}
+			}
     	}
     	return childModelGetters;
     }
@@ -364,47 +402,59 @@ public class ModelReflector<M extends Model> {
     private SequenceSet<String> indexedColumns = null;
     public List<String> getIndexedColumns(){
     	if (indexedColumns == null){
-    		indexedColumns = new SequenceSet<String>();
-        	for (Method indexedFieldGetter : getIndexedFieldGetters()){
-        		String indexColumnName = getColumnDescriptor(getFieldName(indexedFieldGetter)).getName();
-        		indexedColumns.add(indexColumnName);
-        	}
+    		synchronized (this) {
+    			if (indexedColumns == null) {
+	    			indexedColumns = new SequenceSet<String>();
+	            	for (Method indexedFieldGetter : getIndexedFieldGetters()){
+	            		String indexColumnName = getColumnDescriptor(getFieldName(indexedFieldGetter)).getName();
+	            		indexedColumns.add(indexColumnName);
+	            	}
+    			}
+			}
     	}
     	return indexedColumns;
     }
     private SequenceSet<String> indexedFields = null ;
     public SequenceSet<String> getIndexedFields(){
     	if (indexedFields == null){
-    		indexedFields = new SequenceSet<String>();
-    		for (Method indexedFieldGetter : getIndexedFieldGetters()){
-    			indexedFields.add(getFieldName(indexedFieldGetter));
-    		}
+    		synchronized (this) {
+				if (indexedFields == null){
+		    		indexedFields = new SequenceSet<String>();
+		    		for (Method indexedFieldGetter : getIndexedFieldGetters()){
+		    			indexedFields.add(getFieldName(indexedFieldGetter));
+		    		}
+				}
+			}
     	}
     	return indexedFields;
     }
     private Cache<String,UniqueKey<M>> uniqueKeys = null; 
     public Collection<UniqueKey<M>> getUniqueKeys(){
     	if (uniqueKeys == null){
-        	uniqueKeys = new Cache<String, UniqueKey<M>>() {
-				private static final long serialVersionUID = 1892299842617679145L;
-
-				@Override
-				protected UniqueKey<M> getValue(String keyName) {
-					return new UniqueKey<M>(getModelClass(), keyName);
-				}
-			};
-    		for (Method fieldGetter : getFieldGetters()){
-    			UNIQUE_KEY key = this.getAnnotation(fieldGetter, UNIQUE_KEY.class);
-    			if (key != null){
-        			String fieldName = getFieldName(fieldGetter);
-        			StringTokenizer keys = new StringTokenizer(key.value(),",");
-        			while (keys.hasMoreTokens()){
-        				String keyName = keys.nextToken();
-            			UniqueKey<M> uk = uniqueKeys.get(keyName);
-            			uk.addField(fieldName,key.exportable(),key.allowMultipleRecordsWithNull());
-        			}
+    		synchronized (this) {
+    			if (uniqueKeys == null){
+	            	uniqueKeys = new Cache<String, UniqueKey<M>>() {
+	    				private static final long serialVersionUID = 1892299842617679145L;
+	
+	    				@Override
+	    				protected UniqueKey<M> getValue(String keyName) {
+	    					return new UniqueKey<M>(getModelClass(), keyName);
+	    				}
+	    			};
+	        		for (Method fieldGetter : getFieldGetters()){
+	        			UNIQUE_KEY key = this.getAnnotation(fieldGetter, UNIQUE_KEY.class);
+	        			if (key != null){
+	            			String fieldName = getFieldName(fieldGetter);
+	            			StringTokenizer keys = new StringTokenizer(key.value(),",");
+	            			while (keys.hasMoreTokens()){
+	            				String keyName = keys.nextToken();
+	                			UniqueKey<M> uk = uniqueKeys.get(keyName);
+	                			uk.addField(fieldName,key.exportable(),key.allowMultipleRecordsWithNull());
+	            			}
+	        			}
+	        		}
     			}
-    		}
+			}
     	}
     	return uniqueKeys.values();
     }
@@ -475,13 +525,16 @@ public class ModelReflector<M extends Model> {
     private List<UniqueKey<M>> singleColumnUniqueKeys = null; 
     public Collection<UniqueKey<M>> getSingleColumnUniqueKeys(){
     	if (singleColumnUniqueKeys == null){
-    		singleColumnUniqueKeys = new ArrayList<UniqueKey<M>>();
-			
-    		for (UniqueKey<M> key: getUniqueKeys()){
-    			if (key.size() == 1){
-    				singleColumnUniqueKeys.add(key);
+    		synchronized (this) {
+    			if (singleColumnUniqueKeys == null){
+            		singleColumnUniqueKeys = new ArrayList<UniqueKey<M>>();
+            		for (UniqueKey<M> key: getUniqueKeys()){
+            			if (key.size() == 1){
+            				singleColumnUniqueKeys.add(key);
+            			}
+            		}
     			}
-    		}
+			}
     	}
     	return singleColumnUniqueKeys;
     }
@@ -489,12 +542,14 @@ public class ModelReflector<M extends Model> {
     private List<String> editableFields = null;
     public List<String> getEditableFields(){
     	if (editableFields == null){
-    		editableFields = new SequenceSet<String>();
-        	for (String field:getFields()){
-        		if (isFieldEditable(field)){
-        			editableFields.add(field);
-        		}
-        	}
+    		synchronized (this) {
+        		editableFields = new SequenceSet<String>();
+            	for (String field:getFields()){
+            		if (isFieldEditable(field)){
+            			editableFields.add(field);
+            		}
+            	}
+			}
     	}
     	return editableFields;
     }
@@ -1010,7 +1065,11 @@ public class ModelReflector<M extends Model> {
     private ColumnDescriptorCache columnDescriptors = null; 
     private ColumnDescriptorCache getColumnDescriptors(){
     	if (columnDescriptors == null){
-    		columnDescriptors = new ColumnDescriptorCache();
+    		synchronized (this) {
+				if (columnDescriptors == null) {
+		    		columnDescriptors = new ColumnDescriptorCache();
+				}
+			}
     	}
     	return columnDescriptors;
     }
@@ -1219,14 +1278,22 @@ public class ModelReflector<M extends Model> {
 	private SequenceSet<Class<? extends Model>> classHierarchies = null;
 	public SequenceSet<Class<? extends Model>> getClassHierarchies() {
 		if (classHierarchies == null){
-			classHierarchies = reflector.getClassHierarchies(getModelClass());
+			synchronized (this) {
+				if (classHierarchies == null) {
+					classHierarchies = reflector.getClassHierarchies(getModelClass());
+				}
+			}
 		}
 		return classHierarchies;
 	}
 	private SequenceSet<Class<?>> classForests = null;
 	public SequenceSet<Class<?>> getClassForests(){
 		if (classForests == null){
-			classForests = reflector.getClassForests(getModelClass());
+			synchronized (this) {
+				if (classForests == null){
+					classForests = reflector.getClassForests(getModelClass());
+				}
+			}
 		}
 		return classForests;
 	}
@@ -1420,9 +1487,13 @@ public class ModelReflector<M extends Model> {
 	private Set<String> participatableRoles = null;
 	public Set<String> getParticipatableRoles(){
 		if (participatableRoles == null){
-			participatableRoles = new HashSet<String>();
-			for (Method m : getParticipantModelGetters()){
-				participatableRoles.add(getParticipatingRole(getReferenceField(m)));
+			synchronized (this) {
+				if (participatableRoles == null){
+					participatableRoles = new HashSet<String>();
+					for (Method m : getParticipantModelGetters()){
+						participatableRoles.add(getParticipatingRole(getReferenceField(m)));
+					}
+				}
 			}
 		}
 		return new HashSet<String>(participatableRoles);
@@ -1435,13 +1506,17 @@ public class ModelReflector<M extends Model> {
 	private Set<String> autoIncrementColumns = null; 
     public Set<String> getAutoIncrementColumns() {
     	if (autoIncrementColumns == null){
-        	autoIncrementColumns = new IgnoreCaseSet();
-    	    for (String f : getFields()){
-    	    	ColumnDescriptor d = getColumnDescriptor(f);
-                if (d.isAutoIncrement()){ 
-                    autoIncrementColumns.add(d.getName());
-                }
-            }
+    		synchronized (this) {
+    			if (autoIncrementColumns == null){
+    	        	autoIncrementColumns = new IgnoreCaseSet();
+    	    	    for (String f : getFields()){
+    	    	    	ColumnDescriptor d = getColumnDescriptor(f);
+    	                if (d.isAutoIncrement()){ 
+    	                    autoIncrementColumns.add(d.getName());
+    	                }
+    	            }
+    			}
+			}
     	}
         return Collections.unmodifiableSet(autoIncrementColumns);
 	}    

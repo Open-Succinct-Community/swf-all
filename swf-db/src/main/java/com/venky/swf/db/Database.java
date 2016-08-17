@@ -76,6 +76,7 @@ public class Database implements _IDatabase{
     public void close() {
 		closeConnections();
 		currentUser = null;
+		
 	}
 
 	private void closeConnections() {
@@ -130,6 +131,15 @@ public class Database implements _IDatabase{
     }
     public Connection getConnection(String pool,boolean registerActivePool){
     	Connection conn = connectionCache.get(pool);
+    	try {
+			if (conn.getTransactionIsolation() != getTransactionIsolationLevel() ){
+				if ( conn.getMetaData().supportsTransactionIsolationLevel(getTransactionIsolationLevel())) {
+					conn.setTransactionIsolation(getTransactionIsolationLevel());
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 		
     	if (registerActivePool && !registeringActivePool){
         	registeringActivePool = true;
@@ -139,6 +149,7 @@ public class Database implements _IDatabase{
         		registeringActivePool = false;
         	}
     	}
+    	
         return conn;
     }
 
@@ -384,9 +395,6 @@ public class Database implements _IDatabase{
 			stmt.executeUpdate();
 			conn.commit();
 		}
-		if (conn.getMetaData().supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED)) {
-			conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-		}
 		Config.instance().getLogger(Database.class.getName()).fine("Opened Connection:" + getCaller());
 		return conn;
 	}
@@ -455,6 +463,24 @@ public class Database implements _IDatabase{
             }
         }
     }
+
+    int transactionIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+    public int getTransactionIsolationLevel(){
+    	return transactionIsolationLevel;
+    }
+	public void setTransactionIsolationLevel(int newIsolationLevel) {
+		if (transactionIsolationLevel == newIsolationLevel) {
+			return;
+		}
+		if (isActiveTransactionPresent()){
+			throw new RuntimeException("Cannot Set Isolation Level when a Transaction is going on");
+		}
+		transactionIsolationLevel = newIsolationLevel;
+		Config.instance().getLogger(getClass().getName()).info ("Set transaction isolation level to " + newIsolationLevel);
+	}
+	public void resetTransactionIsolationLevel(){
+		setTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED);
+	}
   	
 
 }

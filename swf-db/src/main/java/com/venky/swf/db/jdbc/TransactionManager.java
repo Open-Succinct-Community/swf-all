@@ -5,9 +5,11 @@ import java.util.Stack;
 
 import com.venky.core.checkpoint.Checkpointed;
 import com.venky.core.checkpoint.MergeableMap;
+import com.venky.core.util.ExceptionUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
+import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 
 /**
@@ -41,32 +43,44 @@ public class TransactionManager {
     }
 
     public void rollback(Transaction transaction, Throwable th) {
-
+    	MultiException m = new MultiException();
+    	if (th != null ) m.add(th);
+    	
         boolean entireTransactionIsRolledBack = false;
         for (String pool : transaction.getActivePools()){
             entireTransactionIsRolledBack = entireTransactionIsRolledBack || Database.getJdbcTypeHelper(pool).hasTransactionRolledBack(th);
         }
         if (!entireTransactionIsRolledBack){
-            transaction.rollbackToSavePoint();
+        	try {
+        		transaction.rollbackToSavePoint();
+        	}catch (RuntimeException ex){
+        		m.add(ExceptionUtil.getRootCause(ex));
+        		throw m;
+        	}
         }
         txnUserAttributes.rollback(transaction.getCheckpoint());
-        updateTransactionStack(transaction);
+        try {
+        	updateTransactionStack(transaction);
+        }catch(RuntimeException ex){
+    		m.add(ExceptionUtil.getRootCause(ex));
+    		throw m;
+        }
         if (transactionStack.isEmpty()){
             try {
                 Config.instance().getLogger(Database.class.getName()).fine("Connection Rollback" + ":" +  Database.getCaller());
                 for (String pool : transaction.getActivePools()){
-                    Database.getInstance().getConnection(pool).rollback();
+                    Database.getInstance().getConnection(pool,false).rollback();
                 }
+                Database.getInstance().registerLockRelease();
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+            	m.add(e);
+                throw m;
+            } finally {
+            	Database.getInstance().resetTransactionIsolationLevel();
             }
         }else{
             if (entireTransactionIsRolledBack){
-                if (RuntimeException.class.isInstance(th)){
-                    throw (RuntimeException)th;
-                }else {
-                    throw new RuntimeException(th);
-                }
+                throw m;
             }
         }
 
@@ -91,9 +105,10 @@ public class TransactionManager {
                 txnUserAttributes.getCurrentValue().clear(); // Now restore the initial value to a clear map.
                 Database.getInstance().registerLockRelease();
                 Registry.instance().callExtensions("after.commit",transaction);
-
             } catch (SQLException e) {
                 throw new RuntimeException(e);
+            }finally {
+            	Database.getInstance().resetTransactionIsolationLevel();
             }
         }
 	}

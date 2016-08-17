@@ -29,20 +29,22 @@ public class SWFSavepoint implements Savepoint{
     private Map<String,Savepoint> savepointMap = new HashMap<String, Savepoint>();
 
     public void addSavepoint(String pool) throws SQLException{
-    	if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()){
-            Savepoint pt = Database.getInstance().getConnection(pool).setSavepoint();
-            savepointMap.put(pool,pt);
-        }else {
-            Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getEstablishSavepointStatement(getSavepointName())).execute();
-            savepointMap.put(pool,null);
-        }
+		if (!savepointMap.containsKey(pool)){
+	    	if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()){
+	            Savepoint pt = Database.getInstance().getConnection(pool).setSavepoint();
+	            savepointMap.put(pool,pt);
+	        }else {
+	            Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getEstablishSavepointStatement(getSavepointName())).execute();
+	            savepointMap.put(pool,null);
+	        }
+		}
     }
     public void removeSavepoint(String pool) throws SQLException{
         Savepoint pt = savepointMap.remove(pool);
         if (Database.getJdbcTypeHelper(pool).isSavepointManagedByJdbc()) {
         	if (pt != null) Database.getInstance().getConnection(pool).releaseSavepoint(pt);
         }else {
-        	Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getEstablishSavepointStatement(getSavepointName())).execute();
+        	Database.getInstance().createStatement(pool,Database.getJdbcTypeHelper(pool).getReleaseSavepointStatement(getSavepointName())).execute();
         }
     }
 

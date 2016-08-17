@@ -1,14 +1,11 @@
 package com.venky.swf.plugins.background.core.workers;
 
-import java.io.ObjectInputStream;
+import java.sql.Connection;
 import java.util.List;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.background.core.WakeupTask;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
-import com.venky.swf.plugins.background.db.model.DelayedTask.Priority;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -59,8 +56,8 @@ public class DelayedTaskPollingThread extends Thread{
 				if (lastRecord != null){
 					where.add(getWhereClause(lastRecord));
 				}
-				
-				db = Database.getInstance();
+                db = Database.getInstance();
+				db.setTransactionIsolationLevel(Connection.TRANSACTION_READ_UNCOMMITTED);
 				List<String> realColumns = ref.getRealColumns();
 				realColumns.remove("DATA");
 				realColumns.remove("LAST_ERROR"); //Remove Clob and Blob Columns.
@@ -68,7 +65,6 @@ public class DelayedTaskPollingThread extends Thread{
 						where(where).
 						orderBy(DelayedTask.DEFAULT_ORDER_BY_COLUMNS);
 				jobs = select.execute(DelayedTask.class,getMaxTasksToBuffer());
-				
 				Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
 				if (jobs.isEmpty()){

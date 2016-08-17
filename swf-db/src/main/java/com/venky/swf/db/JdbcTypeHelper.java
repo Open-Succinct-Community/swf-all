@@ -47,9 +47,13 @@ import com.venky.swf.routing.Config;
  * @author venky
  */
 public abstract class JdbcTypeHelper {
+	public boolean supportsLimitSyntax(){
+		return true;
+	}
 	public boolean isSavepointManagedByJdbc(){
     	return true;
     }
+	
 	public boolean isAutoCommitOnDDL(){
 		return false;
 	}

@@ -118,12 +118,13 @@ public class Transaction implements _IDatabase._ITransaction {
     	return activePools;
     }
     public void registerActivePool(String pool){
-    	getActivePools().add(pool);
-    	try {
-			savepoint.addSavepoint(pool);
-		} catch (SQLException e) {
-			throw new RuntimeException(e);
-		}
+    	if (getActivePools().add(pool)){
+        	try {
+    			savepoint.addSavepoint(pool);
+    		} catch (SQLException e) {
+    			throw new RuntimeException(e);
+    		}
+    	}
     }
     
     public void registerTableDataChanged(String tableName){

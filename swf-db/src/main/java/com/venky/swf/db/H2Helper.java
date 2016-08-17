@@ -8,11 +8,13 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.TimeZone;
 
 import com.venky.core.date.DateUtils;
+import com.venky.swf.exceptions.SWFTimeoutException;
 
 /**
  *
@@ -48,6 +50,19 @@ public class H2Helper extends JdbcTypeHelper{
     public boolean isQueryTimeoutSupported(){ 
 		return true;
 	}
+    public boolean hasTransactionRolledBack(Throwable ex){
+    	if (super.hasTransactionRolledBack(ex) || ex instanceof SWFTimeoutException){
+    		return true;
+    	}
+    	return false;
+    }
+    public boolean isQueryTimeoutException(SQLException ex){
+    	if (super.isQueryTimeoutException(ex) || ex.getMessage().contains("Statement was canceled or the session timed out") || ex.getErrorCode() == 50200 || ex.getErrorCode() == 57014 || ex.getErrorCode() == 90039){
+    		return true;
+    	}
+		return false;
+	}
+    
     public boolean isNoWaitSupported(){
 		return false;
 	}
