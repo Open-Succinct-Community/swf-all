@@ -1,5 +1,8 @@
 package com.venky.swf.plugins.background.core.workers;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
@@ -15,12 +18,17 @@ public class DelayedTaskWorker extends Thread {
 		setDaemon(false);
 		this.manager = manager;
 	}
-	
+	private Logger cat = Config.instance().getLogger(getClass().getName());
+	private void log(Level level,String message){
+		if (cat.isLoggable(level)){
+			cat.log(level, "Thread :" + getName() + ":" + message);
+		}
+	}
 	public void run(){
 		DelayedTask task = null ;
 		while ((task = manager.next()) != null ){
 			TimerStatistics.setEnabled(Config.instance().isTimerEnabled());
-			Config.instance().getLogger(getClass().getName()).info("Started Task:" + task.getId());
+			log(Level.INFO,"Started Task:" + task.getId());
 			Database db = null; 
 			Transaction txn = null;
 			try {
@@ -30,7 +38,7 @@ public class DelayedTaskWorker extends Thread {
 				task.execute();
 				txn.commit();
 			}catch (Throwable e){
-				Config.instance().getLogger(getClass().getName()).info("Worker thread Rolling back due to exception " + ExceptionUtil.getRootCause(e).toString());
+				log(Level.INFO,"Worker thread Rolling back due to exception " + ExceptionUtil.getRootCause(e).toString());
 				try {
 					if (txn != null) {
 						txn.rollback(e);
@@ -40,7 +48,7 @@ public class DelayedTaskWorker extends Thread {
 				}
 			}finally{
 				try {
-					Config.instance().getLogger(getClass().getName()).info("Completed Task:" + task.getId());
+					log(Level.INFO,"Completed Task:" + task.getId());
 					if (db != null) {
 						db.close();
 					}
