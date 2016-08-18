@@ -1,10 +1,12 @@
 package com.venky.swf.plugins.background.core.workers;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -19,7 +21,7 @@ public class DelayedTaskPollingThread extends Thread{
 		super("DelayedTaskPollingThread");
 		setDaemon(false);
 		this.manager = manager;
-		this.maxTasksToBuffer = Math.max(10, manager.getNumWorkerThreads() * 2);
+		this.maxTasksToBuffer = Math.max(10, AsyncTaskManager.getNumWorkerThreads() * 2);
 	}
 	
 	private Expression getWhereClause(DelayedTask lastRecord){
@@ -47,8 +49,8 @@ public class DelayedTaskPollingThread extends Thread{
 	public void run(){
 		DelayedTask lastRecord = null;
 		Database db = null ;
-		while (manager.needMoreTasks()){
-			List<DelayedTask> jobs = null;
+		List<DelayedTask> jobs = new ArrayList<DelayedTask>();
+		while (manager.needMoreTasks(!jobs.isEmpty())){
 			try {
 				Config.instance().getLogger(getClass().getName()).finest("Checking for Tasks...");
 				Expression where = new Expression(ref.getPool(),Conjunction.AND);
@@ -72,10 +74,8 @@ public class DelayedTaskPollingThread extends Thread{
 				}else {
 					lastRecord = jobs.get(jobs.size()-1);
 				}
-				db.getCurrentTransaction().commit();
-				if (jobs != null){
-					manager.addDelayedTasks(jobs);
-				}
+				db.getCurrentTransaction().commit(); // Release all read locks before workers start.!!
+				manager.addAll(jobs);
 			}catch (Exception e){
 				if (db != null){
 					Config.instance().getLogger(getClass().getName()).info("Polling thread Rolling back due to exception 1 " + e.toString());

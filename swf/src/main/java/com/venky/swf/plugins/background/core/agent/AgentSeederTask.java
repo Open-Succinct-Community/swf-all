@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.background.core.agent;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import com.venky.swf.plugins.background.core.Task;
@@ -16,15 +18,22 @@ public abstract class AgentSeederTask implements Task{
 		if (tasks.isEmpty()) {
 			AgentFinishUpTask task = new AgentFinishUpTask();
 			task.setAgentName(getAgentName());
-			TaskManager.instance().executeDelayed(task);
+			executeDelayed(task);
 		}else {
-			for (Task task: tasks) {
-				TaskManager.instance().executeDelayed(task);
-			}
+			executeDelayed(tasks);
 		}
+	}
+	public void executeDelayed(Task task) {
+		executeDelayed(Arrays.asList(task));
+	}
+	public void executeDelayed(Collection<Task> tasks) {
+		TaskManager.instance().executeAsync(tasks,isAgentTaskQPersistent());
 	}
 
 	public abstract List<Task> getTasks();
 	public abstract String getAgentName();
+	protected boolean isAgentTaskQPersistent(){
+		return true;
+	}
 
 }

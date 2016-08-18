@@ -66,7 +66,7 @@ public class Agent {
 		synchronized (status) {
 			if (!status.isRunning()){
 				status.setRunning(true);
-				TaskManager.instance().executeDelayed(task);
+				TaskManager.instance().executeAsync(task,task.isAgentTaskQPersistent());
 			}else {
 				Config.instance().getLogger(getClass().getName()).info("Agent " + task.getAgentName() + " is already runnning!");
 			}

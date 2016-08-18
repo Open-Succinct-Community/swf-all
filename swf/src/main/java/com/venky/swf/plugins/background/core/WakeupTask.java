@@ -1,7 +1,5 @@
 package com.venky.swf.plugins.background.core;
 
-import com.venky.swf.plugins.background.core.workers.DelayedTaskManager;
-
 public class WakeupTask implements Task{
 
 	/**
@@ -11,7 +9,7 @@ public class WakeupTask implements Task{
 
 	@Override
 	public void execute() {
-		DelayedTaskManager.instance().wakeUp();
+		TaskManager.instance().wakeUp();
 	}
 
 }
