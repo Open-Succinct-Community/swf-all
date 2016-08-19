@@ -157,6 +157,8 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 			}
 			if (keepAlive() && !queue.isEmpty()) {
 				dt = queue.poll();
+				Config.instance().getLogger(getClass().getName())
+				.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
 				queue.notifyAll();
 			}
 		}
