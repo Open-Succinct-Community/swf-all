@@ -11,6 +11,8 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
+import com.venky.core.util.Bucket;
+
 /**
  *
  * @author venky
@@ -66,7 +68,7 @@ public class DerbyHelper extends JdbcTypeHelper{
             registerjdbcSQLType(boolean.class, new TypeRef<Boolean>(
                             java.sql.Types.SMALLINT, "SMALLINT", 0, 0, false,false,
                             new BooleanConverter()));
-
+            
             registerjdbcSQLType(Byte.class, new TypeRef<Byte>(java.sql.Types.SMALLINT,
                             "SMALLINT", 0, 0, false,false,new ByteConverter()));
 
@@ -106,7 +108,10 @@ public class DerbyHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
             registerjdbcSQLType(double.class, new TypeRef<Double>(
                             java.sql.Types.DOUBLE, "DOUBLE", 0, 0, false,false,new DoubleConverter())); // ALSO
-                                                                                                                                                            // FLOAT
+            
+            registerjdbcSQLType(Bucket.class, new TypeRef<Bucket>(
+                    java.sql.Types.DOUBLE, "DOUBLE", 0, 0, false,false,new BucketConverter())); // ALSO
+                                                                                                                                                    // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,
                             "DATE", 0, 0, true,false, new DateConverter()));

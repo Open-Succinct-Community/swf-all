@@ -13,6 +13,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.venky.core.util.Bucket;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
@@ -106,6 +107,9 @@ public class MySqlHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
             registerjdbcSQLType(double.class, new TypeRef<Double>(
                             java.sql.Types.DOUBLE, "DOUBLE", 0, 0, false,false,new DoubleConverter())); // ALSO
+
+            registerjdbcSQLType(Bucket.class, new TypeRef<Bucket>(
+                    java.sql.Types.DOUBLE, "DOUBLE", 0, 0, false,false,new BucketConverter())); // ALSO
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,

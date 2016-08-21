@@ -33,6 +33,7 @@ import com.venky.core.io.StringReader;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.DoubleUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
@@ -365,7 +366,21 @@ public abstract class JdbcTypeHelper {
             }
         }
     }
+    public class BucketConverter extends NumericConverter<Bucket> {
 
+        public Bucket valueOf(Object o) {
+            if (ObjectUtil.isVoid(o)) {
+                return new Bucket(0.0);
+            }else if (o instanceof Date){
+            	return new Bucket(((Date)o).getTime());
+            }else if (o instanceof Boolean){
+            	BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
+             	return new Bucket( bc.valueOf("1").equals(o)? 1 : 0);
+            }else {
+            	return new Bucket(Double.valueOf(StringUtil.valueOf(o)));
+            }
+        }
+    }
     public class BigDecimalConverter extends NumericConverter<BigDecimal> {
         public BigDecimal valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {

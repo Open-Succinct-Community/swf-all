@@ -17,6 +17,7 @@ import java.util.TimeZone;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
 
 /**
  *
@@ -135,6 +136,8 @@ public class SQLDroidHelper extends JdbcTypeHelper{
             registerjdbcSQLType(double.class, new TypeRef<Double>(
                             java.sql.Types.REAL, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
                                                                                                                                                             // FLOAT
+            registerjdbcSQLType(Bucket.class, new TypeRef<Bucket>(
+                    java.sql.Types.REAL, "REAL", 0, 0,false,false, new BucketConverter())); // ALSO
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.VARCHAR,
                             "TEXT", 0, 0, true,false, new DateConverter(DateUtils.ISO_DATE_FORMAT_STR,TimeZone.getDefault())));

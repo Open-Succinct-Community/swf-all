@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.util.TimeZone;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.util.Bucket;
 import com.venky.swf.exceptions.SWFTimeoutException;
 
 /**
@@ -137,6 +138,9 @@ public class H2Helper extends JdbcTypeHelper{
                             java.sql.Types.REAL, "REAL", 0, 0,false,false, new DoubleConverter())); // ALSO
             registerjdbcSQLType(double.class, new TypeRef<Double>(
                             java.sql.Types.REAL, "REAL", 0, 0, false,false,new DoubleConverter())); // ALSO
+
+            registerjdbcSQLType(Bucket.class, new TypeRef<Bucket>(
+            				java.sql.Types.REAL, "REAL", 0, 0, false,false,new BucketConverter())); // ALSO
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,

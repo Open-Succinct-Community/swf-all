@@ -6,23 +6,23 @@
   <version>${version}</version>
   <name>${artifactId}</name>
   <description>${artifactId}</description>
-	<properties>
-  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>com.github.venkatramanm.swf-all</groupId>
-				<artifactId>swf-maven-plugin</artifactId>
-				<version>${archetypeVersion}</version>
-					<dependencies>
-						<dependency>
-							<groupId>${groupId}</groupId>
-							<artifactId>${artifactId}</artifactId>
-							<version>${version}</version>
-						</dependency>
-					</dependencies>
-			</plugin>
+    <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.venkatramanm.swf-all</groupId>
+                <artifactId>swf-maven-plugin</artifactId>
+                <version>${archetypeVersion}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>${groupId}</groupId>
+                            <artifactId>${artifactId}</artifactId>
+                            <version>${version}</version>
+                        </dependency>
+                    </dependencies>
+            </plugin>
       <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -47,40 +47,75 @@
             </lifecycleMappingMetadata>
           </configuration>
       </plugin>
-		</plugins>
-	</build>
-  <dependencies>
-  	<dependency>
-  		<groupId>com.github.venkatramanm.swf-all</groupId>
-  		<artifactId>swf</artifactId>
-  		<version>[${archetypeVersion},)</version>
-  	</dependency>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>2.4</version>
+          <executions>
+            <execution>
+                <id>copy-dependencies</id>
+                <phase>package</phase>
+                <goals>
+                    <goal>copy-dependencies</goal>
+                </goals>
+            </execution>
+          </executions>
+      </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.5.1</version>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+            <!--
+                <compilerArgs>
+                <arg>-verbose</arg>
+                <arg>-Xlint:all,-options,-path</arg>
+                </compilerArgs>
+             -->
+          </configuration>
+      </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>LATEST</version>
+        <scope>test</scope>
+    </dependency>
+      <dependency>
+          <groupId>com.github.venkatramanm.swf-all</groupId>
+          <artifactId>swf</artifactId>
+          <version>[${archetypeVersion},)</version>
+      </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>1.4.192</version>
     </dependency>
     <!-- Uncomment dependencies as required
-  	<dependency>
-  		<groupId>org.apache.derby</groupId>
-  		<artifactId>derby</artifactId>
-  		<version>10.12.1.1</version>
-  	</dependency>
+      <dependency>
+          <groupId>org.apache.derby</groupId>
+          <artifactId>derby</artifactId>
+          <version>10.12.1.1</version>
+      </dependency>
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
       <version>3.7.15-SNAPSHOT</version>
     </dependency>
-  	<dependency>
-  		<groupId>mysql</groupId>
-  		<artifactId>mysql-connector-java</artifactId>
-  		<version>5.1.22</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>postgresql</groupId>
-  		<artifactId>postgresql</artifactId>
+      <dependency>
+          <groupId>mysql</groupId>
+          <artifactId>mysql-connector-java</artifactId>
+          <version>5.1.22</version>
+      </dependency>
+      <dependency>
+          <groupId>postgresql</groupId>
+          <artifactId>postgresql</artifactId>
       <version>9.1-901-1.jdbc4</version>
-  	</dependency>
+      </dependency>
     -->
-  </dependencies>
+    </dependencies>
 </project>
