@@ -54,6 +54,7 @@ public class TransactionManager {
         	try {
         		transaction.rollbackToSavePoint();
         	}catch (RuntimeException ex){
+        		Config.instance().getLogger(TransactionManager.class.getName()).warning("Full Transaction seems  to be rolled back!!" + ExceptionUtil.getRootCause(ex).getMessage());
         		m.add(ExceptionUtil.getRootCause(ex));
         		throw m;
         	}

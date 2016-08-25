@@ -17,6 +17,7 @@ import com.venky.core.util.Bucket;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.exceptions.SWFTimeoutException;
 import com.venky.swf.sql.DataManupulationStatement;
 import com.venky.swf.sql.Select;
 
@@ -43,6 +44,12 @@ public class MySqlHelper extends JdbcTypeHelper{
 		}
 		return false;
 	}
+    public boolean hasTransactionRolledBack(Throwable ex){
+    	if (super.hasTransactionRolledBack(ex) || ex instanceof SWFTimeoutException){
+    		return true;
+    	}
+    	return false;
+    }
 
 	@Override
 	public String getDefaultKW(TypeRef<?> ref,Object value) {
