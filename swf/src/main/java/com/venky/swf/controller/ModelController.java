@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -56,6 +57,7 @@ import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
+import com.venky.swf.path.Path.ControllerInfo;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -236,9 +238,65 @@ public class ModelController<M extends Model> extends Controller {
 	}
 	
     private View list(int maxRecords) {
-        Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>(getModelClass()));
+    	List<M> records =  null;
+    	if (!reflector.isVirtual()) {
+	        Select q = new Select().from(modelClass);
+	        records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords ,new DefaultModelFilter<M>(getModelClass()));
+    	}else {
+    		records = getChildrenFromParent();
+    		Expression where = getPath().getWhereClause();
+    		Iterator<M> i = records.iterator();
+    		while(i.hasNext()){
+    			M record = i.next();
+    			if (!where.eval(record)){
+    				i.remove();
+    			}
+    		}
+    	}
+    	
         return list(records, maxRecords == 0 || records.size() < maxRecords);
+    }
+    
+    private List<M> getChildrenFromParent(){
+    	List<M> children = new ArrayList<M>();
+    	Class<? extends Model> parentClass = null;
+    	Method childGetter = null;
+		for (Method rmg : reflector.getReferredModelGetters()){
+			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(rmg);
+			ModelReflector<? extends Model> ref = ModelReflector.instance(referredModelClass);
+			if (ref.isVirtual()){
+				continue;
+			}
+			for (Method cg : ref.getChildGetters()){
+				if (ref.getChildModelClass(cg).isAssignableFrom(reflector.getModelClass())){
+					parentClass = referredModelClass;
+					childGetter = cg;
+					break;
+				}
+			}
+		}
+		List<ControllerInfo> controllerElements = new ArrayList<ControllerInfo>(getPath().getControllerElements());
+        Collections.reverse(controllerElements);
+        Iterator<ControllerInfo> cInfoIter = controllerElements.iterator() ;
+        if (cInfoIter.hasNext()){
+            cInfoIter.next();// The last model was self.
+        }
+		while(cInfoIter.hasNext()){
+			ControllerInfo info = cInfoIter.next();
+			if(info.getModelClass().isAssignableFrom(parentClass)){
+				Integer id = info.getId();
+				if (id == null){
+					continue;
+				}
+				Model parent = Database.getTable(info.getModelClass()).get(info.getId());
+				try {
+					children = (List<M>) childGetter.invoke(parent);
+				} catch (Exception e) {
+					//
+				}
+			}
+		}
+		return children;
     }
     
     protected View list(List<M> records,boolean isCompleteList){

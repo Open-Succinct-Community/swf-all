@@ -22,6 +22,14 @@ public class FileTextBox extends Input{
 	protected String getInputType() {
 		return "file";
 	}
+	
+	@Override 
+	public void setVisible(boolean visible){
+		super.setVisible(visible);
+		if (link != null){
+			link.setVisible(visible);
+		}
+	}
 
 	public void setContentType(String contentType){	
 		setProperty("accept",contentType);
@@ -37,6 +45,7 @@ public class FileTextBox extends Input{
 	private Link link = null;
 	public void setStreamUrl(String url,String text){
 		link = new Link(url);
+		link.setVisible(isVisible());
 		if (getContentType() != null && getContentType().startsWith("image")){
 			Image image = new Image(url);
     		link.addControl(image);

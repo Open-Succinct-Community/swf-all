@@ -48,7 +48,8 @@ public class LoginView extends HtmlView{
     	String applicationName = Config.instance().getProperty("swf.application.name", "Application Login");
     	Label appLabel = new Label(applicationName);
     	appLabel.addClass("application-title");
-        appLabel.addControl(new LinkedImage("/resources/images/oid.png","/oid/login" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to)));
+        appLabel.addControl(new LinkedImage("/resources/google_signin_buttons/web/vector/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
+        appLabel.addControl(new LinkedImage("/resources/flogoonline/svg/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
 
         applicationDescPannel.addControl(appLabel);
         

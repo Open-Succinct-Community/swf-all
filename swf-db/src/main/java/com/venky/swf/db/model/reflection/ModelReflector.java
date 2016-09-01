@@ -721,7 +721,7 @@ public class ModelReflector<M extends Model> {
 		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
 		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
 	    	List<Count> counts  = new ArrayList<Count>();
-	    	if (!isVirtual() && !fieldDescriptor.isVirtual() && (fieldDescriptor.getSize() <= Database.getJdbcTypeHelper(getPool()).getTypeRef(String.class).getSize()) ){
+	    	if (!isVirtual() && !fieldDescriptor.isVirtual()){
 	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Count.class);
 		    	if (!counts.isEmpty()){
 		    		size = counts.get(0).getCount(); 

@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.venky.cache.Cache;
 import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.util.ChangeListener;
+import com.venky.core.util.ChangeObservable;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
@@ -74,25 +76,36 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	}
     	return ret ;
     }
+    private void markDirty(String fieldName, Object oldValue, Object newValue){
+    	if (isFieldDirty(fieldName)){//if already dirty..
+    		Object oldestValue = dirtyFields.get(fieldName);
+    		if (equals(oldestValue,newValue)){ // Value is rolled back.
+    			dirtyFields.remove(fieldName);
+    		}
+		}else {
+			dirtyFields.put(fieldName,oldValue);
+		}
+    }
     /** 
      * 
      * @param fieldName
      * @param value
      * @return previous value of the field.
      */
-    public Object put(String fieldName, Object value){
+    public Object put( String fieldName, Object value){
         Object oldValue =  get(fieldName); 
 
         if (!equals(oldValue, value)){
-        	if (isFieldDirty(fieldName)){//if already dirty..
-        		Object oldestValue = dirtyFields.get(fieldName);
-        		if (equals(oldestValue,value)){ // Value is rolled back.
-        			dirtyFields.remove(fieldName);
-        		}
-    		}else {
-    			dirtyFields.put(fieldName,oldValue);
-    		}
-        }
+        	markDirty(fieldName, oldValue, value);
+        	if (value != null && value instanceof ChangeObservable){
+            	((ChangeObservable)value).registerChangeListener(new ChangeListener() {
+    				@Override
+    				public void hasChanged(Object oldValue, Object newValue) {
+    					markDirty(fieldName, oldValue, newValue);
+    				}
+    			});
+            }
+    	}
         return fieldValues.put(fieldName, value);
     }
     public Object get(String fieldName){

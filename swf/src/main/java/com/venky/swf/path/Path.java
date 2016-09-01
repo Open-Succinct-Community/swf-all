@@ -560,7 +560,7 @@ public class Path implements _IPath{
         return currentUser != null ; 
     }
     
-    private void createUserSession(User user,boolean autoInvalidate){
+    public void createUserSession(User user,boolean autoInvalidate){
         HttpSession session = getRequest().getSession(true);
         session.setAttribute("user", user);
         session.setAttribute("user.id",user.getId());

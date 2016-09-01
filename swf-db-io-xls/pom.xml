@@ -45,10 +45,15 @@
 			<artifactId>swf-db</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.venkatramanm</groupId>
-			<artifactId>poi</artifactId>
-			<version>[1.12,)</version>
-		</dependency>
+    <dependency>
+      <groupId>com.github.venkatramanm</groupId>
+      <artifactId>reflection</artifactId>
+      <version>[1.12,)</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi</artifactId>
+      <version>[3.7,)</version>
+    </dependency>
   </dependencies>
 </project>

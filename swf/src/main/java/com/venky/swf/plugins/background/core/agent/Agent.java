@@ -1,7 +1,9 @@
 package com.venky.swf.plugins.background.core.agent;
 
 import java.io.ObjectInputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.venky.cache.Cache;
 import com.venky.core.util.ObjectUtil;
@@ -34,6 +36,37 @@ public class Agent {
 		}
 		
 	};
+	private Map<String,AgentSeederTaskBuilder> agentSeederTaskBuilderMap = new HashMap<String, AgentSeederTaskBuilder>();
+	public void registerAgentSeederTaskBuilder(String agentName,AgentSeederTaskBuilder builder){
+		synchronized (this) {
+			if (builder == null){
+				throw new NullPointerException("Trying to register null builder for agent " + agentName);
+			}
+			agentSeederTaskBuilderMap.put(agentName, builder);
+		}
+	}
+	public void validateAgent(String agentName){
+		if (!agentSeederTaskBuilderMap.containsKey(agentName)){
+			throw new UnsupportedOperationException(agentName + " Is not a registered agent");
+		}
+	}
+	public AgentSeederTask getAgentSeederTask(String agentName){
+		AgentSeederTaskBuilder builder  = agentSeederTaskBuilderMap.get(agentName) ;
+		if (builder == null) {
+			synchronized (this) {
+				builder = agentSeederTaskBuilderMap.get(agentName);
+			}
+		}
+		if (builder == null){
+			throw new RuntimeException("Don't know how to seed Task for agent " + agentName);
+		}
+		return builder.createSeederTask();
+	}
+	
+	public void start(String agentName){
+		start(getAgentSeederTask(agentName));
+	}
+	
 	private Agent(){
 		List<DelayedTask> tasks = new Select().from(DelayedTask.class).execute();
 		for (DelayedTask dt: tasks){
@@ -58,7 +91,7 @@ public class Agent {
 			return status.isRunning();
 		}
 	}
-	public void start(AgentSeederTask  task) {
+	private void start(AgentSeederTask  task) {
 		if (ObjectUtil.isVoid(task.getAgentName())) {
 			throw new NullPointerException(task.getClass().getName() + " doesnot seem to implement getAgentName()");
 		}
@@ -74,6 +107,7 @@ public class Agent {
 	}
 	
 	public void finish(String name) {
+		validateAgent(name);
 		Status status = agentStatus.get(name);
 		synchronized (status) {
 			status.setRunning(false);

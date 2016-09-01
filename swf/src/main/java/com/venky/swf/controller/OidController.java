@@ -1,25 +1,47 @@
 package com.venky.swf.controller;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
-import org.openid4java.consumer.ConsumerManager;
-import org.openid4java.consumer.VerificationResult;
-import org.openid4java.discovery.DiscoveryInformation;
-import org.openid4java.discovery.Identifier;
-import org.openid4java.message.AuthRequest;
-import org.openid4java.message.AuthSuccess;
-import org.openid4java.message.MessageException;
-import org.openid4java.message.ParameterList;
-import org.openid4java.message.ax.AxMessage;
-import org.openid4java.message.ax.FetchRequest;
-import org.openid4java.message.ax.FetchResponse;
+import org.apache.oltu.oauth2.client.HttpClient;
+import org.apache.oltu.oauth2.client.OAuthClient;
+import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
+import org.apache.oltu.oauth2.client.response.GitHubTokenResponse;
+import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
+import org.apache.oltu.oauth2.client.response.OAuthAuthzResponse;
+import org.apache.oltu.oauth2.client.response.OAuthClientResponse;
+import org.apache.oltu.oauth2.client.response.OAuthClientResponseFactory;
+import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
+import org.apache.oltu.oauth2.client.response.OAuthResourceResponse;
+import org.apache.oltu.oauth2.common.OAuth;
+import org.apache.oltu.oauth2.common.OAuthProviderType;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.apache.oltu.oauth2.common.utils.OAuthUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
-import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
@@ -27,7 +49,6 @@ import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.path.Path;
-import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -43,10 +64,102 @@ import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.TextBox;
 
+
 public class OidController extends Controller{
 
 	public OidController(Path path) {
 		super(path);
+	}
+	
+	static class OIDProvider {
+		public OIDProvider(String opendIdProvider, OAuthProviderType providerType, String clientId, String clientSecret , 
+				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl) {
+			this.openIdProvider = opendIdProvider ; 
+			this.providerType = providerType; this.clientId = clientId; 
+			this.clientSecret = clientSecret ; this.iss = issuer ; 
+			this.tokenResponseClass = tokenResponseClass;
+			this.resourceUrl = resourceUrl;
+		}
+		String openIdProvider;
+		OAuthProviderType providerType;
+		String clientId;
+		String clientSecret;
+		String iss;
+		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
+		String resourceUrl;
+		public OAuthClientRequest createRequest(){
+			try {
+				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
+						.setScope("email").
+						setRedirectURI("http://localhost:3030/oid/verify?SELECTED_OPEN_ID="+openIdProvider).buildQueryMessage();
+			} catch (OAuthSystemException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		public String authorize(String code){
+			try {
+				OAuthClientRequest oauthRequest = OAuthClientRequest
+				        .tokenProvider(providerType)
+				        .setGrantType(GrantType.AUTHORIZATION_CODE)
+				        .setClientId(clientId)
+				        .setClientSecret(clientSecret)
+				        .setRedirectURI("http://localhost:3030/oid/verify?SELECTED_OPEN_ID="+openIdProvider)
+				        .setCode(code)
+				        .setScope("email")
+				        .buildBodyMessage();
+
+				OAuthClient oAuthClient = new OAuthClient(new OidHttpClient());
+
+		        OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oauthRequest, tokenResponseClass);
+		        
+		        if (ObjectUtil.isVoid(resourceUrl)){
+					return extractEmail(oAuthResponse);
+		        }else {
+		        	String accessToken = oAuthResponse.getAccessToken();
+			        Long expiresIn = oAuthResponse.getExpiresIn();
+			    	OAuthClientRequest bearerClientRequest = new OAuthBearerClientRequest(resourceUrl)
+					         .setAccessToken(accessToken).buildQueryMessage();
+					 
+					OAuthResourceResponse resourceResponse = oAuthClient.resource(bearerClientRequest, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
+					
+					return extractEmail(resourceResponse);
+		        }
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}		
+		}
+		public String extractEmail(OAuthResourceResponse oAuthResponse) throws Exception{
+			JSONObject body = (JSONObject) new JSONParser().parse(oAuthResponse.getBody());
+			String email =  (String) body.get("email");
+			return email;
+		}
+		public String extractEmail(OAuthAccessTokenResponse oAuthResponse) throws Exception{
+	        if (oAuthResponse instanceof OAuthJSONAccessTokenResponse){
+		        String idToken = oAuthResponse.getParam("id_token");
+		        StringTokenizer tk = new StringTokenizer(idToken,".");
+		        String headerBuf = new String(Base64.getDecoder().decode(tk.nextToken()));
+		        String bodyBuf = new String(Base64.getDecoder().decode(tk.nextToken()));
+		        JSONObject header = (JSONObject) new JSONParser().parse(headerBuf);
+		        JSONObject body = (JSONObject) new JSONParser().parse(bodyBuf);
+		        
+		        String emailId = (String) body.get("email");
+		        String[] issuers = new String[] {iss, "http://" + iss , "https://" + iss };
+		        
+		        if (body.get("aud").equals(clientId) && Arrays.asList(issuers).contains(body.get("iss"))) {
+		        	  return emailId;
+		    	}
+			}
+	        throw new RuntimeException("OAuth Failed");
+
+		}
+	 
+	}
+	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
+	static { 
+		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"889348299516-s4jqevqsni9sj9rqu5plqb2rfovl26mm.apps.googleusercontent.com","xlI8E_tEuboZCrHq_DdW17-U","accounts.google.com",
+				OAuthJSONAccessTokenResponse.class,""));
+		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"1111218912260076","e5f1a398a99b290152d7392672b96e57","",
+				GitHubTokenResponse.class,"https://graph.facebook.com/me?fields=email,name"));
 	}
 	
 	protected HtmlView createLoginView(){
@@ -70,22 +183,12 @@ public class OidController extends Controller{
 				com.venky.swf.views.controls.page.text.Select cmbOpenId = new com.venky.swf.views.controls.page.text.Select();
 				cmbOpenId.setName("SELECTED_OPEN_ID");
 				cmbOpenId.createOption("-Select-", "");
-				cmbOpenId.createOption("Google", "https://www.google.com/accounts/o8/id");
-				cmbOpenId.createOption("Yahoo", "https://me.yahoo.com/");
-				cmbOpenId.createOption("OpenId", "https://myopenid.com/");
+				for (String key: oidproviderMap.keySet()){
+					cmbOpenId.createOption(key, key);
+				}
 				row.createColumn().addControl(lblOpenId);
 				row.createColumn().addControl(cmbOpenId);
 				row.createColumn().addControl(sbm);
-				
-				row = layout.createRow();
-				row.createColumn(3).addControl(new Label("OR"));
-				
-				row = layout.createRow();
-				row.createColumn().addControl(new Label("Enter your OpenID provider"));
-				TextBox txtOpenId = new TextBox();
-				txtOpenId.setName("OPEN_ID");
-				row.createColumn().addControl(txtOpenId);				
-				row.createColumn().addControl(sbm);				
 				
 				String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
 				if (!ObjectUtil.isVoid(_redirect_to)){
@@ -103,115 +206,20 @@ public class OidController extends Controller{
 		return view;
 	}
 	
-	private ConsumerManager _manager = null ;
-	
-	protected ConsumerManager getManager() {
-		if ( _manager == null ){
-			_manager = new ConsumerManager();
-			if (Config.instance().isDevelopmentEnvironment()){
-				_manager.getRealmVerifier().setEnforceRpId(false);	
-			}
-		}
-		return _manager;
-	}
-	
-	private void addAttributes(FetchRequest fetchReq,String[] attributeTypeURI) throws MessageException{
-		for (int i  = 0 ; i < attributeTypeURI.length ; i++){
-			fetchReq.addAttribute(attributeTypeURI[i], true);
-		}
-	}
-	private FetchRequest initializeFetchRequest() throws MessageException{
-		FetchRequest fetchReq = FetchRequest.createFetchRequest();
-		addAttributes(fetchReq, EMAIL_TYPE_URI);
-		addAttributes(fetchReq, FULLNAME_TYPE_URI);
-		addAttributes(fetchReq, FIRSTNAME_TYPE_URI);
-		addAttributes(fetchReq, LASTNAME_TYPE_URI);
-		return fetchReq;
-	}
-	
-	private static final String[] EMAIL_TYPE_URI = { "http://schema.openid.net/contact/email" ,  "http://axschema.org/contact/email" };
-	private static final String[] FULLNAME_TYPE_URI = { "http://schema.openid.net/namePerson", "http://axschema.org/namePerson"};
-	private static final String[] FIRSTNAME_TYPE_URI = { "http://schema.openid.net/namePerson/first", "http://axschema.org/namePerson/first"};
-	private static final String[] LASTNAME_TYPE_URI = { "http://schema.openid.net/namePerson/last", "http://axschema.org/namePerson/last"};
-	
-	@SuppressWarnings("rawtypes")
-	private List getEmails(FetchResponse response){
-		String alias = getAlias(response, EMAIL_TYPE_URI);
-		return response.getAttributeValues(alias);
-	}
-	private String getFullName(FetchResponse response){
-		String fullNameAlias = getAlias(response, FULLNAME_TYPE_URI);
-		String fullName = null ;
-		
-		if (fullNameAlias == null){
-			String firstAlias = getAlias(response, FIRSTNAME_TYPE_URI);
-			if (firstAlias != null){
-				fullName = response.getAttributeValue(firstAlias);
-			}
-			String lastAlias = getAlias(response, LASTNAME_TYPE_URI);
-			if (lastAlias != null){
-				if (fullName != null){
-					fullName += " " ;
-				}
-				fullName += response.getAttributeValue(lastAlias);
-			}
-		}else {
-			fullName = response.getAttributeValue(fullNameAlias);
-		}
-		
-		
-		return fullName;
-	}
-	
-	private String getAlias(FetchResponse response , String[] uriChoices){
-		String alias = null ;
-		for (int i = 0; alias == null && i < uriChoices.length ; i ++ ){
-			alias = response.getAttributeAlias(uriChoices[i]);
-		}
-		return alias;
-	}
-	
-	
-	
 	@SuppressWarnings("rawtypes")
 	protected View authenticate() {
-		String openId = getPath().getRequest().getParameter("OPEN_ID");
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
-		String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
 		
-		if (ObjectUtil.isVoid(openId) && ObjectUtil.isVoid(selectedOpenId)){
+		if (ObjectUtil.isVoid(selectedOpenId)){
 			HtmlView lv = createLoginView();
 			lv.setStatus(StatusType.ERROR, "Open id provider not specified");
 			return lv;
 		}
 		
-		if (ObjectUtil.isVoid(openId) && !ObjectUtil.isVoid(selectedOpenId)){
-			openId = selectedOpenId;
-		}
-		HttpSession newSession = null;
 		try {
-			ConsumerManager manager = getManager();
-			List discoveries = manager.discover(openId);
-			DiscoveryInformation discovered = manager.associate(discoveries);
-			newSession = getPath().getRequest().getSession(true);
-			newSession.setAttribute("discovered", discovered);
-			newSession.setAttribute("manager", manager);
-			
-			HttpServletRequest req = getPath().getRequest();
-			
-			int port = req.getServerPort(); 
-			String sPort = ":" + String.valueOf(port);
-			if (port == -1 || port == 80 || port == 443){
-				sPort = "" ; // Default ports must be squashed.
-			}
-			
-			String returnUrl = req.getScheme() + "://"  + req.getServerName() + sPort + getPath().controllerPath() + "/verify" + (_redirect_to == null ? "" : "?_redirect_to=" + _redirect_to);  
-					
-			AuthRequest authReq = manager.authenticate(discovered, returnUrl);
-			authReq.addExtension(initializeFetchRequest());
-			
+			OAuthClientRequest request = oidproviderMap.get(selectedOpenId).createRequest();
 			RedirectorView ret = new RedirectorView(getPath());
-			ret.setRedirectUrl(authReq.getDestinationUrl(true));
+			ret.setRedirectUrl(request.getLocationUri());
 			return ret;
 		} catch (Exception e) {
 			return createLoginView(StatusType.ERROR,e.getMessage());
@@ -221,76 +229,137 @@ public class OidController extends Controller{
 	
 	@SuppressWarnings("rawtypes")
 	@RequireLogin(false)
-	public View verify(){
+	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException{
 		HttpServletRequest request = getPath().getRequest();
-		ParameterList openidResp = new ParameterList(request.getParameterMap());
+		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
+		String code = oar.getCode();
+		
+		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
+		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
-	    // retrieve the previously stored discovery information
-	    DiscoveryInformation discovered = (DiscoveryInformation) getPath().getSession().getAttribute("discovered");
-	    ConsumerManager manager = (ConsumerManager) getPath().getSession().getAttribute("manager");
-	    // extract the receiving URL from the HTTP request
-	    StringBuffer receivingURL = request.getRequestURL();
-	    String queryString = request.getQueryString();
-	    if (queryString != null && queryString.length() > 0)
-	        receivingURL.append("?").append(request.getQueryString());
-
-	    // verify the response
-	    VerificationResult verification;
 		try {
-			verification = manager.verify(receivingURL.toString(), openidResp, discovered);
-		    // examine the verification result and extract the verified identifier
-		    Identifier verified = verification.getVerifiedId();
-		    
-		    if (verified != null){
-		    	AuthSuccess result = (AuthSuccess)verification.getAuthResponse(); 
-		    	if (result.hasExtension(AxMessage.OPENID_NS_AX)){
-		    		FetchResponse fetchResp = (FetchResponse) result.getExtension(AxMessage.OPENID_NS_AX);
-		    		List emails = getEmails(fetchResp);
-		    		String name = getFullName(fetchResp);
-
-		    		User u = null;
-	    			Select select = new Select().from(UserEmail.class);
-	    			select.where(new Expression(select.getPool(),"email",Operator.IN, emails.toArray()));
-	    			List<UserEmail> oids = select.execute(UserEmail.class);
-	    			int numOids = oids.size();
-	    			
-	    			if (numOids > 0) {
-		    			SortedSet<Integer> numUsers = new TreeSet<Integer>();
-		    			for (UserEmail oid: oids){
-		    				numUsers.add(oid.getUserId());
-		    			}
-		    			if (numUsers.size() > 1) {
-		    				return createLoginView(StatusType.ERROR, "Multiple users associated with same email id");
-		    			}
-						u = Database.getTable(User.class).get(numUsers.first());
-	    			}
-	    			
-	    			if (u == null){
-		    			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
-						u = Database.getTable(User.class).newRecord();
-		    			u.setName(name);
-		    			u.setPassword(null);
-		    			u.save();
-		    			
-		    			for (Object email : emails){
-							UserEmail oid = Database.getTable(UserEmail.class).newRecord();
-			    			oid.setUserId(u.getId());
-			    			oid.setEmail(StringUtil.valueOf(email));
-			    			oid.save();
-		    			}
-		    			txn.commit();
-		    		}
-		    		HttpSession newSession = getPath().getSession();
-		            newSession.setAttribute("user", u);
-		            
-	    			return new RedirectorView(getPath(), loginSuccessful());
-		    	}
+	        String email = provider.authorize(code);
+    		User u = null;
+			Select select = new Select().from(UserEmail.class);
+			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
+			List<UserEmail> oids = select.execute(UserEmail.class);
+			int numOids = oids.size();
+			
+			if (numOids > 0) {
+    			SortedSet<Integer> numUsers = new TreeSet<Integer>();
+    			for (UserEmail oid: oids){
+    				numUsers.add(oid.getUserId());
+    			}
+    			if (numUsers.size() > 1) {
+    				return createLoginView(StatusType.ERROR, "Multiple users associated with same email id");
+    			}
+				u = Database.getTable(User.class).get(numUsers.first());
 			}
-		    return createLoginView();
+			if (u == null){
+    			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+				u = Database.getTable(User.class).newRecord();
+    			u.setName(email);
+    			u.setPassword(null);
+    			u.save();
+    			UserEmail oid = Database.getTable(UserEmail.class).newRecord();
+    			oid.setUserId(u.getId());
+    			oid.setEmail(email);
+    			oid.save();
+    			txn.commit();
+    		}
+    		getPath().createUserSession(u, false);
+            
+			return new RedirectorView(getPath(), loginSuccessful());
 		} catch (Exception e) {
 			return createLoginView(StatusType.ERROR, e.getMessage());
 		}
+	}
+	
+	public static class OidHttpClient implements HttpClient {
+
+	    public OidHttpClient() {
+	    }
+
+	    public <T extends OAuthClientResponse> T execute(OAuthClientRequest request, Map<String, String> headers,
+	                                                     String requestMethod, Class<T> responseClass)
+	            throws OAuthSystemException, OAuthProblemException {
+
+	        InputStream responseBody = null;
+	        URLConnection c;
+	        Map<String, List<String>> responseHeaders = new HashMap<String, List<String>>();
+	        int responseCode;
+	        try {
+	            URL url = new URL(request.getLocationUri());
+
+	            c = url.openConnection();
+	            c.setConnectTimeout(5000);
+	            c.setReadTimeout(5000);
+	            responseCode = -1;
+	            if (c instanceof HttpURLConnection) {
+	                HttpURLConnection httpURLConnection = (HttpURLConnection) c;
+
+	                if (headers != null && !headers.isEmpty()) {
+	                    for (Map.Entry<String, String> header : headers.entrySet()) {
+	                        httpURLConnection.addRequestProperty(header.getKey(), header.getValue());
+	                    }
+	                }
+
+	                if (request.getHeaders() != null) {
+	                    for (Map.Entry<String, String> header : request.getHeaders().entrySet()) {
+	                        httpURLConnection.addRequestProperty(header.getKey(), header.getValue());
+	                    }
+	                }
+
+	                if (OAuthUtils.isEmpty(requestMethod)) {
+	                    httpURLConnection.setRequestMethod(OAuth.HttpMethod.GET);
+	                } else {
+	                    httpURLConnection.setRequestMethod(requestMethod);
+	                    setRequestBody(request, requestMethod, httpURLConnection);
+	                }
+	                
+	                httpURLConnection.connect();
+
+	                InputStream inputStream;
+	                responseCode = httpURLConnection.getResponseCode();
+	                if (responseCode == SC_BAD_REQUEST || responseCode == SC_UNAUTHORIZED) {
+	                    inputStream = httpURLConnection.getErrorStream();
+	                } else {
+	                    inputStream = httpURLConnection.getInputStream();
+	                }
+
+	                responseHeaders = httpURLConnection.getHeaderFields();
+	                responseBody = inputStream;
+	            }
+	        } catch (IOException e) {
+	            throw new OAuthSystemException(e);
+	        }
+
+	        return OAuthClientResponseFactory
+	                .createCustomResponse(responseBody, c.getContentType(), responseCode, responseHeaders, responseClass);
+	    }
+
+	    private void setRequestBody(OAuthClientRequest request, String requestMethod, HttpURLConnection httpURLConnection)
+	            throws IOException {
+	        String requestBody = request.getBody();
+	        if (OAuthUtils.isEmpty(requestBody)) {
+	            return;
+	        }
+
+	        if (OAuth.HttpMethod.POST.equals(requestMethod) || OAuth.HttpMethod.PUT.equals(requestMethod)) {
+	            httpURLConnection.setDoOutput(true);
+	            OutputStream ost = httpURLConnection.getOutputStream();
+	            PrintWriter pw = new PrintWriter(ost);
+	            pw.print(requestBody);
+	            pw.flush();
+	            pw.close();
+	        }
+	    }
+
+	    @Override
+	    public void shutdown() {
+	        // Nothing to do here
+	    }
 
 	}
-	 
+
 }

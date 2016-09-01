@@ -155,17 +155,16 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	}
             	
             	table.addControl(fg,forceNewRow,0,forceNewRow? NUM_COLUMNS_PER_ROW :1);
+            	if (fieldData instanceof FileTextBox){
+                	form.setProperty("enctype","multipart/form-data");
+                	FileTextBox ftb = (FileTextBox)fieldData;
+                	if (reflector.getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
+                        Column column = table.addControl(ftb.getStreamLink(), true, 0, NUM_COLUMNS_PER_ROW);
+                    	column.addClass("text-center");
+                    }
+                }
             }else {
                 hiddenFields.add(fieldData);
-            }
-            
-            if (fieldData instanceof FileTextBox){
-            	form.setProperty("enctype","multipart/form-data");
-            	FileTextBox ftb = (FileTextBox)fieldData;
-            	if (reflector.getContentSize(record, fieldName) != 0 && !record.getRawRecord().isNewRecord()){
-                    Column column = table.addControl(ftb.getStreamLink(), true, 0, NUM_COLUMNS_PER_ROW);
-                    column.addClass("text-center");
-            	}
             }
         }
         
