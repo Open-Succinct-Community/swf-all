@@ -29,13 +29,7 @@ public class JettyServer {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String port = System.getProperty("PORT");
-		if (ObjectUtil.isVoid(port)){
-			port = System.getenv("PORT");
-		}
-		if (ObjectUtil.isVoid(port)){
-			port = "8080";
-		}
+		
 		String pidfile = System.getProperty("swf.pidfile");
 		if (!ObjectUtil.isVoid(pidfile)){
 			PrintWriter pw = new PrintWriter(new FileWriter(pidfile, true));
@@ -44,7 +38,7 @@ public class JettyServer {
 			pw.close();
 		}
 		
-		JettyServer s = new JettyServer(Integer.valueOf(port));
+		JettyServer s = new JettyServer(Integer.valueOf(Config.instance().getPortNumber()));
 		s.start();
 	}
 	public boolean isDevelopmentEnvironment(){

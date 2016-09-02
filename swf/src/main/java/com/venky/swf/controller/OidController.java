@@ -49,6 +49,7 @@ import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -56,13 +57,6 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.Form;
-import com.venky.swf.views.controls.page.buttons.Submit;
-import com.venky.swf.views.controls.page.layout.Table;
-import com.venky.swf.views.controls.page.layout.Table.Row;
-import com.venky.swf.views.controls.page.text.Label;
-import com.venky.swf.views.controls.page.text.TextBox;
 
 
 public class OidController extends Controller{
@@ -72,13 +66,15 @@ public class OidController extends Controller{
 	}
 	
 	static class OIDProvider {
-		public OIDProvider(String opendIdProvider, OAuthProviderType providerType, String clientId, String clientSecret , 
+		public OIDProvider(String opendIdProvider, OAuthProviderType providerType,
 				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl) {
-			this.openIdProvider = opendIdProvider ; 
-			this.providerType = providerType; this.clientId = clientId; 
-			this.clientSecret = clientSecret ; this.iss = issuer ; 
+			this.iss = issuer ; 
 			this.tokenResponseClass = tokenResponseClass;
 			this.resourceUrl = resourceUrl;
+			this.openIdProvider = opendIdProvider ;  this.providerType = providerType; 
+			this.clientId = Config.instance().getClientId(opendIdProvider); 
+			this.clientSecret = Config.instance().getClientSecret(opendIdProvider) ; 
+			this.redirectUrl = Config.instance().getServerBaseUrl() + "/oid/verify?SELECTED_OPEN_ID="+opendIdProvider;
 		}
 		String openIdProvider;
 		OAuthProviderType providerType;
@@ -87,11 +83,12 @@ public class OidController extends Controller{
 		String iss;
 		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
 		String resourceUrl;
+		String redirectUrl; 
 		public OAuthClientRequest createRequest(){
 			try {
 				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope("email").
-						setRedirectURI("http://localhost:3030/oid/verify?SELECTED_OPEN_ID="+openIdProvider).buildQueryMessage();
+						setRedirectURI(redirectUrl).buildQueryMessage();
 			} catch (OAuthSystemException e) {
 				throw new RuntimeException(e);
 			}
@@ -103,7 +100,7 @@ public class OidController extends Controller{
 				        .setGrantType(GrantType.AUTHORIZATION_CODE)
 				        .setClientId(clientId)
 				        .setClientSecret(clientSecret)
-				        .setRedirectURI("http://localhost:3030/oid/verify?SELECTED_OPEN_ID="+openIdProvider)
+				        .setRedirectURI(redirectUrl)
 				        .setCode(code)
 				        .setScope("email")
 				        .buildBodyMessage();
@@ -156,54 +153,11 @@ public class OidController extends Controller{
 	}
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
-		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"889348299516-s4jqevqsni9sj9rqu5plqb2rfovl26mm.apps.googleusercontent.com","xlI8E_tEuboZCrHq_DdW17-U","accounts.google.com",
+		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"accounts.google.com",
 				OAuthJSONAccessTokenResponse.class,""));
-		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"1111218912260076","e5f1a398a99b290152d7392672b96e57","",
+		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"",
 				GitHubTokenResponse.class,"https://graph.facebook.com/me?fields=email,name"));
-	}
-	
-	protected HtmlView createLoginView(){
-		invalidateSession();
-		HtmlView view = new HtmlView(getPath()) {
-			 
-			@Override
-			protected void createBody(_IControl b) {
-				Form form = new Form();
-				form.setAction(getPath().controllerPath(), "login");
-				form.setMethod(Form.SubmitMethod.POST);
 
-				Submit sbm = new Submit("SignIn");
-				
-		        
-				Table layout = new Table();
-				Row row = layout.createRow();
-
-				Label lblOpenId = new Label();
-				lblOpenId.setText("Choose your OpenID provider");
-				com.venky.swf.views.controls.page.text.Select cmbOpenId = new com.venky.swf.views.controls.page.text.Select();
-				cmbOpenId.setName("SELECTED_OPEN_ID");
-				cmbOpenId.createOption("-Select-", "");
-				for (String key: oidproviderMap.keySet()){
-					cmbOpenId.createOption(key, key);
-				}
-				row.createColumn().addControl(lblOpenId);
-				row.createColumn().addControl(cmbOpenId);
-				row.createColumn().addControl(sbm);
-				
-				String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
-				if (!ObjectUtil.isVoid(_redirect_to)){
-					TextBox redirect_to = new TextBox();
-					redirect_to.setVisible(false);
-					redirect_to.setName("_redirect_to");
-					redirect_to.setValue(_redirect_to);
-					layout.createRow().createColumn().addControl(redirect_to);
-				}
-				form.addControl(layout);
-				b.addControl(form);
-			}
-		};
-		
-		return view;
 	}
 	
 	@SuppressWarnings("rawtypes")

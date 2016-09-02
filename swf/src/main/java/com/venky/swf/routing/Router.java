@@ -202,7 +202,8 @@ public class Router extends AbstractHandler {
 	        p.setRequest(request);
 	        p.setResponse(response);
 	        
-	        
+	        Logger logger = Config.instance().getLogger(getClass().getName());
+	        logger.info(Config.instance().getProperty("HOSTNAME") + ":" + Config.instance().getProperty("PORT"));
 	        _IDatabase db = null ;
 	        try {
 	        	db = getDatabase(); 
@@ -239,7 +240,6 @@ public class Router extends AbstractHandler {
 	        	}
 	        	if (p.getSession() != null){
 	        		p.addErrorMessage(e.getMessage());
-	        		Logger logger = Config.instance().getLogger(getClass().getName());
 	        		if (logger.isLoggable(Level.FINE)){
 		        		StringWriter error = new StringWriter();
 		        		e.printStackTrace(new PrintWriter(error));

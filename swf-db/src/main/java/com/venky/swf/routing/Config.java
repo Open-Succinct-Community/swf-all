@@ -90,6 +90,24 @@ public class Config {
 		}
 	}	
 
+	public String getHostName(){
+		return getProperty("swf.host","localhost");
+	}
+	public int getPortNumber(){
+		String port =  getProperty("swf.port",getProperty("PORT","8080"));
+		return Integer.valueOf(port);
+	}
+	
+	public String getServerBaseUrl(){
+		return "http://"+ getHostName() + ":" + getPortNumber() ;
+	}
+	public String getClientId(String opendIdProvider){
+		return getProperty("swf."+opendIdProvider +".client.id");
+	}
+	public String getClientSecret(String opendIdProvider){
+		return getProperty("swf."+opendIdProvider +".client.secret");
+	}
+	
     private List<URL> resourceBaseurls = null;
     public List<URL> getResourceBaseUrls(){
     	return resourceBaseurls;
