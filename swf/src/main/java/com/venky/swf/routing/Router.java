@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -203,7 +202,6 @@ public class Router extends AbstractHandler {
 	        p.setResponse(response);
 	        
 	        Logger logger = Config.instance().getLogger(getClass().getName());
-	        logger.info(Config.instance().getProperty("HOSTNAME") + ":" + Config.instance().getProperty("PORT"));
 	        _IDatabase db = null ;
 	        try {
 	        	db = getDatabase(); 
