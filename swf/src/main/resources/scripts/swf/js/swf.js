@@ -80,8 +80,9 @@ $(function(){
         
         $(this).typeahead({
                 onSelect: function(item){
-                    $(this).attr("value",item.value);
-                    $('input[name="' + hidden_field_name + '"]').attr("value",item.id);
+                    // Input has text and value instead of name and id!! 
+                    //$(this).attr("value",item.text); 
+                    $('input[name="' + hidden_field_name + '"]').attr("value",item.value);
                     setConfirmUnload(true)
                     if (onAutoCompleteSelectUrl){
                             $.ajax({

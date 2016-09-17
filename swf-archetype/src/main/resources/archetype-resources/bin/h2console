@@ -1,0 +1,11 @@
+source src/main/resources/config/envvars
+urlname=".$1."
+if [ "$urlname" = ".." ] 
+then 
+	urlname="."
+fi
+url=`grep ^swf.jdbc${urlname}url= src/main/resources/config/swf.properties|cut -f2- -d '='`
+user=`grep ^swf.jdbc${urlname}userid= src/main/resources/config/swf.properties|cut -f2- -d '='`
+password=`grep ^swf.jdbc${urlname}password= src/main/resources/config/swf.properties|cut -f2- -d '='`
+
+henplus -J ''${url}'' -U''${user}'' -P''${password}''

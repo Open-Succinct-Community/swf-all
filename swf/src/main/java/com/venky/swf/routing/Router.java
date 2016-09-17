@@ -222,10 +222,10 @@ public class Router extends AbstractHandler {
 	            db.getCurrentTransaction().commit();
 	        }catch(Exception e){
 	        	try {
-					e.printStackTrace();
+	        		logger.log(Level.INFO, "Request failed", e);
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
-	        		ex.printStackTrace();
+	        		logger.log(Level.INFO, "Rollback failed", ex);
 	        	}
 	        	if (p.isForwardedRequest()){
 	        		if (e instanceof RuntimeException){
@@ -238,11 +238,7 @@ public class Router extends AbstractHandler {
 	        	}
 	        	if (p.getSession() != null){
 	        		p.addErrorMessage(e.getMessage());
-	        		if (logger.isLoggable(Level.FINE)){
-		        		StringWriter error = new StringWriter();
-		        		e.printStackTrace(new PrintWriter(error));
-		        		logger.fine(error.toString());
-	        		}
+	        		Config.instance().getLogger(Router.class.getName()).log(Level.INFO, "Request failed", e);
 	        		if (p.getTarget().equals(p.getBackTarget())){
 	        			ev = createRedirectorView(p, "/dashboard");
 	        		}else {

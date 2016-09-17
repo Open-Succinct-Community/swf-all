@@ -46,6 +46,16 @@ public class JettyServer {
 	}
 	
 	public void start() throws Exception {
+		if (Config.instance().getBooleanProperty("System.out.close",false)){
+			System.out.close();
+		}
+		if (Config.instance().getBooleanProperty("System.err.close",false)){
+			System.err.close();
+		}
+		if (Config.instance().getBooleanProperty("System.in.close",false)){
+			System.in.close();
+		}
+
 		Server server = new Server(this.port);
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(100);

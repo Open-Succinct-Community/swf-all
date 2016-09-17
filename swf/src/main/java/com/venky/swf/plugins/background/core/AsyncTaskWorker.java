@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.background.core;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +41,10 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 				task.execute();
 				txn.commit();
 			}catch (Throwable e){
-				log(Level.INFO,"Worker thread Rolling back due to exception " + ExceptionUtil.getRootCause(e).toString());
+				StringWriter sw = new StringWriter();
+				PrintWriter p = new PrintWriter(sw);
+				ExceptionUtil.getRootCause(e).printStackTrace(p);		
+				log(Level.WARNING,"Worker thread Rolling back due to exception " + sw.toString());
 				try {
 					if (txn != null) {
 						txn.rollback(e);
