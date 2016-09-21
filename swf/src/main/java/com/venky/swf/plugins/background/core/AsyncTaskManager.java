@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.venky.core.util.Bucket;
 import com.venky.swf.plugins.background.core.Task.Priority;
@@ -56,29 +58,57 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	}
 
 	protected AsyncTaskManager() {
-		this(getNumWorkerThreads());
+		this(getInitialNumWorkerThreads());
 	}
-
-	@SuppressWarnings("unchecked")
+	
 	protected AsyncTaskManager(int numWorkers) {
 		queue();
-		workers = new AsyncTaskWorker[numWorkers];
-		for (int i = 0; i < workers.length; i++) {
-			incrementWorkerCount();
-			workers[i] = createWorker(i);
-			workers[i].start();
+		for (int i = 0; i < numWorkers; i++) {
+			addWorker();
+		}
+	}
+	
+	public void addWorker(){
+		AsyncTaskWorker<T> worker = null;
+		incrementWorkerCount();
+		worker = createWorker();
+		workerThreads.add(worker);
+		worker.start();
+	}
+	public void evictWorker(int number){
+		synchronized (numWorkersToEvict) {
+			numWorkersToEvict.increment(number);
+			numWorkersToEvict.notifyAll();
+		}
+		wakeUp();
+	}
+
+	Bucket numWorkersToEvict = new Bucket();
+	public boolean evicted(){
+		synchronized (numWorkersToEvict) {
+			if (numWorkersToEvict.intValue() > 0 && Thread.currentThread() instanceof AsyncTaskWorker<?>){
+				workerThreads.remove(Thread.currentThread());
+				numWorkersToEvict.decrement();
+				numWorkersToEvict.notifyAll();
+				return true;
+			}
+			return false;
 		}
 	}
 
-	public static final int getNumWorkerThreads() {
+	public static final int getInitialNumWorkerThreads() {
 		return Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1);
 	}
 
-	public AsyncTaskWorker<T> createWorker(int instanceNumber) {
-		return new AsyncTaskWorker<T>(this, instanceNumber);
+	private AtomicInteger instanceNumber = new AtomicInteger();
+	public AsyncTaskWorker<T> createWorker() {
+		return new AsyncTaskWorker<T>(this, instanceNumber.incrementAndGet());
 	}
 
-	private AsyncTaskWorker<T>[] workers = null;
+	private List<AsyncTaskWorker<T>> workerThreads = new Vector<>();
+	public int getNumWorkers(){
+		return workerThreads.size();
+	}
 
 	private Queue<T> queue = null;
 
@@ -129,33 +159,26 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		}
 		while (true) {
 			Config.instance().getLogger(getClass().getName()).info("Waiting for all Threads to shutdown");
-			try {
-				for (int i = 0; i < workers.length; i++) {
-					workers[i].join();
-					Config.instance().getLogger(getClass().getName())
-							.info("Worker " + i + " of " + workers.length + " has shutdown");
-				}
-				break;
-			} catch (InterruptedException e) {
-				//
-			}
+			evictWorker(workerThreads.size());
+			waitUntilWorkersAreEvicted();
+			break;
 		}
 	}
 
 	public T waitUntilNextTask() {
 		T dt = null;
 		synchronized (queue) {
-			while (queue.isEmpty() && keepAlive()) {
+			while (queue.isEmpty() && keepAlive() && !evicted()) {
 				try {
 					Config.instance().getLogger(getClass().getName())
 							.finest("Worker: going back to sleep as there is no work to be done.");
-					queue.wait();
+					queue.wait(30*1000);
 				} catch (InterruptedException ex) {
 					Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
 					//
 				}
 			}
-			if (keepAlive() && !queue.isEmpty()) {
+			if (keepAlive() && !queue.isEmpty() && !evicted()) {
 				dt = queue.poll();
 				Config.instance().getLogger(getClass().getName())
 				.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
@@ -164,10 +187,10 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		}
 		return dt;
 	}
-
+	
 	public T next() {
 		decrementWorkerCount();
-		T task = waitUntilNextTask();
+		T task =  waitUntilNextTask();
 		if (task != null) {
 			incrementWorkerCount();
 		}
@@ -203,6 +226,17 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 					numWorkersWorking.wait();
 				} catch (InterruptedException ex) {
 
+				}
+			}
+		}
+	}
+	public void waitUntilWorkersAreEvicted() {
+		synchronized (numWorkersToEvict) {
+			while (numWorkersToEvict.intValue() != 0){
+				try {
+					numWorkersToEvict.wait();
+				} catch (InterruptedException e) {
+					
 				}
 			}
 		}
@@ -255,7 +289,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		execute(Arrays.asList(task),priority);
 	}
 	public void execute(Collection<Task> tasks, Priority priority) {
-		if (getNumWorkerThreads() == 0) {
+		if (getInitialNumWorkerThreads() == 0) {
 			for (Task task:tasks) {
 				task.execute();
 			}

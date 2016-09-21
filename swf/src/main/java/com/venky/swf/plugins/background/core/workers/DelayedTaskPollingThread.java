@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -21,7 +20,7 @@ public class DelayedTaskPollingThread extends Thread{
 		super("DelayedTaskPollingThread");
 		setDaemon(false);
 		this.manager = manager;
-		this.maxTasksToBuffer = Math.max(10, AsyncTaskManager.getNumWorkerThreads() * 2);
+		this.maxTasksToBuffer = Math.max(10, manager.getNumWorkers() * 2);
 	}
 	
 	private Expression getWhereClause(DelayedTask lastRecord){
