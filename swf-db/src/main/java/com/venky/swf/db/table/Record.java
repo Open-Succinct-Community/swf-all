@@ -150,7 +150,11 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         		if (refs.size() == 1){
         			ref = refs.get(0);
         		}else  {
-        			ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(reflector.getFieldGetter(reflector.getFieldName(columnName)).getReturnType());
+        			String fieldName = reflector.getFieldName(columnName);
+        			if (fieldName == null) {
+        				continue;
+        			}
+        			ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());
         		}
         		columnValue = ref.getTypeConverter().valueOf(columnValue);
         	}
