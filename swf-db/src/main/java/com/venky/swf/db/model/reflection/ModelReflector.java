@@ -658,7 +658,7 @@ public class ModelReflector<M extends Model> {
 		    	if (numFields == 1){
 		    		return fields.get(0); 
 		    	}else if (numFields == 0){
-		    		cat.info("Field not found for Column " + columnOrFieldName + " in " + getTableName() + ", Model Is " + getModelClass().getName());
+		    		cat.finest("Field not found for Column " + columnOrFieldName + " in " + getTableName() + ", Model Is " + getModelClass().getName());
 		    		return null;
 		    	}
 	    	}

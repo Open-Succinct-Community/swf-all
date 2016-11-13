@@ -87,8 +87,9 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	public boolean evicted(){
 		synchronized (numWorkersToEvict) {
 			if (numWorkersToEvict.intValue() > 0 && Thread.currentThread() instanceof AsyncTaskWorker<?>){
-				workerThreads.remove(Thread.currentThread());
-				numWorkersToEvict.decrement();
+				if (workerThreads.remove(Thread.currentThread())){
+					numWorkersToEvict.decrement();
+				}
 				numWorkersToEvict.notifyAll();
 				return true;
 			}
@@ -153,22 +154,22 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	private boolean shutdown = false;
 
 	public void shutdown() {
-		synchronized (queue) {
-			shutdown = true;
-			queue.notifyAll();
-		}
 		while (true) {
 			Config.instance().getLogger(getClass().getName()).info("Waiting for all Threads to shutdown");
 			evictWorker(workerThreads.size());
 			waitUntilWorkersAreEvicted();
 			break;
 		}
+		synchronized (queue) {
+			shutdown = true;
+			queue.notifyAll();
+		}
 	}
 
 	public T waitUntilNextTask() {
 		T dt = null;
 		synchronized (queue) {
-			while (queue.isEmpty() && keepAlive() && !evicted()) {
+			while (!evicted() && keepAlive() && queue.isEmpty() ) {
 				try {
 					Config.instance().getLogger(getClass().getName())
 							.finest("Worker: going back to sleep as there is no work to be done.");
@@ -178,7 +179,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 					//
 				}
 			}
-			if (keepAlive() && !queue.isEmpty() && !evicted()) {
+			if (!evicted() && keepAlive() && !queue.isEmpty() ) {
 				dt = queue.poll();
 				Config.instance().getLogger(getClass().getName())
 				.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
@@ -234,7 +235,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		synchronized (numWorkersToEvict) {
 			while (numWorkersToEvict.intValue() != 0){
 				try {
-					numWorkersToEvict.wait();
+					numWorkersToEvict.wait(5000);
 				} catch (InterruptedException e) {
 					
 				}
@@ -251,7 +252,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	
 	public void waitIfQueueIsEmpty(int seconds){
 		synchronized (queue) {
-			if (queue.isEmpty()) {
+			if (queue.isEmpty() && keepAlive()) {
 				try {
 					queue.wait(seconds * 1000); 
 				} catch (InterruptedException e) {

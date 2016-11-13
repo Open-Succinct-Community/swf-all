@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -47,18 +46,19 @@ public class Select extends SqlStatement{
 		this.columnNames = columnNames;
 	}
 
-	private Set<String> pools = new HashSet<String>();
+	private Set<String> pools = new SequenceSet<String>();
 	public String getPool(){
 		if (pools.size() == 0){
 			throw new RuntimeException("Cannot determine db Pool");
 		}else if (pools.size() > 1){
-			throw new RuntimeException("Cannot select across db pools in a single select statement");
+			throw new RuntimeException("Cannot select across db pools in a single select statement " + pools);
 		}else{
 			return  pools.iterator().next();
 		}
 	}
-	public void addPool(String pool){
+	public Select addPool(String pool){
 		pools.add(pool);
+		return this;
 	}
 	@SuppressWarnings("unchecked")
 	public Select from(Class<?>... models){
@@ -79,7 +79,7 @@ public class Select extends SqlStatement{
 		}
 	}
 	
-	private Select from(String... tables){
+	public Select from(String... tables){
 		this.tableNames = tables;
 		return this;
 	}
@@ -128,7 +128,7 @@ public class Select extends SqlStatement{
 	}
 	
 	protected void finalizeParameterizedSQL(){
-		StringBuilder builder = getQuery();
+		StringBuilder builder = new StringBuilder();
 		builder.append("SELECT ");
 		if (columnNames == null || columnNames.length == 0){
 			builder.append(" * ");
@@ -147,6 +147,8 @@ public class Select extends SqlStatement{
 			builder.append(where.getParameterizedSQL());
 			getValues().addAll(where.getValues());
 		}
+		getQuery().insert(0, builder.toString()); // To handle any fragment additions.
+		builder = getQuery();
 		
 		if (groupBy != null){
 			builder.append(" GROUP BY ");

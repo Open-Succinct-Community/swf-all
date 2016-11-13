@@ -93,16 +93,8 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(records, wb, StringUtil.pluralize(getBeanClass().getSimpleName()), fields);
 	}
 	public void write(List<M> records, Workbook wb, String sheetName, List<String> fields) {
-		Font font = createDefaultFont(wb);
-		
-		CellStyle headerStyle = wb.createCellStyle();
-		headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
-		headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
-		headerStyle.setFont(font);
-		headerStyle.setWrapText(true);
-		center(headerStyle);
-		
 		Sheet sheet = createSheet(wb,sheetName);
+		StyleHelper helper = new StyleHelper(wb);
 		
     	Bucket rowNum = new Bucket(START_ROW); 
     	Bucket columnNum = new Bucket(START_COLUMN);
@@ -112,10 +104,10 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		while (fi.hasNext()){
 			String fieldName = fi.next();
 			if (referedModelMap.get(fieldName) == null){
-				createCell(sheet, header, columnNum, StringUtil.camelize(fieldName), headerStyle);
+				createCell(sheet, header, columnNum, StringUtil.camelize(fieldName), helper.headerStyle);
 			}else {
 				for (String headerField : referredModelFieldsToExport.get(fieldName)){
-					createCell(sheet, header, columnNum, headerField, headerStyle);
+					createCell(sheet, header, columnNum, headerField, helper.headerStyle);
 				}
 			}
 		}
@@ -145,16 +137,16 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	    			m = clone;
 	    		}
     		}
-    		write(m,r,font,fields);
+    		write(m,r,fields,helper);
     	}
 
     	
 	}
 
-	@Override
 	public void write(M m, Row r, List<String> fields) {
-		write(m,r,null,fields);
+		write(m,r,fields,null);
 	}
+	
 	public void alignTop(CellStyle style){
 		style.setAlignment(CellStyle.ALIGN_LEFT);
 		style.setVerticalAlignment(CellStyle.VERTICAL_TOP);
@@ -163,31 +155,58 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		style.setAlignment(CellStyle.ALIGN_CENTER);
 		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
 	}
-	private void write(M m, Row r, Font font, List<String> fields) {
-		Workbook wb = r.getSheet().getWorkbook();
-		
-		CreationHelper createHelper = wb.getCreationHelper();
-		CellStyle decimalStyle = wb.createCellStyle();
-		decimalStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.0##"));
-		decimalStyle.setFont(font);
-		center(decimalStyle);
+	private class StyleHelper {
+		CellStyle integerStyle;
+		CellStyle decimalStyle;
+		CellStyle dateStyle;
+		CellStyle stringStyle;
+		CellStyle headerStyle;
+		Font font;
+		private Font createDefaultFont(Workbook wb){
+			Font font = wb.createFont();
+			font.setFontName("Courier New");
+			font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS));
+			return font;
+		}
 
-		CellStyle integerStyle = wb.createCellStyle();
-		integerStyle.setDataFormat(createHelper.createDataFormat().getFormat("0"));
-		integerStyle.setFont(font);
-		center(integerStyle);
-		
-		CellStyle dateStyle = wb.createCellStyle();
-		dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
-		dateStyle.setFont(font);
-		center(dateStyle);
-		
-		CellStyle stringStyle = wb.createCellStyle();
-		stringStyle.setWrapText(true);
-		stringStyle.setFont(font);
-		alignTop(stringStyle);
-		//center(stringStyle);
-		
+		private StyleHelper(Workbook wb){
+			font = createDefaultFont(wb);
+			
+			headerStyle = wb.createCellStyle();
+			headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+			headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			headerStyle.setFont(font);
+			headerStyle.setWrapText(true);
+			center(headerStyle);
+			
+
+			CreationHelper createHelper = wb.getCreationHelper();
+			decimalStyle = wb.createCellStyle();
+			decimalStyle.setDataFormat(createHelper.createDataFormat().getFormat("#.0##"));
+			decimalStyle.setFont(font);
+			center(decimalStyle);
+
+			integerStyle = wb.createCellStyle();
+			integerStyle.setDataFormat(createHelper.createDataFormat().getFormat("0"));
+			integerStyle.setFont(font);
+			center(integerStyle);
+			
+			dateStyle = wb.createCellStyle();
+			dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("d/m/yyyy"));
+			dateStyle.setFont(font);
+			center(dateStyle);
+			
+			stringStyle = wb.createCellStyle();
+			stringStyle.setWrapText(true);
+			stringStyle.setFont(font);
+			alignTop(stringStyle);
+		}
+	}
+	
+	private void write(M m, Row r, List<String> fields, StyleHelper helper) {
+		if (helper == null){
+			helper = new StyleHelper(r.getSheet().getWorkbook());
+		}
 		Iterator<String> fi = fields.iterator();
 		ModelReflector<M> ref = getReflector();
 		Bucket columnNum = new Bucket(START_COLUMN);
@@ -196,10 +215,10 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			Object value = ref.get(m, f);
 			if (referedModelMap.get(f) != null){
 				for (String cf: referredModelFieldsToExport.get(f) ){
-					writeNextColumn(r, columnNum, getValue(m,cf), integerStyle, decimalStyle,dateStyle,stringStyle);
+					writeNextColumn(r, columnNum, getValue(m,cf), helper.integerStyle, helper.decimalStyle,helper.dateStyle,helper.stringStyle);
 				}
 			}else {
-				writeNextColumn(r, columnNum, value, integerStyle,decimalStyle, dateStyle,stringStyle);
+				writeNextColumn(r, columnNum, value, helper.integerStyle,helper.decimalStyle, helper.dateStyle, helper.stringStyle);
 			}
 		}
 	}
@@ -262,12 +281,6 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		}
 	}
 	
-	public Font createDefaultFont(Workbook wb){
-		Font font = wb.createFont();
-		font.setFontName("Courier New");
-		font.setFontHeightInPoints((short)(CHARACTER_HEIGHT_IN_POINTS));
-		return font;
-	}
 	private void fixCellDimensions(Sheet sheet,Row row,Bucket columnNum,CellStyle style, Object value, int maxColumnLength){
 		int currentColumnWidth = getColumnWidth(sheet,columnNum.intValue());
 		String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(value.getClass()).getTypeConverter().toString(value);

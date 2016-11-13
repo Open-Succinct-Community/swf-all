@@ -33,7 +33,7 @@
 	                </goals>
 	              </pluginExecutionFilter>
 	              <action>
-	                <ignore />
+	                <ignore/>
 	              </action>
 	            </pluginExecution>
 	          </pluginExecutions>
@@ -101,5 +101,6 @@
     <module>swf-plugin-collab</module>
     <module>swf-plugin-bugs</module>
     <module>swf-plugin-mail</module>
+    <module>swf-plugin-mobile</module>
   </modules>
 </project>
