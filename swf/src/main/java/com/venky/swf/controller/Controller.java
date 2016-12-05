@@ -301,8 +301,9 @@ public class Controller {
     
     protected void importxls(InputStream in,ImportSheetFilter filter){
 		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
+		Workbook book =  null;
 		try {
-			Workbook book = new HSSFWorkbook(in);
+			book = new HSSFWorkbook(in);
 			for (Sheet sheet : getSheetsToImport(book,filter)){ 
 				Table<? extends Model> table = getTable(sheet);
 				if (table == null){
@@ -325,6 +326,13 @@ public class Controller {
 			}
 		}catch (IOException ex){
 			throw new RuntimeException(ex);
+		}finally {
+			try {
+				if (book != null)
+					book.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
     }
     public View importxls(){
@@ -342,7 +350,7 @@ public class Controller {
         		if (in == null){
         			throw new RuntimeException("Nothing uploaded!");
         		}
-        		importxls(in,filter);
+    			importxls(in,filter);
         	}
         	return back();
         }

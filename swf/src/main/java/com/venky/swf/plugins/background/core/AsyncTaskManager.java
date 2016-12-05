@@ -173,7 +173,8 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 				try {
 					Config.instance().getLogger(getClass().getName())
 							.finest("Worker: going back to sleep as there is no work to be done.");
-					queue.wait(30*1000);
+					//queue.wait(30*1000);
+					queue.wait();
 				} catch (InterruptedException ex) {
 					Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
 					//

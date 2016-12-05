@@ -52,7 +52,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
-      <artifactId>poi</artifactId>
+      <artifactId>poi-ooxml</artifactId>
       <version>[3.7,)</version>
     </dependency>
   </dependencies>

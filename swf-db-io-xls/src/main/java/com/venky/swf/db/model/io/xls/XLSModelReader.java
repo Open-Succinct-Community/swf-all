@@ -318,8 +318,15 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	public List<M> read(InputStream in, String rootElementName)
 			throws IOException {
 
-		Workbook book = new HSSFWorkbook(in);
-		Sheet sheet = book.getSheet(StringUtil.pluralize(rootElementName));
-		return read(sheet);
+		Workbook book = null;
+		try {
+			book = new HSSFWorkbook(in);
+			Sheet sheet = book.getSheet(StringUtil.pluralize(rootElementName));
+			return read(sheet);
+		}finally { 
+			if (book != null){
+				book.close();
+			}
+		}
 	}
 }

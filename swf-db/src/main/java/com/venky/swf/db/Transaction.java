@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import com.venky.core.checkpoint.Checkpoint;
 import com.venky.core.checkpoint.MergeableMap;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.jdbc.SWFSavepoint;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -74,13 +75,22 @@ public class Transaction implements _IDatabase._ITransaction {
         Database.getInstance().getTransactionManager().registerCommit(this);
     }
     public void commit() {
-        Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" .commit : " + Database.getCaller());
-        Database.getInstance().getTransactionManager().commit(this);
-
-    }
-    public void rollback(Throwable th) {
-        Config.instance().getLogger(Database.class.getName()).fine("Transaction :" + transactionNo + " Rollback" + ": " + Database.getCaller());
-        Database.getInstance().getTransactionManager().rollback(this,th);
+    	String ctx = Config.instance().isTimerEnabled() ? "Transaction:"+transactionNo+ " .commit" + Database.getCaller() : null;
+    	Timer t = Timer.startTimer(ctx,Config.instance().isTimerAdditive());
+    	try {
+            Database.getInstance().getTransactionManager().commit(this);
+    	}finally{ 
+    		t.stop();
+    	}
+	}
+    public void rollback(Throwable th) { 
+    	String ctx = Config.instance().isTimerEnabled() ? "Transaction:"+transactionNo+ " .rollback" + Database.getCaller() : null;
+    	Timer t = Timer.startTimer(ctx,Config.instance().isTimerAdditive());
+    	try {
+    	    Database.getInstance().getTransactionManager().rollback(this,th);
+    	}finally{ 
+    		t.stop();
+    	}
     }
 
 

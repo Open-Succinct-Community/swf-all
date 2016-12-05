@@ -43,7 +43,7 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 			}catch (Throwable e){
 				StringWriter sw = new StringWriter();
 				PrintWriter p = new PrintWriter(sw);
-				ExceptionUtil.getRootCause(e).printStackTrace(p);		
+				ExceptionUtil.getRootCause(e).printStackTrace(p); p.close();
 				log(Level.WARNING,"Worker thread Rolling back due to exception " + sw.toString());
 				try {
 					if (txn != null) {

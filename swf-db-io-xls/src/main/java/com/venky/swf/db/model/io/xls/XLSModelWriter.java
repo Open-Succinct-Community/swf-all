@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -22,6 +21,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
@@ -74,7 +74,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	private static final int START_COLUMN = 0;
 	
 	public void write(List<M> records, OutputStream os, List<String> fields) throws IOException {
-		Workbook wb = new HSSFWorkbook();
+		Workbook wb = new XSSFWorkbook();
 		write(records,wb,fields);
 		wb.write(os);
 	}
