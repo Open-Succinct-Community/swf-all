@@ -43,11 +43,12 @@ public class ConnectionManager {
 
 		@Override
 		protected Class<?> getValue(String pool) {
+			String driver =  "[]";
 			try {
-				String driver = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".driver"));
+				driver = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".driver"));
 				return Class.forName(driver);
 			}catch (Exception e){
-				throw new RuntimeException(e);
+				throw new RuntimeException("Pool " + pool + " driver not found " + driver, e);
 			}
 		}
 	};

@@ -32,8 +32,6 @@ public abstract class AgentSeederTask implements Task{
 
 	public abstract List<Task> getTasks();
 	public abstract String getAgentName();
-	protected boolean isAgentTaskQPersistent(){
-		return true;
-	}
+	protected abstract boolean isAgentTaskQPersistent();
 
 }

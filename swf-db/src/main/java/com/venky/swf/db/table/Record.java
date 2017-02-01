@@ -33,6 +33,12 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     private IgnoreCaseMap<Object> dirtyFields = new IgnoreCaseMap<Object>();
 
 	private String pool;
+	public Record(){
+		
+	}
+	public void setPool(String pool){
+		this.pool = pool;
+	}
 	public Record(String pool){
 		this.pool = pool;
 	}

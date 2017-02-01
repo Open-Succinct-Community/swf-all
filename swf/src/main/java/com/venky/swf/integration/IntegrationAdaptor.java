@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
@@ -69,18 +71,33 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public View createResponse(Path path, List<M> models){
 		return createResponse(path,models, null);
 	}
+	public View createResponse(Path path, List<M> m, List<String> includeFields) {
+		return createResponse(path, m, includeFields, new HashMap<>());
+	}
+	public View createResponse(Path path, List<M> m, List<String> includeFields, Map<Class<? extends Model>, List<String>> childFields) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			writer.write(m, baos, getFields(includeFields),childFields);
+			return new BytesView(path, baos.toByteArray());
+		}catch (IOException ex){ 
+			throw new RuntimeException(ex);
+		}
+	}
 	public View createResponse(Path path, M m){
 		return createResponse(path, m,null);
 	}
 	public View createResponse(Path path, M m, List<String> includeFields) {
+		return createResponse(path, m,includeFields, new HashMap<>());
+	}
+	public View createResponse(Path path, M m, List<String> includeFields,  Map<Class<? extends Model>, List<String>> childFields) {
 		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); 
 		T element = helper.getRoot();
 		T elementAttribute = helper.getElementAttribute(modelReflector.getModelClass().getSimpleName());
 		if (elementAttribute == null) {
 			elementAttribute = element;
 		}
-		writer.write(m, elementAttribute , getFields(includeFields));
-		return new BytesView(path, element.toString().getBytes());
+		writer.write(m, elementAttribute , getFields(includeFields), childFields);
+		return new BytesView(path, helper.toString().getBytes());
 	}
 	
 	private List<String> getFields(List<String> includeFields) {
@@ -98,15 +115,6 @@ public class IntegrationAdaptor<M extends Model,T> {
 		return fields;
 	}
 	
-	public View createResponse(Path path, List<M> m, List<String> includeFields) {
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			writer.write(m, baos, getFields(includeFields));
-			return new BytesView(path, baos.toByteArray());
-		}catch (IOException ex){ 
-			throw new RuntimeException(ex);
-		}
-	}
 	
 	public void writeResponse(List<M> m, OutputStream os){
 		writeResponse(m, os,null);

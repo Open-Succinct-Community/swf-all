@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -484,7 +485,7 @@ public class Controller {
     }
     protected <M extends Model> void exportxls(Class<M> modelClass,Workbook wb , List<String> fieldsIncluded){
     	List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass,new DefaultModelFilter<M>(modelClass));
-		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded);
+		getXLSModelWriter(modelClass).write(list, wb,fieldsIncluded,new HashMap<>());
     }
     protected <M extends Model> XLSModelWriter<M> getXLSModelWriter(Class<M> modelClass){
     	return new XLSModelWriter<M>(modelClass); 

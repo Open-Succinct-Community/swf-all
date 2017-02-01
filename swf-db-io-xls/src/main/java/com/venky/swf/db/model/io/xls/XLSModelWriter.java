@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -73,11 +74,19 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	private static final int START_ROW = 0; 
 	private static final int START_COLUMN = 0;
 	
+	@Override
 	public void write(List<M> records, OutputStream os, List<String> fields) throws IOException {
+		write(records,os,fields,new HashMap<Class<? extends Model>,List<String>>());
+	}
+	@Override
+	public void write(List<M> records, OutputStream os, List<String> fields,
+			Map<Class<? extends Model>, List<String>> childfields) throws IOException {
 		Workbook wb = new XSSFWorkbook();
-		write(records,wb,fields);
+		write(records,wb,fields,childfields);
 		wb.write(os);
 	}
+	
+	
 	public Sheet createSheet(Workbook book, String sheetName){
 		Sheet sheet = book.createSheet(sheetName);
 		sheet.setAutobreaks(false);
@@ -89,10 +98,10 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 
 		return sheet;
 	}
-	public void write(List<M> records, Workbook wb, List<String> fields) {
-		write(records, wb, StringUtil.pluralize(getBeanClass().getSimpleName()), fields);
+	public void write(List<M> records, Workbook wb, List<String> fields,Map<Class<? extends Model>, List<String>> childfields) {
+		write(records, wb, StringUtil.pluralize(getBeanClass().getSimpleName()), fields, childfields);
 	}
-	public void write(List<M> records, Workbook wb, String sheetName, List<String> fields) {
+	public void write(List<M> records, Workbook wb, String sheetName, List<String> fields,Map<Class<? extends Model>, List<String>> childfields) {
 		Sheet sheet = createSheet(wb,sheetName);
 		StyleHelper helper = new StyleHelper(wb);
 		
@@ -137,16 +146,19 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	    			m = clone;
 	    		}
     		}
-    		write(m,r,fields,helper);
+    		write(m,r,fields,childfields,helper);
     	}
 
     	
 	}
 
 	public void write(M m, Row r, List<String> fields) {
-		write(m,r,fields,null);
+		write(m,r,fields,new HashMap<Class<? extends Model>,List<String>>());
 	}
-	
+	@Override
+	public void write(M record, Row into, List<String> fields, Map<Class<? extends Model>, List<String>> childfields) {
+		write (record,into,fields,childfields,null);
+	}
 	public void alignTop(CellStyle style){
 		style.setAlignment(CellStyle.ALIGN_LEFT);
 		style.setVerticalAlignment(CellStyle.VERTICAL_TOP);
@@ -203,7 +215,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		}
 	}
 	
-	private void write(M m, Row r, List<String> fields, StyleHelper helper) {
+	private void write(M m, Row r, List<String> fields, Map<Class<? extends Model>, List<String>> childfields,StyleHelper helper) {
 		if (helper == null){
 			helper = new StyleHelper(r.getSheet().getWorkbook());
 		}
@@ -221,6 +233,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 				writeNextColumn(r, columnNum, value, helper.integerStyle,helper.decimalStyle, helper.dateStyle, helper.stringStyle);
 			}
 		}
+		//TODO Need to take care of childen models here.!!
 	}
 	
 
@@ -325,4 +338,5 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		columnNum.increment();
 		return cell;
 	}
+	
 }

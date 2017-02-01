@@ -101,7 +101,7 @@ public class MySqlHelper extends JdbcTypeHelper{
                             "BIGINT", 0, 0,false,false, new LongConverter()));
 
             registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
-                            java.sql.Types.DECIMAL, "DECIMAL", 14, 8,false,false,
+                            java.sql.Types.DECIMAL, "DECIMAL", 15, 10,false,false,
                             new BigDecimalConverter()));// also NUMERIC
 
             registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.REAL,

@@ -702,6 +702,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         while (columnIterator.hasNext()) {
             String columnName = columnIterator.next();
             String fieldName =  getReflector().getFieldName(columnName);
+            if (fieldName == null){
+            	continue;
+            }
             TypeRef<?> ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
             values.put(columnName,new BindVariable(getPool(),record.get(columnName), ref));
         }

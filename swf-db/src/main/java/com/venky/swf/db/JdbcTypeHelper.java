@@ -309,13 +309,17 @@ public abstract class JdbcTypeHelper {
  
 	@SuppressWarnings("unchecked")
 	public abstract class NumericConverter<N extends Number> extends NumberConverter<N> {
+		public DecimalFormat getDisplayFormat(){
+			return new DecimalFormat("##############.0000");
+		}
+		
 		public String toString(Object o){
 			if (o == null){
 				return "";
 			}
 			N n = (N)o; 
 			double fract = n.doubleValue() - Math.floor(n.doubleValue()); 
-			DecimalFormat fmt = new DecimalFormat("##############.0000");
+			DecimalFormat fmt = getDisplayFormat();
 			if (DoubleUtils.compareTo(fract ,Math.round(fract*100.0)/100.0)== 0){
 				fmt = new DecimalFormat("##############.00");
 			}
@@ -382,6 +386,10 @@ public abstract class JdbcTypeHelper {
         }
     }
     public class BigDecimalConverter extends NumericConverter<BigDecimal> {
+    	public DecimalFormat getDisplayFormat(){
+			return new DecimalFormat("###############.0000000000");
+		}
+		
         public BigDecimal valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
                 return new BigDecimal(0.0);
