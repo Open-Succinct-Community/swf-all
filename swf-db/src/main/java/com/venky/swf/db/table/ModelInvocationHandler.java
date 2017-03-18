@@ -4,7 +4,6 @@
  */
 package com.venky.swf.db.table;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
@@ -25,6 +24,7 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -194,7 +194,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     	Method inImplClass = implClass.getMethod(mName, parameters);
     	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
-	        Timer timer = startTimer(inImplClass.toString(), Config.instance().isTimerAdditive());
+	        Timer timer = cat.startTimer(inImplClass.toString());
 	        try {
 	        	return inImplClass.invoke(implObject, args);
 	        }catch (InvocationTargetException ex){
@@ -206,6 +206,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     		throw new NoSuchMethodException("Donot know how to execute " + reflector.getSignature(method));
     	}
     }
+    private final SWFLogger cat = Config.instance().getLogger(getClass().getName()+"."+getModelName());
 
     @SuppressWarnings("unchecked")
 	public <P extends Model> P getParent(Method parentGetter) {
@@ -294,7 +295,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return getParticipatingRoles(user, user.getParticipationOptions(asModel));
     }
     private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
-    	Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+    	Timer timer = cat.startTimer();
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
         	Set<String> participantingRoles = new HashSet<String>();
@@ -317,7 +318,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	}
     }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
-    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
+    	Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive());
     	try {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;

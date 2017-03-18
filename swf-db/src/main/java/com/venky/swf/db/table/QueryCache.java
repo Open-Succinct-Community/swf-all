@@ -1,7 +1,5 @@
 package com.venky.swf.db.table;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +11,7 @@ import java.util.logging.Level;
 
 import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -67,7 +66,8 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private static final Level defaultLevel = Level.FINE;
 	
 	public SequenceSet<Record> getCachedResult(Expression where, int maxRecords, boolean locked) {
-		Timer timer = startTimer(null,Config.instance().isTimerAdditive());
+		SWFLogger cat = Config.instance().getLogger(loggerName);
+		Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive());
 		StringBuilder debug = new StringBuilder();
 		try {
 			if (where != null && where.isEmpty()) {
@@ -78,7 +78,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 
 			SequenceSet<Record> result = queryCache.get(where);
 			
-			if (Config.instance().getLogger(loggerName).isLoggable(defaultLevel) && result != null ){
+			if (cat.isLoggable(defaultLevel) && result != null ){
 				debug.append("Cache for " + getTable().getRealTableName() + " has criteria:" + queryCriteria);
 			}
 			
@@ -86,13 +86,13 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 			if (result == null) {
 				synchronized (queryCache) {
 					result = queryCache.get(where);
-					if (Config.instance().getLogger(loggerName).isLoggable(defaultLevel) && result != null ){
+					if (cat.isLoggable(defaultLevel) && result != null ){
 						debug.append("Cache for " + getTable().getRealTableName() + " has criteria:" + queryCriteria);
 					}
 
 					boolean fullTableScanPerformed = queryCache.containsKey(null);
 					if (result == null){
-						if (Config.instance().getLogger(loggerName).isLoggable(Level.FINER)){
+						if (cat.isLoggable(Level.FINER)){
 							debug.append("Cache for " + getTable().getRealTableName() + " does not have criteria:" + queryCriteria);
 							debug.append("\nChecking against available cachedRecords if there are enough records satifying the criteria");
 							debug.append("\nWas full table scanned ever?:" + fullTableScanPerformed);
@@ -125,12 +125,12 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 				}
 			}
 			
-			if (Config.instance().getLogger(loggerName).isLoggable(defaultLevel)){
+			if (cat.isLoggable(defaultLevel)){
 				if (result == null || result.isEmpty()) {
 					debug.append("NOT ");
 				}
 				debug.append("Enough " + (locked ? "locked" : "" ) + "records found in cache.");
-				Config.instance().getLogger(loggerName).log(defaultLevel,debug.toString());
+				cat.log(defaultLevel,debug.toString());
 			}
 			
 			

@@ -1,7 +1,5 @@
 package com.venky.swf.plugins.security.extensions;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.venky.cache.Cache;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -62,8 +61,9 @@ public class ParticipantControllerAccessExtension implements Extension{
 	
 	private PermissionCacheBuster permissionCacheBuster = new PermissionCacheBuster();
 	
+	private final SWFLogger cat = Config.instance().getLogger(getClass().getName()); 
 	public void invoke(Object... context) {
-		Timer timer = startTimer("Participant Controller Action invoke",Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("Participant Controller Action invoke");
 		try {
 			_invoke(context);
 		}finally {
@@ -103,7 +103,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 			final String parameterValue, 
 			Path path){
 		
-		Timer timer = startTimer("Check If Action is Secured",Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("Check If Action is Secured");
 		boolean securedAction = path.isActionSecure(actionPathElementName);
 		timer.stop();
 		
@@ -121,14 +121,14 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if ( possibleTable != null ){
 			modelClass = possibleTable.getModelClass();
 		}
-		Timer gettingParticipatingRoles = startTimer("Getting participating Roles",Config.instance().isTimerAdditive());
+		Timer gettingParticipatingRoles = cat.startTimer("Getting participating Roles");
 		if (modelClass != null ){
-			Timer t = startTimer("Getting model Reflector", Config.instance().isTimerAdditive());
+			Timer t = cat.startTimer("Getting model Reflector", Config.instance().isTimerAdditive());
 			ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
 			t.stop();
 			
 			if (parameterValue != null){
-				t = startTimer("Getting Participating Roles when parameter != null", Config.instance().isTimerAdditive());
+				t = cat.startTimer("Getting Participating Roles when parameter != null", Config.instance().isTimerAdditive());
 				try {
 					int id = Integer.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
@@ -143,14 +143,14 @@ public class ParticipantControllerAccessExtension implements Extension{
 					t.stop();
 				}
 			}else {
-				t = startTimer("Getting Participating Roles when parameter == null", Config.instance().isTimerAdditive());
+				t = cat.startTimer("Getting Participating Roles when parameter == null", Config.instance().isTimerAdditive());
 				participantingRoles = ref.getParticipatableRoles() ;
 				t.stop();
 			}
 		}
 		gettingParticipatingRoles.stop();
 		
-		Timer preparingPermissionQuery = startTimer("Preparing Permission query",Config.instance().isTimerAdditive());
+		Timer preparingPermissionQuery = cat.startTimer("Preparing Permission query");
 
 		ModelReflector<RolePermission> permissionRef = ModelReflector.instance(RolePermission.class);
 		Expression permissionQueryWhere = new Expression(permissionRef.getPool(),Conjunction.AND);
@@ -189,13 +189,13 @@ public class ParticipantControllerAccessExtension implements Extension{
 
 		preparingPermissionQuery.stop(); 
 		
-		Timer selectingUserRole = startTimer("Selecting user Roles",Config.instance().isTimerAdditive());
+		Timer selectingUserRole = cat.startTimer("Selecting user Roles");
 		Select userRoleQuery = new Select().from(UserRole.class);
 		userRoleQuery.where(new Expression(userRoleQuery.getPool(),"user_id",Operator.EQ,new BindVariable(userRoleQuery.getPool(),user.getId())));
 		List<UserRole> userRoles = userRoleQuery.execute(UserRole.class);
 		selectingUserRole.stop();
 		
-		Timer preparingRoleWhere = startTimer("Preparing role Where clause",Config.instance().isTimerAdditive());
+		Timer preparingRoleWhere = cat.startTimer("Preparing role Where clause");
 		List<Integer> userRoleIds = new ArrayList<Integer>();
 		
 		ModelReflector<Role> roleRef = ModelReflector.instance(Role.class);
@@ -212,7 +212,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		permissionQueryWhere.add(roleWhere);
 		
 		
-		Timer selectingRolePermissions = startTimer("Selecting from role permissions",Config.instance().isTimerAdditive());
+		Timer selectingRolePermissions = cat.startTimer("Selecting from role permissions");
 		
 		Select permissionQuery = new Select().from(RolePermission.class);
 		permissionQuery.where(permissionQueryWhere);
@@ -221,7 +221,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		selectingRolePermissions.stop();
 		
 		if (selectedModel != null){ 
-			Timer removingPermissionRecords = startTimer("Remove permission records based on condition.",Config.instance().isTimerAdditive());
+			Timer removingPermissionRecords = cat.startTimer("Remove permission records based on condition.");
 			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
 				RolePermission permission = permissionIterator.next();
 				Reader condition = permission.getConditionText();
@@ -248,7 +248,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 	
 	private PermissionCache permissionCache = new PermissionCache();
 	
-	private static class PermissionCache extends Cache<String,Cache<String,Boolean>> {
+	private class PermissionCache extends Cache<String,Cache<String,Boolean>> {
 		
 		private static final long serialVersionUID = 8076958083615092776L;
 
@@ -279,46 +279,49 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		
 		private boolean calculatePermission(List<RolePermission> permissions, List<Integer> userRoleIds){
-			Timer sortingPermissions = startTimer("sorting permissions", Config.instance().isTimerAdditive());
+			Timer sortingPermissions = cat.startTimer("sorting permissions", Config.instance().isTimerAdditive());
 			Collections.sort(permissions, rolepermissionComparator);
 			sortingPermissions.stop();
 			
 			//permissions,userRoleIds, 
 
-			Timer permissionsChecking = startTimer("Checking Permissions for being allowed",Config.instance().isTimerAdditive());
-			RolePermission firstPermission = permissions.get(0);
-			RolePermission currentPermissionGroup = firstPermission;
+			Timer permissionsChecking = cat.startTimer("Checking Permissions for being allowed");
+            try {
+                    RolePermission firstPermission = permissions.get(0);
+                    RolePermission currentPermissionGroup = firstPermission;
 
-			Iterator<RolePermission> permissionIterator = permissions.iterator();
-			while (permissionIterator.hasNext()){
-				RolePermission effective = permissionIterator.next();
-				if (permissionGroupComparator.compare(currentPermissionGroup,effective) < 0){
-					if (currentPermissionGroup.getRoleId() != null ){
-						userRoleIds.remove(effective.getRoleId());
-					}else {
-						break;
-					}
-					currentPermissionGroup = effective;
-				}
-				if (effective.getRoleId() != null && !userRoleIds.contains(effective.getRoleId())){
-					//Disallowed at more granular level for this role. So Ignore this record.
-					continue;
-				}
-				
-				if (effective.isAllowed()){
-					if (effective.getRoleId() != null || firstPermission.getRoleId() == null){
-						return true;
-					}else if (!userRoleIds.isEmpty() ){
-						//First role not null but effective.role is null.
-						//If User has atleast one more role that is not configured as disallowed then allowed.
-						return true;
-					}else {
-						//Role level dissallowed will override.
-						break;
-					}
-				}
-			}
-			permissionsChecking.stop();
+                    Iterator<RolePermission> permissionIterator = permissions.iterator();
+                    while (permissionIterator.hasNext()){
+                        RolePermission effective = permissionIterator.next();
+                        if (permissionGroupComparator.compare(currentPermissionGroup,effective) < 0){
+                            if (currentPermissionGroup.getRoleId() != null ){
+                                userRoleIds.remove(effective.getRoleId());
+                            }else {
+                                break;
+                            }
+                            currentPermissionGroup = effective;
+                        }
+                        if (effective.getRoleId() != null && !userRoleIds.contains(effective.getRoleId())){
+                            //Disallowed at more granular level for this role. So Ignore this record.
+                            continue;
+                        }
+                        
+                        if (effective.isAllowed()){
+                            if (effective.getRoleId() != null || firstPermission.getRoleId() == null){
+                                return true;
+                            }else if (!userRoleIds.isEmpty() ){
+                                //First role not null but effective.role is null.
+                                //If User has atleast one more role that is not configured as disallowed then allowed.
+                                return true;
+                            }else {
+                                //Role level dissallowed will override.
+                                break;
+                            }
+                        }
+                    }
+            }finally {
+			    permissionsChecking.stop();
+            }
 
 			return false;
 
@@ -378,7 +381,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		Path tmpPath = (Path)context[4];
 		
 		if (tmpPath == null){
-			Timer constructPath = startTimer("Create Path",Config.instance().isTimerAdditive());
+			Timer constructPath = cat.startTimer("Create Path");
 			tmpPath = new Path("/"+controllerPathElementName+"/"+actionPathElementName + (parameterValue == null ? "" : "/"+parameterValue));
 			constructPath.stop();
 		}

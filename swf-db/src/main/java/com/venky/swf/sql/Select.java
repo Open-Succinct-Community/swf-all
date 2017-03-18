@@ -1,6 +1,5 @@
 package com.venky.swf.sql;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +13,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -60,9 +60,11 @@ public class Select extends SqlStatement{
 		pools.add(pool);
 		return this;
 	}
+	
+	private SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	@SuppressWarnings("unchecked")
 	public Select from(Class<?>... models){
-		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer();
 		try {
 			String[] tables = new String[models.length];
 			for (int i = 0 ; i< models.length ; i++){
@@ -106,7 +108,7 @@ public class Select extends SqlStatement{
 	}
 	
 	private <M extends Model> boolean allOrderByColumnsAreReal(Class<M> modelClass){
-		Timer timer = startTimer(null, Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer();
 		try {
 			if (orderBy == null){
 				return false;
@@ -241,7 +243,7 @@ public class Select extends SqlStatement{
         	}
         	
         	if (result == null){
-	            Timer queryTimer = startTimer(getRealSQL(), Config.instance().isTimerAdditive());
+	            Timer queryTimer = cat.startTimer(getRealSQL());
 	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();
@@ -302,7 +304,7 @@ public class Select extends SqlStatement{
 	            }
         	}else {
         		if (sortResults && orderByPassed != null && orderByPassed.length > 0){
-        			Timer sorting = startTimer("Sorting cached records", Config.instance().isTimerAdditive());
+        			Timer sorting = cat.startTimer("Sorting cached records");
             		Collections.sort(result,new Comparator<Record>() {
     					@SuppressWarnings({ "unchecked", "rawtypes" })
     					public int compare(Record r1, Record r2) {
@@ -326,7 +328,7 @@ public class Select extends SqlStatement{
         			sorting.stop();
         		}
         		
-        		Timer processingCache = startTimer("Processing cached records", Config.instance().isTimerAdditive());
+        		Timer processingCache = cat.startTimer("Processing cached records");
         		ret = new ArrayList<M>();
         		for (Iterator<Record> recordIterator  = result.iterator(); 
         				(maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords ) && recordIterator.hasNext() ; ){

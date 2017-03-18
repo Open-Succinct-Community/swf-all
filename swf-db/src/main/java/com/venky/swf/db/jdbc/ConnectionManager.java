@@ -130,8 +130,34 @@ public class ConnectionManager {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private Cache<String,List<String>> sameDBpools = new Cache<String, List<String>>(0,0) {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -6568310584085285249L;
+
+		@Override
+		protected List<String> getValue(String pool) {
+			List<String> pools = new ArrayList<String>();
+			String url = Platform.getConnectionProperties(pool).getProperty("url");
+			for (String tpool : getPools()){ 
+				if (Platform.getConnectionProperties(tpool).getProperty("url").equals(url)){
+					pools.add(pool);
+				}
+			}
+			return pools;
+		}
+	};
 	public boolean isPoolReadOnly(String pool){
-		return Config.instance().getBooleanProperty(getNormalizedPropertyName("swf.jdbc."+pool+".readOnly"),false);
+		boolean readOnly = false;
+		if (!readOnly){
+			for (String tPool : sameDBpools.get(pool) ){
+				readOnly = readOnly || Config.instance().getBooleanProperty(getNormalizedPropertyName("swf.jdbc."+tPool+".readOnly"),false);
+			}
+		}
+		return readOnly;
 	}
 	public void close() {
         List<String> allPools = new ArrayList<String>(dsCache.keySet());

@@ -1,6 +1,5 @@
 package com.venky.swf.views.controls.model;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -12,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
@@ -126,9 +126,9 @@ public class ModelListTable<M extends Model> extends Div{
         }
     }
 
-	
+	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     protected void setWidths(Row header,int numActions){
-    	Timer timer = startTimer("Setting widths",Config.instance().isTimerAdditive());
+    	Timer timer = cat.startTimer("Setting widths");
     	try { 
     		_setWidths(header, numActions);
     	}finally {
@@ -187,7 +187,7 @@ public class ModelListTable<M extends Model> extends Div{
         return showAction;
 	}
 	protected void addLineLevelActions(Row row, M record, BitSet showAction) {
-		Timer timer = startTimer("Adding Line Level Actions",Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("Adding Line Level Actions");
 		try {
 			_addLineLevelActions(row, record, showAction);
 		}finally {
@@ -211,7 +211,7 @@ public class ModelListTable<M extends Model> extends Div{
         }
 	}
 	protected void addFields(Row row, M record){
-		Timer addingFields = startTimer("Adding Fields",Config.instance().isTimerAdditive());
+		Timer addingFields = cat.startTimer("Adding Fields");
 		try {
 			_addFields(row, record);
 		}finally {
@@ -311,7 +311,7 @@ public class ModelListTable<M extends Model> extends Div{
 		return control.getText().length();
 	}
 	protected void addRecordToTable(M record, BitSet showAction){
-		Timer timer = startTimer("Adding one record to table",Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("Adding one record to table");
 		try {
 			_addRecordToTable(record, showAction);
 		}finally {
@@ -320,7 +320,7 @@ public class ModelListTable<M extends Model> extends Div{
 	}
     protected void _addRecordToTable(M record, BitSet showAction){
     	User u = (User)Database.getInstance().getCurrentUser();
-    	Timer recordAccessibility = startTimer("Checking Record accessibility",Config.instance().isTimerAdditive());
+    	Timer recordAccessibility = cat.startTimer("Checking Record accessibility");
     	try {
 	    	if (u != null && !record.isAccessibleBy(u,modelAwareness.getReflector().getModelClass())){
 	    		return;
@@ -328,7 +328,7 @@ public class ModelListTable<M extends Model> extends Div{
     	}finally {
     		recordAccessibility.stop();
     	}
-    	Timer checkingIndexActionAccessibility = startTimer("Checking index action Accessibility",Config.instance().isTimerAdditive());
+    	Timer checkingIndexActionAccessibility = cat.startTimer("Checking index action Accessibility");
     	try {
 	    	if (record.getId() > 0  && !modelAwareness.getPath().canAccessControllerAction("index",String.valueOf(record.getId()))){
 	    		return;

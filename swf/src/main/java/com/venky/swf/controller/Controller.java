@@ -4,8 +4,6 @@
  */
 package com.venky.swf.controller;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +30,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.json.simple.JSONObject;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -443,6 +442,7 @@ public class Controller {
 	
     }
     
+    private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {
     	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
     	Class<M> modelClass = null;
@@ -452,7 +452,7 @@ public class Controller {
 		}
 		@Override
 		public boolean pass(M record) {
-			Timer timer = startTimer("DefaultModelFilter.pass",Config.instance().isTimerAdditive());
+			Timer timer = cat.startTimer("DefaultModelFilter.pass",Config.instance().isTimerAdditive());
 			try {
 				return defaultFilter.pass(record) && getPath().getModelAccessPath(modelClass).canAccessControllerAction("index",
 						StringUtil.valueOf(record.getId()));

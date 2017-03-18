@@ -4,7 +4,6 @@
  */
 package com.venky.swf.views;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -14,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
@@ -70,12 +70,15 @@ public abstract class HtmlView extends View{
     @Override
     public String toString(){
         Html html = new Html();
-        
-        Timer htmlCreation = startTimer("html creation.",Config.instance().isTimerAdditive());
-    	createHtml(html);
-        htmlCreation.stop();
+        SWFLogger cat = Config.instance().getLogger(getClass().getName());
+        Timer htmlCreation = cat.startTimer("html creation.");
+        try {
+        	createHtml(html);
+        }finally {
+        	htmlCreation.stop();
+        }
 
-        Timer htmlToString = startTimer("html rendering.",Config.instance().isTimerAdditive());
+        Timer htmlToString = cat.startTimer("html rendering.");
         try {
         	return html.toString();
         }finally {

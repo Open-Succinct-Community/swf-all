@@ -13,6 +13,7 @@ import java.util.jar.JarFile;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
+import com.venky.swf.routing.Config;
 
 public class SWFClassLoader extends ClassLoader {
 	private Set<File> pathsHandled = new HashSet<File>();
@@ -41,6 +42,8 @@ public class SWFClassLoader extends ClassLoader {
 
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
 		if (name.startsWith("com.venky.swf.routing")) {
+			return super.loadClass(name);
+		}else if (name.startsWith("com.venky.swf.util.SWFLogger") || name.startsWith("com.venky.core.log")) {
 			return super.loadClass(name);
 		}else if (name.startsWith("com.venky.swf")
 				&& name.substring(name.lastIndexOf(".") + 1).startsWith("_I")) {

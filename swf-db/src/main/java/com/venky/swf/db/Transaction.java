@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import com.venky.core.checkpoint.Checkpoint;
 import com.venky.core.checkpoint.MergeableMap;
+import com.venky.core.log.ExtendedLevel;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.jdbc.SWFSavepoint;
 import com.venky.swf.db.model.Model;
@@ -39,7 +40,7 @@ public class Transaction implements _IDatabase._ITransaction {
         return checkpoint;
     }
 
-    Logger cat = Config.instance().getLogger(getClass().getName());
+    SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public void setSavepoint(){
         try {
             for (String pool : getActivePools()){ //Set in all pools
@@ -75,8 +76,8 @@ public class Transaction implements _IDatabase._ITransaction {
         Database.getInstance().getTransactionManager().registerCommit(this);
     }
     public void commit() {
-    	String ctx = Config.instance().isTimerEnabled() ? "Transaction:"+transactionNo+ " .commit" + Database.getCaller() : null;
-    	Timer t = Timer.startTimer(ctx,Config.instance().isTimerAdditive());
+    	String ctx = cat.isLoggable(ExtendedLevel.TIMER) ? "Transaction:"+transactionNo+ " commit " + Database.getCaller() : null;
+    	Timer t = cat.startTimer(ctx,Config.instance().isTimerAdditive());
     	try {
             Database.getInstance().getTransactionManager().commit(this);
     	}finally{ 
@@ -84,8 +85,8 @@ public class Transaction implements _IDatabase._ITransaction {
     	}
 	}
     public void rollback(Throwable th) { 
-    	String ctx = Config.instance().isTimerEnabled() ? "Transaction:"+transactionNo+ " .rollback" + Database.getCaller() : null;
-    	Timer t = Timer.startTimer(ctx,Config.instance().isTimerAdditive());
+    	String ctx = cat.isLoggable(ExtendedLevel.TIMER) ? "Transaction:"+transactionNo+ " rollback " + Database.getCaller() : null;
+    	Timer t = cat.startTimer(ctx,Config.instance().isTimerAdditive());
     	try {
     	    Database.getInstance().getTransactionManager().rollback(this,th);
     	}finally{ 

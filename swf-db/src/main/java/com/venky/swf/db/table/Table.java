@@ -15,6 +15,7 @@ import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -108,6 +109,7 @@ public class Table<M extends Model> {
         	this.realTableName = this.tableName;
         	this.pool = pool;
         }
+        cat = Config.instance().getLogger(getClass().getName()+"."+getTableName());
     }
     
     public static <M extends Model> String tableName(Class<M> modelClass){
@@ -387,16 +389,15 @@ public class Table<M extends Model> {
     public M get(int id) {
     	return get(id,false,false);
     }
+    private SWFLogger cat = null;
     public M get(int id,boolean locked,boolean wait) {
-    	Timer timer = Timer.startTimer(null, Config.instance().isTimerAdditive());
+    	Timer timer = cat.startTimer(null, Config.instance().isTimerAdditive());
     	try {
 	    	Select q = new Select(locked,wait);
 	    	q.from(getModelClass());
 
 	    	String idColumn = getReflector().getColumnDescriptor("id").getName();
-	    	Timer createWhereTimer = Timer.startTimer(null, Config.instance().isTimerAdditive());
 	        q.where(new Expression(q.getPool(),idColumn,Operator.EQ,new BindVariable(getPool(),id)));
-	        createWhereTimer.stop();
 	        
 	        List<M> result = q.execute(getModelClass(),1);
 	        if (result.isEmpty()){

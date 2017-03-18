@@ -4,7 +4,6 @@
  */
 package com.venky.swf.controller; 
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -131,7 +130,7 @@ public class ModelController<M extends Model> extends Controller {
     @Override
     @RequireLogin(true)
     public View index() {
-    	Timer index = startTimer(getReflector().getTableName() + ".index", Config.instance().isTimerAdditive());
+    	Timer index = Config.instance().getLogger(getClass().getName()).startTimer(getReflector().getTableName() + ".index");
     	try {
 	    	if (indexedModel){
 	    		return search();

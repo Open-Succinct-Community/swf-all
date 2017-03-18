@@ -4,12 +4,9 @@
  */
 package com.venky.swf.routing;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.logging.Level;
@@ -23,6 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
+import com.venky.core.log.ExtendedLevel;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.PackageUtil;
@@ -70,6 +69,8 @@ public class Router extends AbstractHandler {
 				this.loader = loader;
 				if (loader != null){
 			    	try {
+			    	    ExtendedLevel.TIMER.intValue();
+
 			    		InputStream is = this.loader.getResourceAsStream("config/logger.properties");
 			    		if (is != null){
 			    			LogManager.getLogManager().readConfiguration(is);
@@ -184,14 +185,14 @@ public class Router extends AbstractHandler {
 	}
 	
 	
+	
     public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     	if (target.equals("/favicon.ico")){
     		response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     		return;
     	}
-		TimerStatistics.setEnabled(Config.instance().isTimerEnabled()); // Ensure thread has right value.
-		
-    	Timer timer = startTimer("handleRequest",true);
+    	SWFLogger cat = Config.instance().getLogger(getClass().getName());
+    	Timer timer = cat.startTimer("handleRequest",true);
     	try {
 	        _IView view = null;
 	        _IView ev = null ;	
@@ -213,7 +214,7 @@ public class Router extends AbstractHandler {
 	            if (view.isBeingRedirected()){
 	            	db.getCurrentTransaction().commit();
 	            }
-	            Timer viewWriteTimer = startTimer(target+".view_write", Config.instance().isTimerAdditive());
+	            Timer viewWriteTimer = cat.startTimer(target+".view_write", Config.instance().isTimerAdditive());
 	            try {
 	            	view.write();
 	            }finally{

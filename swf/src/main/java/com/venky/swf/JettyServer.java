@@ -59,7 +59,7 @@ public class JettyServer {
 		Server server = new Server(this.port);
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(100);
-		Router router = Router.instance();
+		Router router = Router.instance(); 
 		if (isDevelopmentEnvironment()){
 			router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
 		}else {

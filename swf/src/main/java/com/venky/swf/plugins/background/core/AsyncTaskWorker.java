@@ -3,9 +3,10 @@ package com.venky.swf.plugins.background.core;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
@@ -19,7 +20,7 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 		setDaemon(false);
 		this.manager = asyncTaskManager;
 	}
-	private Logger cat = Config.instance().getLogger(getClass().getName());
+	private SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	private void log(Level level,String message){
 		if (cat.isLoggable(level)){
 			cat.log(level, "Thread :" + getName() + ":" + message);
@@ -31,10 +32,10 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 	public void run(){
 		T task = null ;
 		while ((task = manager.next()) != null ){
-			TimerStatistics.setEnabled(Config.instance().isTimerEnabled());
 			log(Level.INFO,"Started Task:" + getTaskIdentifier(task));
 			Database db = null; 
 			Transaction txn = null;
+			Timer timer = cat.startTimer(getTaskIdentifier(task));
 			try {
 				db = Database.getInstance();
 				txn = db.getCurrentTransaction();
@@ -53,6 +54,7 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 					ex.printStackTrace();
 				}
 			}finally{
+				timer.stop();
 				try {
 					log(Level.INFO,"Completed Task:" + getTaskIdentifier(task));
 					if (db != null) {

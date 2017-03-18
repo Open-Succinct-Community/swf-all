@@ -16,11 +16,10 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.venky.cache.Cache;
-import com.venky.core.log.TimerStatistics;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
@@ -231,11 +230,9 @@ public class Config {
     	return propertyValueList.get(name);
 	}
     
-    public boolean isTimerEnabled(){
-    	return getLogger(TimerStatistics.class.getName()).isLoggable(Level.FINE);
-    }
     
-    private Cache<String,Logger> loggers = new Cache<String, Logger>() {
+    
+    private Cache<String,SWFLogger> loggers = new Cache<String, SWFLogger>() {
 
 		/**
 		 * 
@@ -243,12 +240,12 @@ public class Config {
 		private static final long serialVersionUID = 7431631281937883673L;
 
 		@Override
-		protected Logger getValue(String k) {
-			return Logger.getLogger(k);
+		protected SWFLogger getValue(String k) {
+			return new SWFLogger(Logger.getLogger(k));
 		}
     	
     };
-    public Logger getLogger(String name){
+    public SWFLogger getLogger(String name){
     	return loggers.get(name);
     }
     

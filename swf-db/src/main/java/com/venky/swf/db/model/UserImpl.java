@@ -1,7 +1,5 @@
 package com.venky.swf.db.model;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +10,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
@@ -110,9 +109,9 @@ public class UserImpl extends ModelImpl<User>{
 			}
 		}
 	}; 
-	
+	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public <R extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<R> modelClass){
-		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName(), Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName());
 		Set<String> tables = new HashSet<String>(relatedTables.get(modelClass));
 		tables.retainAll(Database.getInstance().getCurrentTransaction().getTablesChanged());
 		Cache<Class<? extends Model>,Cache<String,Map<String,List<Integer>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
@@ -138,7 +137,7 @@ public class UserImpl extends ModelImpl<User>{
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
-		Timer timer = startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ), Config.instance().isTimerAdditive());
+		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
 		try {
 			Cache<String,Map<String, List<Integer>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Integer>>>(){
 

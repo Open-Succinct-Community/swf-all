@@ -4,7 +4,6 @@
  */
 package com.venky.swf.db;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +29,7 @@ import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.StringReader;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.DoubleUtils;
 import com.venky.core.string.StringUtil;
@@ -640,7 +640,7 @@ public abstract class JdbcTypeHelper {
         if (ref != null) {
             return ref;
         }
-        Timer loop = startTimer("loop:" + javaClass.getName(), Config.instance().isTimerAdditive());
+        Timer loop = cat.startTimer("loop:" + javaClass.getName(), Config.instance().isTimerAdditive());
     	try {
 	        for (Class<?> key : javaTypeRefMap.keySet()) {
 	            if (key.isAssignableFrom(javaClass)) {
@@ -681,7 +681,7 @@ public abstract class JdbcTypeHelper {
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();
     public String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){
-    	Timer timer = startTimer(null,Config.instance().isTimerAdditive());
+    	Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive());
     	try {
 	    	if (def.value() == StandardDefault.CURRENT_TIMESTAMP){
 	    		return getCurrentTimeStampKW();
@@ -722,5 +722,6 @@ public abstract class JdbcTypeHelper {
 	public void setBinaryStream(PreparedStatement st, int i, ByteArrayInputStream in) throws SQLException {
 		st.setBinaryStream(i, in, in.available());
 	}
-    
+ 
+	private final SWFLogger cat = new SWFLogger(Config.instance().getLogger(getClass().getName()));
 }

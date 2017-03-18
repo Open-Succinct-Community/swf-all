@@ -4,8 +4,6 @@
  */
 package com.venky.swf.path;
 
-import static com.venky.core.log.TimerStatistics.Timer.startTimer;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +39,7 @@ import com.venky.cache.Cache;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -658,11 +657,12 @@ public class Path implements _IPath{
         return false;
     }
 
+    private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());
         for (Method m :methods){
-            Timer timer = startTimer(null,Config.instance().isTimerAdditive()); 
+            Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive()); 
             try {
                 boolean securedAction = getControllerReflector().isSecuredActionMethod(m) ;
                 if (securedAction){
