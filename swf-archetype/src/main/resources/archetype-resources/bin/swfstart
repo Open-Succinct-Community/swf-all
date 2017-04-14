@@ -10,7 +10,7 @@ then
   export swf_env="development"
 fi
 
-mvn -DskipTests=true package
+mvn clean -DskipTests=true package
 if [ "$debug" = "" ] 
 then
   export debug=y
@@ -28,9 +28,10 @@ pid=`ps -ef |grep java.*PORT=${wport}|grep -v grep |tr -s ' ' |cut -f2 -d ' '`
 if [ "$pid" != "" ]
 then 
 kill -9 $pid
+sleep 5
 fi
 
-nohup java -ea:com.venky  -Xmx2g -XX:+HeapDumpOnOutOfMemoryError -DPORT=${wport} -Dswf.env=${swf_env} -Dswf.pidfile=$PWD/tmp/pid -Dderby.locks.waitTimeout=10  -DSystem.out.close=true -DSystem.err.close=true -DSystem.in.close=true -cp overrideProperties/:target/classes/:target/dependency/* com.venky.swf.JettyServer  &
+nohup java -ea:com.venky  -Xmx4g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/media/heaps/java.hprof $DEBUG_OPTS -DPORT=${wport} -Dswf.env=${swf_env} -Dswf.pidfile=$PWD/tmp/pid -Dderby.locks.waitTimeout=10  -DSystem.out.close=true -DSystem.err.close=true -DSystem.in.close=true -cp overrideProperties/:target/classes/:target/dependency/* com.venky.swf.JettyServer &
 
 
 pid=`ps -ef |grep java.*PORT=${wport}|grep -v grep |tr -s ' ' |cut -f2 -d ' '`
@@ -39,9 +40,9 @@ then
   numtrys=0
   ret=-1 
   status=""
-  while [ $ret -ne 0  -a $numtrys -lt 3 ] 
+  while [ $ret -ne 0  -a $numtrys -lt 6 ] 
   do
-    sleep 10;
+    sleep 20;
     numtrys=`expr $numtrys + 1`
     curl  -s http://localhost:${wport}/ping -H 'ApiKey:9ab1a68e5092e42788b3926a81d7817c31c7cece' -H 'ApiProtocol: application/json'
     ret=$?

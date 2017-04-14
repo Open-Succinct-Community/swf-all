@@ -18,6 +18,9 @@ public class ConfigLoader implements Installer {
 			if (!tableName.equals(currentTable.getRealTableName())){
 				continue;
 			}
+			if (currentTable.getReflector() == null){
+				continue;
+			}
 			if (currentTable.getReflector().isAnnotationPresent(CONFIGURATION.class)) {
 				List<Count> counts = new Select("COUNT(1) AS COUNT").from(currentTable.getModelClass()).execute(Count.class);
 				Count count = counts.get(0);

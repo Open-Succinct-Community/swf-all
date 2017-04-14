@@ -22,6 +22,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
@@ -200,13 +201,20 @@ public class Database implements _IDatabase{
 	public static <M extends Model> Table<M> getTable(Class<M> modelClass) {
 		return (Table<M>) getTable(ModelReflector.instance(modelClass).getPool(),Table.tableName(modelClass));
 	}
-    @SuppressWarnings("unchecked")
 	public static <M extends Model> Table<M> getTable(String table){
+    	SequenceSet<Table<M>> set = new SequenceSet<>();
+    	
     	for (String pool:tablesInPool.keySet()){
     		Table<M> t = getTable(pool, table);
     		if (t != null){
-    			return t;
+    			set.add(t);
+    			if (t.getModelClass()!= null){
+    				return t;
+    			}
     		}
+    	}
+    	if (set.size() > 0){
+    		return set.first();
     	}
         return null;
     }
@@ -298,9 +306,6 @@ public class Database implements _IDatabase{
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);
-				if (ConnectionManager.instance().isPoolReadOnly(pool) && table == null){
-					continue;
-				}
 				if (table == null){ //
 					table = new Table(tableName,pool);
                     getTables(pool).put(tableName, table);

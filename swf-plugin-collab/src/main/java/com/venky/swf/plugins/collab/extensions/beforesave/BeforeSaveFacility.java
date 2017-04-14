@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import com.venky.core.string.StringUtil;
+import com.venky.core.string.StringUtil; 
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.geo.GeoCoder;
@@ -72,13 +72,13 @@ public class BeforeSaveFacility extends BeforeModelSaveExtension<Facility>{
 		//coders.add(new GeoCoder("yahoo"));
 		coders.add(new GeoCoder("google"));
 		coders.add(new GeoCoder("openstreetmap"));
-		for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(facility.getLatitude()) || ObjectUtil.isVoid(facility.getLongitude())) ; ){
+		for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(facility.getLat()) || ObjectUtil.isVoid(facility.getLng())) ; ){
 			GeoCoder coder = i.next(); 
 			for (StringBuilder address: getAddressQueries(facility)){
 				GeoLocation location = coder.getLocation(address.toString());
 				if (location != null){ 
-					facility.setLatitude(location.getLatitude());
-					facility.setLongitude(location.getLongitude());
+					facility.setLat(location.getLat());
+					facility.setLng(location.getLng());
 					break ;
 				}
 			} 

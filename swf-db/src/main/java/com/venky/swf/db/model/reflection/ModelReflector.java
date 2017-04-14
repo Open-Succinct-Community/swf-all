@@ -243,8 +243,9 @@ public class ModelReflector<M extends Model> {
     	if (fieldGetters == null){
 	    	synchronized (this) {
 	    		if (fieldGetters == null){
-		    		fieldGetters = new SequenceSet<Method>();
+	    			SequenceSet<Method> fieldGetters = new SequenceSet<Method>();
 		        	loadMethods(fieldGetters, getFieldGetterMatcher());
+		        	this.fieldGetters = fieldGetters;
 	    		}
 			}
     	}
@@ -256,10 +257,11 @@ public class ModelReflector<M extends Model> {
     	if (fieldGetterSignatures == null){
     		synchronized (this) {
     			if (fieldGetterSignatures == null ){ 
-    				fieldGetterSignatures = new SequenceSet<String>();
+    				SequenceSet<String> fieldGetterSignatures = new SequenceSet<String>();
             		for (Method m : getFieldGetters()){
             			fieldGetterSignatures.add(getSignature(m));
             		}
+            		this.fieldGetterSignatures = fieldGetterSignatures;
     			}
 			}
     	}
@@ -271,8 +273,9 @@ public class ModelReflector<M extends Model> {
     	if (indexedFieldGetters == null) {
         	synchronized (this) {
         		if (indexedFieldGetters == null){
-        			indexedFieldGetters =  new SequenceSet<Method>();
+        			SequenceSet<Method> indexedFieldGetters =  new SequenceSet<Method>();
                 	loadMethods(indexedFieldGetters, getIndexedFieldGetterMatcher());
+                	this.indexedFieldGetters = indexedFieldGetters;
         		}
     		}
     	}
@@ -284,8 +287,9 @@ public class ModelReflector<M extends Model> {
     	if (fieldSetters == null) {
     		synchronized (this) {
     			if (fieldSetters == null) {
-    				fieldSetters =  new SequenceSet<Method>() ;
+    				SequenceSet<Method> fieldSetters =  new SequenceSet<Method>() ;
     		    	loadMethods(fieldSetters, getFieldSetterMatcher());
+    		    	this.fieldSetters = fieldSetters;
     			}
 			}
     	}
@@ -297,8 +301,9 @@ public class ModelReflector<M extends Model> {
     	if (referredModelGetters == null ){
     		synchronized (this) {
     			if (referredModelGetters == null) {
-	        		referredModelGetters = new SequenceSet<Method>();
+    				SequenceSet<Method> referredModelGetters = new SequenceSet<Method>();
 	            	loadMethods(referredModelGetters, getReferredModelGetterMatcher());
+	            	this.referredModelGetters =  referredModelGetters;
     			}
 			}
     	}
@@ -310,8 +315,9 @@ public class ModelReflector<M extends Model> {
     	if (participantModelGetters == null){
     		synchronized (this) {
     			if (participantModelGetters == null){
-	        		participantModelGetters = new SequenceSet<Method>();
+    				SequenceSet<Method> participantModelGetters = new SequenceSet<Method>();
 	            	loadMethods(participantModelGetters, getParticipantModelGetterMatcher());
+	            	this.participantModelGetters = participantModelGetters;
     			}
 			}
     	}
@@ -323,8 +329,9 @@ public class ModelReflector<M extends Model> {
     	if (childModelGetters == null){
     		synchronized (this) {
 				if (childModelGetters == null) {
-		    		childModelGetters = new SequenceSet<Method>();
+					SequenceSet<Method> childModelGetters = new SequenceSet<Method>();
 		        	loadMethods(childModelGetters,getChildrenGetterMatcher());
+		        	this.childModelGetters = childModelGetters;
 				}
 			}
     	}
@@ -350,21 +357,23 @@ public class ModelReflector<M extends Model> {
     }
     
 
-    private List<String> allfields = new IgnoreCaseList(false);
+    private List<String> allfields = null;
     private Map<String,List<String>> columnFields = new IgnoreCaseMap<List<String>>();
     private Map<String,String> fieldColumn = new IgnoreCaseMap<String>();
 
     private void loadAllFields(){
 		Timer timer = cat.startTimer();
 		try {
-	        if (!allfields.isEmpty()){
+	        if (allfields != null){
 	            return;
 	        }
-	        synchronized (allfields) {
-	            if (!allfields.isEmpty()){
+	        synchronized (this) {
+	            if (allfields != null){
 	                return;
 	            }
 	            List<Method> fieldGetters = getFieldGetters();
+	            List<String> allfields = new IgnoreCaseList(false);
+                
 	            for (Method fieldGetter : fieldGetters){
 	        		String fieldName = getFieldName(fieldGetter);
 	
@@ -372,7 +381,7 @@ public class ModelReflector<M extends Model> {
 	        		COLUMN_NAME name = (COLUMN_NAME)map.get(COLUMN_NAME.class);
 	        		String columnName = ( name == null ? fieldName : name.value());
 	        		
-	                allfields.add(fieldName);
+	        		allfields.add(fieldName);
 	        		List<String> fields = columnFields.get(columnName);
 	        		if (fields == null){
 	        			fields = new IgnoreCaseList(false);
@@ -381,6 +390,7 @@ public class ModelReflector<M extends Model> {
 	        		fields.add(fieldName);
 	        		fieldColumn.put(fieldName, columnName);
 	            }
+	            this.allfields=allfields;
 	        }
 		}finally {
 			timer.stop();
@@ -402,11 +412,12 @@ public class ModelReflector<M extends Model> {
     	if (indexedColumns == null){
     		synchronized (this) {
     			if (indexedColumns == null) {
-	    			indexedColumns = new SequenceSet<String>();
+    				SequenceSet<String> indexedColumns = new SequenceSet<String>();
 	            	for (Method indexedFieldGetter : getIndexedFieldGetters()){
 	            		String indexColumnName = getColumnDescriptor(getFieldName(indexedFieldGetter)).getName();
 	            		indexedColumns.add(indexColumnName);
 	            	}
+	            	this.indexedColumns = indexedColumns;
     			}
 			}
     	}
@@ -417,10 +428,11 @@ public class ModelReflector<M extends Model> {
     	if (indexedFields == null){
     		synchronized (this) {
 				if (indexedFields == null){
-		    		indexedFields = new SequenceSet<String>();
+					SequenceSet<String> indexedFields = new SequenceSet<String>();
 		    		for (Method indexedFieldGetter : getIndexedFieldGetters()){
 		    			indexedFields.add(getFieldName(indexedFieldGetter));
 		    		}
+		    		this.indexedFields = indexedFields;
 				}
 			}
     	}
@@ -431,7 +443,7 @@ public class ModelReflector<M extends Model> {
     	if (uniqueKeys == null){
     		synchronized (this) {
     			if (uniqueKeys == null){
-	            	uniqueKeys = new Cache<String, UniqueKey<M>>() {
+    				Cache<String, UniqueKey<M>> uniqueKeys = new Cache<String, UniqueKey<M>>() {
 	    				private static final long serialVersionUID = 1892299842617679145L;
 	
 	    				@Override
@@ -451,6 +463,7 @@ public class ModelReflector<M extends Model> {
 	            			}
 	        			}
 	        		}
+	        		this.uniqueKeys = uniqueKeys;
     			}
 			}
     	}
@@ -525,12 +538,13 @@ public class ModelReflector<M extends Model> {
     	if (singleColumnUniqueKeys == null){
     		synchronized (this) {
     			if (singleColumnUniqueKeys == null){
-            		singleColumnUniqueKeys = new ArrayList<UniqueKey<M>>();
+    				ArrayList<UniqueKey<M>> singleColumnUniqueKeys = new ArrayList<UniqueKey<M>>();
             		for (UniqueKey<M> key: getUniqueKeys()){
             			if (key.size() == 1){
             				singleColumnUniqueKeys.add(key);
             			}
             		}
+            		this.singleColumnUniqueKeys = singleColumnUniqueKeys;
     			}
 			}
     	}
@@ -541,12 +555,13 @@ public class ModelReflector<M extends Model> {
     public List<String> getEditableFields(){
     	if (editableFields == null){
     		synchronized (this) {
-        		editableFields = new SequenceSet<String>();
+    			SequenceSet<String> editableFields = new SequenceSet<String>();
             	for (String field:getFields()){
             		if (isFieldEditable(field)){
             			editableFields.add(field);
             		}
             	}
+            	this.editableFields = editableFields;
 			}
     	}
     	return editableFields;
@@ -875,13 +890,19 @@ public class ModelReflector<M extends Model> {
     }
     private static final String[] getterPrefixes = new String[]{"get" , "is"};
     
-    private Map<String,Method> fieldGetterMap = new IgnoreCaseMap<Method>();
+    private Map<String,Method> fieldGetterMap = null ;
     public void loadFieldGetters(){
-    	if (fieldGetterMap.isEmpty()){
-    		List<Method> fieldGetters = getFieldGetters();
-    		for (Method fieldGetter: fieldGetters){
-    			fieldGetterMap.put(getFieldName(fieldGetter), fieldGetter);
-    		}
+    	if (fieldGetterMap == null){
+    		synchronized (this) {
+    			if (fieldGetterMap == null) {
+        			IgnoreCaseMap<Method> fieldGetterMap  = new IgnoreCaseMap<Method>();
+            		List<Method> fieldGetters = getFieldGetters();
+            		for (Method fieldGetter: fieldGetters){
+            			fieldGetterMap.put(getFieldName(fieldGetter), fieldGetter);
+            		}
+            		this.fieldGetterMap = fieldGetterMap;
+    			}
+			}
     	}
     }
     public Method getFieldGetter(String fieldName){
@@ -899,13 +920,19 @@ public class ModelReflector<M extends Model> {
 		}
     }
     
-    private Map<String,Method> fieldSetterMap = new IgnoreCaseMap<Method>();
+    private Map<String,Method> fieldSetterMap = null;
     private void loadFieldSetters(){
-    	if (fieldSetterMap.isEmpty()){
-    		List<Method> fieldSetters = getFieldSetters();
-    		for (Method fieldSetter: fieldSetters){
-    			fieldSetterMap.put(getFieldName(fieldSetter), fieldSetter);
-    		}
+    	if (fieldSetterMap == null){
+    		synchronized (this) {
+    			if (fieldSetterMap == null){
+    				IgnoreCaseMap<Method> fieldSetterMap = new IgnoreCaseMap<Method>();
+    	    		List<Method> fieldSetters = getFieldSetters();
+    	    		for (Method fieldSetter: fieldSetters){
+    	    			fieldSetterMap.put(getFieldName(fieldSetter), fieldSetter);
+    	    		}
+    	    		this.fieldSetterMap = fieldSetterMap;
+    			}
+			}
     	}
     }
     public Method getFieldSetter(String fieldName){
@@ -950,22 +977,26 @@ public class ModelReflector<M extends Model> {
 	    	if (map != null){
 	    		return map;
 	    	}
-			map = new HashMap<Class<? extends Annotation>, Annotation>();
-	        for (Class<? extends Model> modelClass:reflector.getSiblingModelClasses(getModelClass())){
-	        	MReflector<? extends Model> ref = MReflector.instance(modelClass);
-	        	//We could have simple called getAnnotation(getter,Annotation class) but that would mean looping multiple times for 
-	        	//each annotation needed. hence this optimization.
-	        	if (map.get(COLUMN_NAME.class) == null){ map.put(COLUMN_NAME.class,ref.getAnnotation(getter,COLUMN_NAME.class)); }
-	        	if (map.get(COLUMN_SIZE.class) == null){ map.put(COLUMN_SIZE.class,ref.getAnnotation(getter,COLUMN_SIZE.class)); }
-	        	if (map.get(DATA_TYPE.class  ) == null){ map.put(DATA_TYPE.class  ,ref.getAnnotation(getter,  DATA_TYPE.class)); }
-	        	if (map.get(DECIMAL_DIGITS.class) == null){ map.put(DECIMAL_DIGITS.class,ref.getAnnotation(getter,DECIMAL_DIGITS.class)); }
-	        	if (map.get(IS_NULLABLE.class) == null){ map.put(IS_NULLABLE.class,ref.getAnnotation(getter,IS_NULLABLE.class)); }
-	        	if (map.get(IS_AUTOINCREMENT.class) == null){ map.put(IS_AUTOINCREMENT.class,ref.getAnnotation(getter,IS_AUTOINCREMENT.class)); }
-	        	if (map.get(IS_VIRTUAL.class) == null){ map.put(IS_VIRTUAL.class,ref.getAnnotation(getter,IS_VIRTUAL.class)); }
-	        	if (map.get(COLUMN_DEF.class) == null){ map.put(COLUMN_DEF.class,ref.getAnnotation(getter,COLUMN_DEF.class)); }
-	        }
-	
-			annotationMap.put(signature, map);
+	    	synchronized (this) {
+	    		map = annotationMap.get(signature);
+	    		if (map == null) {
+	    			map = new HashMap<Class<? extends Annotation>, Annotation>();
+	    	        for (Class<? extends Model> modelClass:reflector.getSiblingModelClasses(getModelClass())){
+	    	        	MReflector<? extends Model> ref = MReflector.instance(modelClass);
+	    	        	//We could have simple called getAnnotation(getter,Annotation class) but that would mean looping multiple times for 
+	    	        	//each annotation needed. hence this optimization.
+	    	        	if (map.get(COLUMN_NAME.class) == null){ map.put(COLUMN_NAME.class,ref.getAnnotation(getter,COLUMN_NAME.class)); }
+	    	        	if (map.get(COLUMN_SIZE.class) == null){ map.put(COLUMN_SIZE.class,ref.getAnnotation(getter,COLUMN_SIZE.class)); }
+	    	        	if (map.get(DATA_TYPE.class  ) == null){ map.put(DATA_TYPE.class  ,ref.getAnnotation(getter,  DATA_TYPE.class)); }
+	    	        	if (map.get(DECIMAL_DIGITS.class) == null){ map.put(DECIMAL_DIGITS.class,ref.getAnnotation(getter,DECIMAL_DIGITS.class)); }
+	    	        	if (map.get(IS_NULLABLE.class) == null){ map.put(IS_NULLABLE.class,ref.getAnnotation(getter,IS_NULLABLE.class)); }
+	    	        	if (map.get(IS_AUTOINCREMENT.class) == null){ map.put(IS_AUTOINCREMENT.class,ref.getAnnotation(getter,IS_AUTOINCREMENT.class)); }
+	    	        	if (map.get(IS_VIRTUAL.class) == null){ map.put(IS_VIRTUAL.class,ref.getAnnotation(getter,IS_VIRTUAL.class)); }
+	    	        	if (map.get(COLUMN_DEF.class) == null){ map.put(COLUMN_DEF.class,ref.getAnnotation(getter,COLUMN_DEF.class)); }
+	    	        }
+	    			annotationMap.put(signature, map);
+	    		}
+			}
 	        return map;
 		}finally{
 			timer.stop();
@@ -1487,10 +1518,11 @@ public class ModelReflector<M extends Model> {
 		if (participatableRoles == null){
 			synchronized (this) {
 				if (participatableRoles == null){
-					participatableRoles = new HashSet<String>();
+					HashSet<String> participatableRoles = new HashSet<String>();
 					for (Method m : getParticipantModelGetters()){
 						participatableRoles.add(getParticipatingRole(getReferenceField(m)));
 					}
+					this.participatableRoles = participatableRoles;
 				}
 			}
 		}

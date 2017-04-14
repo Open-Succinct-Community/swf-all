@@ -1,4 +1,5 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.venky.geo.GeoLocation;
@@ -58,11 +59,11 @@ public interface Facility extends CompanySpecific, GeoLocation, Model{
 	public String getPincode();
 	public void setPincode(String pincode);
 	
-	public Float getLatitude(); 
-	public void setLatitude(Float latitude);
+	public BigDecimal getLat(); 
+	public void setLat(BigDecimal latitude);
 	
-	public Float getLongitude();
-	public void setLongitude(Float longitude);
+	public BigDecimal getLng();
+	public void setLng(BigDecimal longitude);
 
 
 	public List<FacilityUser> getFacilityUsers();

@@ -31,6 +31,9 @@ public class AppInstaller implements Installer{
 			}
 			
 			//Do this only for real Tables.
+			if (currentTable.getReflector() == null){
+				continue;
+			}
 			LuceneIndexer indexer = LuceneIndexer.instance(currentTable.getReflector());
 			if (indexer.hasIndexedFields()){
 				mkdir(currentTable);

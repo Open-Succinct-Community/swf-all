@@ -231,9 +231,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 
 	public boolean remove(Record record) {
 		boolean ret = cachedRecords.remove(record);
-		if (ret) {
-			queryCache.remove(getIdWhereClause(record));
-		}
+		ret = ret || (queryCache.remove(getIdWhereClause(record)) != null);
 		return ret;
 	}
 

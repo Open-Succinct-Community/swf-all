@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 
 import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.platform.Platform;
@@ -101,6 +102,15 @@ public class ConnectionManager {
             info.setProperty("testOnReturn", "true");
             info.setProperty("testWhileIdle", "false");
             info.setProperty("maxActive", "-1");
+            
+            String poolFix = ObjectUtil.isVoid(pool) ? "" : "\\." + pool;
+            for (String key : Config.instance().getPropertyKeys("swf\\.jdbc"+poolFix+"\\.datasource\\..*")){
+            	String newKey = key.replaceAll("swf\\.jdbc"+poolFix+"\\.datasource\\.","");
+            	info.setProperty(newKey, Config.instance().getProperty(key));
+            }
+            
+            //Config.instance().getLogger(getClass().getName()).finest("Connection Pool Properties:\n" + info.toString());
+            
             try {
                 Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
                 Method m = c.getMethod("createDataSource", Properties.class);
