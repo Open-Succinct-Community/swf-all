@@ -566,8 +566,15 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     public void defaultFields(){
         if (!record.isNewRecord()){
-        	proxy.setUpdatedAt(null);
-        	proxy.setUpdaterUserId(null);
+        	ColumnDescriptor updatedAt = getReflector().getColumnDescriptor("updated_at");
+        	ColumnDescriptor updatorUser = getReflector().getColumnDescriptor("updater_user_id");
+        	if (!updatedAt.isVirtual()){
+        		proxy.setUpdatedAt(null);
+        	}
+        		
+        	if (!updatorUser.isVirtual()){
+        		proxy.setUpdaterUserId(null);
+        	}
         }
         for (String field:reflector.getRealFields()){
         	String columnName = reflector.getColumnDescriptor(field).getName();
@@ -670,12 +677,16 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
         
         String idColumn = getReflector().getColumnDescriptor("id").getName();
-        String lockidColumn = getReflector().getColumnDescriptor("lock_id").getName();
-        q.set(lockidColumn,new BindVariable(getPool(),newLockId));
-        
         Expression condition = new Expression(getPool(),Conjunction.AND);
         condition.add(new Expression(getPool(),idColumn,Operator.EQ,new BindVariable(getPool(),proxy.getId())));
-        condition.add(new Expression(getPool(),lockidColumn,Operator.EQ,new BindVariable(getPool(),oldLockId)));
+
+        ColumnDescriptor lockIdColumDescriptor = getReflector().getColumnDescriptor("lock_id");
+        if (!lockIdColumDescriptor.isVirtual()){
+            String lockidColumn = lockIdColumDescriptor.getName();
+            q.set(lockidColumn,new BindVariable(getPool(),newLockId));
+            condition.add(new Expression(getPool(),lockidColumn,Operator.EQ,new BindVariable(getPool(),oldLockId)));
+        }
+        
 
         q.where(condition);
         

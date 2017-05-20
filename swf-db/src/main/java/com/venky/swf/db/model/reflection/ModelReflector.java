@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
@@ -55,6 +56,7 @@ import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.ORDER_BY;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.TableReflector.MReflector;
@@ -726,6 +728,26 @@ public class ModelReflector<M extends Model> {
     }
 	public String getPool(){
 		return reflector.getPool();
+	}
+	
+	TimeZone zone = null;
+	public TimeZone getTimeZone(){
+		if (zone == null) {
+			synchronized (this) {
+				if (zone == null){
+					String zoneId = Config.instance().getProperty(ConnectionManager.instance().getNormalizedPropertyName("swf.jdbc."+getPool()+".timezone"));
+					if (ObjectUtil.isVoid(zoneId)){
+						zone = TimeZone.getDefault();
+					}else {
+						zone = TimeZone.getTimeZone(zoneId);
+						if (!StringUtil.equals(zone.getID(),zoneId)){
+							throw new RuntimeException("Invalid timezone specified for pool " +getPool());
+						}
+					}
+				}
+			}
+		}
+		return zone;
 	}
     public int getMaxDataLength(String fieldName){
 		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);

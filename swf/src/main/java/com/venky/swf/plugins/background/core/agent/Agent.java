@@ -91,7 +91,7 @@ public class Agent {
 			return status.isRunning();
 		}
 	}
-	private void start(AgentSeederTask  task) {
+	public void start(AgentSeederTask  task) {
 		if (ObjectUtil.isVoid(task.getAgentName())) {
 			throw new NullPointerException(task.getClass().getName() + " doesnot seem to implement getAgentName()");
 		}

@@ -107,6 +107,12 @@ public class Select extends SqlStatement{
 		return this;
 	}
 	
+	private String having = null;
+	public Select having( String condition ){
+		this.having = condition;
+		return this;
+	}
+	
 	private <M extends Model> boolean allOrderByColumnsAreReal(Class<M> modelClass){
 		Timer timer = cat.startTimer();
 		try {
@@ -155,6 +161,10 @@ public class Select extends SqlStatement{
 		if (groupBy != null){
 			builder.append(" GROUP BY ");
 			addlist(builder, groupBy);
+		}
+		if (having != null) {
+			builder.append( " HAVING "); 
+			builder.append(having);
 		}
 		
 		if (orderBy != null){
