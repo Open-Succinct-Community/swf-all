@@ -14,13 +14,16 @@ public abstract class AgentSeederTask implements Task{
 		if (!Agent.instance().isRunning(getAgentName())){
 			return;
 		}
-		List<Task> tasks = getTasks();
-		if (tasks.isEmpty()) {
-			AgentFinishUpTask task = new AgentFinishUpTask();
-			task.setAgentName(getAgentName());
-			executeDelayed(task);
-		}else {
-			executeDelayed(tasks);
+		AgentFinishUpTask finish = new AgentFinishUpTask(getAgentName());
+		try {
+			List<Task> tasks = getTasks();
+			if (tasks.isEmpty()) {
+				executeDelayed(finish);
+			}else {
+				executeDelayed(tasks);
+			}
+		}catch(Exception ex){
+			executeDelayed(finish);
 		}
 	}
 	public void executeDelayed(Task task) {
