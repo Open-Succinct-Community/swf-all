@@ -13,9 +13,9 @@ import com.venky.swf.db.Transaction;
 import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 
-public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thread{
-	private AsyncTaskManager<T> manager ;
-	public AsyncTaskWorker(AsyncTaskManager<T> asyncTaskManager, int instanceNumber) {
+public class AsyncTaskWorker extends Thread{
+	private AsyncTaskManager manager ;
+	public AsyncTaskWorker(AsyncTaskManager asyncTaskManager, int instanceNumber) {
 		super(asyncTaskManager.getClass().getSimpleName() + ":" + instanceNumber);
 		setDaemon(false);
 		this.manager = asyncTaskManager;
@@ -26,11 +26,11 @@ public class AsyncTaskWorker<T extends Task & Comparable<? super T>> extends Thr
 			cat.log(level, "Thread :" + getName() + ":" + message);
 		}
 	}
-	protected String getTaskIdentifier(T task){
+	protected <T extends Task> String getTaskIdentifier(T task){
 		return task.getClass().getName();
 	}
 	public void run(){
-		T task = null ;
+		Task task = null ;
 		while ((task = manager.next()) != null ){
 			log(Level.INFO,"Started Task:" + getTaskIdentifier(task));
 			Database db = null; 

@@ -27,6 +27,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.model.TABLE_NAME;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -179,26 +180,35 @@ public class Table<M extends Model> {
     public Class<M> getModelClass() {
         return modelClass;
     }
-    
-    public void dropTable(){
+    private void runDDL(DDL ddl){
+    	_runDML(ddl,true);
+    }
+    private void runDML(DataManupulationStatement q){
+    	_runDML(q,false);
+    }
+    private void _runDML(DataManupulationStatement q, boolean isDDL){
+    	boolean readOnly = ConnectionManager.instance().isPoolReadOnly(getPool());
     	Transaction txn = Database.getInstance().getCurrentTransaction();
-        DDL.DropTable q = new DDL.DropTable(getPool(),getRealTableName());
-        q.executeUpdate();
-        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
-        	txn.registerCommit();
+        
+    	if (!readOnly) {
+            q.executeUpdate();
+            if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
+            	txn.registerCommit();
+            }else {
+            	txn.commit();
+            }
         }else {
-        	txn.commit();
+        	cat.fine("Pool " + getPool() +" Skipped running" + q.getRealSQL());
         }
     }
+    
+    public void dropTable(){
+    	DDL.DropTable q = new DDL.DropTable(getPool(),getRealTableName());
+        runDDL(q);
+    }
     public void createTable() {
-        Transaction txn = Database.getInstance().getCurrentTransaction();
         CreateTable q = createTableQuery();
-        q.executeUpdate();
-        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
-        	txn.registerCommit();
-        }else {
-        	txn.commit();
-        }
+        runDDL(q);
     }
     private CreateTable createTableQuery(){
     	return createTableQuery(getRealTableName());
@@ -266,12 +276,10 @@ public class Table<M extends Model> {
         if (addedFields.isEmpty() && droppedColumns.isEmpty() && alteredFields.isEmpty()){
             return false;
         }
-        
-        Transaction txn = Database.getInstance().getCurrentTransaction();
         for (String columnName:droppedColumns){
             AlterTable q = new AlterTable(getPool(),getRealTableName());
             q.dropColumn(columnName);
-            q.executeUpdate();
+            runDDL(q);
         }
 
         boolean dropAndReCreateTable = false;
@@ -279,7 +287,7 @@ public class Table<M extends Model> {
             AlterTable q = new AlterTable(getPool(),getRealTableName());
         	ColumnDescriptor cd = reflector.getColumnDescriptor(fieldName);
             q.addColumn(cd.toString());
-            q.executeUpdate();
+            runDDL(q);
         }
         
         for (String fieldName:alteredFields){
@@ -295,34 +303,35 @@ public class Table<M extends Model> {
         	String columnName = cd.getName();
         	AlterTable q = new AlterTable(getPool(),getRealTableName());
         	q.addColumn("NEW_"+cd.toString());
-            q.executeUpdate();
+        	runDDL(q);
             
         	Update u = new Update(getPool(),getRealTableName());
         	u.setUnBounded("NEW_"+columnName, columnName);
-        	u.executeUpdate();
+        	runDML(u);
         	
         	q = new AlterTable(getPool(),getRealTableName());
         	q.dropColumn(columnName);
-            q.executeUpdate();
+        	runDDL(q);
             
             q = new AlterTable(getPool(),getRealTableName());
             q.addColumn(cd.toString());
-            q.executeUpdate();
+            runDDL(q);
             
             u = new Update(getPool(),getRealTableName());
         	u.setUnBounded(columnName,"NEW_" + columnName);
-        	u.executeUpdate();
-            
+        	runDML(u);
+        	
             q = new AlterTable(getPool(),getRealTableName());
         	q.dropColumn("NEW_" + columnName);
-            q.executeUpdate();
+        	runDDL(q);
+            
         }
 
         if (dropAndReCreateTable){
         	// Rare event. Drop and recreate table.
         	String tmpTable = "temp_"+getRealTableName();
         	CreateTable create = createTableQuery(tmpTable);
-        	create.executeUpdate();
+        	runDDL(create);
         	
         	SequenceSet<String> columns = new SequenceSet<String>(); 
         	columns.addAll(reflector.getRealColumns());
@@ -339,14 +348,14 @@ public class Table<M extends Model> {
             	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
             }
             insert.add(" from " + getRealTableName());
-            insert.executeUpdate();
+            runDML(insert);
             
         	
             DropTable drop = new DropTable(getPool(),getRealTableName());
-            drop.executeUpdate();
+            runDDL(drop);
             
             create = createTableQuery();
-            create.executeUpdate();
+            runDDL(create);
             
             insert = new DataManupulationStatement(getPool());
             insert.add("insert into ").add(getRealTableName()).add("(");
@@ -360,15 +369,10 @@ public class Table<M extends Model> {
             	insert.add(columnIterator.next()).add(columnIterator.hasNext()? "," : "");
             }
             insert.add(" from temp_" + getRealTableName());
-            insert.executeUpdate();
+            runDML(insert);
             
             drop = new DropTable(getPool(),"temp_"+getRealTableName());
-            drop.executeUpdate();
-        }
-        if (Database.getJdbcTypeHelper(getPool()).isAutoCommitOnDDL()) {
-        	txn.registerCommit();
-        }else {
-        	txn.commit();
+            runDDL(drop);
         }
         return true;
     }

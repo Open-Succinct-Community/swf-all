@@ -5,8 +5,6 @@ import java.util.Collection;
 
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
-import com.venky.swf.plugins.background.core.Task.Priority;
-import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 
 public class TaskManager{
@@ -24,53 +22,33 @@ public class TaskManager{
 		return _instance;
 	}
 
-	public void execute(Task task){
+	public <T extends Task> void execute(T task){
 		task.execute();
 	}
 	@Deprecated
-	public void executeDelayed(Task task) {
+	public <T extends Task> void executeDelayed(T task) {
 		executeAsync(task);
 	}
-	public void executeAsync(Task task){
-		executeAsync(Arrays.asList(task)); 
+	public <T extends Task>  void executeAsync(T task){
+		executeAsync(task,true); 
+	}
+
+	public <T extends Task> void executeAsync(T task,boolean persistTaskQueue){
+		executeAsync(Arrays.asList(task), persistTaskQueue);
 	}
 	
-	public void executeAsync(Collection<Task> tasks){
-		executeAsync(tasks, Priority.DEFAULT); 
+	public <T extends Task> void executeAsync(Collection<T> tasks){
+		executeAsync(tasks, true); 
 	}
-	
-	public void executeAsync(Task task,Priority priority){
-		executeAsync(Arrays.asList(task), priority);
-	}
-	
-	public void executeAsync(Collection<Task> tasks,Priority priority){
-		executeAsync(tasks, priority, true);
-	}
-	
-	public void executeAsync(Task task,boolean persistTaskQueue){
-		executeAsync(Arrays.asList(task),persistTaskQueue); 
-	}
-	
-	public void executeAsync(Collection<Task> tasks,boolean persistTaskQueue){
-		executeAsync(tasks, Priority.DEFAULT,persistTaskQueue); 
-	}
-	
-	public void executeAsync(Task task,Priority priority, boolean persistTaskQueue){
-		executeAsync(Arrays.asList(task), priority,persistTaskQueue);
-	}
-	
-	public void executeAsync(Collection<Task> tasks,Priority priority,boolean persistTaskQueue){
-		if (persistTaskQueue){
-			AsyncTaskManager.getInstance(DelayedTask.class).execute(tasks, priority);
-		}else {
-			AsyncTaskManager.getInstance(TaskHolder.class).execute(tasks, priority);
-		}
+
+	public <T extends Task> void executeAsync(Collection<T> tasks, boolean persistTaskQueue){
+		AsyncTaskManager.getInstance().execute(tasks, persistTaskQueue);
 	}
 	
 	public void shutdown(){
-		AsyncTaskManager.shutdownAll();
+		AsyncTaskManager.getInstance().shutdown();
 	}
 	public void wakeUp(){
-		AsyncTaskManager.wakeUpAll();
+		AsyncTaskManager.getInstance().wakeUp();
 	}
 }

@@ -4,11 +4,32 @@ import java.io.Serializable;
 
 import com.venky.cache.Cache;
 import com.venky.core.math.GCDFinder;
+import com.venky.swf.routing.Config;
 
 
 
-public interface Task extends Serializable{
+public interface Task extends Serializable , Comparable<Task>{
 	public void execute();
+	
+	default Priority getTaskPriority(){
+		return Priority.DEFAULT;
+	}
+	
+	default int getTaskId(){
+		return -1;
+	}
+	
+	@Override
+	default int compareTo(Task o) {
+		int ret  = getTaskPriority().compareTo(o.getTaskPriority()); 
+		if (ret == 0) {
+			ret = Integer.compare(getTaskId(), o.getTaskId());
+		}
+		if (ret == 0) {
+			ret = getClass().getName().compareTo(o.getClass().getName());
+		}	
+		return ret;
+	}
 	
 	public static enum Priority {
 		HIGH(-1),
@@ -23,14 +44,22 @@ public interface Task extends Serializable{
         public int getValue() { return value; }
 		
 	}
+	public static Priority getPriority(int value){ 
+		for (Priority p : Priority.values()){ 
+			if (value == p.getValue()) {
+				return p;
+			}
+		}
+		return Priority.DEFAULT;
+	}
 	public static interface PriorityWeightScheme { 
 		//public int getWeight(Priority priority);
-		
 		default public int getWeight(Priority priority){ 
-			return 1 - (priority.getValue());
+			return Config.instance().getIntProperty("swf.plugins.background.core.Task.Priority."+priority.toString()+".Weight", (2-priority.getValue()));
 		}
 		
 	}
+	
 	public static class NormalizedWeightScheme implements PriorityWeightScheme{
 		
 		public NormalizedWeightScheme(PriorityWeightScheme scheme){

@@ -2,26 +2,32 @@ package com.venky.swf.plugins.background.core;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TaskHolder implements Task, Comparable<TaskHolder>{
+public class TaskHolder implements Task {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 5587808806039003066L;
 
 	private Task task = null;
-	private Priority priority = null;
-	public Priority getPriority() {
-		return priority;
+	private Priority taskPriority = null;
+	private int taskId = -1; 
+	
+	@Override
+	public Priority getTaskPriority() {
+		return taskPriority;
 	}
-
-
-	private int id = -1; 
-
+	
+	@Override
+	public int getTaskId(){ 
+		return taskId;
+	}
+	
+	
 	private static AtomicInteger fakeIdGenerator = new AtomicInteger();
-	public TaskHolder(Task task, Priority priority){
+	public TaskHolder(Task task){
 		this.task = task;
-		this.priority = priority;
-		this.id = fakeIdGenerator.incrementAndGet();
+		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();
+		this.taskId = task.getTaskId() > 0 ? task.getTaskId() : fakeIdGenerator.incrementAndGet();
 	}
 	
 
@@ -29,18 +35,5 @@ public class TaskHolder implements Task, Comparable<TaskHolder>{
 	public void execute() {
 		task.execute();
 	}
-
-
-	@Override
-	public int compareTo(TaskHolder o) {
-		int ret  = getPriority().compareTo(o.getPriority()); 
-		if (ret == 0) {
-			ret = Integer.compare(id, o.id);
-		}
-		return ret;
-	}
-
-	
-	
 
 }

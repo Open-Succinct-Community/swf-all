@@ -70,9 +70,16 @@ public class ConnectionManager {
                     t.nextToken();//jdbc
                     pool = t.nextToken();//poolname
                 }
+                if (ObjectUtil.isVoid(pool)){
+                	pool = getDefaultPool(); //Treat blank as something else!
+                }
+                	
                 pools.add(pool);
             }
         }
+    }
+    public String getDefaultPool(){ 
+    	return Config.instance().getProperty("swf.jdbc.pool", "");
     }
 	public List<String> getPools(){
         return pools;

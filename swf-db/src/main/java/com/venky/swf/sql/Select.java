@@ -263,9 +263,11 @@ public class Select extends SqlStatement{
 		            if (this.orderBy != null){
 		            	sortResults = false;
 		            }
-	            	if (!wait && (!lock || (lock && !Database.getJdbcTypeHelper(getPool()).isNoWaitSupported())) && Database.getJdbcTypeHelper(getPool()).isQueryTimeoutSupported()){
+	            	if (!wait && 
+	            			(!lock || (lock && !Database.getJdbcTypeHelper(getPool()).isNoWaitSupported())) && 
+	            			Database.getJdbcTypeHelper(getPool()).isQueryTimeoutSupported()){
 	            		Config.instance().getLogger(getClass().getName()).fine("Setting Statement Time out");
-	            		st.setQueryTimeout(60);
+	            		st.setQueryTimeout(Config.instance().getIntProperty("swf.sql.Select.nowait.TimeOut",60));
 	            	}
 		            result = new SequenceSet<Record>();
 		        	ret = new ArrayList<M>();

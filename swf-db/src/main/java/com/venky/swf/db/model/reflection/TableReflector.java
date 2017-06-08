@@ -12,11 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.util.ObjectUtil;
 import com.venky.reflection.MethodSignatureCache;
 import com.venky.reflection.Reflector;
 import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.model.DBPOOL;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -43,6 +45,9 @@ public class TableReflector {
     	String tableName = Table.tableName(realModelClass);
     	DBPOOL dbpool = realModelClass.getAnnotation(DBPOOL.class);
     	String pool = dbpool == null ? "" : dbpool.value();
+    	if (ObjectUtil.isVoid(pool)){
+    		pool = ConnectionManager.instance().getDefaultPool();
+    	}
     	String tableKey = pool + "." + tableName;
     	
     	TableReflector reflector = tableReflectorByTableName.get(tableKey);

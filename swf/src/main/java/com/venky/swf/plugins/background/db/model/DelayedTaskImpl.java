@@ -8,31 +8,24 @@ import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
-import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.plugins.background.core.Task.Priority;
 import com.venky.swf.routing.Config;
 
-public class DelayedTaskImpl extends ModelImpl<DelayedTask> implements Comparable<DelayedTask>{
+public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 
 	public DelayedTaskImpl(DelayedTask proxy) {
 		super(proxy);
 	}
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public int compareTo(DelayedTask o2) {
-		int ret = 0 ;
-		DelayedTask o1 = getProxy();
-		ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
-		for (String field: DelayedTask.DEFAULT_ORDER_BY_COLUMNS){
-			if (ret == 0){
-				Comparable v1 = (Comparable)ref.get(o1,field);
-				Comparable v2 = (Comparable)ref.get(o2,field);
-				ret = v1.compareTo(v2);
-			}
-		}
-		
-		return ret;
+	
+	public Priority getTaskPriority(){ 
+		return Task.getPriority(getProxy().getPriority());
 	}
+	public int getTaskId(){
+		return getProxy().getId();
+	}
+
 	
 	public void execute(){
 		DelayedTask o = getProxy();

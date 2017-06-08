@@ -1,60 +1,35 @@
 package com.venky.swf.plugins.background.core;
 
-import java.util.Arrays;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.Bucket;
-import com.venky.swf.plugins.background.core.Task.Priority;
-import com.venky.swf.plugins.background.core.workers.DelayedTaskManager;
+import com.venky.swf.db.Database;
+import com.venky.swf.plugins.background.core.agent.Agent;
+import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 
-public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
-	@SuppressWarnings("rawtypes")
-	private static Map<Class, AsyncTaskManager> _instance = new HashMap<Class,AsyncTaskManager>();
-
-	@SuppressWarnings("unchecked")
-	public static <T extends Task & Comparable<? super T>> AsyncTaskManager<T> getInstance(Class<T> taskClass) {
-		AsyncTaskManager<T> tm = _instance.get(taskClass);
+public class AsyncTaskManager  {
+	
+	private static AsyncTaskManager tm  = null;
+	public static AsyncTaskManager getInstance() {
 		if (tm == null) {
-			synchronized (_instance) {
-				tm = _instance.get(taskClass);
-				if (tm == null) {
-					tm = buldTaskManager(taskClass);
-					_instance.put(taskClass, tm);
+			synchronized (AsyncTaskManager.class) {
+				if (tm == null){
+					tm = new AsyncTaskManager();
 				}
 			}
 		}
 		return tm;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <T extends Task & Comparable<? super T>> AsyncTaskManager<T> buldTaskManager(Class<T> taskClass) {
-		if (DelayedTask.class.isAssignableFrom(taskClass)) {
-			return (AsyncTaskManager<T>) new DelayedTaskManager();
-		} else if (TaskHolder.class.isAssignableFrom(taskClass)) {
-			return (AsyncTaskManager<T>) new AsyncTaskManager<TaskHolder>(){
-				
-				@Override
-				protected void pushAsyncTasks(Collection<Task> tasks, Priority priority) {
-					List<TaskHolder> taskHolders = new LinkedList<TaskHolder>();
-					for (Task task : tasks){
-						taskHolders.add(new TaskHolder(task, priority));
-					}
-					addAll(taskHolders);
-				}
-			};	
-		} else {
-			throw new RuntimeException("Don't know how tp build TaskManager for " + taskClass.getName());
-		}
 	}
 
 	protected AsyncTaskManager() {
@@ -69,7 +44,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	}
 	
 	public void addWorker(){
-		AsyncTaskWorker<T> worker = null;
+		AsyncTaskWorker worker = null;
 		incrementWorkerCount();
 		worker = createWorker();
 		workerThreads.add(worker);
@@ -86,7 +61,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	Bucket numWorkersToEvict = new Bucket();
 	public boolean evicted(){
 		synchronized (numWorkersToEvict) {
-			if (numWorkersToEvict.intValue() > 0 && Thread.currentThread() instanceof AsyncTaskWorker<?>){
+			if (numWorkersToEvict.intValue() > 0 && Thread.currentThread() instanceof AsyncTaskWorker){
 				if (workerThreads.remove(Thread.currentThread())){
 					numWorkersToEvict.decrement();
 				}
@@ -102,24 +77,25 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 	}
 
 	private AtomicInteger instanceNumber = new AtomicInteger();
-	public AsyncTaskWorker<T> createWorker() {
-		return new AsyncTaskWorker<T>(this, instanceNumber.incrementAndGet());
+	public AsyncTaskWorker createWorker() {
+		return new AsyncTaskWorker(this, instanceNumber.incrementAndGet());
 	}
 
-	private List<AsyncTaskWorker<T>> workerThreads = new Vector<>();
+	private List<AsyncTaskWorker> workerThreads = new Vector<>();
 	public int getNumWorkers(){
 		return workerThreads.size();
 	}
 
-	private Queue<T> queue = null;
+	private Queue<Task> queue = null;
 
-	protected Queue<T> queue() {
+	protected Queue<Task> queue() {
 		if (queue != null) {
 			return queue;
 		}
 		synchronized (this) {
-			if (queue == null)
-				queue = new PriorityQueue<T>();
+			if (queue == null) {
+				queue = new WeightedPriorityQueue();
+			}
 		}
 		return queue;
 	}
@@ -128,7 +104,7 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		private static final long serialVersionUID = -8216421138960049897L;
 	}
 
-	public void addAll(Collection<T> tasks) {
+	public void addAll(Collection<Task> tasks) {
 		if (tasks.isEmpty()) {
 			return;
 		}
@@ -166,8 +142,8 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		}
 	}
 
-	public T waitUntilNextTask() {
-		T dt = null;
+	public Task waitUntilNextTask() {
+		Task dt = null;
 		synchronized (queue) {
 			while (!evicted() && keepAlive() && queue.isEmpty() ) {
 				try {
@@ -190,9 +166,9 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		return dt;
 	}
 	
-	public T next() {
+	public Task next() {
 		decrementWorkerCount();
-		T task =  waitUntilNextTask();
+		Task task =  waitUntilNextTask();
 		if (task != null) {
 			incrementWorkerCount();
 		}
@@ -287,30 +263,42 @@ public abstract class AsyncTaskManager<T extends Task & Comparable<? super T>> {
 		}
 	}
 
-	public void execute(Task task, Priority priority) {
-		execute(Arrays.asList(task),priority);
+	public <T extends Task>  void execute(Collection<T> tasks){ 
+		execute(tasks, false);
 	}
-	public void execute(Collection<Task> tasks, Priority priority) {
+	
+	public <T extends Task> void execute(Collection<T> tasks, boolean persist){ 
 		if (getInitialNumWorkerThreads() == 0) {
 			for (Task task:tasks) {
 				task.execute();
 			}
 		} else {
-			pushAsyncTasks(tasks, priority);
+			pushAsyncTasks(tasks, persist);
 		}
 	}
 	
-	protected abstract void pushAsyncTasks(Collection<Task> task, Priority priority) ;
-	
-
-	public static void shutdownAll() {
-		AsyncTaskManager.getInstance(TaskHolder.class).shutdown();
-		AsyncTaskManager.getInstance(DelayedTask.class).shutdown();
+	protected <T extends Task> void pushAsyncTasks(Collection<T> tasks, boolean persist) {
+		if (!persist) {
+			List<Task> taskHolders = new LinkedList<Task>();
+			for (Task task : tasks){
+				taskHolders.add(new TaskHolder(task));
+			}
+			addAll(taskHolders);
+		}else {
+			for (Task task: tasks){ 
+				try {
+					DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+					ByteArrayOutputStream os = new ByteArrayOutputStream(); 
+					ObjectOutputStream oos = new ObjectOutputStream(os);
+					oos.writeObject(task);
+					de.setPriority(task.getTaskPriority().getValue());
+					de.setData(new ByteArrayInputStream(os.toByteArray()));
+					de.save();
+				} catch (IOException ex) {
+					throw new RuntimeException(task.getClass().getName() ,ex);
+				}
+			}
+			Agent.instance().start(new PersistedTaskPollingAgent.PersistedTaskPoller());
+		}
 	}
-
-	public static void wakeUpAll() {
-		AsyncTaskManager.getInstance(TaskHolder.class).wakeUp();
-		AsyncTaskManager.getInstance(DelayedTask.class).wakeUp();
-	}
-
 }

@@ -4,13 +4,14 @@ import java.io.InputStream;
 import java.io.Reader;
 
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.background.core.Task;
 
 @MENU("Admin")
-public interface DelayedTask extends Task, Model, Comparable<DelayedTask>{
+public interface DelayedTask extends Task, Model {
 	public InputStream getData();
 	public void setData(InputStream stream);
 	
@@ -25,9 +26,16 @@ public interface DelayedTask extends Task, Model, Comparable<DelayedTask>{
 	public Reader getLastError();
 	public void setLastError(Reader s);
 	
-	public void execute();
-	public static final String[] DEFAULT_ORDER_BY_COLUMNS = new String[] {"PRIORITY", "NUM_ATTEMPTS", "UPDATED_AT", "ID"}; //Field and column names are same.
-
 	
+	@IS_VIRTUAL
+	public Priority getTaskPriority();
+	
+	@IS_VIRTUAL
+	public int getTaskId();
+	
+	
+	public void execute();
+	
+	public static final String[] DEFAULT_ORDER_BY_COLUMNS = new String[] {"PRIORITY", "NUM_ATTEMPTS", "UPDATED_AT", "ID"}; //Field and column names are same.
 	
 }

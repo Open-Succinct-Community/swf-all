@@ -236,9 +236,6 @@ public class Database implements _IDatabase{
 		boolean dbModified = false;
 		loadTables(dbModified);
         for (String pool: tablesInPool.keySet()) {
-            if (ConnectionManager.instance().isPoolReadOnly(pool)) {
-                continue;
-            }
             for (Table<?> table : tablesInPool.get(pool).values()) {
             	if (table.isVirtual()){
             		continue;

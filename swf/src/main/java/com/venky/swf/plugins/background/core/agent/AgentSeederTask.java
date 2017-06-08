@@ -16,7 +16,7 @@ public abstract class AgentSeederTask implements Task{
 		}
 		AgentFinishUpTask finish = new AgentFinishUpTask(getAgentName());
 		try {
-			List<Task> tasks = getTasks();
+			List<? extends Task> tasks = getTasks();
 			if (tasks.isEmpty()) {
 				executeDelayed(finish);
 			}else {
@@ -26,14 +26,17 @@ public abstract class AgentSeederTask implements Task{
 			executeDelayed(finish);
 		}
 	}
-	public void executeDelayed(Task task) {
+	public <T extends Task> void executeDelayed(T task) {
 		executeDelayed(Arrays.asList(task));
 	}
-	public void executeDelayed(Collection<Task> tasks) {
+	public <T extends Task>void executeDelayed(Collection<T> tasks) {
 		TaskManager.instance().executeAsync(tasks,isAgentTaskQPersistent());
+		if (isAgentTaskQPersistent()){ 
+			Agent.instance().start(new PersistedTaskPollingAgent.PersistedTaskPoller());
+		}
 	}
 
-	public abstract List<Task> getTasks();
+	public abstract <T extends Task> List<T> getTasks();
 	public abstract String getAgentName();
 	protected abstract boolean isAgentTaskQPersistent();
 
