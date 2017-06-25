@@ -805,4 +805,5 @@ public class ModelInvocationHandler implements InvocationHandler {
     public boolean isDirty(){
     	return !getProxy().getRawRecord().getDirtyFields().isEmpty();
     }
+    
 }

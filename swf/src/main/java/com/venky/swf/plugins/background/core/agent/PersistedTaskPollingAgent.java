@@ -86,18 +86,21 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
 		@Override
 		public String getAgentName() {
-			return "PERSISTED_TASK_POLLER";
+			return PERSISTED_TASK_POLLER;
 		}
 
 		@Override
 		protected boolean isAgentTaskQPersistent() {
 			return false;
 		}
+
 	}
+	public static final String PERSISTED_TASK_POLLER = "PERSISTED_TASK_POLLER";
 
 	@Override
 	public AgentSeederTask createSeederTask() {
 		return new PersistedTaskPoller();
 	}
+
 
 }

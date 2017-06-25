@@ -46,7 +46,8 @@ public class ConnectionManager {
 		protected Class<?> getValue(String pool) {
 			String driver =  "[]";
 			try {
-				driver = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".driver"));
+				String realPool = ObjectUtil.isVoid(pool) ? getDefaultPool() : pool;
+				driver = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+realPool+".driver"));
 				return Class.forName(driver);
 			}catch (Exception e){
 				throw new RuntimeException("Pool " + pool + " driver not found " + driver, e);

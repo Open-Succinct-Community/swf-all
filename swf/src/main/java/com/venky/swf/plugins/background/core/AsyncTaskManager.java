@@ -298,7 +298,7 @@ public class AsyncTaskManager  {
 					throw new RuntimeException(task.getClass().getName() ,ex);
 				}
 			}
-			Agent.instance().start(new PersistedTaskPollingAgent.PersistedTaskPoller());
+			Database.getInstance().getCurrentTransaction().setAttribute(PersistedTaskPollingAgent.class.getName()+".trigger", true);
 		}
 	}
 }

@@ -31,13 +31,10 @@ public abstract class AgentSeederTask implements Task{
 	}
 	public <T extends Task>void executeDelayed(Collection<T> tasks) {
 		TaskManager.instance().executeAsync(tasks,isAgentTaskQPersistent());
-		if (isAgentTaskQPersistent()){ 
-			Agent.instance().start(new PersistedTaskPollingAgent.PersistedTaskPoller());
-		}
 	}
 
 	public abstract <T extends Task> List<T> getTasks();
 	public abstract String getAgentName();
 	protected abstract boolean isAgentTaskQPersistent();
-
+	
 }
