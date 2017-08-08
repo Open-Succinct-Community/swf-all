@@ -6,6 +6,7 @@ import java.util.List;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.user.User;
+import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 
 public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 	static {
@@ -20,17 +21,14 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		User u = (User)user;
 		if ("SELF_COMPANY_ID".equalsIgnoreCase(fieldName)){
 			ret = new ArrayList<Integer>();
-			ret.add(u.getCompanyId());
-			if (partial.getId() > 0 && partial.getCreatorUserId() == user.getId()){
+			List<UserCompany> ucs = u.getUserCompanies(); 
+			for (UserCompany uc :ucs){ 
+				ret.add(uc.getCompanyId());
+			}
+			if (partial.getId() > 0 && ret.contains(partial.getId())){
 				ret.add(partial.getId());
 			}
-		}else if ("CREATOR_USER_ID".equalsIgnoreCase(fieldName)){
-			if (partial.getId() == 0 ){
-				ret = new ArrayList<Integer>();
-				ret.add(user.getId());
-			}
 		}
-		
 		return ret;
 	}
 

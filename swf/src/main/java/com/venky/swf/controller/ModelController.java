@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.json.simple.JSONObject;
 
 import com.venky.cache.Cache;
+import com.venky.cache.UnboundedCache;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -42,6 +43,7 @@ import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
@@ -258,19 +260,26 @@ public class ModelController<M extends Model> extends Controller {
     
     private List<M> getChildrenFromParent(){
     	List<M> children = new ArrayList<M>();
-    	Class<? extends Model> parentClass = null;
-    	Method childGetter = null;
-		for (Method rmg : reflector.getReferredModelGetters()){
+    	Map<Class<? extends Model>,List<Method>> childListMethodsOnParentClass = new UnboundedCache<Class<? extends Model>, List<Method>>() {
+			private static final long serialVersionUID = 1040614841128288969L;
+
+			@Override
+			protected List<Method> getValue(Class<? extends Model> parentClass) {
+				return new ArrayList<>();
+			}
+		};
+    	
+    	for (Method rmg : reflector.getReferredModelGetters()){
 			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(rmg);
 			ModelReflector<? extends Model> ref = ModelReflector.instance(referredModelClass);
 			if (ref.isVirtual()){
 				continue;
 			}
 			for (Method cg : ref.getChildGetters()){
-				if (ref.getChildModelClass(cg).isAssignableFrom(reflector.getModelClass())){
-					parentClass = referredModelClass;
-					childGetter = cg;
-					break;
+				ModelReflector<? extends Model> childRef = ModelReflector.instance(ref.getChildModelClass(cg));
+				
+				if (StringUtil.equals(reflector.getTableName(),childRef.getTableName())){
+					childListMethodsOnParentClass.get(referredModelClass).add(cg);
 				}
 			}
 		}
@@ -282,16 +291,24 @@ public class ModelController<M extends Model> extends Controller {
         }
 		while(cInfoIter.hasNext()){
 			ControllerInfo info = cInfoIter.next();
-			if(info.getModelClass().isAssignableFrom(parentClass)){
-				Integer id = info.getId();
-				if (id == null){
-					continue;
-				}
-				Model parent = Database.getTable(info.getModelClass()).get(info.getId());
-				try {
-					children = (List<M>) childGetter.invoke(parent);
-				} catch (Exception e) {
-					//
+			for (Class<? extends Model> parentClass :childListMethodsOnParentClass.keySet()) {
+				String simpleModelName = info.getModelClass() ==null ? null : info.getModelClass().getSimpleName();
+				if(StringUtil.equals(parentClass.getSimpleName(),simpleModelName)){ 
+					//Name of  the model class is sacred and 
+					Integer id = info.getId();
+					if (id == null){
+						continue;
+					}
+					Model parent = Database.getTable(parentClass).get(info.getId());
+					for (Method childGetter :childListMethodsOnParentClass.get(parentClass)){
+						try {
+							children = (List<M>) childGetter.invoke(parent);
+							break;
+						} catch (Exception e) {
+							//
+						}
+					}
+					break;
 				}
 			}
 		}
@@ -848,11 +865,17 @@ public class ModelController<M extends Model> extends Controller {
     	Expression where = new Expression(referredModelReflector.getPool(),Conjunction.AND);
     	
     	where.add(getAutoCompleteBaseWhere(reflector, record, field));
-    	where.add(new Expression(referredModelReflector.getPool(),referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
-    			autoCompleteHelperFieldValue));
+    	if (!Database.getJdbcTypeHelper(referredModelReflector.getPool()).isVoid(currentValue)) {
+        	where.add(new Expression(referredModelReflector.getPool(), "ID", Operator.EQ, currentValue));
+    	}
+    	if (!referredModelReflector.isFieldVirtual(descriptionField)) {
+        	where.add(new Expression(referredModelReflector.getPool(),referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
+        			autoCompleteHelperFieldValue));
+    	}
+    	
     	@SuppressWarnings({ "rawtypes", "unchecked" })
 		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass,new Select.AccessibilityFilter());
-		
+    	
 		if (models.size() == 1){
 			referredModel = models.get(0);
 			currentValue = StringUtil.valueOf(referredModel.getId());

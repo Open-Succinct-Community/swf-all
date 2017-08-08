@@ -3,6 +3,9 @@ package com.venky.swf;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -91,25 +94,32 @@ public class JettyServer {
 		ServerConnector connector = new ServerConnector(server);
 		connector.setPort(this.port);
 
+		List<Connector> connectors = new ArrayList<>(); 
+		connectors.add(connector);
+		String keyStorePath = Config.instance().getProperty("swf.ssl.key.store.path");
+		if (keyStorePath == null ){
+			URL keystore = getClass().getClassLoader().getResource("config/keys/keystore.jks");
+			keyStorePath = keystore != null ? keystore.toExternalForm() : null ;
+		}
 		
-		HttpConfiguration https = new HttpConfiguration();
-		https.addCustomizer(new SecureRequestCustomizer());
-		SslContextFactory sslContextFactory = new SslContextFactory();
+		if (keyStorePath != null){
+			System.out.println("SSL Store" + keyStorePath);
+			HttpConfiguration https = new HttpConfiguration();
+			https.addCustomizer(new SecureRequestCustomizer());
+			SslContextFactory sslContextFactory = new SslContextFactory();
 
-		System.out.println("SSL Store" + Config.instance().getProperty("swf.ssl.key.store.path",getClass().getClassLoader().getResource("config/keys/keystore.jks").toExternalForm()));
-		sslContextFactory.setKeyStorePath(Config.instance().getProperty("swf.ssl.key.store.path",getClass().getClassLoader().getResource("config/keys/keystore.jks").toExternalForm()));
-		sslContextFactory.setKeyStorePassword(Config.instance().getProperty("swf.ssl.key.store.pass","venky12"));
+			sslContextFactory.setKeyStorePath(keyStorePath);
+			sslContextFactory.setKeyStorePassword(Config.instance().getProperty("swf.ssl.key.store.pass","venky12"));
+			
+			sslContextFactory.setKeyManagerPassword(Config.instance().getProperty("swf.ssl.key.manager.pass","venky12"));
+
+			ServerConnector sslConnector = new ServerConnector(server,
+					new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
+			sslConnector.setPort(this.port+363); // 80 + 363 = 443 ; convention
+			connectors.add(sslConnector);
+		}
 		
-		sslContextFactory.setKeyManagerPassword(Config.instance().getProperty("swf.ssl.key.manager.pass","venky12"));
-		/*
-		sslContextFactory.setTrustStorePath(sslContextFactory.getKeyStorePath());
-		sslContextFactory.setTrustStorePassword(Config.instance().getProperty("swf.ssl.key.manager.pass","venky12"));
-		*/
-		ServerConnector sslConnector = new ServerConnector(server,
-				new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
-		sslConnector.setPort(this.port+363); // 80 + 363 = 443 ; convention
-		
-		server.setConnectors(new Connector[]{connector,sslConnector});
+		server.setConnectors(connectors.toArray(new Connector[]{}));
 		
 	}
 

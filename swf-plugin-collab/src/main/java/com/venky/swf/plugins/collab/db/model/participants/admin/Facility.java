@@ -1,10 +1,8 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
-import java.math.BigDecimal;
 import java.util.List;
 
 import com.venky.geo.GeoLocation;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
-import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
@@ -20,10 +18,6 @@ public interface Facility extends CompanySpecific, GeoLocation, Model{
 	@UNIQUE_KEY
 	public String getName();
 	public void setName(String name);
-
-	@IS_NULLABLE(false)
-	@UNIQUE_KEY
-	public Integer getCompanyId();
 	
 	public String getAddressLine1();
 	public void setAddressLine1(String line1);
@@ -44,6 +38,7 @@ public interface Facility extends CompanySpecific, GeoLocation, Model{
 	public City getCity();
 
 	@PARTICIPANT("STATE")
+	@OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.FacilityStateSelectionProcessor")
 	public int getStateId();
 	public void setStateId(int stateId);
 	public State getState();
@@ -59,12 +54,5 @@ public interface Facility extends CompanySpecific, GeoLocation, Model{
 	public String getPincode();
 	public void setPincode(String pincode);
 	
-	public BigDecimal getLat(); 
-	public void setLat(BigDecimal latitude);
-	
-	public BigDecimal getLng();
-	public void setLng(BigDecimal longitude);
-
-
 	public List<FacilityUser> getFacilityUsers();
 }

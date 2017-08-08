@@ -237,7 +237,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	if (fieldName.endsWith("_ID")){
             	Method fieldGetter = childReflector.getFieldGetter(fieldName);
             	Method referredModelGetter = childReflector.getReferredModelGetterFor(fieldGetter);
-            	if (referredModelGetter != null && referredModelGetter.getReturnType().isAssignableFrom(modelClass)){
+            	if (referredModelGetter != null && ObjectUtil.equals(referredModelGetter.getReturnType().getSimpleName(),modelClass.getSimpleName())){
             		String columnName = childReflector.getColumnDescriptor(fieldName).getName();
             		expression.add(new Expression(childReflector.getPool(),columnName,Operator.EQ,proxy.getId()));
             	}

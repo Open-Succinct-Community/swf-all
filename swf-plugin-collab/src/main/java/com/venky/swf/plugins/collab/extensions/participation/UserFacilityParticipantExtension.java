@@ -1,7 +1,6 @@
 package com.venky.swf.plugins.collab.extensions.participation;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.venky.core.collections.SequenceSet;
@@ -52,43 +51,25 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					}
 				}
 			}else {
-				List<Facility> facilites = DataSecurityFilter.getRecordsAccessible(Facility.class,user);
-				List<Integer> facilityIds = DataSecurityFilter.getIds(facilites);
 				ret = new SequenceSet<Integer>();
-				if (facilityIds.isEmpty() || ( model.getFacilityId() > 0 && !facilityIds.contains(model.getFacilityId()))){
+				if (model.getFacilityId() > 0 && !model.getFacility().isAccessibleBy(user)){
 					return ret; 
 				}
 				//Facility is accessible or not passed.
 				
-				List<Integer> userIdsAlreadySubscribedToSomeFacility = new SequenceSet<Integer>();
-				for (Facility f : facilites){
+				Facility f = model.getFacility();
+				if (f != null ){ 
+					SequenceSet<Integer> subscribedUserIds = new SequenceSet<>();
 					for (FacilityUser fu : f.getFacilityUsers()){
-						userIdsAlreadySubscribedToSomeFacility.add(fu.getUserId());
+						subscribedUserIds.add(fu.getUserId());
 					}
+					SequenceSet<Integer> subscribableUserIds = new SequenceSet<>();
+					f.getCompany().getCompanyUsers().forEach((cu)->subscribableUserIds.add(cu.getUserId()));
+					subscribableUserIds.removeAll(subscribedUserIds);
+					ret.addAll(subscribableUserIds);
+				}else { 
+					ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class, user));
 				}
-				
-				Facility f = model.getFacility(); 
-				
-				List<User> allowedUsers = DataSecurityFilter.getRecordsAccessible(User.class,user);
-				
-				Iterator<User> aui = allowedUsers.iterator();
-				while( aui.hasNext() ){
-					User allowedUser = aui.next();
-					Integer companyId = ((com.venky.swf.plugins.collab.db.model.user.User)allowedUser).getCompanyId();
-					if (companyId == null){
-						aui.remove();
-					}else if (userIdsAlreadySubscribedToSomeFacility.contains(allowedUser.getId())){
-						aui.remove();
-					}else if (f != null){
-						if (f.getCompanyId() != companyId){
-							aui.remove();
-						}else if (!f.isAccessibleBy(allowedUser)){
-							aui.remove();
-						}
-					}
-				}
-				
-				ret = DataSecurityFilter.getIds(allowedUsers);
 			}
 		}
 		return ret;	

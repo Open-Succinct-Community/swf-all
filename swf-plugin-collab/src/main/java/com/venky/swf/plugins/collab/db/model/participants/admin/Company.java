@@ -22,7 +22,6 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.plugins.collab.db.model.user.User;
 
 public interface Company extends Model{
 	@COLUMN_NAME("ID")
@@ -35,6 +34,7 @@ public interface Company extends Model{
 	
 	@IS_VIRTUAL
 	public Company getSelfCompany();
+	
 	
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY
@@ -68,9 +68,6 @@ public interface Company extends Model{
 	
 	public List<Facility> getFacilities();
 	
-	@PARTICIPANT
-	public Integer getCreatorUserId();
-	
 	@CONNECTED_VIA("COMPANY_ID")
-	public List<User> getCompanyUsers();
+	public List<CompanyUser> getCompanyUsers();
 }

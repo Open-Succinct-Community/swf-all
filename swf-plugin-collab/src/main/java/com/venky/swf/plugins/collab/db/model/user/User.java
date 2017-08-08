@@ -1,6 +1,14 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
-import com.venky.swf.plugins.collab.db.model.CompanySpecific;
+import java.util.List;
 
-public interface User extends CompanySpecific , com.venky.swf.db.model.User{
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
+
+public interface User extends com.venky.swf.plugins.security.db.model.User{
+	@Deprecated
+	@HIDDEN
+	public Integer getCompanyId(); 
+	public void setCompanyId(Integer companyId);
+	
+	public List<UserCompany> getUserCompanies();
 }

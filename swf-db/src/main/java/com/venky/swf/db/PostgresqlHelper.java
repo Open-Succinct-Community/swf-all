@@ -122,6 +122,9 @@ public class PostgresqlHelper extends JdbcTypeHelper{
             registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
                             java.sql.Types.DECIMAL, "DECIMAL", 14, 8,false,false,
                             new BigDecimalConverter()));// also NUMERIC
+            registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
+                    java.sql.Types.NUMERIC, "DECIMAL", 14, 8,false,false,
+                    new BigDecimalConverter()));// also NUMERIC
 
             registerjdbcSQLType(Float.class, new TypeRef<Float>(java.sql.Types.REAL,
                             "REAL", 0, 0, false,false,new FloatConverter()));

@@ -244,7 +244,9 @@ public class Controller {
 	            	where.add(idExpression);
 	        	}
         	}
-    		where.add(new Expression(reflector.getPool(),columnName,Operator.LK,new BindVariable(reflector.getPool(),"%"+value+"%")));
+	        if (!reflector.isFieldVirtual(fieldName)) {
+	        	where.add(new Expression(reflector.getPool(),columnName,Operator.LK,new BindVariable(reflector.getPool(),"%"+value+"%")));
+	        }
     	}
         Select q = new Select().from(modelClass);
         q.where(where).orderBy(reflector.getOrderBy());
@@ -254,6 +256,11 @@ public class Controller {
         	M m = i.next();
         	if (!baseWhereClause.eval(m)){
         		i.remove();
+        	}else if (reflector.isFieldVirtual(fieldName)){
+        		String fieldValue = reflector.get(m, fieldName); 
+        		if (!ObjectUtil.isVoid(value) && !fieldValue.contains(value)) {
+        			i.remove();
+        		}
         	}
         }
         Method fieldGetter = reflector.getFieldGetter(fieldName);
