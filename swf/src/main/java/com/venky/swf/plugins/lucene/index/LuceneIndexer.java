@@ -21,6 +21,7 @@ import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
@@ -30,7 +31,6 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
-import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 

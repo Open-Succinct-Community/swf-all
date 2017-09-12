@@ -124,12 +124,16 @@ public class ModelReflector<M extends Model> {
 		return extensionPointsCache.get(prefix+"@"+suffix);
 	}
         
-	private final Class<M> modelClass  ;  
-	private final TableReflector reflector ;
+	private Class<M> modelClass  ;  
+	private TableReflector reflector ;
 	private ModelReflector(Class<M> modelClass,TableReflector reflector){
 		this.modelClass = modelClass;
 		this.reflector = reflector;
 		this.cat = Config.instance().getLogger(modelClass.getName());
+	}
+	
+	private ModelReflector() {
+		
 	}
 
 	public Class<M> getModelClass(){
@@ -728,6 +732,13 @@ public class ModelReflector<M extends Model> {
     }
 	public String getPool(){
 		return reflector.getPool();
+	}
+	public JdbcTypeHelper getJdbcTypeHelper() { 
+		return Database.getJdbcTypeHelper(getPool());
+	}
+	
+	public boolean isVoid(Object o) {
+		return getJdbcTypeHelper().isVoid(o);
 	}
 	
 	TimeZone zone = null;

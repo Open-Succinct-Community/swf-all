@@ -45,11 +45,14 @@ import com.venky.swf.routing.Config;
 
 public class ModelGeneratorMojo extends AbstractMojo {
 	
-	@Parameter(property="generate-model.srcdir",defaultValue="src/main/java")
+	@Parameter(property="srcDir",defaultValue="src/main/java")
 	File srcDir;
 	
 	@Parameter(property="pool",defaultValue="")
 	String pool;
+	
+	@Parameter(property="tableName",defaultValue="")
+	String tableName;
 	
 	@Parameter(property="project.build.sourceEncoding",defaultValue="UTF-8")
 	String encoding;
@@ -70,14 +73,19 @@ public class ModelGeneratorMojo extends AbstractMojo {
 	        	generateModelClass(directory, pool);
 	        }
         }
+        Database.getInstance().getCurrentTransaction().rollback(null);
+        Database.getInstance().close();
     }
     private void generateModelClass(File directory, String pool) throws MojoExecutionException {
-        for (Table<?> table: Database.getTables(pool).values()){
+	    for (Table<?> table: Database.getTables(pool).values()){
             generateModelClass(table, directory,pool);
         }
     }
     
     private void generateModelClass(Table<?> table,File directory,String pool) throws MojoExecutionException{
+    	if (!ObjectUtil.isVoid(this.tableName) && !ObjectUtil.equals(table.getTableName(), this.tableName)) {
+    		return;
+    	}
     	String simpleModelClassName = Table.getSimpleModelClassName(table.getTableName());
     	String fQModelClassName = null; 
     	StringBuilder packageName = new StringBuilder(Config.instance().getModelPackageRoots().get(0));
@@ -253,9 +261,9 @@ public class ModelGeneratorMojo extends AbstractMojo {
 			}
 			if (ref.isColumnDefaultQuoted()) {
 				StringTokenizer tok = new StringTokenizer(dbDefault, "'",false);
-				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,someValue=\""+tok.nextToken() +"\")";
+				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,args=\""+tok.nextToken() +"\")";
 			}else {
-				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,someValue=\""+dbDefault+"\")";
+				return "@COLUMN_DEF(value=StandardDefault.SOME_VALUE,args=\""+dbDefault+"\")";
 			}
 		}else {
 			return "@COLUMN_DEF(value=StandardDefault.NULL)";

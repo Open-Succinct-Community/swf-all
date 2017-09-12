@@ -132,6 +132,11 @@ public class MySqlHelper extends JdbcTypeHelper{
                             java.sql.Types.VARCHAR, "VARCHAR", 128, 0, true, true,
                             new StringConverter())); // ALSO CHAR, LONG VARCHAR
 
+            registerjdbcSQLType(String.class, new TypeRef<String>(
+                    java.sql.Types.CHAR, "VARCHAR", 128, 0, true, true,
+                    new StringConverter())); // ALSO CHAR, LONG VARCHAR
+
+            
             registerjdbcSQLType(Reader.class, new TypeRef<Reader>(java.sql.Types.CLOB,
                             "LONGTEXT", 0, 0, true, true, new ReaderConverter()));
 
@@ -140,6 +145,7 @@ public class MySqlHelper extends JdbcTypeHelper{
 
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
                             "LONGBLOB", 0, 0, true, true, new InputStreamConverter()));
+            
             
     
     }

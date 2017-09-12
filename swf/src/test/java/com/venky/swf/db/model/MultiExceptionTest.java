@@ -2,7 +2,7 @@ package com.venky.swf.db.model;
 
 import org.junit.Test;
 
-import com.venky.swf.exceptions.MultiException;
+import com.venky.core.util.MultiException;
 
 public class MultiExceptionTest {
 

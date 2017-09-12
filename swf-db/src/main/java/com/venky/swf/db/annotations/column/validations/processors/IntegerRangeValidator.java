@@ -1,9 +1,9 @@
 package com.venky.swf.db.annotations.column.validations.processors;
 
+import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.validations.IntegerRange;
-import com.venky.swf.exceptions.MultiException;
 
 public class IntegerRangeValidator extends FieldValidator<IntegerRange>{
 

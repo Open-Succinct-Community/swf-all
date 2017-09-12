@@ -2,10 +2,10 @@ package com.venky.swf.db.annotations.model.validations;
 
 import java.util.logging.Level;
 
+import com.venky.core.util.MultiException;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;

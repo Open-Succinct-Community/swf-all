@@ -4,9 +4,9 @@
  */
 package com.venky.swf.db.annotations.column.validations.processors;
 
+import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
-import com.venky.swf.exceptions.MultiException;
 
 /**
  *

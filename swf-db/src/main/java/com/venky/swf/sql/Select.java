@@ -220,7 +220,7 @@ public class Select extends SqlStatement{
 		return execute(modelInterface,maxRecords,lock,filter);
 	}
 	
-	private boolean isCacheable(ModelReflector<? extends Model> ref){
+	protected boolean isCacheable(ModelReflector<? extends Model> ref){
 		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null) ;
 	}
 	

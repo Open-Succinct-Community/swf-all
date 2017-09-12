@@ -121,9 +121,6 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 		sheet.setRepeatingColumns(new CellRangeAddress(rowNum.intValue(), rowNum.intValue(), 0, columnNum.intValue() -1 ));
-    	//TODO !! wb.setRepeatingRowsAndColumns(wb.getSheetIndex(sheet), 0, columnNum.intValue()-1, rowNum.intValue(), rowNum.intValue());
-    	
-    	
     	for (int i = 0 ; i < records.size() ; i ++ ){
     		M m = records.get(i);
     		rowNum.increment();

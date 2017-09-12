@@ -27,6 +27,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -54,7 +55,6 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
-import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Delete;
@@ -72,13 +72,18 @@ import com.venky.swf.sql.parser.SQLExpressionParser;
 public class ModelInvocationHandler implements InvocationHandler {
 
     private Record record = null;
-    private Model proxy = null;
-    private ModelReflector<? extends Model> reflector = null;
+    private Class<? extends Model> modelClass = null;
     private List<String> virtualFields = new IgnoreCaseList(false);
     private String modelName = null;
 
+    private transient Model proxy = null;
+    private transient ModelReflector<? extends Model> reflector = null;
+
 	@SuppressWarnings("unchecked")
 	public <M extends Model> ModelReflector<M> getReflector() {
+		if (reflector == null) { 
+			reflector = ModelReflector.instance(modelClass);
+		}
 		return (ModelReflector<M>) reflector;
 	}
 	
@@ -89,8 +94,22 @@ public class ModelInvocationHandler implements InvocationHandler {
 	public String getPool(){
 		return getReflector().getPool();
 	}
+	
+	public Class<? extends Model> getModelClass(){ 
+		return modelClass;
+	}
+	
+	
+	/**
+	 * Used for serialization.:
+	 */
+	protected ModelInvocationHandler() {
+		
+	}
 	public ModelInvocationHandler(Class<? extends Model> modelClass, Record record) {
         this.record = record;
+        this.modelClass = modelClass;
+        
         this.reflector = ModelReflector.instance(modelClass);
         this.modelName = Table.getSimpleModelClassName(reflector.getTableName());
         this.virtualFields = reflector.getVirtualFields();
@@ -98,7 +117,8 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
 	
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // Not Required. setProxy(getModelClass().cast(proxy));
+        // Not Required. 
+    	setProxy(getModelClass().cast(proxy));
         String mName = method.getName();
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
@@ -142,7 +162,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	}
         } else if (getReflector().getChildGetters().contains(method)) {
         	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
-	        	CONNECTED_VIA join = reflector.getAnnotation(method,CONNECTED_VIA.class);
+	        	CONNECTED_VIA join = getReflector().getAnnotation(method,CONNECTED_VIA.class);
 	        	if (join != null){
 	        		return getChildren(getReflector().getChildModelClass(method),join.value(),join.additional_join());
 	        	}else {
@@ -203,10 +223,10 @@ public class ModelInvocationHandler implements InvocationHandler {
 	        	timer.stop();
 	        }
     	}else {
-    		throw new NoSuchMethodException("Donot know how to execute " + reflector.getSignature(method));
+    		throw new NoSuchMethodException("Donot know how to execute " + getReflector().getSignature(method));
     	}
     }
-    private final SWFLogger cat = Config.instance().getLogger(getClass().getName()+"."+getModelName());
+    private transient final SWFLogger cat = Config.instance().getLogger(getClass().getName()+"."+getModelName());
 
     @SuppressWarnings("unchecked")
 	public <P extends Model> P getParent(Method parentGetter) {
@@ -214,7 +234,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	
     	String parentIdFieldName =  StringUtil.underscorize(parentGetter.getName().substring(3) +"Id");
     	
-    	Method parentIdGetter = this.reflector.getFieldGetter(parentIdFieldName);
+    	Method parentIdGetter = this.getReflector().getFieldGetter(parentIdFieldName);
     	
     	Integer parentId;
 		try {
@@ -274,7 +294,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     
     public <M extends Model> void setProxy(M proxy) {
-        this.proxy = proxy;
+    	if (this.proxy == null ) { 
+            this.proxy = proxy;
+    	}
     }
 
     @SuppressWarnings("unchecked")
@@ -381,7 +403,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
 	
 	private Class<?> getMethodImplClass(Method m){
-		return methodImplClassCache.get(reflector.getModelClass()).get(m);
+		return methodImplClassCache.get(getReflector().getModelClass()).get(m);
 	}
 	
 	private static Cache<Class<? extends Model>,Cache<Method,Class<?>>> methodImplClassCache = new Cache<Class<? extends Model>, Cache<Method,Class<?>>>() {
@@ -506,11 +528,11 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     
     protected boolean isModelValid(MultiException ex) {
-        List<String> fields = reflector.getEditableFields();
+        List<String> fields = getReflector().getEditableFields();
         boolean ret = true;
         for (String field : fields) {
         	MultiException fieldException = new MultiException();
-            if (!reflector.isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
+            if (!getReflector().isHouseKeepingField(field) && !isFieldValid(field,fieldException)) {
                 ex.add(fieldException);
                 ret = false;
             }
@@ -554,7 +576,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
     
     private <R extends Model> void callExtensions(String extnPointNameSuffix){
-    	for (String extnPoint: getExtensionPoints(reflector.getModelClass(), extnPointNameSuffix)){
+    	for (String extnPoint: getExtensionPoints(getReflector().getModelClass(), extnPointNameSuffix)){
     		Registry.instance().callExtensions(extnPoint, getProxy());
     	}
     }
@@ -576,6 +598,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         		proxy.setUpdaterUserId(null);
         	}
         }
+        ModelReflector<? extends Model> reflector = getReflector();
         for (String field:reflector.getRealFields()){
         	String columnName = reflector.getColumnDescriptor(field).getName();
         	if (record.get(columnName) == null){
@@ -724,7 +747,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         
         
         Record generatedValues = new Record(getPool());
-        Set<String> autoIncrementColumns = reflector.getAutoIncrementColumns();
+        Set<String> autoIncrementColumns = getReflector().getAutoIncrementColumns();
         assert (autoIncrementColumns.size() <= 1); // atmost one auto increment id column
         List<String> generatedKeys = new ArrayList<String>();
         

@@ -24,10 +24,10 @@ import com.venky.core.log.ExtendedLevel;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.util.MultiException;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
-import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
 

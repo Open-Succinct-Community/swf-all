@@ -6,10 +6,10 @@ import java.util.Stack;
 import com.venky.core.checkpoint.Checkpointed;
 import com.venky.core.checkpoint.MergeableMap;
 import com.venky.core.util.ExceptionUtil;
+import com.venky.core.util.MultiException;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
-import com.venky.swf.exceptions.MultiException;
 import com.venky.swf.routing.Config;
 
 /**

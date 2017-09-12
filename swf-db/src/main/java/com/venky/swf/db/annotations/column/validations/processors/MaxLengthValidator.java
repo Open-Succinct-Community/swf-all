@@ -4,8 +4,8 @@
  */
 package com.venky.swf.db.annotations.column.validations.processors;
 
+import com.venky.core.util.MultiException;
 import com.venky.swf.db.annotations.column.validations.MaxLength;
-import com.venky.swf.exceptions.MultiException;
 
 /**
  *
