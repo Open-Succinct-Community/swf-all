@@ -117,8 +117,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
 	
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // Not Required. 
-    	setProxy(getModelClass().cast(proxy));
+    	bootStrapProxy(getModelClass().cast(proxy));
         String mName = method.getName();
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
@@ -294,9 +293,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     
     public <M extends Model> void setProxy(M proxy) {
-    	if (this.proxy == null ) { 
-            this.proxy = proxy;
-    	}
+        this.proxy = proxy;
     }
 
     @SuppressWarnings("unchecked")
@@ -366,18 +363,23 @@ public class ModelInvocationHandler implements InvocationHandler {
 	public static <M extends Model> M getProxy(Class<M> modelClass, Record record) {
 		ModelReflector<M> ref = ModelReflector.instance(modelClass);
 		
-		List<Class<?>> modelImplClasses = getModelImplClasses(modelClass);		
 		
 		try {
 	    	ModelInvocationHandler mImpl = new ModelInvocationHandler(modelClass, record);
 	    	M m = modelClass.cast(Proxy.newProxyInstance(modelClass.getClassLoader(), ref.getClassHierarchies().toArray(new Class<?>[]{}), mImpl));
-	    	mImpl.setProxy(m);
-	    	for (Class<?> implClass: modelImplClasses){
-	    		mImpl.addModelImplObject(constructImpl(implClass, m));
-	    	}
+	    	mImpl.bootStrapProxy(m);
 	    	return m;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+	private <M extends Model> void bootStrapProxy(M m) {
+		if (proxy == null) {
+	    	setProxy(m);
+	        List<Class<?>> modelImplClasses = getModelImplClasses(modelClass);		
+	    	for (Class<?> implClass: modelImplClasses){
+	    		addModelImplObject(constructImpl(implClass, m));
+	    	}
 		}
 	}
 	@SuppressWarnings("unchecked")
@@ -397,7 +399,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 		}
 		throw new RuntimeException("Don't know how to instantiate " + implClass.getName());
 	}
-	private SequenceMap<Class<?>,Object> modelImplObjects = new SequenceMap<Class<?>,Object>();
+	private transient SequenceMap<Class<?>,Object> modelImplObjects = new SequenceMap<Class<?>,Object>();
 	private void addModelImplObject(Object o){
 		modelImplObjects.put(o.getClass(),o);
 	}
@@ -814,7 +816,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 		return (M)getRawRecord().clone().getAsProxy(getReflector().getModelClass());
     }
  
-    private Map<String,Object> txnProperties = new HashMap<String, Object>();
+    private transient Map<String,Object> txnProperties = new HashMap<String, Object>();
     public Object getTxnProperty(String name) { 
     	return txnProperties.get(name);
     }

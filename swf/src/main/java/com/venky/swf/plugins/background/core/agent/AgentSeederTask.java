@@ -3,9 +3,11 @@ package com.venky.swf.plugins.background.core.agent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.routing.Config;
 
 public abstract class AgentSeederTask implements Task{
 	private static final long serialVersionUID = 3385669580336293058L;
@@ -23,6 +25,7 @@ public abstract class AgentSeederTask implements Task{
 				executeDelayed(tasks);
 			}
 		}catch(Exception ex){
+			Config.instance().getLogger(getClass().getName()).log(Level.WARNING, "Failed To seed Agent", ex);
 			executeDelayed(finish);
 		}
 	}

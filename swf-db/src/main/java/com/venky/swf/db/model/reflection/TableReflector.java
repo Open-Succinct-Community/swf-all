@@ -167,7 +167,7 @@ public class TableReflector {
     		}		
 		}
     }
-    private MethodSignatureCache signatureCache = new MethodSignatureCache();
+    private transient MethodSignatureCache signatureCache = new MethodSignatureCache();
     public String getSignature(Method method){
     	return signatureCache.get(method);
     }

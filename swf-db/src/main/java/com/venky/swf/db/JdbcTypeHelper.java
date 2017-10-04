@@ -635,10 +635,10 @@ public abstract class JdbcTypeHelper {
         colTypeRefs.add(ref);
     }
 
-    public TypeRef<?> getTypeRef(Class<?> javaClass) {
+    public <T> TypeRef<T> getTypeRef(Class<T> javaClass) {
         TypeRef<?> ref = javaTypeRefMap.get(javaClass);
         if (ref != null) {
-            return ref;
+            return (TypeRef<T>) ref;
         }
         Timer loop = cat.startTimer("loop:" + javaClass.getName(), Config.instance().isTimerAdditive());
     	try {
@@ -646,7 +646,7 @@ public abstract class JdbcTypeHelper {
 	            if (key.isAssignableFrom(javaClass)) {
 	            	TypeRef<?> value = javaTypeRefMap.get(key);
 	            	javaTypeRefMap.put(key, value);
-	                return value;
+	                return (TypeRef<T>) value;
 	            }
 	        }
 	        return null;

@@ -78,7 +78,11 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
 			if (!jobs.isEmpty()){
-				jobs.add(new PersistedTaskPoller(lastRecordId));
+				if (jobs.size() < getMaxTasksToBuffer()) { 
+					jobs.add(new PersistedTaskPoller(lastRecordId));
+				}else {
+					jobs.add(new  AgentFinishUpTask(getAgentName()));
+				}
 			}
 
 			return jobs;

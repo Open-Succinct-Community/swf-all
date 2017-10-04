@@ -40,7 +40,10 @@ public class Agent {
 			if (builder == null){
 				throw new NullPointerException("Trying to register null builder for agent " + agentName);
 			}
-			agentSeederTaskBuilderMap.put(agentName, builder);
+			
+			if (!agentSeederTaskBuilderMap.containsKey(agentName)) {
+				agentSeederTaskBuilderMap.put(agentName, builder);
+			}
 		}
 	}
 	public void validateAgent(String agentName){
@@ -69,7 +72,7 @@ public class Agent {
 		
 	}
 	
-	public AgentStatus getStatus(String name){ 
+	private AgentStatus getStatus(String name){ 
 		ModelReflector<AgentStatus> ref = ModelReflector.instance(AgentStatus.class);
 		List<AgentStatus> list = new Select(true).from(AgentStatus.class).where(new Expression(ref.getPool(), "NAME" , Operator.EQ, name)).execute(AgentStatus.class);
 		AgentStatus status = null;
