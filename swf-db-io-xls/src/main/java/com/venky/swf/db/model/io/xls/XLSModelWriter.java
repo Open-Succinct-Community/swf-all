@@ -15,11 +15,14 @@ import java.util.Set;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.PrintSetup;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -157,12 +160,12 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write (record,into,fields,childfields,null);
 	}
 	public void alignTop(CellStyle style){
-		style.setAlignment(CellStyle.ALIGN_LEFT);
-		style.setVerticalAlignment(CellStyle.VERTICAL_TOP);
+		style.setAlignment(HorizontalAlignment.LEFT);
+		style.setVerticalAlignment(VerticalAlignment.TOP);
 	}
 	public void center(CellStyle style){
-		style.setAlignment(CellStyle.ALIGN_CENTER);
-		style.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+		style.setAlignment(HorizontalAlignment.LEFT);
+		style.setVerticalAlignment(VerticalAlignment.TOP);
 	}
 	private class StyleHelper {
 		CellStyle integerStyle;
@@ -183,7 +186,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			
 			headerStyle = wb.createCellStyle();
 			headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
-			headerStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
+			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 			headerStyle.setFont(font);
 			headerStyle.setWrapText(true);
 			center(headerStyle);
