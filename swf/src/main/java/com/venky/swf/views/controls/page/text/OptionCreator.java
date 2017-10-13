@@ -12,4 +12,5 @@ public abstract class OptionCreator<T> extends Control {
 	private static final long serialVersionUID = 2323739582878342507L;
 
 	public abstract T createOption(String text,String value);
+	
 }

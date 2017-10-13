@@ -608,6 +608,9 @@ public class Path implements _IPath{
     
     public MimeType getProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol");
+        if (ObjectUtil.isVoid(apiprotocol)) {
+        	apiprotocol = getRequest().getHeader("content-type");
+        }
         return Path.getProtocol(apiprotocol);
     }
     public static MimeType getProtocol(String apiprotocol){

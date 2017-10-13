@@ -14,9 +14,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -353,13 +355,21 @@ public class ModelController<M extends Model> extends Controller {
     protected View show(M record){
     	View view = null ;
 		if (integrationAdaptor != null){
-			view = integrationAdaptor.createResponse(getPath(),record);
+			view = integrationAdaptor.createResponse(getPath(),record,null,getIgnoredParentModels(), getIncludedChildModelFields());
 		}else {
 			view = dashboard(createModelShowView(record));
 		}
     	return view;
     }
-    protected ModelShowView<M> createModelShowView(M record){
+    protected Set<Class<? extends Model>> getIgnoredParentModels() {
+		return new HashSet<>();
+	}
+
+	protected Map<Class<? extends Model>, List<String>> getIncludedChildModelFields() {
+		return new HashMap<>();
+	}
+
+	protected ModelShowView<M> createModelShowView(M record){
     	return constructModelShowView(getPath(),record);
     }
     protected ModelShowView<M> constructModelShowView(Path path, M record){

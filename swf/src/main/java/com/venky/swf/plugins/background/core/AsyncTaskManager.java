@@ -278,6 +278,9 @@ public class AsyncTaskManager  {
 	}
 	
 	protected <T extends Task> void pushAsyncTasks(Collection<T> tasks, boolean persist) {
+		if (tasks.isEmpty()) {
+			return;
+		}
 		if (!persist) {
 			List<Task> taskHolders = new LinkedList<Task>();
 			for (Task task : tasks){

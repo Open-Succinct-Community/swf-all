@@ -51,6 +51,27 @@ public class Select extends OptionCreator<Option>{
     	}
     }
     
+    public void setReadOnly(final boolean readonly){
+    	super.setReadOnly(readonly);
+    	for (_IControl control:getContainedControls()){
+    		if (control instanceof Option){
+    			Option o = (Option)control;
+    			if (readonly) {
+        			if (ObjectUtil.equals(o.getProperty("selected"),"selected")) {
+        				o.setEnabled(true);
+        			}else {
+        				o.setEnabled(false);
+        			}
+    	    	}else {
+    	    		o.setEnabled(true);
+	    		}
+    		}
+    	}
+    	
+    }
+    public boolean isReadOnly(){
+    	return super.isReadOnly();
+    }  
     public String getValue(){
     	String value = null;
     	for (_IControl control:getContainedControls()){
