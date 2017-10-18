@@ -16,3 +16,4 @@ url=`grep ^swf.jdbc${urlname}url= src/main/resources/config/swf.properties|cut -
 user=`grep ^swf.jdbc${urlname}userid= src/main/resources/config/swf.properties|cut -f2- -d '='`
 password=`grep ^swf.jdbc${urlname}password= src/main/resources/config/swf.properties|cut -f2- -d '='`
 fi
+
