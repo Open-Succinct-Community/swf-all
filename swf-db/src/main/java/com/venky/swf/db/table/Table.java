@@ -30,6 +30,7 @@ import com.venky.swf.db.annotations.model.TABLE_NAME;
 import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Config;
@@ -645,7 +646,10 @@ public class Table<M extends Model> {
 		if (fullModel == null){
 			fullModel = partiallyFilledModel;
 		}else {
-			if (!fullModel.isAccessibleBy(Database.getInstance().getCurrentUser())){
+            User loggedInUser = Database.getInstance().getCurrentUser();
+
+			if (loggedInUser != null &&  !fullModel.isAccessibleBy(loggedInUser)){
+			    //logged in user is null during login and if integration adaptor is used.
 				throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by "+ getReflector().get(fullModel,getReflector().getDescriptionField()) + " cannot be  modified.");
 			}
 			Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();

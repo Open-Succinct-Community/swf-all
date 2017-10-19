@@ -1,6 +1,7 @@
 package com.venky.swf.db.model;
 
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.date.DateUtils;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
@@ -34,11 +36,13 @@ public class UserImpl extends ModelImpl<User>{
 		super(user);
 	}
 	public void generateApiKey(){
+	    User user = getProxy();
 		StringBuilder key = new StringBuilder();
 		key.append(getProxy().getId()).append(":").append(getProxy().getName()).append(":").append(getProxy().getPassword()).append(":").append(System.currentTimeMillis());
 		String encryptedKey = Encryptor.encrypt(key.toString());
-		getProxy().setApiKey(encryptedKey);
-		getProxy().save();
+		user.setApiKey(encryptedKey);
+		user.setApiKeyGeneratedTs(new Timestamp(System.currentTimeMillis()));
+		user.save();
 	}
 	
 	public String getChangePassword(){
@@ -61,14 +65,29 @@ public class UserImpl extends ModelImpl<User>{
 				ret = ObjectUtil.equals(user.getPassword(),password);
 				if (!ret){
 					Config.instance().getLogger(getClass().getName()).fine("Password mismatch '" + password + "' <> '" + user.getPassword() + "'");
-				}
+				}else if (getNumMinutesToKeyExpiration() < 0 ) {
+                    generateApiKey();
+                }
 			}
 		}catch (AccessDeniedException ex){
 			ret  = false;
 		}
 		return ret;
 	}
-	
+
+	public int getNumMinutesToKeyExpiration(){
+        int keyLifeInMinutes = Config.instance().getIntProperty("api.key.expiration.days",30) * 24 * 60;
+        User user = getProxy();
+	    if (user.getApiKeyGeneratedTs() == null){
+	        //Backward compatibility
+            return keyLifeInMinutes;
+        }
+        if (user.getApiKey() == null){
+	        return -1; //Treat as expired.
+        }
+        int keyLivedMinutes = DateUtils.compareToMinutes(System.currentTimeMillis(),user.getApiKeyGeneratedTs().getTime());
+        return keyLifeInMinutes - keyLivedMinutes;
+    }
 	
 	private Cache<Class<? extends Model>, SequenceSet<String>> participantExtensionPointsCache = new Cache<Class<? extends Model>, SequenceSet<String>>() {
 		/**

@@ -4,6 +4,7 @@
  */
 package com.venky.swf.db.model;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +57,10 @@ public interface User extends Model{
     @EXPORTABLE(false)
     public String getApiKey();
     public void setApiKey(String key);
+
+    @IS_NULLABLE
+    public Timestamp getApiKeyGeneratedTs();
+    public void setApiKeyGeneratedTs(Timestamp ts);
 
     @IS_VIRTUAL
     @COLUMN_SIZE(60)

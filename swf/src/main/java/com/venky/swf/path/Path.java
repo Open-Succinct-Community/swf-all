@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
@@ -584,14 +586,25 @@ public class Path implements _IPath{
         }
 
         if (user == null){
+            IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
+
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
-                String username = getRequest().getParameter("name");
+                String username = null;
+                String password = null;
+                if (adaptor == null){
+                    username = getRequest().getParameter("name");
+                    password = getRequest().getParameter("password");
+                }else {
+                    List<User> input = adaptor.readRequest(this);
+                    if (input.size() == 1){
+                        username = input.get(0).getName();
+                        password = input.get(0).getPassword();
+                    }
+                }
                 if (!ObjectUtil.isVoid(username)){
                     Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
                     user = getUser("name",username);
                     Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    
-                    String password = getRequest().getParameter("password");
                     if (user != null && user.authenticate(password)){
                         createUserSession(user,autoInvalidate);
                     }else {
@@ -607,7 +620,7 @@ public class Path implements _IPath{
     }
     
     public MimeType getProtocol(){
-        String apiprotocol = getRequest().getHeader("ApiProtocol");
+        String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)) {
         	apiprotocol = getRequest().getHeader("content-type");
         }

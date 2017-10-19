@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/swf/swf.iml" filepath="$PROJECT_DIR$/swf/swf.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-all.iml" filepath="$PROJECT_DIR$/swf-all.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-archetype/swf-archetype.iml" filepath="$PROJECT_DIR$/swf-archetype/swf-archetype.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-db/swf-db.iml" filepath="$PROJECT_DIR$/swf-db/swf-db.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-db-io-json/swf-db-io-json.iml" filepath="$PROJECT_DIR$/swf-db-io-json/swf-db-io-json.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-db-io-xls/swf-db-io-xls.iml" filepath="$PROJECT_DIR$/swf-db-io-xls/swf-db-io-xls.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-db-io-xml/swf-db-io-xml.iml" filepath="$PROJECT_DIR$/swf-db-io-xml/swf-db-io-xml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-maven-plugin/swf-maven-plugin.iml" filepath="$PROJECT_DIR$/swf-maven-plugin/swf-maven-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-plugin-archetype/swf-plugin-archetype.iml" filepath="$PROJECT_DIR$/swf-plugin-archetype/swf-plugin-archetype.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-plugin-bugs/swf-plugin-bugs.iml" filepath="$PROJECT_DIR$/swf-plugin-bugs/swf-plugin-bugs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-plugin-collab/swf-plugin-collab.iml" filepath="$PROJECT_DIR$/swf-plugin-collab/swf-plugin-collab.iml" />
+      <module fileurl="file://$PROJECT_DIR$/swf-plugin-mail/swf-plugin-mail.iml" filepath="$PROJECT_DIR$/swf-plugin-mail/swf-plugin-mail.iml" />
+    </modules>
+  </component>
+</project>

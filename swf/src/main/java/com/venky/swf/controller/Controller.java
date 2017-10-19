@@ -10,12 +10,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -23,6 +18,7 @@ import java.util.zip.ZipOutputStream;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
+import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -132,7 +128,16 @@ public class Controller {
     
     protected View authenticate(){
     	if (getPath().isRequestAuthenticated()){
-    		return new RedirectorView(getPath(), loginSuccessful());
+            if (getPath().getProtocol() == MimeType.TEXT_HTML) {
+                return new RedirectorView(getPath(), loginSuccessful());
+            }else {
+                IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class,FormatHelper.getFormatClass(getPath().getProtocol()));
+                if (adaptor == null){
+                    throw new RuntimeException(" content-type in request header should be " + MimeType.APPLICATION_JSON + " or " + MimeType.APPLICATION_XML);
+                }
+                return adaptor.createResponse(getPath(),(User)getSessionUser(), Arrays.asList("API_KEY"));
+            }
+
     	}else {
         	return createLoginView(StatusType.ERROR, "Login incorrect!");
     	}
