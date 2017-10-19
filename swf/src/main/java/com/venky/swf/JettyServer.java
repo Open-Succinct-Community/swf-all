@@ -42,9 +42,9 @@ public class JettyServer {
 		
 		String pidfile = System.getProperty("swf.pidfile");
 		if (!ObjectUtil.isVoid(pidfile)){
-			PrintWriter pw = new PrintWriter(new FileWriter(pidfile, true));
+			PrintWriter pw = new PrintWriter(new FileWriter(pidfile, false));
 			String name = ManagementFactory.getRuntimeMXBean().getName();
-			pw.write(name);
+			pw.write(name.split("@")[0]);
 			pw.close();
 		}
 		
