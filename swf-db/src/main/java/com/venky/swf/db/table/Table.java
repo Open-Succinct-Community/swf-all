@@ -630,7 +630,12 @@ public class Table<M extends Model> {
     }
 	
 	public M getRefreshed(M partiallyFilledModel){
-		M fullModel = null;
+        User loggedInUser = Database.getInstance().getCurrentUser();
+        if (loggedInUser == null) {
+            return partiallyFilledModel;
+        }
+
+        M fullModel = null;
 		if (partiallyFilledModel.getId() > 0) {
 			fullModel = Database.getTable(getModelClass()).get(partiallyFilledModel.getId());
 		}else {
@@ -646,10 +651,7 @@ public class Table<M extends Model> {
 		if (fullModel == null){
 			fullModel = partiallyFilledModel;
 		}else {
-            User loggedInUser = Database.getInstance().getCurrentUser();
-
-			if (loggedInUser != null &&  !fullModel.isAccessibleBy(loggedInUser)){
-			    //logged in user is null during login and if integration adaptor is used.
+			if (!fullModel.isAccessibleBy(Database.getInstance().getCurrentUser())){
 				throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by "+ getReflector().get(fullModel,getReflector().getDescriptionField()) + " cannot be  modified.");
 			}
 			Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();

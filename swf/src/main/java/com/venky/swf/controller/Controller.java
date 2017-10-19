@@ -127,20 +127,24 @@ public class Controller {
 
     
     protected View authenticate(){
-    	if (getPath().isRequestAuthenticated()){
-            if (getPath().getProtocol() == MimeType.TEXT_HTML) {
+        boolean authenticated = getPath().isRequestAuthenticated();
+        if (getPath().getProtocol() == MimeType.TEXT_HTML) {
+            if (authenticated) {
                 return new RedirectorView(getPath(), loginSuccessful());
             }else {
-                IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class,FormatHelper.getFormatClass(getPath().getProtocol()));
-                if (adaptor == null){
-                    throw new RuntimeException(" content-type in request header should be " + MimeType.APPLICATION_JSON + " or " + MimeType.APPLICATION_XML);
-                }
-                return adaptor.createResponse(getPath(),(User)getSessionUser(), Arrays.asList("API_KEY"));
+                return createLoginView(StatusType.ERROR, "Login incorrect!");
             }
-
-    	}else {
-        	return createLoginView(StatusType.ERROR, "Login incorrect!");
-    	}
+        }else {
+            IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class,FormatHelper.getFormatClass(getPath().getProtocol()));
+            if (adaptor == null){
+                throw new RuntimeException(" content-type in request header should be " + MimeType.APPLICATION_JSON + " or " + MimeType.APPLICATION_XML);
+            }
+            if (authenticated) {
+                return adaptor.createResponse(getPath(), (User) getSessionUser(), Arrays.asList("API_KEY"));
+            }else {
+                return adaptor.createStatusResponse(getPath(),new RuntimeException("Login incorrect!"));
+            }
+        }
     }
 	protected final HtmlView createLoginView(StatusType statusType, String text){
 		invalidateSession();
