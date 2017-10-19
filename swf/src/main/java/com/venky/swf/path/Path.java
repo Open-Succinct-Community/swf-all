@@ -586,7 +586,10 @@ public class Path implements _IPath{
         }
 
         if (user == null){
-            IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
+            IntegrationAdaptor<User,?> adaptor = null;
+            if (getProtocol() != MimeType.TEXT_HTML) {
+                adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
+            }
 
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
                 String username = null;
