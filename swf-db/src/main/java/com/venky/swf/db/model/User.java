@@ -59,6 +59,9 @@ public interface User extends Model{
     public void setApiKey(String key);
 
     @IS_NULLABLE
+    @HIDDEN
+    @EXPORTABLE(false)
+    @COLUMN_DEF(StandardDefault.NULL)
     public Timestamp getApiKeyGeneratedTs();
     public void setApiKeyGeneratedTs(Timestamp ts);
 
