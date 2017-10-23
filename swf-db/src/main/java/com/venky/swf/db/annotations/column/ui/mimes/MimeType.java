@@ -108,6 +108,14 @@ public enum MimeType {
 			return false;
 		}
 	},
+    APPLICATION_PDF() {
+        public String toString(){
+            return "application/pdf";
+        }
+        public boolean isImage(){
+            return false;
+        }
+    },
 	;
 
 	public abstract boolean isImage();
