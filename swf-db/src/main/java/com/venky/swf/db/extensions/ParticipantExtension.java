@@ -21,7 +21,12 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		instance.ref = ModelReflector.instance(modelClass);
 		Registry.instance().registerExtension(User.GET_PARTICIPATION_OPTION + "." + modelClass.getSimpleName() , instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(ParticipantExtension<M> instance){
+        Class<M> modelClass = getModelClass(instance);
+        instance.modelClass = modelClass;
+        instance.ref = ModelReflector.instance(modelClass);
+        Registry.instance().deregisterExtension(User.GET_PARTICIPATION_OPTION + "." + modelClass.getSimpleName() , instance);
+    }
 	
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(ParticipantExtension<M> instance){

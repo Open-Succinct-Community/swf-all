@@ -10,7 +10,9 @@ public abstract class AfterModelValidateExtension<M extends Model> implements Ex
 	protected static <M extends Model> void registerExtension(AfterModelValidateExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.validate", instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(AfterModelValidateExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".after.validate", instance);
+    }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelValidateExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();

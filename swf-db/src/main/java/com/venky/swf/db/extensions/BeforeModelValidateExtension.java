@@ -10,7 +10,9 @@ public abstract class BeforeModelValidateExtension<M extends Model> implements E
 	protected static <M extends Model> void registerExtension(BeforeModelValidateExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.validate", instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(BeforeModelValidateExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".before.validate", instance);
+    }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelValidateExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();

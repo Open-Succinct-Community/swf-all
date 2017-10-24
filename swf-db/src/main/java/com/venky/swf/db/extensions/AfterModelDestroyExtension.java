@@ -11,7 +11,9 @@ public abstract class AfterModelDestroyExtension<M extends Model> implements Ext
 	protected static <M extends Model> void registerExtension(AfterModelDestroyExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.destroy", instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(AfterModelDestroyExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".after.destroy", instance);
+    }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelDestroyExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();

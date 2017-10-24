@@ -10,7 +10,10 @@ public abstract class AfterModelSaveExtension<M extends Model> implements Extens
 	protected static <M extends Model> void registerExtension(AfterModelSaveExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.save", instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(AfterModelSaveExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".after.save", instance);
+    }
+
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelSaveExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();

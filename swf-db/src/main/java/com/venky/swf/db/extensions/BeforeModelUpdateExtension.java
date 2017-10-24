@@ -10,7 +10,9 @@ public abstract class BeforeModelUpdateExtension<M extends Model> implements Ext
 	protected static <M extends Model> void registerExtension(BeforeModelUpdateExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.update", instance);
 	}
-	
+    protected static <M extends Model> void deregisterExtension(BeforeModelUpdateExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".before.update", instance);
+    }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelUpdateExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();

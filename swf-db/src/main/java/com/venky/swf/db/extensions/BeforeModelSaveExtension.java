@@ -11,7 +11,9 @@ public abstract class BeforeModelSaveExtension<M extends Model> implements Exten
 	protected static <M extends Model> void registerExtension(BeforeModelSaveExtension<M> instance){
 		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.save", instance);
 	}
-
+    protected static <M extends Model> void deregisterExtension(BeforeModelSaveExtension<M> instance){
+        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".before.save", instance);
+    }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelSaveExtension<M> instance){
 		ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
