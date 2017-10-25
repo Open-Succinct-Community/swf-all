@@ -142,7 +142,7 @@ public class Controller {
             if (authenticated) {
                 return adaptor.createResponse(getPath(), (User) getSessionUser(), Arrays.asList("API_KEY"));
             }else {
-                return adaptor.createStatusResponse(getPath(),new RuntimeException("Login incorrect!"));
+                throw new RuntimeException("Login incorrect!");
             }
         }
     }
