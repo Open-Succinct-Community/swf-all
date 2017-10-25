@@ -216,7 +216,7 @@ public class Router extends AbstractHandler {
 	            }
 	            Timer viewWriteTimer = cat.startTimer(target+".view_write", Config.instance().isTimerAdditive());
 	            try {
-	            	view.write();
+	            	view.write(false);
 	            }finally{
 	            	viewWriteTimer.stop();
 	            }
@@ -248,7 +248,7 @@ public class Router extends AbstractHandler {
 	        	}else {
 	        		ev = createExceptionView(p, e);
 	        	}
-	        	ev.write();
+	        	ev.write(true);
 	        }finally {
 	        	if (db != null ){
 	        		db.close();

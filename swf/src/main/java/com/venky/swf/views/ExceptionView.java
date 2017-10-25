@@ -30,7 +30,7 @@ public class ExceptionView extends View{
         this.th = th;
     }
 
-	public void write() throws IOException {
+	public void write(boolean error) throws IOException {
         final StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
         if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){
@@ -47,10 +47,10 @@ public class ExceptionView extends View{
 		            lbl.setText(sw.toString());
 		            b.addControl(lbl);
 				}
-			}.write();
+			}.write(error);
     	}else {
     		IntegrationAdaptor<SWFHttpResponse, ?> responseAdaptor = IntegrationAdaptor.instance(SWFHttpResponse.class, FormatHelper.getFormatClass(p.getProtocol()));
-    		responseAdaptor.createStatusResponse((Path) getPath(), th).write();
+    		responseAdaptor.createStatusResponse((Path) getPath(), th).write(error);
     	}
 		
 	}

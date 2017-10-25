@@ -4,5 +4,5 @@ import java.io.IOException;
 
 public interface _IView {
 	public boolean isBeingRedirected();
-	public void write() throws IOException;
+	public void write(boolean error) throws IOException;
 }

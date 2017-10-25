@@ -58,8 +58,9 @@ public abstract class HtmlView extends View{
     	}
     	return links;
     }
-    
-    public void write() throws IOException{ 
+
+    @Override
+    public void write(boolean error) throws IOException{
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);

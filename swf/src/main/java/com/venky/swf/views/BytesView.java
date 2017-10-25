@@ -41,7 +41,7 @@ public class BytesView extends View{
         	}
         }
     }
-    public void write() throws IOException {
+    public void write(boolean error) throws IOException {
         HttpServletResponse response = getPath().getResponse();
         response.setContentType(contentType);
         if (addnlResponseHeaders != null){
@@ -49,7 +49,11 @@ public class BytesView extends View{
         		response.addHeader(key, addnlResponseHeaders.get(key));
         	}
         }
-        response.setStatus(HttpServletResponse.SC_OK);
+        if (!error){
+            response.setStatus(HttpServletResponse.SC_OK);
+        }else {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
         response.getOutputStream().write(bytes);
 
     }
