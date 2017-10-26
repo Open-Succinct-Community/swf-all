@@ -8,9 +8,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.SWFHttpResponse;
+import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
@@ -18,6 +20,8 @@ import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.text.Label;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  *
@@ -29,8 +33,15 @@ public class ExceptionView extends View{
         super(path);
         this.th = th;
     }
+    public void write() throws IOException{
+        int httpStatus = HttpServletResponse.SC_BAD_REQUEST;
+        if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof AccessDeniedException ) {
+            httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+        }
+        write(httpStatus);
+    }
 
-	public void write(boolean error) throws IOException {
+	public void write(int httpStatus) throws IOException {
         final StringWriter sw = new StringWriter();
         PrintWriter w = new PrintWriter(sw);
         if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(th.getMessage())){
@@ -47,10 +58,10 @@ public class ExceptionView extends View{
 		            lbl.setText(sw.toString());
 		            b.addControl(lbl);
 				}
-			}.write(error);
+			}.write(httpStatus);
     	}else {
     		IntegrationAdaptor<SWFHttpResponse, ?> responseAdaptor = IntegrationAdaptor.instance(SWFHttpResponse.class, FormatHelper.getFormatClass(p.getProtocol()));
-    		responseAdaptor.createStatusResponse((Path) getPath(), th).write(error);
+    		responseAdaptor.createStatusResponse((Path) getPath(), th).write(httpStatus);
     	}
 		
 	}

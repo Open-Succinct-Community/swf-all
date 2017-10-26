@@ -60,10 +60,10 @@ public abstract class HtmlView extends View{
     }
 
     @Override
-    public void write(boolean error) throws IOException{
+    public void write(int httpStatusCode) throws IOException{
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/html;charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
+        response.setStatus(httpStatusCode);
         response.getWriter().println("<!DOCTYPE html>");
         response.getWriter().println(this);
     }

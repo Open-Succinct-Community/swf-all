@@ -40,7 +40,7 @@ public class ForwardedView extends View{
     }
     
     
-    public void write(boolean error) throws IOException {
+    public void write(int httpStatus) throws IOException {
         try {
 			getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
 		} catch (ServletException e) {

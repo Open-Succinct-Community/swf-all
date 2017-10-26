@@ -695,7 +695,7 @@ public class Path implements _IPath{
                             if (getProtocol() == MimeType.TEXT_HTML){
                                 return new RedirectorView(this,"","login");
                             }else {
-                                throw new RuntimeException ("Request not authenticated");
+                                throw new AccessDeniedException ("Request not authenticated");
                             }
                         }
                     }

@@ -6,6 +6,9 @@ package com.venky.swf.views;
 
 import com.venky.swf.path._IPath;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 /**
  *
  * @author venky
@@ -21,6 +24,10 @@ public abstract class View implements _IView{
     }
     public boolean isBeingRedirected(){
     	return false;
+    }
+
+    public void write() throws IOException {
+        write(HttpServletResponse.SC_OK);
     }
     
 }

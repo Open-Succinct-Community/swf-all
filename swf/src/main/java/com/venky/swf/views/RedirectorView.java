@@ -42,7 +42,7 @@ public class RedirectorView extends View{
 
     
     
-    public void write(boolean error) throws IOException {
+    public void write(int httpStatusCode) throws IOException {
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/plain");
         response.sendRedirect(redirectUrl);
