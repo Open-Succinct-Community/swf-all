@@ -820,7 +820,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     public Object getTxnProperty(String name) { 
     	return txnProperties.get(name);
     }
-    public void setTxnPropery(String name,Object value) {
+    public void setTxnProperty(String name,Object value) {
     	txnProperties.put(name, value);
     }
     public Object removeTxnProperty(String name) { 

@@ -289,8 +289,8 @@ public class Select extends SqlStatement{
 			                    }else {
 			                    	cache.add(r);
 			                    }
+                                result.add(r);
 		                    }
-		                    result.add(r);
 		                    M m = r.getAsProxy(modelInterface);
 		                    if (filter == null || filter.pass(m)){
 		                    	ret.add(m);

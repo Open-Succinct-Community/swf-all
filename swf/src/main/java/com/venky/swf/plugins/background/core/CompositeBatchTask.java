@@ -11,26 +11,30 @@ public class CompositeBatchTask implements Task{
 	 */
 	private static final long serialVersionUID = -8912479033438357513L;
 	private LinkedList<Task> tasks = new LinkedList<>();
-	private int batchSize = 2; 
+	private int batchSize = 2;
+	private boolean persistTaskQueue = false;
 	public CompositeBatchTask(List<Task> tasks){
 		this(tasks,0);
 	}
 	public CompositeBatchTask(List<Task> tasks, int batchSize) {
+        this(tasks,batchSize,false);
+    }
+    public CompositeBatchTask(List<Task> tasks, int batchSize, boolean persistTaskQueue) {
 		this.batchSize = batchSize;
 		this.tasks.addAll(tasks);
-		if (this.batchSize <=0 ){ 
-			this.batchSize = 2;
-		}
+		this.persistTaskQueue = persistTaskQueue;
 	}
 	
 	public CompositeBatchTask() {
 		
 		
 	}
-
-	@Override
+    @Override
 	public void execute() {
-		List<Task> batch = new ArrayList<>();
+        if (this.batchSize <=0 ){
+            this.batchSize = 2;
+        }
+        List<Task> batch = new ArrayList<>();
 		Iterator<Task> ti = tasks.iterator();
 		for (int i = 0 ; i < batchSize && ti.hasNext() ; i ++ ) {
 			Task next = ti.next();
@@ -38,8 +42,8 @@ public class CompositeBatchTask implements Task{
 			ti.remove();
 		}
 		if (ti.hasNext()) {
-			batch.add(new CompositeBatchTask(tasks));
+			batch.add(new CompositeBatchTask(tasks,batchSize,persistTaskQueue));
 		}
-		TaskManager.instance().executeAsync(new CompositeTask(batch.toArray(new Task[]{})), false);
+		TaskManager.instance().executeAsync(new CompositeTask(batch.toArray(new Task[]{})), persistTaskQueue);
 	}
 }

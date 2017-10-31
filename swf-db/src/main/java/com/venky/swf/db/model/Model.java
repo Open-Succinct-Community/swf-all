@@ -103,7 +103,7 @@ public interface Model extends _Identifiable {
 
     
     public Object getTxnProperty(String name);
-    public void setTxnPropery(String name,Object value);
+    public void setTxnProperty(String name,Object value);
     public Object removeTxnProperty(String name);
     
     @IS_VIRTUAL

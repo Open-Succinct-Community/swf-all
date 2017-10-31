@@ -45,7 +45,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 		public PersistedTaskPoller(int lastRecordId) {
 			this.lastRecordId = lastRecordId;
 		}
-		private int maxTasksToBuffer = 10;
+		private int maxTasksToBuffer = Config.instance().getIntProperty("swf.persisted.task.polling.batch.size",1000);
 		public int getMaxTasksToBuffer(){ 
 			return maxTasksToBuffer;
 		}

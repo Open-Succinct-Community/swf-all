@@ -1,26 +1,24 @@
 package com.venky.swf.plugins.lucene.index.background;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.Directory;
-
 import com.venky.cache.Cache;
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.Bucket;
-import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.db.Database;
+import com.venky.swf.plugins.lucene.db.model.IndexQueue;
 import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import com.venky.swf.sql.Select;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.List;
 
 public class IndexManager {
 	private static IndexManager _instance = new IndexManager();
@@ -63,18 +61,31 @@ public class IndexManager {
 	}
 	
 	public void addDocuments(String tableName, List<Document> documents){
-		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.ADD));
+		executeDelayed(createIndexTask(tableName, documents, Operation.ADD));
 	}
 
 	public void updateDocuments(String tableName, List<Document> documents) {
-		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.MODIFY));	
+		executeDelayed(createIndexTask(tableName, documents, Operation.MODIFY));
 	}
 
 	public void removeDocuments(String tableName, List<Document> documents) {
-		TaskManager.instance().executeDelayed(createIndexTask(tableName, documents, Operation.DELETE));
+		executeDelayed(createIndexTask(tableName, documents, Operation.DELETE));
 	}
 
-	private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
+    private void executeDelayed(IndexTask indexTask) {
+        IndexQueue q = Database.getTable(IndexQueue.class).newRecord();
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+            oos.writeObject(indexTask);
+            q.setIndexTask(new ByteArrayInputStream(os.toByteArray()));
+            q.save();
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
 		
 		/**
 		 * 
