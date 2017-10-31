@@ -2,6 +2,9 @@ package com.venky.swf.plugins.lucene.extensions;
 
 import java.util.List;
 
+import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.background.core.agent.Agent;
+import com.venky.swf.plugins.lucene.index.agents.IndexUpdatorAgent;
 import org.apache.lucene.document.Document;
 
 import com.venky.cache.Cache;
@@ -18,36 +21,49 @@ public class BeforeCommitExtension implements Extension{
 	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
 		_ITransaction completedTransaction = (_ITransaction)context[0];
-		addDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.added"));
-		updateDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.updated"));
-		removeDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.removed"));
-	
-	}
-	public void addDocuments(Cache<String,List<Document>> documentsByTable){
-		if (documentsByTable == null){
-			return;
-		}
+		boolean fireAgent = false;
+		fireAgent = addDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.added")) || fireAgent;
+		fireAgent = updateDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.updated")) || fireAgent;
+		fireAgent = removeDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.removed")) || fireAgent;
+		if (fireAgent) {
+            TaskManager.instance().executeAsync(new IndexUpdatorAgent.IndexUpdatorAgentSeeder(), true);
+        }
+    }
+	public boolean addDocuments(Cache<String,List<Document>> documentsByTable){
+		boolean documentsSubmittedForUpdate = false;
+        if (documentsByTable == null){
+            return documentsSubmittedForUpdate;
+        }
 		for (String tableName: documentsByTable.keySet()){
 			List<Document> documents = documentsByTable.get(tableName);
 			IndexManager.instance().addDocuments(tableName, documents);
+            documentsSubmittedForUpdate = true;
 		}
+		return documentsSubmittedForUpdate;
+
 	}
-	public void updateDocuments(Cache<String,List<Document>> documentsByTable){
-		if (documentsByTable == null){
-			return;
-		}
+	public boolean updateDocuments(Cache<String,List<Document>> documentsByTable){
+        boolean documentsSubmittedForUpdate = false;
+        if (documentsByTable == null){
+            return documentsSubmittedForUpdate ;
+        }
 		for (String tableName: documentsByTable.keySet()){
 			List<Document> documents = documentsByTable.get(tableName);
 			IndexManager.instance().updateDocuments(tableName, documents);
+			documentsSubmittedForUpdate = true;
 		}
+		return documentsSubmittedForUpdate;
 	}
-	public void removeDocuments(Cache<String,List<Document>> documentsByTable){
+	public boolean removeDocuments(Cache<String,List<Document>> documentsByTable){
+        boolean documentsSubmittedForUpdate = false;
 		if (documentsByTable == null){
-			return;
+			return documentsSubmittedForUpdate;
 		}
 		for (String tableName: documentsByTable.keySet()){
 			List<Document> documents = documentsByTable.get(tableName);
 			IndexManager.instance().removeDocuments(tableName, documents);
+			documentsSubmittedForUpdate = true;
 		}
+		return documentsSubmittedForUpdate;
 	}
 }
