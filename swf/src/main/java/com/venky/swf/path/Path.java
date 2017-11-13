@@ -873,7 +873,6 @@ public class Path implements _IPath{
         Map<String, List<Method>> referredModelGetterMap = new HashMap<String, List<Method>>();
         ModelReflector<? extends Model> reflector = ModelReflector.instance(modelClass);
         Expression where = new Expression(reflector.getPool(),Conjunction.AND);
-        
         for (Method referredModelGetter : reflector.getReferredModelGetters()){
             @SuppressWarnings("unchecked")
             Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
@@ -900,7 +899,8 @@ public class Path implements _IPath{
         if (cInfoIter.hasNext()){
             cInfoIter.next();// The last model was self.
         }
-        
+
+        Model partiallyFilledModel = Database.getTable(reflector.getModelClass()).newRecord();
         Set<String> modelElementProcessed = new HashSet<String>();
         while(cInfoIter.hasNext()){ 
             ControllerInfo controllerInfo = cInfoIter.next();
@@ -927,11 +927,13 @@ public class Path implements _IPath{
                         for (Method referredModelGetter: referredModelGetters){ 
                             String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
                             String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
-
+                            reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
                             referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
                         }
                     }else {
                         String referredModelIdColumnName = join.value();
+                        String referredModelIdFieldName =  reflector.getFieldName(referredModelIdColumnName);
+                        reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
                         referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
                         if (!ObjectUtil.isVoid(join.additional_join())){
                             SQLExpressionParser parser = new SQLExpressionParser(modelClass);
@@ -951,7 +953,7 @@ public class Path implements _IPath{
         User user = getSessionUser();
         
         if (user != null){
-            Cache<String,Map<String,List<Integer>>> pOptions = user.getParticipationOptions(reflector.getModelClass());
+            Cache<String,Map<String,List<Integer>>> pOptions = user.getParticipationOptions(reflector.getModelClass(),partiallyFilledModel);
             if (pOptions.size() >  0){
                 Set<String> fields = new HashSet<String>();
                 for (String g: pOptions.keySet()){
