@@ -26,7 +26,7 @@ public class BeforeCommitExtension implements Extension{
 		fireAgent = updateDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.updated")) || fireAgent;
 		fireAgent = removeDocuments((Cache<String,List<Document>>)completedTransaction.getAttribute("lucene.removed")) || fireAgent;
 		if (fireAgent) {
-            TaskManager.instance().executeAsync(new IndexUpdatorAgent.IndexUpdatorAgentSeeder(), true);
+            Agent.instance().start(new IndexUpdatorAgent.IndexUpdatorAgentSeeder());
         }
     }
 	public boolean addDocuments(Cache<String,List<Document>> documentsByTable){
