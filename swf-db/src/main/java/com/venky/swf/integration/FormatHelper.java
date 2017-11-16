@@ -103,6 +103,7 @@ public abstract class FormatHelper<T> {
 	public abstract T getElementAttribute(String name);
 	
 	public abstract void setAttribute(String name, String value);
+	public abstract void setElementAttribute(String name, String value);
 	
 	public abstract Set<String> getAttributes();
 	public abstract String getAttribute(String name);

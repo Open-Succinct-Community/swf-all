@@ -1,6 +1,7 @@
 package com.venky.swf.db.model.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -94,8 +95,12 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				}
 			}else {
 				String attributeName = getAttributeName(field);
-                String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
-				formatHelper.setAttribute(attributeName, sValue);
+				String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
+				if (InputStream.class.isAssignableFrom(fieldGetter.getReturnType())) {
+				    formatHelper.setElementAttribute(attributeName,sValue);
+                }else {
+                    formatHelper.setAttribute(attributeName, sValue);
+                }
 			}
 		}
 

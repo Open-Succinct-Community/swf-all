@@ -18,12 +18,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
@@ -547,7 +542,9 @@ public abstract class JdbcTypeHelper {
         public String toString(Object in) {
             return in == null ? "" : (in instanceof String ? (String)in : StringUtil.read(valueOf(in)));
         }
-        
+        public String toStringISO(Object in) {
+            return in == null ? "" : (in instanceof String ? (String)in : Base64.getEncoder().encodeToString(StringUtil.readBytes(valueOf(in))));
+        }
         @Override
 		public String getDisplayClassName() {
 			return "string";

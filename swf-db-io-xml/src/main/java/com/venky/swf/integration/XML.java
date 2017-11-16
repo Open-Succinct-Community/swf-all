@@ -72,8 +72,13 @@ public class XML extends FormatHelper<XMLElement>{
 		}
 	}
 
-	
-	@Override
+    @Override
+    public void setElementAttribute( String name, String value) {
+	    XMLElement element = createElementAttribute(name);
+	    element.setNodeValue(value);
+    }
+
+    @Override
 	public XMLElement createElementAttribute(String name) {
 		XMLElement element = getElementAttribute(name);
 		if (element == null){

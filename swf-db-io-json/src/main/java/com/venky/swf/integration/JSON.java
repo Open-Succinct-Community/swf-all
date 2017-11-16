@@ -93,8 +93,13 @@ public class JSON extends FormatHelper<JSONObject>{
 			root.put(name,obj);
 		}
 	}
-	
-	@SuppressWarnings("unchecked")
+
+    @Override
+    public void setElementAttribute(String name, String value) {
+        setAttribute(name,value);
+	}
+
+    @SuppressWarnings("unchecked")
 	@Override
 	public JSONObject createElementAttribute(String name) {
 		JSONObject attr = getElementAttribute(name);
