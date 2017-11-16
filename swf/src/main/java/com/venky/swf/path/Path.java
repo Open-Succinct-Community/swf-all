@@ -583,6 +583,9 @@ public class Path implements _IPath{
         if (!ObjectUtil.isVoid(apiKey)){
             autoInvalidate = true;
             user = getUser("api_key",apiKey);
+            if (user == null) {
+                return false;
+            }
         }
 
         if (user == null){
@@ -1071,7 +1074,7 @@ public class Path implements _IPath{
     
                     PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
                     if (participant != null && participant.defaultable()){
-                        idoptions = getSessionUser().getParticipationOptions(modelClass).get(participant.value()).get(referredModelIdFieldName);
+                        idoptions = getSessionUser().getParticipationOptions(modelClass,record).get(participant.value()).get(referredModelIdFieldName);
                     }
                             
                     if (idoptions != null && !idoptions.isEmpty()){

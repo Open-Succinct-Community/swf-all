@@ -872,18 +872,20 @@ public class ModelController<M extends Model> extends Controller {
     	
     	//autoCompleteHelperFieldValue is not void.
     	Expression where = new Expression(referredModelReflector.getPool(),Conjunction.AND);
-    	
-    	where.add(getAutoCompleteBaseWhere(reflector, record, field));
+
+    	//getAutoCompleteBaseWhere calling always is a performance killer!!.
     	if (!Database.getJdbcTypeHelper(referredModelReflector.getPool()).isVoid(currentValue)) {
         	where.add(new Expression(referredModelReflector.getPool(), "ID", Operator.EQ, currentValue));
-    	}
-    	if (!referredModelReflector.isFieldVirtual(descriptionField)) {
-        	where.add(new Expression(referredModelReflector.getPool(),referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
-        			autoCompleteHelperFieldValue));
-    	}
+    	}else if (!referredModelReflector.isFieldVirtual(descriptionField)) {
+            where.add(new Expression(referredModelReflector.getPool(),referredModelReflector.getColumnDescriptor(descriptionField).getName(),Operator.EQ,
+                    autoCompleteHelperFieldValue));
+        }else {
+            where.add(getAutoCompleteBaseWhere(reflector, record, field));
+        }
+
     	
     	@SuppressWarnings({ "rawtypes", "unchecked" })
-		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass,new Select.AccessibilityFilter());
+		List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass,2,new Select.AccessibilityFilter());
     	
 		if (models.size() == 1){
 			referredModel = models.get(0);
