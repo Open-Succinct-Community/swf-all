@@ -238,13 +238,17 @@ public class Router extends AbstractHandler {
 	        		}
 	        	}
 	        	if (p.getSession() != null){
-	        		p.addErrorMessage(e.getMessage());
-	        		Config.instance().getLogger(Router.class.getName()).log(Level.INFO, "Request failed", e);
-	        		if (p.getTarget().equals(p.getBackTarget())){
-	        			ev = createRedirectorView(p, "/dashboard");
-	        		}else {
-	        			ev = createRedirectorView(p,p.getBackTarget());
-	        		}
+	        		if (p.redirectOnException()){
+                        p.addErrorMessage(e.getMessage());
+                        Config.instance().getLogger(Router.class.getName()).log(Level.INFO, "Request failed", e);
+                        if (p.getTarget().equals(p.getBackTarget())){
+                            ev = createRedirectorView(p, "/dashboard");
+                        }else {
+                            ev = createRedirectorView(p,p.getBackTarget());
+                        }
+                    }else {
+                        ev = createExceptionView(p, e);
+                    }
 	        	}else {
 	        		ev = createExceptionView(p, e);
 	        	}

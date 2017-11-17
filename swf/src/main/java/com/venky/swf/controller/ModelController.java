@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
+import com.venky.swf.db.table.RecordNotFoundException;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -347,6 +348,9 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("index")
     public View show(int id) {
     	M record = Database.getTable(modelClass).get(id);
+    	if (record == null){
+    	    throw new RecordNotFoundException();
+        }
 		if (!record.isAccessibleBy(getSessionUser(),modelClass)){
 			throw new AccessDeniedException();
 		}
@@ -529,6 +533,9 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("index")
     public View destroy(int id){ 
 		M record = Database.getTable(modelClass).get(id);
+        if (record == null){
+            throw new RecordNotFoundException();
+        }
         destroy(record);
         return getSuccessView();
     }

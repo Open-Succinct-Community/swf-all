@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.views._IView;
 
@@ -47,4 +48,7 @@ public interface _IPath {
 	void autoInvalidateSession();
 	boolean isForwardedRequest();
 	String getOriginalRequestUrl();
+
+    boolean redirectOnException();
+
 }

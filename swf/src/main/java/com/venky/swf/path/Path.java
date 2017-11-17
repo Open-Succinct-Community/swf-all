@@ -624,6 +624,9 @@ public class Path implements _IPath{
         
         return isUserLoggedOn();
     }
+    public boolean redirectOnException(){
+        return getProtocol().equals(MimeType.TEXT_HTML);
+    }
     
     public MimeType getProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
