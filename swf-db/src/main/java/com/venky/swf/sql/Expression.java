@@ -422,5 +422,15 @@ public class Expression {
 		
 		return builder.toString();
 	}
-	
+
+	public String getColumnName(){
+	    return columnName;
+    }
+    public Operator getOperator(){
+	    return op;
+    }
+
+    public Conjunction getConjunction() {
+        return conjunction;
+    }
 }
