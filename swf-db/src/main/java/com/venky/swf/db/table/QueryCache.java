@@ -66,7 +66,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private static final Level defaultLevel = Level.FINE;
 
 	private boolean isIdWhereClause(Expression where){
-	    if (where.getNumChildExpressions() == 0){
+	    if (where != null && where.getNumChildExpressions() == 0){
             if (where.getOperator() == Operator.EQ && "ID".equalsIgnoreCase(where.getColumnName())){
                 return where.getValues().size() == 1;
             }
