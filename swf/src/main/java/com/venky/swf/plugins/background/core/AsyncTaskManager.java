@@ -16,6 +16,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.core.agent.Agent;
 import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
+import com.venky.swf.plugins.background.extensions.InMemoryTaskQueueManager;
 import com.venky.swf.routing.Config;
 
 public class AsyncTaskManager  {
@@ -276,17 +277,17 @@ public class AsyncTaskManager  {
 			pushAsyncTasks(tasks, persist);
 		}
 	}
-	
 	protected <T extends Task> void pushAsyncTasks(Collection<T> tasks, boolean persist) {
 		if (tasks.isEmpty()) {
 			return;
 		}
 		if (!persist) {
-			List<Task> taskHolders = new LinkedList<Task>();
-			for (Task task : tasks){
-				taskHolders.add(new TaskHolder(task));
-			}
-			addAll(taskHolders);
+            List<Task> taskHolders = new LinkedList<Task>();
+            for (Task task : tasks){
+                taskHolders.add(new TaskHolder(task));
+            }
+            //addAll(taskHolders);
+            InMemoryTaskQueueManager.getPendingTasks().addAll(taskHolders); //To ensures tasks are executed after commit.
 		}else {
 			for (Task task: tasks){ 
 				try {
