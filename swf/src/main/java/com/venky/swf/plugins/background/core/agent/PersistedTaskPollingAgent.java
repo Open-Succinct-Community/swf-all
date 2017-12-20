@@ -6,6 +6,7 @@ import java.util.List;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.CompositeTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
@@ -80,7 +81,8 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			Config.instance().getLogger(getClass().getName()).finest("Number of tasks found:" + jobs.size());
 
 			if (!jobs.isEmpty()){
-                jobs.add(new PersistedTaskPoller(lastRecordId));
+			    Task lastTask = jobs.remove(jobs.size()-1);
+                jobs.add(new CompositeTask(lastTask,new PersistedTaskPoller(lastRecordId)));
 			}
 
 			return jobs;

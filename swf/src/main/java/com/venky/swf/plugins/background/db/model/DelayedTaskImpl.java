@@ -26,8 +26,20 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 		return getProxy().getId();
 	}
 
-	
-	public void execute(){
+    public String getTaskClassName() {
+	    DelayedTask proxy = getProxy();
+	    try {
+            ObjectInputStream is = new ObjectInputStream(proxy.getData());
+            Task task = (Task) is.readObject();
+            is.close();
+            return task.getClass().getName();
+        }catch (Exception e){
+	        return "Unknown";
+        }
+    }
+
+
+    public void execute(){
 		DelayedTask o = getProxy();
 		Transaction parentTxn = Database.getInstance().getTransactionManager().createTransaction();
 		try { 

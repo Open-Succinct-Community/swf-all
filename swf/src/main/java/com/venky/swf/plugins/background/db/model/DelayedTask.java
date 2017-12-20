@@ -25,6 +25,9 @@ public interface DelayedTask extends Task, Model {
 	
 	public Reader getLastError();
 	public void setLastError(Reader s);
+
+	@IS_VIRTUAL
+	public String getTaskClassName();
 	
 	
 	@IS_VIRTUAL

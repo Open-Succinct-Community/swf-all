@@ -6,10 +6,10 @@ import com.venky.swf.db.Transaction;
 import com.venky.swf.plugins.background.core.agent.Agent;
 import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
 
-public class AfterCommitExtension implements Extension{
-	private static AfterCommitExtension instance = new AfterCommitExtension();
+public class BeforeCommitExtension implements Extension{
+	private static BeforeCommitExtension instance = new BeforeCommitExtension();
 	static {
-		Registry.instance().registerExtension("after.commit", instance);
+		Registry.instance().registerExtension("before.commit", instance);
 	}
 	public void invoke(Object... context) {
 		Transaction txn = (Transaction)context[0];
