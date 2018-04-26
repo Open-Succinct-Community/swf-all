@@ -10,26 +10,17 @@ public class BeforeCommitExtension implements Extension{
 	private static BeforeCommitExtension instance = new BeforeCommitExtension();
 	static {
 		Registry.instance().registerExtension("before.commit", instance);
-		Registry.instance().registerExtension("after.commit", new PersistedTaskTrigger());
 	}
 	public void invoke(Object... context) {
 		Transaction txn = (Transaction)context[0];
 		String triggerAgent = PersistedTaskPollingAgent.class.getName()+".trigger" ;
         Registry.instance().callExtensions("before." + triggerAgent,txn);
+
+        Boolean trigger = txn.getAttribute(triggerAgent) ;
+        if (trigger != null && trigger) {
+            Agent.instance().start(PersistedTaskPollingAgent.PERSISTED_TASK_POLLER);
+        }
+
 	}
 
-	public static class PersistedTaskTrigger implements Extension {
-
-        @Override
-        public void invoke(Object... context) {
-            Transaction txn = (Transaction)context[0];
-            String triggerAgent = PersistedTaskPollingAgent.class.getName()+".trigger" ;
-            Boolean trigger = txn.getAttribute(triggerAgent) ;
-            if (trigger != null && trigger) {
-                Agent.instance().start(PersistedTaskPollingAgent.PERSISTED_TASK_POLLER);
-            }
-
-        }
-    }
-	
 }
