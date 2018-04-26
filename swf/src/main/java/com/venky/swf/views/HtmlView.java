@@ -6,13 +6,16 @@ package com.venky.swf.views;
 
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.collections.UpperCaseStringCache;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
@@ -20,12 +23,7 @@ import com.venky.extension.Registry;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.Body;
-import com.venky.swf.views.controls.page.Css;
-import com.venky.swf.views.controls.page.Head;
-import com.venky.swf.views.controls.page.HotLink;
-import com.venky.swf.views.controls.page.Html;
-import com.venky.swf.views.controls.page.Script;
+import com.venky.swf.views.controls.page.*;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
@@ -155,7 +153,56 @@ public abstract class HtmlView extends View{
         
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
         head.addControl(new Script("/resources/scripts/swf/js/swf.js"));
+
+        String applicationInitScript = Config.instance().getProperty("swf.application.init.script", "/resources/scripts/application.js");
+        if ( !applicationInitScript.startsWith("/") ) {
+            applicationInitScript = "/" + applicationInitScript;
+        }
+
+        if ( applicationInitScript.startsWith("/resources")) {
+            applicationInitScript = applicationInitScript.substring("/resources".length());
+        }
+
+        URL r = getClass().getResource(applicationInitScript);
+        if (r != null){
+            head.addControl(new Script("/resources" + applicationInitScript));
+        }
+
+        addProgressiveWebAppLinks(head);
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
+    }
+    public void addProgressiveWebAppLinks(Head head){
+        URL r = getClass().getResource("/web_manifest/manifest.json");
+        if (r == null){
+            return;
+        }
+
+        Link link  = new HLink("/resources/web_manifest/manifest.json");
+        link.setProperty("rel","manifest");
+        head.addControl(link);
+
+        link  = new HLink("/resources/web_manifest/manifest.png"); //192x192
+        link.setProperty("rel","icon");
+        head.addControl(link);
+
+        link  = new HLink("/resources/web_manifest/manifest.png");
+        link.setProperty("rel","apple-touch-icon");
+        head.addControl(link);
+
+
+        head.addControl(new Meta("mobile-web-app-capable" , "yes"));
+        head.addControl(new Meta("apple-mobile-web-app-capable" , "yes"));
+
+        String applicationName = Config.instance().getProperty("swf.application.name", "Application");
+
+        head.addControl(new Meta("application-name" , applicationName));
+        head.addControl(new Meta("apple-mobile-web-app-title" , applicationName));
+
+        head.addControl(new Meta("msapplication-starturl","/"));
+        head.addControl(new Meta("viewport","width=device-width, initial-scale=1, shrink-to-fit=no"));
+        //head.addControl(new Meta( "Service-Worker-Allowed" , "yes"));
+
+
     }
     /*
      * When views are composed, includeStatusMessage is passed as false so that it may be included in parent/including view

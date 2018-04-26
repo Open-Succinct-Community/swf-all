@@ -40,7 +40,7 @@ public class IndexUpdatorAgent implements AgentSeederTaskBuilder{
                 protected boolean isCacheable(ModelReflector<? extends Model> ref) {
                     return false;
                 }
-            }.from(IndexQueue.class).orderBy("ID").execute(IndexQueue.class, maxRecords +1 ,new Select.ResultFilter<IndexQueue>() {
+            }.from(IndexQueue.class).orderBy("CREATED_AT","ID").execute(IndexQueue.class, maxRecords +1 ,new Select.ResultFilter<IndexQueue>() {
                 @Override
                 public boolean pass(IndexQueue record) {
                     ObjectInputStream ois =null;

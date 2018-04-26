@@ -1,0 +1,26 @@
+#!/bin/bash
+toolpath=`dirname $0`
+projpath=$toolpath/..
+cd $projpath
+
+source $HOME/.bash_aliases
+source src/main/resources/config/envvars
+user=$1
+shift
+api=$1
+shift
+data="$@"
+
+if [ "${content_type}"="" ] 
+then 
+    content_type="application/xml" 
+fi
+
+apiKey=`bin/getapikey $user`
+echo "user=$user"
+echo "api=$api"
+echo "data=$data"
+echo "apiKey=$apiKey"
+
+curl  "http://localhost:${wport}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}" -d "$data"
+

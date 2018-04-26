@@ -37,7 +37,7 @@ public class DatabaseDirectory extends Directory {
 		if (directory == null){
 			throw new FileNotFoundException("Directory entry missing for " + tableName +". Check if there are any field getters marked with annotation @Index in any of it's models.");
 		}
-		setLockFactory(new SingleInstanceLockFactory());
+		setLockFactory(new DatabaseLockFactory(directory));
 	}
 	
 	private IndexDirectory directory = null;

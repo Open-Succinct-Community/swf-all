@@ -1,10 +1,12 @@
 #!/bin/bash
+
 toolpath=`dirname $0`
 projpath=$toolpath/..
 cd $projpath
 
 source $HOME/.bash_aliases
+source src/main/resources/config/envvars
 apiKey=`bin/getapikey`
 
-curl  http://localhost:3030/reset_router 	  -H "ApiKey: $apiKey" -H 'ApiProtocol: application/json' 
+curl  http://localhost:${wport}/reset_router 	  -H "ApiKey: $apiKey" -H 'ApiProtocol: application/json' 
 

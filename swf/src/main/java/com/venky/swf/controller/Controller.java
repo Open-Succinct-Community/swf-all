@@ -177,6 +177,8 @@ public class Controller {
         return new RedirectorView(getPath(), "dashboard");
     }
 
+
+
     public DashboardView dashboard(){
         return Controller.dashboard(getPath());
     }

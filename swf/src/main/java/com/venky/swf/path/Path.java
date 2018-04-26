@@ -263,8 +263,13 @@ public class Path implements _IPath{
         boolean isResource = false;
         while (stok.hasMoreTokens()) {
             String token = stok.nextToken();
-            if (pathelements.isEmpty() && token.equals("resources")){
-                isResource = true;
+            if (pathelements.isEmpty() ){
+                if (token.equals("resources")) {
+                    isResource = true;
+                }else if((token.contains(".") && !stok.hasMoreElements())){
+                    isResource = true;
+                    resourcePath.append("/").append(token);
+                }
             }else if (isResource){
                 resourcePath.append("/").append(token);
             }

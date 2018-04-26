@@ -1,4 +1,5 @@
 source $HOME/.bash_aliases
+source src/main/resources/config/envvars
 
 toolpath=`dirname $0`
 projpath=$toolpath/../
@@ -7,15 +8,12 @@ cd $projpath
 if [ $# -eq 0 ] 
 then 
     user=root
+    password=root
 else
     user=$1
+    password=$1
 fi
 
+curl -s -H "content-type: application/json" "http://localhost:${wport}/login" -d '{ "User" : { "Name":"'$user'" , "Password":"'$password'"} } ' |grep 'ApiKey' |cut -f2 -d ':' |sed -e 's/ //g' -e 's/"//g' 
 
-bin/h2console <<EOF 2>/dev/null |cut -f1 -d '|' 
-set-property sql-result-showheader 0
-set-property sql-result-showfooter 0
-select api_key from users where name = '$user' ;
-set-property sql-result-showheader 1
-set-property sql-result-showfooter 1
-EOF
+

@@ -13,7 +13,10 @@ public class BeforeCommitExtension implements Extension{
 	}
 	public void invoke(Object... context) {
 		Transaction txn = (Transaction)context[0];
-		Boolean trigger = txn.getAttribute(PersistedTaskPollingAgent.class.getName()+".trigger") ;
+		String triggerAgent = PersistedTaskPollingAgent.class.getName()+".trigger" ;
+        Registry.instance().callExtensions("before." + triggerAgent,txn);
+
+        Boolean trigger = txn.getAttribute(triggerAgent) ;
 		if (trigger != null && trigger){
 			Agent.instance().start(PersistedTaskPollingAgent.PERSISTED_TASK_POLLER);
 		}

@@ -2,11 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="76e9d7da-d32e-40b4-817c-37bf123a3b9a" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/PersistedTaskPollingAgent.java" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/PersistedTaskPollingAgent.java" />
-      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTask.java" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTask.java" />
-      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTaskImpl.java" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTaskImpl.java" />
-      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/AfterCommitExtension.java" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java" />
+      <change afterPath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/callapi" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseLockFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/HLink.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/Meta.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/getapikey" beforeDir="false" afterPath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/getapikey" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/reset_router" beforeDir="false" afterPath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/reset_router" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/swfstart" beforeDir="false" afterPath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/swfstart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/trigger" beforeDir="false" afterPath="$PROJECT_DIR$/swf-archetype/src/main/resources/archetype-resources/bin/trigger" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/Controller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforeCommitExtension.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforePersistedTaskPollingAgentTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java" beforeDir="false" afterPath="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/swf-archetype/target/" />
     <ignored path="$PROJECT_DIR$/swf-db/target/" />
@@ -41,11 +53,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="InMemoryTaskQueueManager.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/InMemoryTaskQueueManager.java">
+      <file leaf-file-name="DatabaseLockFactory.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseLockFactory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36">
-              <caret line="23" column="0" lean-forward="false" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
+            <state relative-caret-position="34">
+              <caret line="8" column="27" selection-start-line="8" selection-start-column="27" selection-end-line="8" selection-end-column="27" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -53,103 +65,93 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Agent.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/Agent.java">
+      <file leaf-file-name="DatabaseDirectory.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="103">
-              <caret line="120" column="0" lean-forward="false" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="306">
+              <caret line="37" column="35" selection-start-line="37" selection-start-column="35" selection-end-line="37" selection-end-column="35" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DelayedTaskImpl.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTaskImpl.java">
+      <file leaf-file-name="IndexWriter.java" pinned="false" current-in-tab="false">
+        <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/index/IndexWriter.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="111">
-              <caret line="45" column="73" lean-forward="false" selection-start-line="45" selection-start-column="73" selection-end-line="45" selection-end-column="73" />
-              <folding />
+            <state relative-caret-position="77809">
+              <caret line="4653" column="54" selection-start-line="4653" selection-start-column="54" selection-end-line="4653" selection-end-column="54" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PersistedTaskPollingAgent.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/PersistedTaskPollingAgent.java">
+      <file leaf-file-name="SimpleFSLockFactory.java" pinned="false" current-in-tab="false">
+        <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/SimpleFSLockFactory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="308">
-              <caret line="82" column="31" lean-forward="false" selection-start-line="82" selection-start-column="31" selection-end-line="82" selection-end-column="31" />
+            <state relative-caret-position="2193">
+              <caret line="130" column="14" selection-start-line="130" selection-start-column="14" selection-end-line="130" selection-end-column="14" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="IndexManager.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="510">
+              <caret line="50" column="47" selection-start-line="50" selection-start-column="47" selection-end-line="50" selection-end-column="47" />
               <folding>
-                <element signature="e#1972#1973#0" expanded="true" />
-                <element signature="e#2005#2006#0" expanded="true" />
+                <element signature="e#1486#1487#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IndexTask.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexTask.java">
+      <file leaf-file-name="BeforePersistedTaskPollingAgentTrigger.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforePersistedTaskPollingAgentTrigger.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="64" column="5" lean-forward="true" selection-start-line="64" selection-start-column="5" selection-end-line="64" selection-end-column="5" />
-              <folding />
+            <state relative-caret-position="850">
+              <caret line="61" column="9" selection-start-line="61" selection-start-column="9" selection-end-line="61" selection-end-column="9" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IndexUpdatorAgent.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="103">
-              <caret line="55" column="0" lean-forward="false" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Select.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Select.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="279">
-              <caret line="269" column="106" lean-forward="false" selection-start-line="269" selection-start-column="77" selection-end-line="269" selection-end-column="106" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Statement.java" pinned="false" current-in-tab="false">
-        <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/sql/Statement.java">
+      <file leaf-file-name="User.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/User.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="179">
-              <caret line="245" column="9" lean-forward="false" selection-start-line="245" selection-start-column="9" selection-end-line="245" selection-end-column="9" />
-              <folding />
+              <caret line="39" column="17" selection-start-line="39" selection-start-column="17" selection-end-line="39" selection-end-column="17" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Table.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/Table.java">
+      <file leaf-file-name="BeforeCommitExtension.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="204">
-              <caret line="400" column="31" lean-forward="false" selection-start-line="400" selection-start-column="31" selection-end-line="400" selection-end-column="31" />
+            <state relative-caret-position="187">
+              <caret line="15" column="84" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="84" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Directory.java" pinned="false" current-in-tab="false">
+        <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/Directory.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2414">
+              <caret line="149" column="27" selection-start-line="149" selection-start-column="27" selection-end-line="149" selection-end-column="27" />
               <folding>
-                <element signature="e#14059#14060#0" expanded="true" />
-                <element signature="e#14092#14093#0" expanded="true" />
-                <element signature="e#14132#14133#0" expanded="true" />
-                <element signature="e#14169#14170#0" expanded="true" />
+                <element signature="e#5477#5478#0" expanded="true" />
+                <element signature="e#5522#5523#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="H2Helper.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/H2Helper.java">
+      <file leaf-file-name="LockFactory.java" pinned="false" current-in-tab="false">
+        <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/LockFactory.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="63" column="21" lean-forward="false" selection-start-line="63" selection-start-column="21" selection-end-line="63" selection-end-column="21" />
-              <folding>
-                <element signature="e#1692#1693#0" expanded="true" />
-                <element signature="e#1711#1712#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="1020">
+              <caret line="64" column="23" selection-start-line="64" selection-start-column="23" selection-end-line="64" selection-end-column="23" />
             </state>
           </provider>
         </entry>
@@ -165,8 +167,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>generateApiKey</find>
-      <find>integrationAdaptor</find>
       <find>isRequestAuthenticated</find>
       <find>write</find>
       <find>Authenti</find>
@@ -185,6 +185,18 @@
       <find>update</find>
       <find>TimeOut</find>
       <find>wait</find>
+      <find>resources</find>
+      <find>createHead</find>
+      <find>applicationName</find>
+      <find>&quot;/&quot;</find>
+      <find>index</find>
+      <find>process</find>
+      <find>getLockFactory</find>
+      <find>lock</find>
+      <find>ReadLock</find>
+      <find>write.loc</find>
+      <find>LOCK_NAME</find>
+      <find>locked</find>
     </findStrings>
     <replaceStrings>
       <replace>documentsSubmittedForUpdate</replace>
@@ -196,41 +208,29 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/extensions/BeforeModelDestroyExtension.java" />
-        <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/extensions/BeforeModelSaveExtension.java" />
-        <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/extensions/BeforeModelUpdateExtension.java" />
-        <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/extensions/BeforeModelValidateExtension.java" />
-        <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/extensions/ParticipantExtension.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/integration/IntegrationAdaptor.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/_IView.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/View.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/RedirectorView.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/ForwardedView.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/BytesView.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/Controller.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/ExceptionView.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/Model.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/IndexQueue.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Select.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/AgentRegistry.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/platform/Platform.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/CompositeBatchTask.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/Agent.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/User.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/configuration/AppInstaller.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/ModelInvocationHandler.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforeCommitExtension.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/JdbcTypeHelper.java" />
         <option value="$PROJECT_DIR$/swf-db-io-json/src/main/java/com/venky/swf/integration/JSON.java" />
         <option value="$PROJECT_DIR$/swf-db-io-xml/src/main/java/com/venky/swf/integration/XML.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/integration/FormatHelper.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/io/AbstractModelWriter.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/_IPath.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/routing/Router.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/ModelController.java" />
         <option value="$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Expression.java" />
@@ -242,11 +242,23 @@
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/AsyncTaskManager.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/AfterCommitExtension.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommit.java" />
-        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/InMemoryTaskQueueManager.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTask.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTaskImpl.java" />
         <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/PersistedTaskPollingAgent.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/Meta.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/HLink.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/Controller.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforeCommitExtension.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforePersistedTaskPollingAgentTrigger.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/LuceneLock.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java" />
+        <option value="$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseLockFactory.java" />
       </list>
     </option>
   </component>
@@ -277,21 +289,10 @@
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
-    <navigator currentView="ProjectPane" proportions="" version="1">
-      <flattenPackages />
-      <showMembers />
-      <showModules />
-      <showLibraryContents />
-      <hideEmptyPackages />
-      <abbreviatePackageNames />
-      <autoscrollToSource />
-      <autoscrollFromSource />
-      <sortByType />
-      <manualOrder />
+    <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -387,22 +388,91 @@
               <item name="java" type="462c0819:PsiDirectoryNode" />
               <item name="swf" type="462c0819:PsiDirectoryNode" />
               <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
+              <item name="configuration" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="swf-all" type="b2602c69:ProjectViewProjectNode" />
+              <item name="swf-all" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
+              <item name="model" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="swf-all" type="b2602c69:ProjectViewProjectNode" />
+              <item name="swf-all" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
               <item name="extensions" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="swf-all" type="b2602c69:ProjectViewProjectNode" />
+              <item name="swf-all" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
+              <item name="index" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="swf-all" type="b2602c69:ProjectViewProjectNode" />
+              <item name="swf-all" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
+              <item name="index" type="462c0819:PsiDirectoryNode" />
+              <item name="background" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="swf-all" type="b2602c69:ProjectViewProjectNode" />
+              <item name="swf-all" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="swf" type="462c0819:PsiDirectoryNode" />
+              <item name="plugins" type="462c0819:PsiDirectoryNode" />
+              <item name="lucene" type="462c0819:PsiDirectoryNode" />
+              <item name="index" type="462c0819:PsiDirectoryNode" />
+              <item name="common" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
       <pane id="PackagesPane" />
+      <pane id="Scope" />
+      <pane id="AndroidView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="project.propCompiler" />
+    <property name="ToolWindowMessages.ShowToolbar" value="false" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
-    <property name="ToolWindowMessages.ShowToolbar" value="false" />
+    <property name="settings.editor.selected.configurable" value="project.propCompiler" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.venky.swf.views.controls.page" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -418,27 +488,12 @@
   </component>
   <component name="RunManager">
     <configuration default="true" type="Applet" factoryName="Applet">
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <module />
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
-      <option name="MAIN_CLASS_NAME" />
-      <option name="VM_PARAMETERS" />
-      <option name="PROGRAM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="" />
-      <envs />
     </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
-      <module name="" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" />
       <option name="PACKAGE_NAME" />
@@ -448,12 +503,10 @@
       <option name="VM_PARAMETERS" value="-ea" />
       <option name="PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
       <option name="TEST_SEARCH_SCOPE">
         <value defaultName="singleModule" />
       </option>
-      <envs />
       <patterns />
     </configuration>
     <configuration default="true" type="Remote" factoryName="Remote">
@@ -463,21 +516,18 @@
       <option name="HOST" value="localhost" />
       <option name="PORT" value="5005" />
     </configuration>
-    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
-      <module name="" />
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-      <option name="PROGRAM_PARAMETERS" />
-      <predefined_log_file id="idea.log" enabled="true" />
-    </configuration>
     <configuration name="&lt;template&gt;" type="TestNG" default="true" selected="false">
       <option name="MAIN_CLASS_NAME" />
       <option name="VM_PARAMETERS" value="-ea" />
       <option name="PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
     </configuration>
-  </component>
-  <component name="ShelveChangesManager" show_recycled="false">
-    <option name="remove_strategy" value="false" />
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <predefined_log_file id="idea.log" enabled="true" />
+    </configuration>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -493,60 +543,37 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="10" y="47" width="1366" height="741" extended-state="6" />
-    <editor active="true" />
+    <frame x="0" y="27" width="1366" height="741" extended-state="6" />
     <layout>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="DB Browser" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="DB Execution Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5197269" sideWeight="0.47285464" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Problems" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32943144" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24962063" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.51062214" sideWeight="0.5271454" order="4" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39929947" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32943144" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24962063" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="TimeTrackerPlugin" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32924694" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info anchor="bottom" id="TODO" order="7" />
+      <window_info id="DB Browser" order="5" />
+      <window_info anchor="right" id="Palette&#9;" order="6" />
+      <window_info id="Image Layers" order="0" />
+      <window_info anchor="bottom" id="DB Execution Console" order="8" />
+      <window_info anchor="right" id="Capture Analysis" order="0" />
+      <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
+      <window_info anchor="right" id="Maven Projects" order="5" />
+      <window_info anchor="bottom" id="Version Control" order="11" />
+      <window_info anchor="bottom" id="Run" order="3" />
+      <window_info anchor="bottom" id="Terminal" order="10" />
+      <window_info id="Capture Tool" order="1" />
+      <window_info id="Designer" order="4" />
+      <window_info anchor="bottom" id="Problems" order="12" weight="0.32943144" />
+      <window_info active="true" content_ui="combo" id="Project" order="2" sideWeight="0.47285464" visible="true" weight="0.39074355" />
+      <window_info id="Structure" order="3" side_tool="true" weight="0.24962063" />
+      <window_info anchor="right" id="Theme Preview" order="1" />
+      <window_info id="Favorites" order="6" sideWeight="0.5271454" side_tool="true" weight="0.51062214" />
+      <window_info anchor="bottom" id="Debug" order="4" weight="0.3989455" />
+      <window_info anchor="bottom" id="TimeTrackerPlugin" order="13" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="4" weight="0.24962063" />
+      <window_info anchor="bottom" id="Inspection" order="6" weight="0.4" />
+      <window_info anchor="bottom" id="Messages" order="0" weight="0.32943144" />
+      <window_info anchor="right" id="Commander" order="2" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="3" weight="0.25" />
+      <window_info anchor="bottom" id="Message" order="1" />
+      <window_info anchor="bottom" id="Cvs" order="5" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="2" weight="0.32924694" />
     </layout>
-    <layout-to-restore>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="DB Browser" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32943144" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="DB Execution Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5197269" sideWeight="0.47285464" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Problems" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32943144" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24962063" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="TimeTrackerPlugin" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32924694" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24962063" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.51062214" sideWeight="0.5271454" order="4" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.39929947" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-    </layout-to-restore>
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
@@ -658,7 +685,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java</url>
-          <line>1079</line>
+          <line>1084</line>
           <properties />
           <option name="timeStamp" value="42" />
         </line-breakpoint>
@@ -676,7 +703,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java</url>
-          <line>18</line>
+          <line>21</line>
           <properties />
           <option name="timeStamp" value="49" />
         </line-breakpoint>
@@ -704,520 +731,157 @@
           <properties />
           <option name="timeStamp" value="55" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java</url>
+          <line>174</line>
+          <properties />
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java</url>
+          <line>265</line>
+          <properties />
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java</url>
+          <line>264</line>
+          <properties />
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforePersistedTaskPollingAgentTrigger.java</url>
+          <line>30</line>
+          <properties />
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
       </breakpoints>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="56" />
+      <option name="time" value="61" />
     </breakpoint-manager>
-    <watches-manager />
+  </component>
+  <component name="debuggerHistoryManager">
+    <expressions id="evaluateExpression">
+      <expression>
+        <expression-string>head.toString()</expression-string>
+        <language-id>JAVA</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>head</expression-string>
+        <language-id>JAVA</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>getClass().getResource(&quot;/web_manifest/manifest.json&quot;)</expression-string>
+        <language-id>JAVA</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>getClass().getResource(&quot;web_manifest/manifest.json&quot;)</expression-string>
+        <language-id>JAVA</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+    </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/UserImpl.java">
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/HLink.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1649">
-          <caret line="137" column="0" lean-forward="false" selection-start-line="137" selection-start-column="0" selection-end-line="137" selection-end-column="0" />
+        <state relative-caret-position="204">
+          <caret line="22" column="5" selection-start-line="22" selection-start-column="5" selection-end-line="22" selection-end-column="5" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/User.java">
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/controls/page/Meta.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="986">
-          <caret line="85" column="51" lean-forward="false" selection-start-line="85" selection-start-column="51" selection-end-line="85" selection-end-column="51" />
+        <state relative-caret-position="85">
+          <caret line="5" column="11" selection-start-line="5" selection-start-column="11" selection-end-line="5" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/login/LoginView.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="47" column="108" selection-start-line="47" selection-start-column="8" selection-end-line="47" selection-end-column="108" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/Controller.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1088">
-          <caret line="129" column="49" lean-forward="false" selection-start-line="129" selection-start-column="49" selection-end-line="129" selection-end-column="49" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/lang/Class.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7106">
-          <caret line="487" column="27" lean-forward="false" selection-start-line="487" selection-start-column="21" selection-end-line="487" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.16/common-1.16-sources.jar!/com/venky/core/string/StringUtil.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="478">
-          <caret line="122" column="3" lean-forward="true" selection-start-line="122" selection-start-column="3" selection-end-line="122" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/io/ByteArrayOutputStream.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="71" column="11" lean-forward="false" selection-start-line="71" selection-start-column="11" selection-end-line="71" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/jre/lib/rt.jar!/sun/reflect/UTF8.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-437">
-          <caret line="7" column="6" lean-forward="false" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/util/Base64.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="478">
-          <caret line="76" column="13" lean-forward="false" selection-start-line="76" selection-start-column="13" selection-end-line="76" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/JdbcTypeHelper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7123">
-          <caret line="545" column="77" lean-forward="false" selection-start-line="545" selection-start-column="77" selection-end-line="545" selection-end-column="77" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/io/ModelWriter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="10" column="17" lean-forward="false" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db-io-json/src/main/java/com/venky/swf/integration/JSON.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="20" column="36" lean-forward="false" selection-start-line="20" selection-start-column="36" selection-end-line="20" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/integration/FormatHelper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="21" column="41" lean-forward="false" selection-start-line="21" selection-start-column="27" selection-end-line="21" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db-io-xml/src/main/java/com/venky/swf/integration/XML.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1071">
-          <caret line="77" column="36" lean-forward="false" selection-start-line="77" selection-start-column="36" selection-end-line="77" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/io/AbstractModelWriter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="986">
-          <caret line="83" column="31" lean-forward="false" selection-start-line="83" selection-start-column="31" selection-end-line="83" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/ExceptionView.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="29" column="13" lean-forward="false" selection-start-line="29" selection-start-column="13" selection-end-line="29" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/_IPath.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="714">
-          <caret line="51" column="34" lean-forward="false" selection-start-line="51" selection-start-column="4" selection-end-line="51" selection-end-column="34" />
+        <state relative-caret-position="1836">
+          <caret line="179" selection-start-line="179" selection-end-line="179" />
+          <folding>
+            <element signature="e#5769#5770#0" expanded="true" />
+            <element signature="e#5834#5835#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/path/Path.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="8823">
-          <caret line="626" column="20" lean-forward="false" selection-start-line="626" selection-start-column="20" selection-end-line="626" selection-end-column="20" />
+        <state relative-caret-position="3179">
+          <caret line="270" column="59" selection-start-line="270" selection-start-column="59" selection-end-line="270" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/views/HtmlView.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-136">
+          <caret line="156" column="131" selection-start-line="156" selection-start-column="131" selection-end-line="156" selection-end-column="131" />
           <folding>
-            <element signature="e#23693#23694#0" expanded="false" />
-            <element signature="e#23756#23757#0" expanded="false" />
+            <element signature="e#7185#7215#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/routing/Router.java">
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/AddDocumentExtension.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3655">
-          <caret line="250" column="21" lean-forward="false" selection-start-line="250" selection-start-column="21" selection-end-line="250" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/controller/ModelController.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7548">
-          <caret line="539" column="32" lean-forward="false" selection-start-line="539" selection-start-column="32" selection-end-line="539" selection-end-column="32" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Expression.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6817">
-          <caret line="435" column="1" lean-forward="false" selection-start-line="435" selection-start-column="1" selection-end-line="435" selection-end-column="1" />
-          <folding>
-            <element signature="e#3174#3175#0" expanded="false" />
-            <element signature="e#3204#3205#0" expanded="false" />
-            <element signature="e#11497#11498#0" expanded="false" />
-            <element signature="e#11527#11528#0" expanded="false" />
-            <element signature="e#11562#11563#0" expanded="false" />
-            <element signature="e#11584#11585#0" expanded="false" />
-            <element signature="e#11627#11628#0" expanded="false" />
-            <element signature="e#11661#11662#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/annotations/column/ui/mimes/MimeType.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="884">
-          <caret line="92" column="9" lean-forward="false" selection-start-line="92" selection-start-column="9" selection-end-line="92" selection-end-column="9" />
-          <folding>
-            <element signature="e#1475#1476#0" expanded="false" />
-            <element signature="e#1496#1497#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/configuration/ConfigLoader.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="12" column="13" lean-forward="false" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/QueryCache.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="68" column="66" lean-forward="false" selection-start-line="68" selection-start-column="66" selection-end-line="68" selection-end-column="66" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/util/Collection.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="359" column="12" lean-forward="false" selection-start-line="359" selection-start-column="12" selection-end-line="359" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/configuration/AppInstaller.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="7" column="32" lean-forward="false" selection-start-line="7" selection-start-column="32" selection-end-line="7" selection-end-column="32" />
-          <folding>
-            <element signature="e#234#235#0" expanded="false" />
-            <element signature="e#311#312#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/core/collections/SequenceSet.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="24" column="11" lean-forward="false" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
-          <folding>
-            <marker date="1512928253000" expanded="false" signature="0:104" ph="/.../" />
-            <marker date="1512928253000" expanded="false" signature="150:499" ph="..." />
-            <marker date="1512928253000" expanded="true" signature="697:704" ph="{}" />
-            <marker date="1512928253000" expanded="true" signature="742:925" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="952:963" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1010:1016" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1038:1049" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1073:1079" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1113:1124" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1152:1158" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1187:1198" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1226:1232" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1255:1266" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1289:1295" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1325:1336" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1362:1368" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1407:1418" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1449:1455" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1490:1501" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1529:1535" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1566:1577" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1604:1610" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="1645:1656" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1684:1690" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="1720:1926" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="1964:2230" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="2279:2290" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="2330:2336" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="2391:2586" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="2634:2904" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="2952:3188" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="3214:3274" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="3302:3793" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="3823:3834" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="3862:3868" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="3905:3916" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="3942:3948" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="3975:3986" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="4013:4019" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="4085:4295" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="4336:4779" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="4823:5280" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="5330:5437" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="5478:5489" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="5535:5541" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="5574:5700" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="5738:5749" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="5772:5778" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="5821:5832" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="5860:5866" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="5918:5929" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="5959:5965" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="6021:6032" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="6079:6085" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="6126:6137" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="6179:6185" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="6236:7491" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="6288:6303" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="6323:6333" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="6367:6382" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="6432:6442" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="6468:6581" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="6619:6634" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="6657:6667" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="6697:6991" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="7023:7038" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="7057:7067" ph=" }" />
-            <marker date="1512928253000" expanded="false" signature="7103:7118" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="7141:7151" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="7182:7270" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="7300:7315" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="7356:7366" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="7397:7485" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/AgentSeederTaskBuilder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34">
-          <caret line="2" column="17" lean-forward="false" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/Task.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="102">
-          <caret line="10" column="17" lean-forward="false" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
-          <folding />
+        <state relative-caret-position="204">
+          <caret line="16" column="24" lean-forward="true" selection-start-line="16" selection-start-column="24" selection-end-line="16" selection-end-column="24" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/IndexExtension.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="68">
-          <caret line="11" column="22" lean-forward="false" selection-start-line="11" selection-start-column="22" selection-end-line="11" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/UpdateDocumentExtension.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="6" column="13" lean-forward="false" selection-start-line="6" selection-start-column="13" selection-end-line="6" selection-end-column="13" />
-          <folding />
+          <caret line="11" column="22" selection-start-line="11" selection-start-column="22" selection-end-line="11" selection-end-column="22" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/DestroyDocumentExtension.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="68">
-          <caret line="8" column="13" lean-forward="false" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforeCommitExtension.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="250">
-          <caret line="28" column="68" lean-forward="false" selection-start-line="28" selection-start-column="68" selection-end-line="28" selection-end-column="68" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/TaskManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="111">
-          <caret line="37" column="0" lean-forward="false" selection-start-line="37" selection-start-column="0" selection-end-line="37" selection-end-column="0" />
-          <folding>
-            <element signature="e#642#643#0" expanded="false" />
-            <element signature="e#665#666#0" expanded="false" />
-            <element signature="e#1407#1408#0" expanded="false" />
-            <element signature="e#1453#1454#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="9" column="80" lean-forward="true" selection-start-line="9" selection-start-column="80" selection-end-line="9" selection-end-column="80" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/extension/Registry.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="84">
-          <caret line="55" column="0" lean-forward="false" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
-          <folding>
-            <marker date="1512928253000" expanded="false" signature="0:104" ph="/.../" />
-            <marker date="1512928253000" expanded="false" signature="143:258" ph="..." />
-            <marker date="1512928253000" expanded="true" signature="439:446" ph="{}" />
-            <marker date="1512928253000" expanded="false" signature="485:496" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="512:518" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="588:693" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="759:1035" ph="{...}" />
-            <marker date="1512928253000" expanded="true" signature="1117:1235" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="1292:1303" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1356:1362" ph=" }" />
-            <marker date="1512928253000" expanded="true" signature="1432:1636" ph="{...}" />
-            <marker date="1512928253000" expanded="false" signature="1671:1682" ph=" { " />
-            <marker date="1512928253000" expanded="false" signature="1709:1715" ph=" }" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/AgentSeederTask.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="158">
-          <caret line="22" column="0" lean-forward="false" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/jdbc/TransactionManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="128">
-          <caret line="93" column="24" lean-forward="false" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/extension/Extension.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="8" column="9" lean-forward="false" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
-          <folding>
-            <marker date="1512928253000" expanded="false" signature="0:104" ph="/.../" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTask.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="29" column="25" lean-forward="false" selection-start-line="29" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/util/Set.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="296" column="12" lean-forward="false" selection-start-line="296" selection-start-column="12" selection-end-line="296" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/AsyncTaskManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="43">
-          <caret line="107" column="16" lean-forward="false" selection-start-line="107" selection-start-column="16" selection-end-line="107" selection-end-column="16" />
-          <folding>
-            <element signature="e#7216#7222#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="103">
-          <caret line="55" column="0" lean-forward="false" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
-          <folding />
+          <caret line="8" column="13" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/Agent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="103">
-          <caret line="120" column="0" lean-forward="false" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
-          <folding />
+        <state relative-caret-position="340">
+          <caret line="129" column="30" lean-forward="true" selection-start-line="129" selection-start-column="30" selection-end-line="129" selection-end-column="30" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/InMemoryTaskQueueManager.java">
+    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/core/collections/SequenceSet.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36">
-          <caret line="23" column="0" lean-forward="false" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+        <state relative-caret-position="170">
+          <caret line="24" column="11" selection-start-line="24" selection-start-column="11" selection-end-line="24" selection-end-column="11" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/db/model/DelayedTaskImpl.java">
+    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/extension/Registry.class">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="111">
-          <caret line="45" column="73" lean-forward="false" selection-start-line="45" selection-start-column="73" selection-end-line="45" selection-end-column="73" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/Table.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="204">
-          <caret line="400" column="31" lean-forward="false" selection-start-line="400" selection-start-column="31" selection-end-line="400" selection-end-column="31" />
-          <folding>
-            <element signature="e#14059#14060#0" expanded="true" />
-            <element signature="e#14092#14093#0" expanded="true" />
-            <element signature="e#14132#14133#0" expanded="true" />
-            <element signature="e#14169#14170#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/sql/Statement.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="245" column="9" lean-forward="false" selection-start-line="245" selection-start-column="9" selection-end-line="245" selection-end-column="9" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Select.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="279">
-          <caret line="269" column="106" lean-forward="false" selection-start-line="269" selection-start-column="77" selection-end-line="269" selection-end-column="106" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/H2Helper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="63" column="21" lean-forward="false" selection-start-line="63" selection-start-column="21" selection-end-line="63" selection-end-column="21" />
-          <folding>
-            <element signature="e#1692#1693#0" expanded="true" />
-            <element signature="e#1711#1712#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="278">
+          <caret line="31" column="38" lean-forward="true" selection-start-line="31" selection-start-column="38" selection-end-line="31" selection-end-column="38" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/agent/PersistedTaskPollingAgent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="308">
-          <caret line="82" column="31" lean-forward="false" selection-start-line="82" selection-start-column="31" selection-end-line="82" selection-end-column="31" />
+        <state relative-caret-position="391">
+          <caret line="62" column="12" lean-forward="true" selection-start-line="62" selection-start-column="12" selection-end-line="62" selection-end-column="12" />
           <folding>
             <element signature="e#1972#1973#0" expanded="true" />
             <element signature="e#2005#2006#0" expanded="true" />
@@ -1225,11 +889,279 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/Model.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="30" column="17" selection-start-line="30" selection-start-column="17" selection-end-line="30" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/IndexQueue.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="6" column="38" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/agents/IndexUpdatorAgent.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="37" column="25" lean-forward="true" selection-start-line="37" selection-start-column="25" selection-end-line="37" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/core/AsyncTaskManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="107" column="16" selection-start-line="107" selection-start-column="16" selection-end-line="107" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/InMemoryTaskQueueManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="41" column="35" selection-start-line="41" selection-start-column="35" selection-end-line="41" selection-end-column="35" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/ResultCollector.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="68">
+          <caret line="4" column="17" selection-start-line="4" selection-start-column="17" selection-end-line="4" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar:///etc/java-config-2/current-system-vm/src.zip!/java/util/concurrent/locks/ReentrantReadWriteLock.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1802">
+          <caret line="140" column="17" selection-start-line="140" selection-start-column="10" selection-end-line="140" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/LuceneLock.java" />
+    <entry file="jar://$MAVEN_REPOSITORY$/com/github/venkatramanm/common/1.17-SNAPSHOT/common-1.17-SNAPSHOT.jar!/com/venky/core/io/Locker.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="11" column="13" selection-start-line="11" selection-start-column="13" selection-end-line="11" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/IndexDirectory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="10" column="17" selection-start-line="10" selection-start-column="17" selection-end-line="10" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/DataOutput.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="76" column="17" selection-start-line="76" selection-start-column="17" selection-end-line="76" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/IndexOutput.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="27" column="45" selection-start-line="27" selection-start-column="45" selection-end-line="27" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/BufferedIndexOutput.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="26" column="12" selection-start-line="26" selection-start-column="12" selection-end-line="26" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DbIndexOutput.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="11" column="50" lean-forward="true" selection-start-line="11" selection-start-column="50" selection-end-line="11" selection-end-column="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/index/IndexReader.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="209">
+          <caret line="1336" column="70" selection-start-line="1336" selection-start-column="70" selection-end-line="1336" selection-end-column="70" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/configuration/AppInstaller.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-595">
+          <caret line="21" column="13" selection-start-line="21" selection-start-column="13" selection-end-line="21" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/db/model/IndexFile.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="13" column="17" selection-start-line="13" selection-start-column="17" selection-end-line="13" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/Lock.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="33" column="22" selection-start-line="33" selection-start-column="22" selection-end-line="33" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/exceptions/SWFTimeoutException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="2" column="13" selection-start-line="2" selection-start-column="13" selection-end-line="2" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/sql/Select.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="289">
+          <caret line="309" column="44" lean-forward="true" selection-start-line="309" selection-start-column="44" selection-end-line="309" selection-end-column="44" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/Table.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="170">
+          <caret line="387" column="13" selection-start-line="387" selection-start-column="13" selection-end-line="387" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/table/QueryCache.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="116">
+          <caret line="126" column="20" lean-forward="true" selection-start-line="126" selection-start-column="20" selection-end-line="126" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/LuceneIndexer.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="503">
+          <caret line="175" column="47" lean-forward="true" selection-start-line="175" selection-start-column="47" selection-end-line="175" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexTask.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="64" column="5" lean-forward="true" selection-start-line="64" selection-start-column="5" selection-end-line="64" selection-end-column="5" />
-          <folding />
+        <state relative-caret-position="323">
+          <caret line="34" column="59" lean-forward="true" selection-start-line="34" selection-start-column="59" selection-end-line="34" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/NIOFSDirectory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="61" column="41" lean-forward="true" selection-start-line="61" selection-start-column="41" selection-end-line="61" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/FSLockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="25" column="29" selection-start-line="25" selection-start-column="29" selection-end-line="25" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/NativeFSLockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="757">
+          <caret line="93" column="24" lean-forward="true" selection-start-line="93" selection-start-column="24" selection-end-line="93" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/SingleInstanceLockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="33" column="13" selection-start-line="33" selection-start-column="13" selection-end-line="33" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/LockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1020">
+          <caret line="64" column="23" selection-start-line="64" selection-start-column="23" selection-end-line="64" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/Directory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2414">
+          <caret line="149" column="27" selection-start-line="149" selection-start-column="27" selection-end-line="149" selection-end-column="27" />
+          <folding>
+            <element signature="e#5477#5478#0" expanded="true" />
+            <element signature="e#5522#5523#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/store/SimpleFSLockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2193">
+          <caret line="130" column="14" selection-start-line="130" selection-start-column="14" selection-end-line="130" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/3.5.0/lucene-core-3.5.0-sources.jar!/org/apache/lucene/index/IndexWriter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="77809">
+          <caret line="4653" column="54" selection-start-line="4653" selection-start-column="54" selection-end-line="4653" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseLockFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="34">
+          <caret line="8" column="27" selection-start-line="8" selection-start-column="27" selection-end-line="8" selection-end-column="27" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/common/DatabaseDirectory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="37" column="35" selection-start-line="37" selection-start-column="35" selection-end-line="37" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/index/background/IndexManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="50" column="47" selection-start-line="50" selection-start-column="47" selection-end-line="50" selection-end-column="47" />
+          <folding>
+            <element signature="e#1486#1487#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/background/extensions/BeforeCommitExtension.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="187">
+          <caret line="15" column="84" selection-start-line="15" selection-start-column="8" selection-end-line="15" selection-end-column="84" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf/src/main/java/com/venky/swf/plugins/lucene/extensions/BeforePersistedTaskPollingAgentTrigger.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="850">
+          <caret line="61" column="9" selection-start-line="61" selection-start-column="9" selection-end-line="61" selection-end-column="9" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/swf-db/src/main/java/com/venky/swf/db/model/User.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="179">
+          <caret line="39" column="17" selection-start-line="39" selection-start-column="17" selection-end-line="39" selection-end-column="17" />
         </state>
       </provider>
     </entry>

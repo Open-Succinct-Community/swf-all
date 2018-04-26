@@ -48,7 +48,7 @@ public class IndexManager {
 
 	};
 	
-	public Directory getDirectory(String name){ 
+	public Directory getDirectory(String name){
 		return directoryCache.get(name);
 	}
 

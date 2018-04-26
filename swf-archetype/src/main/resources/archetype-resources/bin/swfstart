@@ -32,6 +32,7 @@ sleep 5
 fi
 
 mkdir -p $PWD/tmp
+rm ${PWD}/tmp/pid
 touch ${PWD}/tmp/pid
 
 unameOut="$(uname -s)"
