@@ -82,7 +82,8 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
 			if (!jobs.isEmpty()){
 			    Task lastTask = jobs.remove(jobs.size()-1);
-                jobs.add(new CompositeTask(lastTask,new PersistedTaskPoller(lastRecordId)));
+                jobs.add(new CompositeTask(new PersistedTaskPoller(lastRecordId),lastTask));
+                //First do get jobs then the task or else the task would be removed and then we will do full select again.
 			}
 
 			return jobs;
