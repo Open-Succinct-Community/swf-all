@@ -1,6 +1,6 @@
 package com.venky.swf.plugins.background.core;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TaskHolder implements Task {
 	/**
@@ -10,7 +10,7 @@ public class TaskHolder implements Task {
 
 	private Task task = null;
 	private Priority taskPriority = null;
-	private int taskId = -1; 
+	private long taskId = -1;
 	
 	@Override
 	public Priority getTaskPriority() {
@@ -18,12 +18,12 @@ public class TaskHolder implements Task {
 	}
 	
 	@Override
-	public int getTaskId(){ 
+	public long getTaskId(){
 		return taskId;
 	}
 	
 	
-	private static AtomicInteger fakeIdGenerator = new AtomicInteger();
+	private static AtomicLong fakeIdGenerator = new AtomicLong();
 	public TaskHolder(Task task){
 		this.task = task;
 		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();

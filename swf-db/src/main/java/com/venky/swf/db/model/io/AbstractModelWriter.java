@@ -133,7 +133,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		
 	}
 	
-	private <R extends Model> void write(Class<R> referredModelClass, int id , T referredModelElement){
+	private <R extends Model> void write(Class<R> referredModelClass, long id , T referredModelElement){
 		Class<T> formatClass = getFormatClass();
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);

@@ -15,8 +15,8 @@ public interface IndexFile extends Model {
 	
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.ZERO)
-	public Integer getIndexDirectoryId();
-	public void setIndexDirectoryId(Integer dirId);
+	public Long getIndexDirectoryId();
+	public void setIndexDirectoryId(Long dirId);
 	public IndexDirectory getIndexDirectory();
 	
 	public String getName();

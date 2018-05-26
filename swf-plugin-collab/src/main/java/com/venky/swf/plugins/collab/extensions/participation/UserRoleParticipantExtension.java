@@ -14,7 +14,7 @@ public class UserRoleParticipantExtension extends ParticipantExtension<UserRole>
 	}
 	
 	@Override
-	protected List<Integer> getAllowedFieldValues(User user,
+	protected List<Long> getAllowedFieldValues(User user,
 			UserRole partiallyFilledModel, String fieldName) {
 		if (fieldName.equalsIgnoreCase("USER_ID")){
 			return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class, user));

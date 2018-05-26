@@ -7,10 +7,10 @@ import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 @IS_VIRTUAL
 public interface CompanyUser extends UserCompany{
 	@HIDDEN(true)
-	public Integer getCompanyId();
+	public Long getCompanyId();
 	
 	@HIDDEN(false)
-	public int getUserId();
+	public long getUserId();
 	
 	
 }

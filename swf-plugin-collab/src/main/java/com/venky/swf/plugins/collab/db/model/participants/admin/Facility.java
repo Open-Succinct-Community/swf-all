@@ -33,19 +33,19 @@ public interface Facility extends CompanySpecific, GeoLocation, Model{
 	
 	@PARTICIPANT("CITY")
 	@OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.FacilityCitySelectionProcessor")
-	public int getCityId();
-	public void setCityId(int cityId);
+	public long getCityId();
+	public void setCityId(long cityId);
 	public City getCity();
 
 	@PARTICIPANT("STATE")
 	@OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.FacilityStateSelectionProcessor")
-	public int getStateId();
-	public void setStateId(int stateId);
+	public long getStateId();
+	public void setStateId(long stateId);
 	public State getState();
 	
 	@PARTICIPANT("COUNTRY")
-	public int getCountryId();
-	public void setCountryId(int countryId);
+	public long getCountryId();
+	public void setCountryId(long countryId);
 	public Country getCountry();
 	
 

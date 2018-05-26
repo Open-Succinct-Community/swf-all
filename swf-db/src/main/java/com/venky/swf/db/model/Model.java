@@ -33,8 +33,8 @@ public interface Model extends _Identifiable {
     @IS_AUTOINCREMENT
     @HIDDEN
     @HOUSEKEEPING
-    public int getId();
-    public void setId(int id);
+    public long getId();
+    public void setId(long id);
     
     @HIDDEN
     @HOUSEKEEPING
@@ -48,8 +48,8 @@ public interface Model extends _Identifiable {
 	@PROTECTION
 	@HOUSEKEEPING
 	@COLUMN_DEF(StandardDefault.CURRENT_USER)
-	public Integer getUpdaterUserId();
-	public void setUpdaterUserId(Integer updaterUserId);
+	public Long getUpdaterUserId();
+	public void setUpdaterUserId(Long updaterUserId);
 	public User getUpdaterUser();
 	
 	@COLUMN_NAME("updated_at")
@@ -66,8 +66,8 @@ public interface Model extends _Identifiable {
 	@PROTECTION
 	@HOUSEKEEPING
 	@COLUMN_DEF(StandardDefault.CURRENT_USER)
-	public Integer getCreatorUserId();
-	public void setCreatorUserId(Integer creatorUserId);
+	public Long getCreatorUserId();
+	public void setCreatorUserId(Long creatorUserId);
 	public User getCreatorUser();
 	
 	@COLUMN_NAME("created_at")

@@ -82,13 +82,13 @@ public interface User extends Model{
     public boolean authenticate(String password);
     public static final String USER_AUTHENTICATE = "user.authenticate" ;
    
-    public <M extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<M> modelClass);
-    public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass,Model model);
+    public <M extends Model> Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<M> modelClass);
+    public Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<? extends Model> modelClass,Model model);
     public static final String GET_PARTICIPATION_OPTION = "get.participation.option";//++ModelClass.SimpleName
     
     public <M extends Model> Expression getDataSecurityWhereClause(Class<M> modelClass);
     public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass,Model model);
-    public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Integer>>> participatingRoleGroupOptions);
+    public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Long>>> participatingRoleGroupOptions);
     
     @IS_VIRTUAL
     public boolean isAdmin();
@@ -98,8 +98,8 @@ public interface User extends Model{
 	@PARTICIPANT
 	@HIDDEN
 	@HOUSEKEEPING
-	public Integer getSelfUserId();
-	public void setSelfUserId(Integer userId);
+	public Long getSelfUserId();
+	public void setSelfUserId(Long userId);
 	@IS_VIRTUAL
 	public User getSelfUser();
 

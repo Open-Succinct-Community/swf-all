@@ -28,7 +28,7 @@ import com.venky.swf.sql.Select;
 public class MySqlHelper extends JdbcTypeHelper{
     @Override
     public String getAutoIncrementInstruction() {
-            return (" INTEGER NOT NULL AUTO_INCREMENT ");
+            return (" BIGINT NOT NULL AUTO_INCREMENT ");
     }
     @Override
     public String getCurrentTimeStampKW(){

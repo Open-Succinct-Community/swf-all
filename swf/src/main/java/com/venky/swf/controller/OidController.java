@@ -200,7 +200,7 @@ public class OidController extends Controller{
 			int numOids = oids.size();
 			
 			if (numOids > 0) {
-    			SortedSet<Integer> numUsers = new TreeSet<Integer>();
+    			SortedSet<Long> numUsers = new TreeSet<Long>();
     			for (UserEmail oid: oids){
     				numUsers.add(oid.getUserId());
     			}

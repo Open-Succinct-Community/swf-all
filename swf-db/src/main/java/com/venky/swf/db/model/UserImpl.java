@@ -129,17 +129,17 @@ public class UserImpl extends ModelImpl<User>{
 		}
 	}; 
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
-	public <R extends Model> Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<R> modelClass){
+	public <R extends Model> Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<R> modelClass){
 		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName());
 		Set<String> tables = new HashSet<String>(relatedTables.get(modelClass));
 		tables.retainAll(Database.getInstance().getCurrentTransaction().getTablesChanged());
-		Cache<Class<? extends Model>,Cache<String,Map<String,List<Integer>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
+		Cache<Class<? extends Model>,Cache<String,Map<String,List<Long>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
 		if (baseParticipationOptions == null){
-			baseParticipationOptions = new Cache<Class<? extends Model>, Cache<String,Map<String,List<Integer>>>>() {
+			baseParticipationOptions = new Cache<Class<? extends Model>, Cache<String,Map<String,List<Long>>>>() {
 				private static final long serialVersionUID = -5570691940356510299L;
 
 				@Override
-				protected Cache<String, Map<String, List<Integer>>> getValue(
+				protected Cache<String, Map<String, List<Long>>> getValue(
 						Class<? extends Model> k) {
 					return getParticipationOptions(k,Database.getTable(k).newRecord());
 				}
@@ -155,10 +155,10 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Cache<String,Map<String,List<Integer>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
+	public Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
 		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
 		try {
-			Cache<String,Map<String, List<Integer>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Integer>>>(){
+			Cache<String,Map<String, List<Long>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Long>>>(){
 
 				/**
 				 * 
@@ -166,8 +166,8 @@ public class UserImpl extends ModelImpl<User>{
 				private static final long serialVersionUID = -6588079568930541478L;
 
 				@Override
-				protected Map<String, List<Integer>> getValue(String k) {
-					return new HashMap<String, List<Integer>>();
+				protected Map<String, List<Long>> getValue(String k) {
+					return new HashMap<String, List<Long>>();
 				}
 				
 			};
@@ -180,7 +180,7 @@ public class UserImpl extends ModelImpl<User>{
 				String referredModelIdFieldName = ref.getReferenceField(referredModelGetter);
 				PARTICIPANT participant = ref.getAnnotation(ref.getFieldGetter(referredModelIdFieldName), PARTICIPANT.class);
 
-				Map<String,List<Integer>> mapParticipatingOptions = mapParticipatingGroupOptions.get(participant.value()); 
+				Map<String,List<Long>> mapParticipatingOptions = mapParticipatingGroupOptions.get(participant.value());
 				
 				
 				boolean extnFound = false;
@@ -199,12 +199,12 @@ public class UserImpl extends ModelImpl<User>{
 				
 				if (!extnFound) {
 					Class<? extends Model> referredModelClass = (Class<? extends Model>) referredModelGetter.getReturnType();
-					Integer rmid = ref.get(model,referredModelIdFieldName);
+					Long rmid = ref.get(model,referredModelIdFieldName);
 					Model referredModel = null;
 					if (rmid != null){
 						referredModel = Database.getTable(referredModelClass).get(rmid);
 					}
-					Cache<String,Map<String,List<Integer>>> referredModelParticipatingGroupOptions = null; 
+					Cache<String,Map<String,List<Long>>> referredModelParticipatingGroupOptions = null;
 					if (referredModel == null){
 						referredModelParticipatingGroupOptions = user.getParticipationOptions(referredModelClass);
 					}else {
@@ -230,7 +230,7 @@ public class UserImpl extends ModelImpl<User>{
 							filter = new Select.AccessibilityFilter<Model>(user);
 						}
 						List<? extends Model> referables = q.execute(referredModelClass,filter);
-						List<Integer> ids = DataSecurityFilter.getIds(referables);
+						List<Long> ids = DataSecurityFilter.getIds(referables);
 						mapParticipatingOptions.put(referredModelIdFieldName,ids);
 					}
 				}
@@ -254,10 +254,10 @@ public class UserImpl extends ModelImpl<User>{
 	
 	public Expression getDataSecurityWhereClause(Class<? extends Model> modelClass,Model model){
 		ModelReflector<? extends Model> ref = ModelReflector.instance(modelClass);
-		Cache<String,Map<String,List<Integer>>> participatingOptions = getParticipationOptions(modelClass,model);
+		Cache<String,Map<String,List<Long>>> participatingOptions = getParticipationOptions(modelClass,model);
 		return getDataSecurityWhereClause(ref, participatingOptions);
 	}
-	public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Integer>>> participatingGroupOptions){
+	public Expression getDataSecurityWhereClause(ModelReflector<? extends Model> ref, Cache<String,Map<String,List<Long>>> participatingGroupOptions){
 		Expression dswMandatory = new Expression(getPool(),Conjunction.AND);
 		
 		Map<String,Expression> optionalWhere = new HashMap<String, Expression>();
@@ -268,12 +268,12 @@ public class UserImpl extends ModelImpl<User>{
 		}
 
 		for (String participantRoleGroup : participatingGroupOptions.keySet()){
-			Map<String,List<Integer>> participatingOptions = participatingGroupOptions.get(participantRoleGroup);
+			Map<String,List<Long>> participatingOptions = participatingGroupOptions.get(participantRoleGroup);
 			Iterator<String> fieldNameIterator = participatingOptions.keySet().iterator();
 			
 			while (fieldNameIterator.hasNext()){
 				String key = fieldNameIterator.next();
-				List<Integer> values = participatingOptions.get(key);
+				List<Long> values = participatingOptions.get(key);
 				
 				ColumnDescriptor cd = ref.getColumnDescriptor(key);
 		    	if (cd.isVirtual()){
@@ -285,7 +285,7 @@ public class UserImpl extends ModelImpl<User>{
 		    	if (values.isEmpty()){
 		    		dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ));
 		    	}else if (values.size() == 1){
-		    		Integer value = values.get(0);
+		    		Long value = values.get(0);
 		    		if (value == null){
 		    			dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ));
 		    		}else {

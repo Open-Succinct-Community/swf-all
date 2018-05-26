@@ -17,8 +17,8 @@ import com.venky.swf.db.model.Model;
 public interface Note extends Model{
 	@PROTECTION(Kind.NON_EDITABLE)
 	@IS_NULLABLE(false)
-	public Integer getIssueId();
-	public void setIssueId(Integer id);
+	public Long getIssueId();
+	public void setIssueId(Long id);
 	public Issue getIssue();
 	
 	@Index

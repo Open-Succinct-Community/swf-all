@@ -13,7 +13,7 @@ import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 public class CompanySpecificParticipantExtension<M extends Model> extends ParticipantExtension<M>{
 
 	@Override
-	protected List<Integer> getAllowedFieldValues(com.venky.swf.db.model.User user, M partiallyFilledModel, String fieldName) {
+	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, M partiallyFilledModel, String fieldName) {
 		
 		CompanySpecific cs = null;
 		User u = (User)user;
@@ -26,7 +26,7 @@ public class CompanySpecificParticipantExtension<M extends Model> extends Partic
 					return Arrays.asList(cs.getCompanyId());
 				}else {
 					List<UserCompany> ucs = u.getUserCompanies();
-					SequenceSet<Integer> ids =  new SequenceSet<>();
+					SequenceSet<Long> ids =  new SequenceSet<>();
 					for (UserCompany uc:ucs){ 
 						ids.add(uc.getCompanyId());
 					}

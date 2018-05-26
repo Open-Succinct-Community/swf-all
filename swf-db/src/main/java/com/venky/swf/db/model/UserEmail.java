@@ -8,8 +8,8 @@ public interface UserEmail extends Model{
 	@PARTICIPANT
 	@UNIQUE_KEY
 	@Index
-	public int getUserId();
-	public void setUserId(int id);
+	public long getUserId();
+	public void setUserId(long id);
 	public User getUser();
 	
 	@UNIQUE_KEY

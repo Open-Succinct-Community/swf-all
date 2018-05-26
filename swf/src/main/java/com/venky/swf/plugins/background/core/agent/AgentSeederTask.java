@@ -16,17 +16,16 @@ public abstract class AgentSeederTask implements Task{
 		if (!Agent.instance().isRunning(getAgentName())){
 			return;
 		}
-		AgentFinishUpTask finish = new AgentFinishUpTask(getAgentName());
 		try {
 			List<Task> tasks = getTasks();
 			if (tasks.isEmpty()) {
-				executeDelayed(finish);
+				finish();
 			}else {
 				executeDelayed(tasks);
 			}
 		}catch(Exception ex){
 			Config.instance().getLogger(getClass().getName()).log(Level.WARNING, "Failed To seed Agent", ex);
-			executeDelayed(finish);
+			finish();
 		}
 	}
 	public <T extends Task> void executeDelayed(T task) {
@@ -39,5 +38,22 @@ public abstract class AgentSeederTask implements Task{
 	public abstract List<Task> getTasks();
 	public abstract String getAgentName();
 	protected abstract boolean isAgentTaskQPersistent();
+
+	private AgentFinishUpTask finishUpTask = null;
+	public AgentFinishUpTask getFinishUpTask(){
+	    if (finishUpTask != null){
+	        return finishUpTask;
+        }
+	    synchronized (this){
+	        if (finishUpTask == null){
+	            finishUpTask = new AgentFinishUpTask(getAgentName());
+            }
+        }
+        return finishUpTask;
+
+    }
+	public void finish(){
+	    getFinishUpTask().execute();
+    }
 	
 }

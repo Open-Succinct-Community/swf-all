@@ -19,7 +19,7 @@ public class MailerTask implements Task{
 
 	private static final long serialVersionUID = 8083486775891668308L;
 	
-	int toUserId ;
+	long toUserId ;
 	String subject; 
 	String text; 
 	boolean isHtml = false;

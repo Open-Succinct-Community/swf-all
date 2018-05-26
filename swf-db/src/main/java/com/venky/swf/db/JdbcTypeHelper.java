@@ -672,7 +672,7 @@ public abstract class JdbcTypeHelper {
     
     
     public String getAutoIncrementInstruction() {
-        return " INTEGER NOT NULL ";
+        return " BIGINT NOT NULL ";
     }
     
     public abstract String getCurrentTimeStampKW();

@@ -22,7 +22,7 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	public Priority getTaskPriority(){ 
 		return Task.getPriority(getProxy().getPriority());
 	}
-	public int getTaskId(){
+	public long getTaskId(){
 		return getProxy().getId();
 	}
 

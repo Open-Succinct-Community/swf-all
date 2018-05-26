@@ -199,13 +199,13 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 	}
 
-	private Expression getIdWhereClause(int id) {
+	private Expression getIdWhereClause(long id) {
 		return new Expression(getTable().getReflector().getPool(),"ID", Operator.EQ, id);
 	}
 
 	private Expression getIdWhereClause(Record record) {
 		if (record != null) {
-			Integer id = record.getId();
+			Long id = record.getId();
 			if (id != null) {
 				return getIdWhereClause(id);
 			}

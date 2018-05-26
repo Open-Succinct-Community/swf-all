@@ -23,14 +23,14 @@ public interface City extends Model {
 	@Index
 	@UNIQUE_KEY
 	@IS_NULLABLE(false)
-	public Integer getStateId();
-	public void setStateId(Integer id);
+	public Long getStateId();
+	public void setStateId(Long id);
 	public State getState();
 	
 	public static City findByCountryAndStateAndName(String  countryName , String stateName,String cityName) { 
 		return findByStateAndName(State.findByCountryAndName(countryName, stateName).getId(), cityName);
 	}
-	public static City findByStateAndName(int stateId, String cityName) {
+	public static City findByStateAndName(long stateId, String cityName) {
 		Select s = new Select().from(City.class); 
 		Expression where = new Expression(s.getPool(),Conjunction.AND);
 		where.add(new Expression(s.getPool(),"NAME",Operator.EQ,cityName));

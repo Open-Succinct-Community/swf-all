@@ -34,7 +34,7 @@ public interface DelayedTask extends Task, Model {
 	public Priority getTaskPriority();
 	
 	@IS_VIRTUAL
-	public int getTaskId();
+	public long getTaskId();
 	
 	
 	public void execute();

@@ -13,15 +13,15 @@ public interface UserCompany extends Model {
 	@PARTICIPANT
 	@UNIQUE_KEY
 	@HIDDEN
-	public int getUserId();
-	public void setUserId(int userId); 
+	public long getUserId();
+	public void setUserId(long userId);
 	public User getUser(); 
 	
 	@IS_NULLABLE(false)
 	@Index
 	@UNIQUE_KEY
-	public Integer getCompanyId();
-	public void setCompanyId(Integer id);
+	public Long getCompanyId();
+	public void setCompanyId(Long id);
 	public Company getCompany();
 
 }

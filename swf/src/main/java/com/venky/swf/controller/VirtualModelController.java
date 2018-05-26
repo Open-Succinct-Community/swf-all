@@ -34,22 +34,22 @@ public abstract class VirtualModelController<M extends Model> extends ModelContr
 	}
 
 	@Override
-	public View show(int id) {
+	public View show(long id) {
 		return throwOperationNotSupportedException();
 	}
 
 	@Override
-	public View view(int id) {
+	public View view(long id) {
 		return throwOperationNotSupportedException();
 	}
 
 	@Override
-	public View edit(int id) {
+	public View edit(long id) {
 		return throwOperationNotSupportedException();
 	}
 
 	@Override
-	public View clone(int id) {
+	public View clone(long id) {
 		return throwOperationNotSupportedException();
 	}
 
@@ -64,7 +64,7 @@ public abstract class VirtualModelController<M extends Model> extends ModelContr
 	}
 
 	@Override
-	public View destroy(int id) {
+	public View destroy(long id) {
 		return back();
 	}
 

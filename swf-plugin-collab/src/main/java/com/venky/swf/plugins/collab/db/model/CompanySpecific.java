@@ -11,8 +11,8 @@ public interface CompanySpecific {
 	@IS_NULLABLE(false)
 	@Index
 	@UNIQUE_KEY
-	public Integer getCompanyId();
-	public void setCompanyId(Integer id);
+	public Long getCompanyId();
+	public void setCompanyId(Long id);
 	public Company getCompany();
 	
 }

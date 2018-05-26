@@ -54,17 +54,17 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		User user = (User)context[0];
 		M model = (M) context[1];
 		String fieldName =  (String)context[2];
-		Cache<String,Map<String,List<Integer>>> participatingGroupOptions = (Cache<String,Map<String, List<Integer>>>)context[3];
+		Cache<String,Map<String,List<Long>>> participatingGroupOptions = (Cache<String,Map<String, List<Long>>>)context[3];
 
 		PARTICIPANT participant = getReflector().getAnnotation(getReflector().getFieldGetter(fieldName), PARTICIPANT.class);
 		
-		Map<String,List<Integer>> participatingOptions = participatingGroupOptions.get(participant.value());
-		List<Integer> allowedValues = getAllowedFieldValues(user,model,fieldName);
+		Map<String,List<Long>> participatingOptions = participatingGroupOptions.get(participant.value());
+		List<Long> allowedValues = getAllowedFieldValues(user,model,fieldName);
 
 		if (allowedValues != null){ 
-			List<Integer> existing = participatingOptions.get(fieldName);
+			List<Long> existing = participatingOptions.get(fieldName);
 			if (existing == null){
-				existing = new SequenceSet<Integer>();
+				existing = new SequenceSet<Long>();
 				participatingOptions.put(fieldName, existing);
 			}
 			existing.addAll(allowedValues);
@@ -77,5 +77,5 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 	 * @param fieldName
 	 * @return Allowed field values for passed used. <code>null</code> implies all values are allowed. 
 	 */
-	protected abstract List<Integer> getAllowedFieldValues(User user, M partiallyFilledModel, String fieldName);
+	protected abstract List<Long> getAllowedFieldValues(User user, M partiallyFilledModel, String fieldName);
 }

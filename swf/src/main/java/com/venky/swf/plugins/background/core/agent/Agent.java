@@ -3,6 +3,8 @@ package com.venky.swf.plugins.background.core.agent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.venky.cache.Cache;
 import com.venky.core.util.ObjectUtil;
@@ -25,6 +27,7 @@ public class Agent {
 			return this.running;
 		}
 	}
+
 	private Cache<String,Status> localAgentStatus = new Cache<String, Agent.Status>(0,0) {
 		private static final long serialVersionUID = 3597037802654592107L;
 
@@ -122,7 +125,7 @@ public class Agent {
 			throw new NullPointerException(task.getClass().getName() + " doesnot seem to implement getAgentName()");
 		}
 		boolean start = false;
-		if (!isRunning(task)){
+        if (!isRunning(task)){
 			start = true;
 			setRunning(task, true);
 		}

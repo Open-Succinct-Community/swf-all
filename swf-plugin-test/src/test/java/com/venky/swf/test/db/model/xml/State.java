@@ -6,8 +6,8 @@ import com.venky.swf.db.model.Model;
 public interface State extends Model{
 	@UNIQUE_KEY
 	public Country getCountry();
-	public int getCountryId();
-	public void setCountryId(int id);
+	public long getCountryId();
+	public void setCountryId(long id);
 	
 	@UNIQUE_KEY
 	public String getName();

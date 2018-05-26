@@ -9,7 +9,7 @@ import org.apache.lucene.store.LockFactory;
 import java.io.IOException;
 
 public class DatabaseLockFactory extends LockFactory {
-    private int id = -1;
+    private long id = -1;
     public DatabaseLockFactory(IndexDirectory directory){
         this.id = directory.getId();
     }

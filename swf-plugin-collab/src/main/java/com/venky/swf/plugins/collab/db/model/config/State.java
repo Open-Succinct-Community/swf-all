@@ -24,8 +24,8 @@ public interface State extends Model{
 	@UNIQUE_KEY
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.ONE)
-	public Integer getCountryId();
-	public void setCountryId(Integer iCountryId);
+	public Long getCountryId();
+	public void setCountryId(Long iCountryId);
 	public Country getCountry();
 	
 	public List<City> getCities(); 
@@ -34,7 +34,7 @@ public interface State extends Model{
 		return findByCountryAndName(Country.findByName(countryName).getId(), stateName);
 	}
 	
-	public static State findByCountryAndName(Integer countryId , String stateName) { 
+	public static State findByCountryAndName(Long countryId , String stateName) {
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
 		where.add(new Expression(s.getPool(),"NAME",Operator.EQ,stateName));

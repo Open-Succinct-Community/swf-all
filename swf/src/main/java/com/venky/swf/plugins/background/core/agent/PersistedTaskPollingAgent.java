@@ -1,20 +1,18 @@
 package com.venky.swf.plugins.background.core.agent;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.CompositeTask;
 import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
@@ -39,11 +37,11 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			return where;
 		}
 
-		private int lastRecordId = -1 ;
+		private long lastRecordId = -1 ;
 		public PersistedTaskPoller(){
 			
 		}
-		public PersistedTaskPoller(int lastRecordId) {
+		public PersistedTaskPoller(long lastRecordId) {
 			this.lastRecordId = lastRecordId;
 		}
 		private int maxTasksToBuffer = Config.instance().getIntProperty("swf.persisted.task.polling.batch.size",1000);
@@ -82,7 +80,16 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
 			if (!jobs.isEmpty()){
 			    Task lastTask = jobs.remove(jobs.size()-1);
-                jobs.add(new CompositeTask(new PersistedTaskPoller(lastRecordId),lastTask));
+                jobs.add(new CompositeTask(new PersistedTaskPoller(lastRecordId),lastTask) {
+                    @Override
+                    public void execute(){
+                        try {
+                            super.execute();
+                        }catch (Exception ex){
+                            finish(); // Don't leave Agent in bad state of Running and having no Seeder!.
+                        }
+                    }
+                });
                 //First do get jobs then the task or else the task would be removed and then we will do full select again.
 			}
 

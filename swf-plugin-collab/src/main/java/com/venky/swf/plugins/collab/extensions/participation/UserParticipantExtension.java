@@ -19,17 +19,17 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 	}
 
 	@Override
-	protected List<Integer> getAllowedFieldValues(com.venky.swf.db.model.User user, User partiallyFilledModel,
+	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, User partiallyFilledModel,
 			String fieldName) {
 		
-		SequenceSet<Integer> ret = null;
+		SequenceSet<Long> ret = null;
 		if (fieldName.equals("SELF_USER_ID")){
 			ret = new SequenceSet<>();
 			
 			User operator = (User)user;
 			ret.add(operator.getId());
 			
-			SequenceSet<Integer> accessableCompanies = new SequenceSet<>(); 
+			SequenceSet<Long> accessableCompanies = new SequenceSet<>();
 			
 			for (UserCompany uc : operator.getUserCompanies()){
 				accessableCompanies.add(uc.getCompanyId());

@@ -249,7 +249,7 @@ public class Controller {
 	        	StringBuilder qry = new StringBuilder();
 	        	qry.append("( ").append(columnName).append(":").append(QueryParser.escape(value)).append("* )");
 	        	Query q = indexer.constructQuery(qry.toString());
-	        	List<Integer> topRecords = indexer.findIds(q, maxRecordsToGet);
+	        	List<Long> topRecords = indexer.findIds(q, maxRecordsToGet);
 	        	int numRecordRetrieved = topRecords.size();
 	        	if (numRecordRetrieved > 0 && numRecordRetrieved < maxRecordsToGet){
 	            	Expression idExpression = Expression.createExpression(reflector.getPool(),"ID", Operator.IN, topRecords.toArray());

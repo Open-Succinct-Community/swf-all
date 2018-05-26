@@ -16,8 +16,8 @@ import com.venky.swf.db.model.Model;
 @MENU("Admin")
 public interface RolePermission extends Model{
 	@Index
-	public Integer getRoleId();
-	public void setRoleId(Integer roleId);
+	public Long getRoleId();
+	public void setRoleId(Long roleId);
 	public Role getRole();
 	
 	@IS_NULLABLE

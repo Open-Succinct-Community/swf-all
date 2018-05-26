@@ -34,7 +34,7 @@ public class IssuesController extends ModelController<Issue>{
 	}
 	
 	@SingleRecordAction(tooltip="Yank")
-	public View yank(int id){
+	public View yank(long id){
 		Issue issue = Database.getTable(Issue.class).get(id);
 		issue.yank();
 		return afterPersistDBView(issue);

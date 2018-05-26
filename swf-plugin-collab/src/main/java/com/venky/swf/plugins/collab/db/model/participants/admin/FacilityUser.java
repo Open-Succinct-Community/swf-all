@@ -7,9 +7,9 @@ import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 @IS_VIRTUAL
 public interface FacilityUser extends UserFacility{
 	@HIDDEN(false)
-	public int getUserId();
+	public long getUserId();
 	
 	@HIDDEN(true)
-	public int getFacilityId();
+	public long getFacilityId();
 	
 }

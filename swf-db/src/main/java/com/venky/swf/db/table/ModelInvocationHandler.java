@@ -235,15 +235,15 @@ public class ModelInvocationHandler implements InvocationHandler {
     	
     	Method parentIdGetter = this.getReflector().getFieldGetter(parentIdFieldName);
     	
-    	Integer parentId;
+    	Number parentId;
 		try {
-			parentId = (Integer)parentIdGetter.invoke(proxy);
+			parentId = (Number)parentIdGetter.invoke(proxy);
 		} catch (Exception e) {
 			throw new RuntimeException(parentIdFieldName,e);
 		} 
 		P parent = null;
 		if (parentId != null) {
-			parent = Database.getTable(parentClass).get(parentId);
+			parent = Database.getTable(parentClass).get(parentId.longValue());
 		}
         return parent;
     }
@@ -272,7 +272,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return getChildren(childClass,parentIdFieldName,null);
     }
     public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName, String addnl_condition){
-    	int parentId = proxy.getId();
+    	long parentId = proxy.getId();
     	ModelReflector<C> childReflector = ModelReflector.instance(childClass);
     	String parentIdColumnName = childReflector.getColumnDescriptor(parentIdFieldName).getName();
     	Expression where = new Expression(getPool(),Conjunction.AND);
@@ -313,13 +313,13 @@ public class ModelInvocationHandler implements InvocationHandler {
     	}
     	return getParticipatingRoles(user, user.getParticipationOptions(asModel,getProxy()));
     }
-    private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions){
+    private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Long>>> pGroupOptions){
     	Timer timer = cat.startTimer();
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
         	Set<String> participantingRoles = new HashSet<String>();
     		for (String participantRoleGroup : pGroupOptions.keySet()){
-    			Map<String,List<Integer>> pOptions = pGroupOptions.get(participantRoleGroup);
+    			Map<String,List<Long>> pOptions = pGroupOptions.get(participantRoleGroup);
     			for (String referencedModelIdFieldName :pOptions.keySet()){
     				Integer referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);	
     				
@@ -767,7 +767,7 @@ public class ModelInvocationHandler implements InvocationHandler {
             assert (generatedValues.getDirtyFields().size() == 1);
             String fieldName = generatedKeys.get(0);
             String virtualFieldName = generatedValues.getDirtyFields().iterator().next();
-            int id = ((Number)generatedValues.get(virtualFieldName)).intValue();
+            long id = ((Number)generatedValues.get(virtualFieldName)).intValue();
             record.put(fieldName, id);
         }
 

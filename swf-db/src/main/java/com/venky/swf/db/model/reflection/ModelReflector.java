@@ -7,16 +7,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
+import java.util.*;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
@@ -1313,8 +1304,7 @@ public class ModelReflector<M extends Model> {
 			if (methodName.startsWith("get")
 					&& methodName.endsWith("Id")
 					&& methodName.length() > 5 // Not = getId
-					&& (referredModelIdGetter.getReturnType() == int.class || referredModelIdGetter
-							.getReturnType() == Integer.class)) {
+					&& (Arrays.asList(int.class,Integer.class,long.class,Long.class).contains(referredModelIdGetter.getReturnType()))) {
 				String referredModelMethodName = methodName.substring(0,
 						methodName.length() - "Id".length());
 				for (Class<? extends Model> modelClass : reflector

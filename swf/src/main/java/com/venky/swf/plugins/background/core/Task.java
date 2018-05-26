@@ -15,15 +15,15 @@ public interface Task extends Serializable , Comparable<Task>{
 		return Priority.DEFAULT;
 	}
 	
-	default int getTaskId(){
-		return -1;
+	default long getTaskId(){
+		return -1L;
 	}
 	
 	@Override
 	default int compareTo(Task o) {
 		int ret  = getTaskPriority().compareTo(o.getTaskPriority()); 
 		if (ret == 0) {
-			ret = Integer.compare(getTaskId(), o.getTaskId());
+			ret = Long.compare(getTaskId(), o.getTaskId());
 		}
 		if (ret == 0) {
 			ret = getClass().getName().compareTo(o.getClass().getName());

@@ -8,6 +8,7 @@ import com.venky.reflection.Reflector;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
+import com.venky.swf.path.Path;
 import com.venky.swf.views.View;
 
 public class ControllerReflector<C extends Controller> extends Reflector<Controller,C>{
@@ -61,7 +62,7 @@ public class ControllerReflector<C extends Controller> extends Reflector<Control
 					if (parameterTypes.length <= 1){
 						matches = method.getName().equals(actionPathElement) && View.class.isAssignableFrom(method.getReturnType());
 						if (matches && parameterTypes.length == 1){
-							matches = (parameterTypes[0] == String.class || parameterTypes[0] == int.class);
+							matches = (parameterTypes[0] == String.class || Path.isNumberClass(parameterTypes[0]));
 						}
 					}
 					

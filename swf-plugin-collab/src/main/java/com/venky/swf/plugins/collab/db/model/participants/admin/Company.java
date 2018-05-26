@@ -29,8 +29,8 @@ public interface Company extends Model{
 	@HIDDEN
 	@HOUSEKEEPING
 	@PARTICIPANT
-	public int getSelfCompanyId();
-	public void setSelfCompanyId(int id);
+	public long getSelfCompanyId();
+	public void setSelfCompanyId(long id);
 	
 	@IS_VIRTUAL
 	public Company getSelfCompany();

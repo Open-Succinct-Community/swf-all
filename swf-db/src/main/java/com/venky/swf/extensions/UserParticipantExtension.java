@@ -12,9 +12,9 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 	}
 	
 	@Override
-	protected List<Integer> getAllowedFieldValues(User user, User partial, String fieldName) {
+	protected List<Long> getAllowedFieldValues(User user, User partial, String fieldName) {
 		if ("SELF_USER_ID".equalsIgnoreCase(fieldName)) {
-			SequenceSet<Integer> ret = new SequenceSet<Integer>();
+			SequenceSet<Long> ret = new SequenceSet<>();
 			ret.add(user.getId());
 			return ret.list();
 		}

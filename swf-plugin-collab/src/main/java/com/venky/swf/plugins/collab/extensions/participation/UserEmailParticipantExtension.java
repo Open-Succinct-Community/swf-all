@@ -14,7 +14,7 @@ public class UserEmailParticipantExtension extends ParticipantExtension<UserEmai
 	}
 	
 	@Override
-	protected List<Integer> getAllowedFieldValues(com.venky.swf.db.model.User user,
+	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user,
 			UserEmail partiallyFilledModel, String fieldName) {
 		
 		if (fieldName.equalsIgnoreCase("USER_ID")){

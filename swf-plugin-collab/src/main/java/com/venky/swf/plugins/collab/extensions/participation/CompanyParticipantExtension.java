@@ -16,11 +16,11 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 
 	
 	@Override
-	protected List<Integer> getAllowedFieldValues(com.venky.swf.db.model.User user, Company partial , String fieldName) {
-		List<Integer> ret = null;
+	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Company partial , String fieldName) {
+		List<Long> ret = null;
 		User u = (User)user;
 		if ("SELF_COMPANY_ID".equalsIgnoreCase(fieldName)){
-			ret = new ArrayList<Integer>();
+			ret = new ArrayList<>();
 			List<UserCompany> ucs = u.getUserCompanies(); 
 			for (UserCompany uc :ucs){ 
 				ret.add(uc.getCompanyId());

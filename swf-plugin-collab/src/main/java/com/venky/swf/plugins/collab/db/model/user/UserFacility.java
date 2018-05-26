@@ -10,14 +10,14 @@ public interface UserFacility extends Model {
 	@PARTICIPANT
 	@UNIQUE_KEY
 	@HIDDEN(true)
-	public int getUserId();
-	public void setUserId(int id);
+	public long getUserId();
+	public void setUserId(long id);
 	public User getUser();
 	
 	@PARTICIPANT
 	@UNIQUE_KEY
 	@HIDDEN(false)
-	public int getFacilityId();
-	public void setFacilityId(int id);
+	public long getFacilityId();
+	public void setFacilityId(long id);
 	public Facility getFacility();
 }

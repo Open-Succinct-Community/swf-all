@@ -18,7 +18,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	}
 	
 	@SingleRecordAction(tooltip="Retry")
-	public View retry(int id){
+	public View retry(long id){
 		DelayedTask task = Database.getTable(DelayedTask.class).get(id);
 		task.setNumAttempts(0);
 		task.setLastError(new StringReader(""));

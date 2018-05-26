@@ -4,14 +4,6 @@
  */
 package com.venky.swf.db.table;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.venky.cache.Cache;
 import com.venky.core.checkpoint.Mergeable;
 import com.venky.core.collections.IgnoreCaseMap;
@@ -23,6 +15,14 @@ import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -194,15 +194,15 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	return dirtyFields.get(field);
     }
     
-    public Integer getId(){
+    public Long getId(){
     	if (fieldValues.containsKey("ID")){
-    		return Integer.valueOf(String.valueOf(fieldValues.get("ID")));
+    		return Long.valueOf(String.valueOf(fieldValues.get("ID")));
     	}else {
     		return fakeId.addAndGet(1);
     	}
     }
     
-    private static AtomicInteger fakeId = new AtomicInteger();
+    private static AtomicLong fakeId = new AtomicLong();
     
 	@Override
 	public int hashCode() {

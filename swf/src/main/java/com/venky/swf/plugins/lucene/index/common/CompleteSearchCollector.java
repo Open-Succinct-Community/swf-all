@@ -11,7 +11,7 @@ import org.apache.lucene.search.Scorer;
 public class CompleteSearchCollector extends Collector{
 
 	private int docBase = 0 ;
-	List<Integer> docIds = new ArrayList<Integer>();
+	List<Integer> docIds = new ArrayList<>();
 	public List<Integer> getDocIds(){
 		return docIds;
 	}

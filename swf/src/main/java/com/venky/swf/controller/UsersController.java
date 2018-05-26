@@ -19,7 +19,7 @@ public class UsersController extends ModelController<User>{
 	}
 
 	@SingleRecordAction
-	public View generateApiKey(int id){
+	public View generateApiKey(long id){
 		User u = Database.getTable(User.class).get(id);
 		u.generateApiKey();
 		StringBuilder message = new StringBuilder(); 

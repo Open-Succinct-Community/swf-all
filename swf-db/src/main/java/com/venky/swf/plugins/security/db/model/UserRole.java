@@ -14,13 +14,13 @@ public interface UserRole extends Model {
 	@PARTICIPANT
 	@UNIQUE_KEY
 	@Index
-	public int getUserId();
-	public void setUserId(int userId);
+	public long getUserId();
+	public void setUserId(long userId);
 	public User getUser();
 	
 	@UNIQUE_KEY
 	@Index
-	public int getRoleId();
-	public void setRoleId(int roleId);
+	public long getRoleId();
+	public void setRoleId(long roleId);
 	public Role getRole();
 }

@@ -29,7 +29,7 @@ public interface Issue extends Model{
 	@HIDDEN(false)
 	@PROTECTION(Kind.NON_EDITABLE)
 	@EXPORTABLE
-	public int getId();
+	public long getId();
 	
 	@Index
 	@CLONING_PROTECT
@@ -66,14 +66,14 @@ public interface Issue extends Model{
 	
 	@IS_NULLABLE
 	@CLONING_PROTECT
-	public Integer getAssignedToId();
-	public void setAssignedToId(Integer id);
+	public Long getAssignedToId();
+	public void setAssignedToId(Long id);
 	public User getAssignedTo();
 	
 	@Index
 	@COLUMN_NAME("creator_id")
 	@EXPORTABLE
-	public Integer getCreatorUserId();
+	public Long getCreatorUserId();
 
 	@EXPORTABLE
 	public Timestamp getCreatedAt();

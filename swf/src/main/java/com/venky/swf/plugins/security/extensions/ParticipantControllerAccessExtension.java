@@ -130,7 +130,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 			if (parameterValue != null){
 				t = cat.startTimer("Getting Participating Roles when parameter != null", Config.instance().isTimerAdditive());
 				try {
-					int id = Integer.valueOf(parameterValue);
+					long id = Long.valueOf(parameterValue);
 					selectedModel = possibleTable.get(id);
 					if (selectedModel != null){
 						participantingRoles = selectedModel.getParticipatingRoles(user);
@@ -196,7 +196,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		selectingUserRole.stop();
 		
 		Timer preparingRoleWhere = cat.startTimer("Preparing role Where clause");
-		List<Integer> userRoleIds = new ArrayList<Integer>();
+		List<Long> userRoleIds = new ArrayList<>();
 		
 		ModelReflector<Role> roleRef = ModelReflector.instance(Role.class);
 		Expression roleWhere = new Expression(roleRef.getPool(),Conjunction.OR);
@@ -252,9 +252,9 @@ public class ParticipantControllerAccessExtension implements Extension{
 		
 		private static final long serialVersionUID = 8076958083615092776L;
 
-		public boolean isAllowed(List<RolePermission> permissions, List<Integer> userRoleIds){
-			List<Integer> permissionIds = DataSecurityFilter.getIds(permissions);
-			List<Integer> copyuserRoleIds =  new ArrayList<Integer>(userRoleIds);
+		public boolean isAllowed(List<RolePermission> permissions, List<Long> userRoleIds){
+			List<Long> permissionIds = DataSecurityFilter.getIds(permissions);
+			List<Long> copyuserRoleIds =  new ArrayList<Long>(userRoleIds);
 			Collections.sort(permissionIds);
 			Collections.sort(copyuserRoleIds);
 			String userRolesKey = copyuserRoleIds.toString();
@@ -278,7 +278,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 			};
 		}
 		
-		private boolean calculatePermission(List<RolePermission> permissions, List<Integer> userRoleIds){
+		private boolean calculatePermission(List<RolePermission> permissions, List<Long> userRoleIds){
 			Timer sortingPermissions = cat.startTimer("sorting permissions", Config.instance().isTimerAdditive());
 			Collections.sort(permissions, rolepermissionComparator);
 			sortingPermissions.stop();

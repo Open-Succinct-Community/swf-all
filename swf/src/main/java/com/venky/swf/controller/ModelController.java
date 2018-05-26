@@ -183,7 +183,7 @@ public class ModelController<M extends Model> extends Controller {
 			LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
 			Query q = indexer.constructQuery(strQuery);
 			
-			List<Integer> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
+			List<Long> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
 			if (!ids.isEmpty()) {
 				Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(),Conjunction.AND)
 					.add(new Expression(getReflector().getPool(),"ID",Operator.IN,ids.toArray()))
@@ -297,7 +297,7 @@ public class ModelController<M extends Model> extends Controller {
 				String simpleModelName = info.getModelClass() ==null ? null : info.getModelClass().getSimpleName();
 				if(StringUtil.equals(parentClass.getSimpleName(),simpleModelName)){ 
 					//Name of  the model class is sacred and 
-					Integer id = info.getId();
+					Long id = info.getId();
 					if (id == null){
 						continue;
 					}
@@ -346,7 +346,7 @@ public class ModelController<M extends Model> extends Controller {
 
     @SingleRecordAction(icon="glyphicon-eye-open",tooltip="See this record")
     @Depends("index")
-    public View show(int id) {
+    public View show(long id) {
     	M record = Database.getTable(modelClass).get(id);
     	if (record == null){
     	    throw new RecordNotFoundException();
@@ -381,7 +381,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     @Depends("index")
-    public View view(int id){
+    public View view(long id){
     	return view(id,null);
     }
     private boolean isViewableInLine(String mimeType){
@@ -399,7 +399,7 @@ public class ModelController<M extends Model> extends Controller {
     	
     	return false;
     }
-    private View view(int id,Boolean asAttachment){
+    private View view(long id,Boolean asAttachment){
 		M record = Database.getTable(modelClass).get(id);
         if (record.isAccessibleBy(getSessionUser(),modelClass)){
             try {
@@ -438,11 +438,11 @@ public class ModelController<M extends Model> extends Controller {
     
     @SingleRecordAction(icon="glyphicon-edit")
     @Depends("save,index")
-    public View edit(int id) {
+    public View edit(long id) {
     	ensureUI();
         return dashboard(createModelEditView(id, "save"));
     }
-    protected ModelEditView<M> createModelEditView(int id, String formAction){
+    protected ModelEditView<M> createModelEditView(long id, String formAction){
     	M record = Database.getTable(modelClass).get(id);
     	return createModelEditView(record, formAction);
     }
@@ -462,7 +462,7 @@ public class ModelController<M extends Model> extends Controller {
 
     @SingleRecordAction(icon="glyphicon-duplicate",tooltip="Duplicate")
     @Depends("save,index")
-    public View clone(int id){
+    public View clone(long id){
     	M record = Database.getTable(modelClass).get(id);
     	M newrecord = clone(record);
 		return blank(newrecord);
@@ -531,7 +531,7 @@ public class ModelController<M extends Model> extends Controller {
 
     @SingleRecordAction(icon="glyphicon-trash")
     @Depends("index")
-    public View destroy(int id){ 
+    public View destroy(long id){
 		M record = Database.getTable(modelClass).get(id);
         if (record == null){
             throw new RecordNotFoundException();
@@ -627,7 +627,7 @@ public class ModelController<M extends Model> extends Controller {
         if (ObjectUtil.isVoid(id)) {
 			record = Database.getTable(modelClass).newRecord();
         } else {
-			record = Database.getTable(modelClass).get(Integer.valueOf(id));
+			record = Database.getTable(modelClass).get(Long.valueOf(id));
             if (!ObjectUtil.isVoid(lockId)) {
                 if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
@@ -733,7 +733,7 @@ public class ModelController<M extends Model> extends Controller {
         if (ObjectUtil.isVoid(id)) {
 			record = Database.getTable(childModelClass).newRecord();
         } else {
-			record = Database.getTable(childModelClass).get(Integer.valueOf(id));
+			record = Database.getTable(childModelClass).get(Long.valueOf(id));
             if (!ObjectUtil.isVoid(lockId)) {
                 if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
@@ -952,7 +952,7 @@ public class ModelController<M extends Model> extends Controller {
 		Map<String,Object> formData = getFormFields();
 		M model = null;
 		if (formData.containsKey("ID")){
-			model = Database.getTable(modelClass).get(Integer.valueOf(formData.get("ID").toString()));
+			model = Database.getTable(modelClass).get(Long.valueOf(formData.get("ID").toString()));
 			model = model.cloneProxy();
 		}else {
 			model = Database.getTable(modelClass).newRecord();
@@ -980,7 +980,7 @@ public class ModelController<M extends Model> extends Controller {
 				//
 			}
     	}
-    	TypeConverter<Integer> integerTypeConverter = (TypeConverter<Integer>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Integer.class).getTypeConverter();
+    	TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
     	
     	JSONObject obj = new JSONObject();
     	Record record = model.getRawRecord();
@@ -994,7 +994,7 @@ public class ModelController<M extends Model> extends Controller {
     			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(referredModelGetter);
     			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
 
-    			int referredModelId = integerTypeConverter.valueOf(record.get(f));
+    			long referredModelId = longTypeConverter.valueOf(record.get(f));
     			Model referredModel = Database.getTable(referredModelClass).get(referredModelId);
 
     			String referredModelDescriptionField = referredModelReflector.getDescriptionField(); 
@@ -1010,7 +1010,7 @@ public class ModelController<M extends Model> extends Controller {
 		Map<String,Object> formData = getFormFields();
 		M model = null;
 		if (formData.containsKey("ID")){
-			model = Database.getTable(modelClass).get(Integer.valueOf(formData.get("ID").toString()));
+			model = Database.getTable(modelClass).get(Long.valueOf(formData.get("ID").toString()));
 		}else {
 			model = Database.getTable(modelClass).newRecord();
 		}
@@ -1052,9 +1052,9 @@ public class ModelController<M extends Model> extends Controller {
     	Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
     	PARTICIPANT participant = reflector.getAnnotation(autoCompleteFieldGetter, PARTICIPANT.class);
 		if (participant != null){
-    		Cache<String,Map<String,List<Integer>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
+    		Cache<String,Map<String,List<Long>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(),model);
     		if (pOptions.get(participant.value()).containsKey(autoCompleteFieldName)){
-    			List<Integer> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
+    			List<Long> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
     			if (!autoCompleteFieldValues.isEmpty()){
     				autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
     				where.add(Expression.createExpression(reflector.getPool(),"ID",Operator.IN,autoCompleteFieldValues.toArray()));

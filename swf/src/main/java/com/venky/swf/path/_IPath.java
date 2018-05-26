@@ -36,7 +36,7 @@ public interface _IPath {
 	_IPath createRelativePath(String toUrl);
 	<M extends Model> _IPath getModelAccessPath(Class<M> modelClass);
 	Object getSessionUser();
-	Integer getSessionUserId();
+	Long getSessionUserId();
 	
 	void addErrorMessage(String msg);
 	void addInfoMessage(String msg);

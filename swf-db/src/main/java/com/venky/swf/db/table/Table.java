@@ -385,17 +385,17 @@ public class Table<M extends Model> {
     }
     
     
-    public M lock(int id){
+    public M lock(long id){
     	return lock(id,true);
     }
-    public M lock(int id,boolean wait){
+    public M lock(long id,boolean wait){
     	return get(id,true,wait);
     }
-    public M get(int id) {
+    public M get(long id) {
     	return get(id,false,false);
     }
     private SWFLogger cat = null;
-    public M get(int id,boolean locked,boolean wait) {
+    public M get(long id,boolean locked,boolean wait) {
     	Timer timer = cat.startTimer(null, Config.instance().isTimerAdditive());
     	try {
 	    	Select q = new Select(locked,wait);

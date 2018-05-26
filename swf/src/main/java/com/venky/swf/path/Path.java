@@ -9,19 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
+import java.util.*;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -186,23 +174,23 @@ public class Path implements _IPath{
         }catch (ClassCastException ex){
             user = null;
             session.removeAttribute("user");
-            Integer id = (Integer)session.getAttribute("user.id");
+            Number id = (Number)session.getAttribute("user.id");
             if (id != null){
                 Table<User> USER = Database.getTable(User.class);
                 if (USER != null){
-                    user = USER.get(id);
+                    user = USER.get(id.longValue());
                     getSession().setAttribute("user", user);
                 }
             }
             return (User)user;
         }
     }
-    public Integer getSessionUserId(){
+    public Long getSessionUserId(){
         if (getSession() == null){
             return null;
         }
-        Integer id = (Integer)getSession().getAttribute("user.id");
-        return id;
+        Number id = (Number)getSession().getAttribute("user.id");
+        return id.longValue();
     }
 
     public HttpSession getSession() {
@@ -303,7 +291,7 @@ public class Path implements _IPath{
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
             String token = pathelements.get(i);
             try {
-                Integer.valueOf(token);
+                Long.valueOf(token);
                 continue; //Ignore integer elements;
             }catch (NumberFormatException e){
                 //
@@ -323,7 +311,7 @@ public class Path implements _IPath{
             }
             try {
                 if (i < pathElementSize - 1){
-                    info.setParameter(Integer.valueOf(pathelements.get(i+1)));
+                    info.setParameter(Long.valueOf(pathelements.get(i+1)));
                     i+=1;
                 }
             }catch (NumberFormatException ex){
@@ -383,12 +371,12 @@ public class Path implements _IPath{
             this.parameter = parameter;
         }
 
-        public Integer getId() {
+        public Long getId() {
             if (parameter == null){
                 return null;
             }
-            if (parameter instanceof Integer){
-                return (Integer)parameter;
+            if (parameter instanceof Long){
+                return (Long)parameter;
             }
             return null;
         }
@@ -720,6 +708,8 @@ public class Path implements _IPath{
                         return (View)m.invoke(controller, parameter());
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class && parameter() != null){
                         return (View)m.invoke(controller, Integer.valueOf(parameter()));
+                    }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class && parameter() != null){
+                        return (View)m.invoke(controller, Long.valueOf(parameter()));
                     }
                 }catch(Exception e){
                     e.printStackTrace();
@@ -738,7 +728,7 @@ public class Path implements _IPath{
         if (!isUserLoggedOn()){
             return new RedirectorView(this,"","login");
         }
-        throw new RuntimeException("Donot know how to invoke controller action" + getTarget()) ;
+        throw new RuntimeException("Donot know how to invoke controller action " + getTarget()) ;
     }
     
     public boolean canAccessControllerAction(){
@@ -757,23 +747,29 @@ public class Path implements _IPath{
     public boolean isActionSecure(String actionPathElement){
         return getControllerReflector().isActionSecure(actionPathElement);
     }
+    private boolean isNumber(String parameter){
+        if (ObjectUtil.isVoid(parameter)) {
+            return false;
+        }
+        try {
+            Double.parseDouble(parameter);
+            return true;
+        }catch (NumberFormatException nfex){
+            return false;
+        }
+    }
+
+    private static List<Class<?>> supportedNumberClasses = Arrays.asList(long.class,int.class); // Inorder of preference.
+    public static boolean isNumberClass(Class<?> aClass){
+        return supportedNumberClasses.contains(aClass);
+    }
     
     private List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
         List<Method> methods = getControllerReflector().getActionMethods(actionPathElement);
         
         final int targetParameterLength = ObjectUtil.isVoid(parameterPathElement)? 0 : 1;
-        boolean parameterIsNumeric = false;
+        final boolean parameterIsNumeric = isNumber(parameterPathElement);
 
-        if (targetParameterLength == 1) {
-            try {
-                Double.parseDouble(parameterPathElement);
-                parameterIsNumeric = true;
-            }catch (NumberFormatException nfex){
-                // 
-            }
-        }
-        final Class<?> targetParameterType = targetParameterLength == 0 ? null : (parameterIsNumeric ? int.class  : String.class);
-        
         Collections.sort(methods,new Comparator<Method>(){
             public int compare(Method o1, Method o2) {
                 int ret = 0 ;
@@ -782,9 +778,23 @@ public class Path implements _IPath{
                 s2 = Math.abs(o2.getParameterTypes().length - targetParameterLength) ;
                 ret = s1 - s2; 
                 if (ret == 0 && o1.getParameterTypes().length == 1){
-                    s1 = o1.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
-                    s2 = o2.getParameterTypes()[0].equals(targetParameterType) ? 0 : 1;
-                    ret = s1 - s2;
+                    Class<?> t1 = o1.getParameterTypes()[0];
+                    Class<?> t2 = o2.getParameterTypes()[0];
+                    if (parameterIsNumeric) {
+                        s1 = isNumberClass(t1) ? 0 : 1 ;
+                        s2 = isNumberClass(t2) ? 0 : 1 ;
+                        ret = s1 - s2;
+                        if (ret == 0 && s1 == 0) {
+                            //Both are numbers,
+                            s1 = supportedNumberClasses.indexOf(t1);
+                            s2 = supportedNumberClasses.indexOf(t2);
+                            ret = s1 - s2; //Give Preference to long.
+                        }
+                    }else {
+                        s1 = t1.equals(String.class) ? 0 : 1;
+                        s2 = t2.equals(String.class) ? 0 : 1;
+                        ret = s1 - s2;
+                    }
                 }
                 return ret;
             }
@@ -964,7 +974,7 @@ public class Path implements _IPath{
         User user = getSessionUser();
         
         if (user != null){
-            Cache<String,Map<String,List<Integer>>> pOptions = user.getParticipationOptions(reflector.getModelClass(),partiallyFilledModel);
+            Cache<String,Map<String,List<Long>>> pOptions = user.getParticipationOptions(reflector.getModelClass(),partiallyFilledModel);
             if (pOptions.size() >  0){
                 Set<String> fields = new HashSet<String>();
                 for (String g: pOptions.keySet()){
@@ -1045,11 +1055,11 @@ public class Path implements _IPath{
             Method referredModelIdGetter =  reflector.getFieldGetter(referredModelIdFieldName);
             
             try {
-                Integer oldValue = (Integer) referredModelIdGetter.invoke(record);
+                Number oldValue = ((Number) referredModelIdGetter.invoke(record));
                 if (!Database.getJdbcTypeHelper(reflector.getPool()).isVoid(oldValue)){
                     continue;
                 }
-                Integer valueToSet = null;
+                Long valueToSet = null;
 
                 Iterator<ControllerInfo> miIter = controllerElements.iterator();
                 if (miIter.hasNext()){
@@ -1078,7 +1088,7 @@ public class Path implements _IPath{
                     }
                 }
                 if (valueToSet == null){
-                    List<Integer> idoptions = null ;
+                    List<Long> idoptions = null ;
     
                     PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
                     if (participant != null && participant.defaultable()){
@@ -1089,7 +1099,7 @@ public class Path implements _IPath{
                         if (idoptions.size() == 1){
                             valueToSet = idoptions.get(0);
                         }else if (idoptions.size() == 2 && idoptions.contains(null)){
-                            for (Integer i:idoptions){
+                            for (Long i:idoptions){
                                 if (i != null){
                                     valueToSet = i;
                                 }

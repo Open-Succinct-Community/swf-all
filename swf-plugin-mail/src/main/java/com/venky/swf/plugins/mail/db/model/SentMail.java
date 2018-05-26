@@ -19,8 +19,8 @@ public interface SentMail extends Model{
 	@IS_NULLABLE(false)
 	@PARTICIPANT
 	@Index
-	public Integer getUserId();
-	public void setUserId(Integer id);
+	public Long getUserId();
+	public void setUserId(Long id);
 	public User getUser();
 	
 	public String getEmail();

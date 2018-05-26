@@ -204,11 +204,11 @@ public class LuceneIndexer {
 		}
 	}
 	
-	public List<Integer> findIds(Query q, int numHits){
-		final List<Integer> ids = new ArrayList<Integer>();
+	public List<Long> findIds(Query q, int numHits){
+		final List<Long> ids = new ArrayList<>();
 		fire(q ,numHits,new ResultCollector() {
 			public void found(Document d) {
-				ids.add(Integer.valueOf(d.getFieldable("ID").stringValue()));
+				ids.add(Long.valueOf(d.getFieldable("ID").stringValue()));
 			}
 		});
 		return ids;
