@@ -321,7 +321,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     		for (String participantRoleGroup : pGroupOptions.keySet()){
     			Map<String,List<Long>> pOptions = pGroupOptions.get(participantRoleGroup);
     			for (String referencedModelIdFieldName :pOptions.keySet()){
-    				Integer referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);	
+    				Number referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);
     				
     				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
     					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
