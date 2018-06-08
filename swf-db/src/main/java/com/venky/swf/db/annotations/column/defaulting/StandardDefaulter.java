@@ -18,7 +18,10 @@ public class StandardDefaulter {
 	public static Object getDefaultValue(StandardDefault defaultKey){
 		return getDefaultValue(defaultKey,"");
 	}
-	public static Object getDefaultValue(StandardDefault defaultKey,String args){
+    public static Object getDefaultValue(StandardDefault defaultKey,String args){
+	    return getDefaultValue(defaultKey,args,TimeZone.getDefault());
+    }
+	public static Object getDefaultValue(StandardDefault defaultKey,String args, TimeZone tz){
 		Object ret = null;
 		switch (defaultKey){
 			case NULL:
@@ -36,23 +39,21 @@ public class StandardDefaulter {
 				break;
 			case CURRENT_DATE:
 				{
-					Date date = new Date(System.currentTimeMillis());
 					String format = args;
 					if (!ObjectUtil.isVoid(format)){
-						ret = DateUtils.getTimestampStr(date, TimeZone.getDefault(), format);
+						ret = DateUtils.getTimestampStr(new Date(System.currentTimeMillis()), tz, format);
 					}else {
-						ret = new Date(DateUtils.getStartOfDay(date).getTime());
+						ret = new Date(DateUtils.getStartOfDay(getNow(tz).getTime()));
 					}
 				}
 				break;
 			case CURRENT_TIMESTAMP:
 				{
-					Timestamp ts = new Timestamp(System.currentTimeMillis());
 					String format = args;
 					if (!ObjectUtil.isVoid(format)){
-						ret = DateUtils.getTimestampStr(ts, TimeZone.getDefault(), format);
+						ret = DateUtils.getTimestampStr(new Timestamp(System.currentTimeMillis()), tz, format);
 					}else {
-						ret = ts;
+						ret = getNow(tz);
 					}
 				}
 				break;
@@ -79,5 +80,23 @@ public class StandardDefaulter {
 		}
 		return ret;
 	}
-	
+
+	public static Timestamp getNow(TimeZone tz) {
+	    if (tz == null || tz.equals(TimeZone.getDefault())) {
+	        return new Timestamp(System.currentTimeMillis());
+        }
+	    Calendar target = Calendar.getInstance(tz);
+        target.setTimeInMillis(System.currentTimeMillis());
+
+        Calendar sys = Calendar.getInstance(TimeZone.getDefault());
+        sys.set(Calendar.YEAR,target.get(Calendar.YEAR));
+        sys.set(Calendar.MONTH,target.get(Calendar.MONTH));
+        sys.set(Calendar.DAY_OF_MONTH,target.get(Calendar.DAY_OF_MONTH));
+        sys.set(Calendar.HOUR_OF_DAY,target.get(Calendar.HOUR_OF_DAY));
+        sys.set(Calendar.MINUTE,target.get(Calendar.MINUTE));
+        sys.set(Calendar.SECOND,target.get(Calendar.SECOND));
+        sys.set(Calendar.MILLISECOND,target.get(Calendar.MILLISECOND));
+
+        return new Timestamp(sys.getTimeInMillis());
+    }
 }

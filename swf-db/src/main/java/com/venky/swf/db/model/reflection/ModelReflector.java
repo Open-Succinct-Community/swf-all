@@ -7,6 +7,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.sql.Timestamp;
 import java.util.*;
 
 import com.venky.cache.Cache;
@@ -36,6 +37,7 @@ import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.CONTENT_TYPE;
@@ -751,6 +753,10 @@ public class ModelReflector<M extends Model> {
 		}
 		return zone;
 	}
+	public Timestamp getNow(){
+        return StandardDefaulter.getNow(getTimeZone());
+    }
+
     public int getMaxDataLength(String fieldName){
 		ColumnDescriptor fieldDescriptor = getColumnDescriptor(fieldName);
 		String fieldColumnName = fieldDescriptor.getName();

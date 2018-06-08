@@ -59,13 +59,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 				}catch(Exception ex){
 					StringWriter sw = new StringWriter();
 					PrintWriter w = new PrintWriter(sw);
-					if (Config.instance().isDevelopmentEnvironment() || ObjectUtil.isVoid(ex.getMessage())){
-			            ex.printStackTrace(w);
-			        }else {
-			        	w.write(ex.getMessage());
-			        }
-					Config.instance().getLogger(getClass().getName()).info(sw.toString());
-
+					ex.printStackTrace(w);
+					Config.instance().getLogger(getClass().getName()).warning(sw.toString());
 					txn.rollback(ex);
 					locked.setLastError(new StringReader(sw.toString()));
 					locked.setNumAttempts(locked.getNumAttempts()+1);

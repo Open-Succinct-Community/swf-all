@@ -607,7 +607,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         		Method fieldGetter = reflector.getFieldGetter(field);
         		COLUMN_DEF cdef = reflector.getAnnotation(fieldGetter,COLUMN_DEF.class);
         		if (cdef != null){
-        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value(),cdef.args());
+        			Object defaultValue = StandardDefaulter.getDefaultValue(cdef.value(),cdef.args(),reflector.getTimeZone());
         			record.put(columnName,defaultValue);
         		}
         	}
