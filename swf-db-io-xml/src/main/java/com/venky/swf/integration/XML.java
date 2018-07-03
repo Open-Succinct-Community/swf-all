@@ -1,14 +1,13 @@
 package com.venky.swf.integration;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
+import org.w3c.dom.Node;
 
 public class XML extends FormatHelper<XMLElement>{
 	XMLElement root = null;
@@ -93,12 +92,33 @@ public class XML extends FormatHelper<XMLElement>{
 
 	@Override
 	public Set<String> getAttributes() {
-		return root.getAttributes().keySet();
+	    Set<String> attributes = new HashSet<>();
+		attributes.addAll(root.getAttributes().keySet());
+		for (Iterator<XMLElement> i =  root.getChildElements() ; i.hasNext() ; ){
+		    XMLElement element = i.next();
+		    if (!element.hasAttributes() && !element.getChildElements().hasNext() && (!ObjectUtil.isVoid(element.getNodeValue()) || !ObjectUtil.isVoid(element.getCharacterData()))){
+                attributes.add(element.getTagName());
+            }
+        }
+        return attributes;
 	}
+
 
 	@Override
 	public String getAttribute(String name) {
-		return root.getAttribute(name);
+		String attr = null;
+		if (root.hasAttribute(name)){
+		    attr = root.getAttribute(name);
+        }else {
+		    XMLElement attrElement = getElementAttribute(name);
+		    if (attrElement != null && !attrElement.hasAttributes() && !attrElement.getChildElements().hasNext()){
+		        attr = attrElement.getNodeValue();
+		        if (ObjectUtil.isVoid(attr)) {
+		            attr = attrElement.getCharacterData();
+                }
+            }
+        }
+        return attr;
 	}
 
 	@Override

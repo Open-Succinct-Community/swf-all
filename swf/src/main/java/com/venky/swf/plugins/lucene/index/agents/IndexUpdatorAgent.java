@@ -81,7 +81,7 @@ public class IndexUpdatorAgent implements AgentSeederTaskBuilder{
 
         @Override
         protected boolean isAgentTaskQPersistent() {
-            return true;
+            return false;
         }
     }
 }

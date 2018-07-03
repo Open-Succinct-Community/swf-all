@@ -11,7 +11,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.mail.db.model.SentMail;
+import com.venky.swf.plugins.mail.db.model.Mail;
 import com.venky.swf.plugins.mail.db.model.User;
 import com.venky.swf.routing.Config;
 
@@ -57,7 +57,7 @@ public class MailerTask implements Task{
 		email.setSubject(subject);
 		StringBuilder emailString = new StringBuilder();
 		for (UserEmail toEmail:emails){
-			email.addRecipient(to.getName() + "(" + toEmail.getEmail() + ")", toEmail.getEmail(), RecipientType.TO);
+			email.addRecipient(toEmail.getAlias() + "(" + toEmail.getEmail() + ")", toEmail.getEmail(), RecipientType.TO);
 			emailString.append(toEmail.getEmail()).append(";");
 		}
 		if (isHtml){
@@ -66,7 +66,7 @@ public class MailerTask implements Task{
 			email.setText(text);
 		}
 		
-		SentMail mail = Database.getTable(SentMail.class).newRecord();
+		Mail mail = Database.getTable(Mail.class).newRecord();
 		mail.setUserId(toUserId);
 		mail.setEmail(emailString.toString());
 		mail.setSubject(subject);

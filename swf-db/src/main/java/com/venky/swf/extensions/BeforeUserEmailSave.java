@@ -2,6 +2,7 @@ package com.venky.swf.extensions;
 
 import java.util.List;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
 import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -24,7 +25,11 @@ public class BeforeUserEmailSave extends BeforeModelSaveExtension<UserEmail> {
 		List<UserEmail> r = select.execute(UserEmail.class);
 		if (!r.isEmpty()){
 			throw new AccessDeniedException("Email belongs to different user!");
-		}
+		}else {
+		    if (ObjectUtil.isVoid(model.getAlias())){
+		        model.setAlias(model.getUser().getLongName());
+            }
+        }
 	}
 
 }

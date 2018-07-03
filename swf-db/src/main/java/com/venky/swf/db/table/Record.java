@@ -259,4 +259,10 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 	public void setLocked(boolean locked){
 		this.locked = locked;
 	}
+
+	public void load(Record from){
+	    for (String f : from.getFieldNames()){
+	        put(f,from.get(f));
+        }
+    }
 }

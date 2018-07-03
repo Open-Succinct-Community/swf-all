@@ -29,7 +29,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 		for (String attributeName: helper.getAttributes()){
 			String fieldName = getFieldName(attributeName);
 			Object attrValue = helper.getAttribute(attributeName);
-			if (fieldName != null) {
+			if (fieldName != null && attrValue != null) {
 				Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
 				Object value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
 				if (value != null){

@@ -11,7 +11,10 @@ public interface UserEmail extends Model{
 	public long getUserId();
 	public void setUserId(long id);
 	public User getUser();
-	
+
+	public String getAlias();
+	public void setAlias(String alias);
+
 	@UNIQUE_KEY
 	@Index
 	public String getEmail();
