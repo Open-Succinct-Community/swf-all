@@ -122,10 +122,10 @@ public class H2Helper extends JdbcTypeHelper{
                             "BIGINT", 0, 0, false,false, new LongConverter()));
 
             registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
-                            java.sql.Types.NUMERIC, "NUMERIC", 0, 0, false,false,
+                            java.sql.Types.NUMERIC, "NUMERIC", 15, 10, false,false,
                             new BigDecimalConverter()));// also NUMERIC
             registerjdbcSQLType(BigDecimal.class, new TypeRef<BigDecimal>(
-                    java.sql.Types.DECIMAL, "DECIMAL", 0, 0, false,false,
+                    java.sql.Types.DECIMAL, "DECIMAL", 15, 10, false,false,
                     new BigDecimalConverter()));// also NUMERIC
             
             

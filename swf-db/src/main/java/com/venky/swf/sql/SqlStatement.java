@@ -59,6 +59,9 @@ public abstract class SqlStatement {
 		int p = 0;
 		while (index >= 0) {
 			String pStr = StringUtil.valueOf(parameters.get(p).getValue());
+            if (Database.getJdbcTypeHelper(getPool()).getTypeRef(parameters.get(p).getJdbcType()).isQuotedWhenUnbounded()){
+                pStr = "'" + pStr + "'";
+            }
 			builder.replace(index, index+1, pStr);
 			p+=1;
 			index = builder.indexOf("?",index+pStr.length());

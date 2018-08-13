@@ -180,7 +180,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		if (where != null && where.isEmpty()) {
 			where = null;
 		}
-		if (!queryCache.containsKey(where)){
+		if (!queryCache.containsKey(where) && result != null){
 			queryCache.put(where, result);
 			if (where == null){
 				for (Record record:result){
@@ -196,7 +196,9 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 					}
 				}
 			}
-		}
+		}else if (queryCache.containsKey(where) && result == null){
+		    queryCache.remove(where);
+        }
 	}
 
 	private Expression getIdWhereClause(long id) {

@@ -76,7 +76,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		}
 		return false;
 	}
-	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> ignoreParents , Map<Class<? extends Model>,List<String>> childFields) {
+	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> ignoreParents , Map<Class<? extends Model>,List<String>> templateFields) {
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
 		for (String field: getFields(fields)){
@@ -91,7 +91,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				if (!isParentIgnored(aParent,ignoreParents)) {
 					String refElementName = referredModelGetter.getName().substring("get".length());
 					T refElement = formatHelper.createElementAttribute(refElementName);
-					write(aParent , ((Number)value).intValue(),refElement);
+					write(aParent , ((Number)value).intValue(),refElement,templateFields);
 				}
 			}else {
 				String attributeName = getAttributeName(field);
@@ -104,18 +104,18 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			}
 		}
 
-		if (!childFields.isEmpty()){
+		if (!templateFields.isEmpty()){
 			ignoreParents.add(ref.getModelClass());
 			List<Method> childGetters = ref.getChildGetters();
 			for (Method childGetter : childGetters) {
-				write(formatHelper,record,childGetter,ignoreParents,childFields);
+				write(formatHelper,record,childGetter,ignoreParents,templateFields);
 			}
-		}		
+		}
 	}
-	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<Class<? extends Model>> parentsWritten ,  Map<Class<? extends Model>, List<String>> childFields){
+	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<Class<? extends Model>> parentsWritten ,  Map<Class<? extends Model>, List<String>> templateFields){
 		@SuppressWarnings("unchecked")
 		Class<R> childModelClass = (Class<R>) getReflector().getChildModelClass(childGetter);
-		if (!childFields.containsKey(childModelClass)){
+		if (!templateFields.containsKey(childModelClass)){
 			return;
 		}
 		
@@ -125,7 +125,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			List<R> children = (List<R>)childGetter.invoke(record);
 			for (R child : children){
 				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
-				childWriter.write(child,childElement,childFields.get(childModelClass),parentsWritten,childFields);
+				childWriter.write(child,childElement,templateFields.get(childModelClass),parentsWritten,templateFields);
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
@@ -133,20 +133,23 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		
 	}
 	
-	private <R extends Model> void write(Class<R> referredModelClass, long id , T referredModelElement){
+	private <R extends Model> void write(Class<R> referredModelClass, long id , T referredModelElement, Map<Class<? extends Model>,List<String>> templateFields){
 		Class<T> formatClass = getFormatClass();
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
-		List<String> uniqueFields = referredModelReflector.getUniqueFields(); 
-		for (Iterator<String> fi = uniqueFields.iterator(); fi.hasNext();){
+		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
+		for (Iterator<String> fi = parentFieldsToAdd.iterator(); fi.hasNext();){
 			String f = fi.next();
 			if (referredModelReflector.isFieldHidden(f)){
 				fi.remove();
 			}
 		}
-		uniqueFields.add("ID");
-		writer.write(referredModel , referredModelElement, uniqueFields);
+		parentFieldsToAdd.add("ID");
+        if (templateFields != null && templateFields.get(referredModelClass) != null) {
+            parentFieldsToAdd.addAll(templateFields.get(referredModelClass));
+        }
+		writer.write(referredModel , referredModelElement, parentFieldsToAdd);
 	}
 	
 }

@@ -5,20 +5,6 @@
 package com.venky.swf.db.table;
 
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.LowerCaseStringCache;
@@ -37,16 +23,7 @@ import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
-import com.venky.swf.db.annotations.column.validations.processors.DateFormatValidator;
-import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
-import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
-import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
-import com.venky.swf.db.annotations.column.validations.processors.IntegerRangeValidator;
-import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
-import com.venky.swf.db.annotations.column.validations.processors.MinLengthValidator;
-import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
-import com.venky.swf.db.annotations.column.validations.processors.NumericRangeValidator;
-import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
+import com.venky.swf.db.annotations.column.validations.processors.*;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.validations.ModelValidator;
 import com.venky.swf.db.annotations.model.validations.UniqueKeyValidator;
@@ -56,14 +33,12 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Config;
-import com.venky.swf.sql.Conjunction;
-import com.venky.swf.sql.Delete;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Insert;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
-import com.venky.swf.sql.Update;
+import com.venky.swf.sql.*;
 import com.venky.swf.sql.parser.SQLExpressionParser;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
 
 /**
  *
@@ -133,16 +108,17 @@ public class ModelInvocationHandler implements InvocationHandler {
 				TypeRef<?> ref =Database.getJdbcTypeHelper(getPool()).getTypeRef(retType);
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (value == null) {
-                	Object defaultValue = null;
-                	COLUMN_DEF colDef = getReflector().getAnnotation(method,COLUMN_DEF.class);
-                	if (colDef != null){
-                		defaultValue = StandardDefaulter.getDefaultValue(colDef.value(),colDef.args());
-                	}
+                    COLUMN_DEF colDef = getReflector().getAnnotation(method, COLUMN_DEF.class);
+                    if (colDef != null) {
+                        value = StandardDefaulter.getDefaultValue(colDef.value(), colDef.args());
+                    }
+                }
+                if (value == null){
                 	if (retType.isPrimitive()){
-                		return converter.valueOf(defaultValue);
+                        return converter.valueOf(value);
                 	}else {
-                		return defaultValue;
-                	}
+                        return value;
+                    }
                 } else if (retType.isInstance(value) && !ref.isLOB()) {
                     return value;
                 } else {
@@ -764,11 +740,12 @@ public class ModelInvocationHandler implements InvocationHandler {
         insertSQL.executeUpdate(generatedValues, generatedKeys.toArray(new String[]{}));
         
         if (generatedKeys.size() == 1){
-            assert (generatedValues.getDirtyFields().size() == 1);
-            String fieldName = generatedKeys.get(0);
-            String virtualFieldName = generatedValues.getDirtyFields().iterator().next();
-            long id = ((Number)generatedValues.get(virtualFieldName)).intValue();
-            record.put(fieldName, id);
+            if (generatedValues.getDirtyFields().size() == 1){
+                String virtualFieldName = generatedValues.getDirtyFields().iterator().next();
+                long id = ((Number)generatedValues.get(virtualFieldName)).longValue();
+                String fieldName = generatedKeys.get(0);
+                record.put(fieldName, id);
+            }
         }
 
         record.setNewRecord(false);

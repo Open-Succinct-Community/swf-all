@@ -52,25 +52,18 @@ public class CompositeTask implements Task {
                     multiException.add(ex);
                 }
             }
+
             if (!tasks.isEmpty()) {
                 if (splitTasksOnException){
-                    parentTxn.commit(); //Don't waste work done by successful tasks.
-                    TaskManager.instance().executeAsync(tasks,true); //Submit errored tasks for retry.
+                    TaskManager.instance().executeAsync(tasks,false); //Submit errored tasks for retry. // May throw serializable exception
                 }else {
                     throw multiException;
                 }
-            }else {
-                parentTxn.commit();
             }
+            parentTxn.commit(); //Don't waste work done by successful tasks.
         }catch ( Exception ex ) {
             parentTxn.rollback(ex);
-            if (splitTasksOnException ){
-                //Let the task be assumed as processed but resubmit individual tasks. Rollback is already done  so no problem. DB is consistent.
-                TaskManager.instance().executeAsync(tasks,true);
-            }else {
-                //Grand parent transaction will be rolledback by this exception.
-                throw ex;
-            }
+            throw ex;
         }
 	}
 	

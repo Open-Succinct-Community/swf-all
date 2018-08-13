@@ -153,7 +153,7 @@ public class Select extends SqlStatement{
 		if (where != null && !where.isEmpty()){
 			builder.append(" WHERE ");
 			builder.append(where.getParameterizedSQL());
-			getValues().addAll(where.getValues());
+			getValues().addAll(0,where.getValues()); // To handle fragment Additions.
 		}
 		getQuery().insert(0, builder.toString()); // To handle any fragment additions.
 		builder = getQuery();
@@ -259,6 +259,7 @@ public class Select extends SqlStatement{
 		            st = prepare();
 		            if (maxRecords != Select.MAX_RECORDS_ALL_RECORDS ) { 
 		            	st.setMaxRows(maxRecords + 1);
+		            	st.setFetchSize(Math.min(st.getMaxRows(),10000));
 		            }
 		            if (this.orderBy != null){
 		            	sortResults = false;

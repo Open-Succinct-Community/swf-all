@@ -483,7 +483,7 @@ public class ModelReflector<M extends Model> {
 		}
 		return rawRecord.isFieldDirty(fieldName);
     }
-    public <T> Collection<Expression> sgetUniqueKeyConditions(T recordOrProxy){
+    public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy){
     	return getUniqueKeyConditions(recordOrProxy, false);
     }
     public <T> Collection<Expression> getUniqueKeyConditions(T recordOrProxy,boolean onlyIfContainsDirtyFields){
