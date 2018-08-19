@@ -82,7 +82,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	}
     	return ret ;
     }
-    private void markDirty(String fieldName, Object oldValue, Object newValue){
+    protected void markDirty(String fieldName, Object oldValue, Object newValue){
     	if (isFieldDirty(fieldName)){//if already dirty..
     		Object oldestValue = dirtyFields.get(fieldName);
     		if (equals(oldestValue,newValue)){ // Value is rolled back.
@@ -104,12 +104,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         if (!equals(oldValue, value)){
         	markDirty(fieldName, oldValue, value);
         	if (value != null && value instanceof ChangeObservable){
-            	((ChangeObservable)value).registerChangeListener(new ChangeListener() {
-    				@Override
-    				public void hasChanged(Object oldValue, Object newValue) {
-    					markDirty(fieldName, oldValue, newValue);
-    				}
-    			});
+            	((ChangeObservable)value).registerChangeListener(new FieldChangeListener(this,fieldName));
             }
     	}
         return fieldValues.put(fieldName, value);
@@ -231,21 +226,6 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 		return this.getId().compareTo(o.getId());
 	}
     
-	
-	private static class ProxyCache extends Cache<Class<? extends Model>,Model> {
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -1436596145516567205L;
-		Record record;
-		ProxyCache(Record record){
-			this.record = record;
-		}
-		@Override
-		protected Model getValue(Class<? extends Model> k) {
-			return ModelInvocationHandler.getProxy(k, record);
-		}
-	}
 	private transient ProxyCache proxyCache = new ProxyCache(this);
 	@SuppressWarnings("unchecked")
 	public <M extends Model> M getAsProxy(Class<M> modelClass){
