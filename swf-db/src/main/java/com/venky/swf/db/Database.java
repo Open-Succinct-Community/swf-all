@@ -333,6 +333,10 @@ public class Database implements _IDatabase{
 			}
 		}
 	}
+	public void evictTableFromPool(String pool,String tableName){
+		//If app determines that a table is dropped (like archived) etc. this may be called.
+		getTables(pool).remove(tableName);
+	}
 
 	public void loadFactorySettings() {
     	List<String> installerNames = Config.instance().getInstallers();
