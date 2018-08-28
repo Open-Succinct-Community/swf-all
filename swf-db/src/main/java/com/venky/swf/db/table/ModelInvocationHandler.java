@@ -88,7 +88,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         this.reflector = ModelReflector.instance(modelClass);
         this.modelName = Table.getSimpleModelClassName(reflector.getTableName());
         this.virtualFields = reflector.getVirtualFields();
-        record.startTracking();
+        record.startTracking(false);
     }
 	
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

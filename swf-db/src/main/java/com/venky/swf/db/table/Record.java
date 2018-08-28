@@ -163,9 +163,14 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         }
     }
     
-    boolean newRecord = false; 
+    boolean newRecord = false;
     void startTracking(){
-        dirtyFields.clear();
+    	startTracking(true);
+	}
+    void startTracking(boolean clearDirtyFields){
+    	if (clearDirtyFields) {
+			dirtyFields.clear();
+		}
         newRecord = fieldValues.isEmpty();
     }
 
