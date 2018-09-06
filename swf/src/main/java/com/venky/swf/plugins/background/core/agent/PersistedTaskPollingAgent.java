@@ -101,11 +101,6 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			return PERSISTED_TASK_POLLER;
 		}
 
-		@Override
-		protected boolean isAgentTaskQPersistent() {
-			return false;
-		}
-
 	}
 	public static final String PERSISTED_TASK_POLLER = "PERSISTED_TASK_POLLER";
 

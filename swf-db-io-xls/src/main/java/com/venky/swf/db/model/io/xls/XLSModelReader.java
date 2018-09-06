@@ -17,6 +17,7 @@ import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -76,17 +77,17 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	public static Object getCellValue(Cell cell, Class<?> hint){
 		Object value = null;
 		switch (cell.getCellType()) {
-			case Cell.CELL_TYPE_NUMERIC:
+			case NUMERIC:
 				if (HSSFDateUtil.isCellDateFormatted(cell)) {
 					value = cell.getDateCellValue();
 				} else {
 					value = cell.getNumericCellValue();
 				}
 				break;
-			case Cell.CELL_TYPE_BOOLEAN:
+			case BOOLEAN:
 				value = cell.getBooleanCellValue();
 				break;
-			case Cell.CELL_TYPE_FORMULA:
+			case FORMULA:
 				try {
 					if (isDate(hint)) {
 						value = cell.getDateCellValue();
@@ -212,10 +213,10 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 					if (cell1 == null){
 						continue;
 					}
-					if (cell1.getCellType() == Cell.CELL_TYPE_STRING && ObjectUtil.isVoid(cell1.getStringCellValue())){
+					if (cell1.getCellType() == CellType.STRING && ObjectUtil.isVoid(cell1.getStringCellValue())){
 						continue;
 					}
-					if (cell1.getCellType() == Cell.CELL_TYPE_BLANK){
+					if (cell1.getCellType() == CellType.BLANK){
 						continue;
 					}
 					referenceFieldsPassed = true;

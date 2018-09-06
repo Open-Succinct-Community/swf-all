@@ -79,9 +79,6 @@ public class IndexUpdatorAgent implements AgentSeederTaskBuilder{
             return INDEX_UPDATOR_AGENT;
         }
 
-        @Override
-        protected boolean isAgentTaskQPersistent() {
-            return false;
-        }
+
     }
 }

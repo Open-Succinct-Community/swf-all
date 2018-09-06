@@ -37,7 +37,10 @@ public abstract class AgentSeederTask implements Task{
 
 	public abstract List<Task> getTasks();
 	public abstract String getAgentName();
-	protected abstract boolean isAgentTaskQPersistent();
+
+	protected final boolean isAgentTaskQPersistent() {
+		return Config.instance().getBooleanProperty("Agent."+getAgentName() +".isAgentTaskQPersistent",false);
+	}
 
 	private AgentFinishUpTask finishUpTask = null;
 	public AgentFinishUpTask getFinishUpTask(){
