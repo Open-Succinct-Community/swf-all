@@ -161,6 +161,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         	}
             put(columnName,columnValue);
         }
+        startTracking();
     }
     
     boolean newRecord = false;
