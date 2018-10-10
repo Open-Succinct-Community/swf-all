@@ -85,7 +85,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
 		for (String field: getFields(fields)){
-			Object value = ref.get(record, field);
+			Object value = TimerUtils.time(cat,"ref.get", ()-> ref.get(record, field));
 			if (value == null){
 				continue;
 			}

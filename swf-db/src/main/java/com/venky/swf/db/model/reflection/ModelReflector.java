@@ -182,8 +182,11 @@ public class ModelReflector<M extends Model> {
 		if (rawRecord == null){
 			rawRecord = record.getRawRecord();
 		}
-				
-    	Timer timer = cat.startTimer();
+        if (record == null){
+            record = rawRecord.getAsProxy(getModelClass());
+        }
+
+        Timer timer = cat.startTimer();
         try {
         	T ret = (T)rawRecord.get(fieldName);
         	if (ret == null){
@@ -191,14 +194,18 @@ public class ModelReflector<M extends Model> {
                 if (!cd.isVirtual()){
                 	ret = (T)rawRecord.get(cd.getName());
                 }
-        	} 
-            Method getter = getFieldGetter(fieldName);
-        	if (ret == null || !(getter.getReturnType().isAssignableFrom(ret.getClass()))) {
-            	if (record == null){
-            		record = rawRecord.getAsProxy(getModelClass());
-            	}
-            	ret = (T)getter.invoke(record); 
         	}
+            Method getter = getFieldGetter(fieldName);
+        	IS_VIRTUAL isVirtual = getAnnotation(getter,IS_VIRTUAL.class);
+        	if (ret == null) {
+                if (isVirtual != null && isVirtual.value()){
+                    ret = (T)getter.invoke(record);
+                }else if (getter.getReturnType().isPrimitive()) {
+                    getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter().valueOf(null);
+                }
+        	}else if(!(getter.getReturnType().isAssignableFrom(ret.getClass()))){
+                ret = (T)getter.invoke(record);
+            }
         	return ret;
         } catch (Exception e1) {
             throw new RuntimeException(e1);
