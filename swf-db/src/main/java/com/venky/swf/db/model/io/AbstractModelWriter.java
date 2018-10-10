@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -20,6 +23,7 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
 
 public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> implements ModelWriter<M, T>{
 
@@ -76,6 +80,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		}
 		return false;
 	}
+	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> ignoreParents , Map<Class<? extends Model>,List<String>> templateFields) {
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
@@ -84,8 +89,9 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			if (value == null){
 				continue;
 			}
-			Method fieldGetter = ref.getFieldGetter(field);
-			Method referredModelGetter = ref.getReferredModelGetterFor(fieldGetter);
+			Method fieldGetter = TimerUtils.time(cat,"getFieldGetter" , () ->ref.getFieldGetter(field));
+			Method referredModelGetter = TimerUtils.time(cat,"getReferredModelGetterFor" , ()->ref.getReferredModelGetterFor(fieldGetter));
+
 			if (referredModelGetter != null){
 				Class<? extends Model> aParent = ref.getReferredModelClass(referredModelGetter);
 				if (!isParentIgnored(aParent,ignoreParents)) {
@@ -94,23 +100,35 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					write(aParent , ((Number)value).intValue(),refElement,templateFields);
 				}
 			}else {
-				String attributeName = getAttributeName(field);
-				String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
+				String attributeName = TimerUtils.time(cat,"getAttributeName()" , ()->getAttributeName(field));
+				String sValue = TimerUtils.time(cat, "toStringISO" ,
+						() -> Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value));
+
 				if (InputStream.class.isAssignableFrom(fieldGetter.getReturnType())) {
 				    formatHelper.setElementAttribute(attributeName,sValue);
                 }else {
-                    formatHelper.setAttribute(attributeName, sValue);
+                    TimerUtils.time(cat,"setAttribute" , ()-> {
+						formatHelper.setAttribute(attributeName, sValue);
+						return true;
+					});
                 }
 			}
 		}
 
-		if (!templateFields.isEmpty()){
-			ignoreParents.add(ref.getModelClass());
-			List<Method> childGetters = ref.getChildGetters();
-			for (Method childGetter : childGetters) {
-				write(formatHelper,record,childGetter,ignoreParents,templateFields);
+		TimerUtils.time(cat,"Writing all Children Objects",()->{
+			if (!templateFields.isEmpty()){
+				ignoreParents.add(ref.getModelClass());
+				try {
+					List<Method> childGetters = ref.getChildGetters();
+					for (Method childGetter : childGetters) {
+						write(formatHelper,record,childGetter,ignoreParents,templateFields);
+					}
+				}finally {
+					ignoreParents.remove(ref.getModelClass());
+				}
 			}
-		}
+			return  true;
+		});
 	}
 	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<Class<? extends Model>> parentsWritten ,  Map<Class<? extends Model>, List<String>> templateFields){
 		@SuppressWarnings("unchecked")
@@ -123,9 +141,14 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		try {
 			@SuppressWarnings("unchecked")
 			List<R> children = (List<R>)childGetter.invoke(record);
-			for (R child : children){
-				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
-				childWriter.write(child,childElement,templateFields.get(childModelClass),parentsWritten,templateFields);
+			List<String> fields = templateFields.remove(childModelClass);
+			try {
+				for (R child : children) {
+					T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
+					childWriter.write(child, childElement, fields, parentsWritten, templateFields);
+				}
+			}finally {
+				templateFields.put(childModelClass, fields);
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
