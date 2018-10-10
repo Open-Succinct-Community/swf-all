@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -23,6 +25,7 @@ import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.io.ModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
 
@@ -106,11 +109,15 @@ public class IntegrationAdaptor<M extends Model,T> {
 			elementAttribute = element;
 		}
 
-		writer.write(m, elementAttribute , includeFields, ignoreParents, childFields);
-		return new BytesView(path, helper.toString().getBytes());
+		T elementAttributeToWrite = elementAttribute;
+		TimerUtils.time(cat,"Write Response" , ()-> {
+			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, childFields);
+			return true;
+		});
+		return TimerUtils.time(cat, "Returning Bytes View" , () -> new BytesView(path, helper.toString().getBytes()));
 	}
-	
-	
+	private transient  final SWFLogger cat = Config.instance().getLogger(getClass().getName());
+
 	
 	public void writeResponse(List<M> m, OutputStream os){
 		writeResponse(m, os,null);
