@@ -308,7 +308,6 @@ public class ModelReflector<M extends Model> {
     	}
     	return referredModelGetters;
     }
-    
     private SequenceSet<Method> participantModelGetters = null ;
     public List<Method> getParticipantModelGetters(){
     	if (participantModelGetters == null){
@@ -1297,40 +1296,22 @@ public class ModelReflector<M extends Model> {
     }
 
 
-
-	private Map<Method,Method> referredModelIdGetterToReferredModelGetterMap = new HashMap<Method, Method>();
+	private Map<Method,Method>  referredModelIdGetterToReferredModelGetterMap = null;
 	public Method getReferredModelGetterFor(Method referredModelIdGetter) {
-		if (!getFieldGetters().contains(referredModelIdGetter)) {
-			return null;
-		}
-
-		Method ret = referredModelIdGetterToReferredModelGetterMap.get(referredModelIdGetter);
-		if (ret == null && !referredModelIdGetterToReferredModelGetterMap.containsKey(referredModelIdGetter)) {
-			String methodName = referredModelIdGetter.getName();
-			if (methodName.startsWith("get")
-					&& methodName.endsWith("Id")
-					&& methodName.length() > 5 // Not = getId
-					&& (Arrays.asList(int.class,Integer.class,long.class,Long.class).contains(referredModelIdGetter.getReturnType()))) {
-				String referredModelMethodName = methodName.substring(0,
-						methodName.length() - "Id".length());
-				for (Class<? extends Model> modelClass : reflector
-						.getSiblingModelClasses(getModelClass())) {
-					try {
-						Method referredModelGetter = modelClass
-								.getMethod(referredModelMethodName);
-						if (Model.class.isAssignableFrom(referredModelGetter
-								.getReturnType())) {
-							ret = referredModelGetter;
-							break;
-						}
-					} catch (NoSuchMethodException ex) {
-						//
+		if (referredModelIdGetterToReferredModelGetterMap == null){
+			synchronized (this){
+				if (referredModelIdGetterToReferredModelGetterMap == null){
+					Map<Method,Method> referredModelIdGetterToReferredModelGetterMap = new HashMap<>();
+					for (Method refModelGetter : getReferredModelGetters()){
+						String field = getReferenceField(refModelGetter);
+						Method refModelIdGetter = getFieldGetter(field);
+						referredModelIdGetterToReferredModelGetterMap.put(refModelIdGetter,refModelGetter);
 					}
+					this.referredModelIdGetterToReferredModelGetterMap = referredModelIdGetterToReferredModelGetterMap;
 				}
 			}
-			referredModelIdGetterToReferredModelGetterMap.put(referredModelIdGetter, ret);
 		}
-		return ret;
+		return referredModelIdGetterToReferredModelGetterMap.get(referredModelIdGetter);
 	}
 
 	private SequenceSet<Class<? extends Model>> classHierarchies = null;
