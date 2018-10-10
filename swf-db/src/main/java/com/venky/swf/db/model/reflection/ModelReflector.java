@@ -196,14 +196,16 @@ public class ModelReflector<M extends Model> {
                 }
         	}
             Method getter = getFieldGetter(fieldName);
-        	IS_VIRTUAL isVirtual = getAnnotation(getter,IS_VIRTUAL.class);
-        	if (ret == null) {
-                if (isVirtual != null && isVirtual.value()){
+            IS_VIRTUAL isVirtual = getAnnotation(getter,IS_VIRTUAL.class);
+            if (isVirtual != null && isVirtual.value()){
+                if (ret == null){
                     ret = (T)getter.invoke(record);
-                }else if (getter.getReturnType().isPrimitive()) {
-                    getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter().valueOf(null);
                 }
-        	}else if(!(getter.getReturnType().isAssignableFrom(ret.getClass()))){
+            }else if (getter.getReturnType().isPrimitive()) {
+                if (ret == null) {
+                    ret = (T) getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter().valueOf(null);
+                }
+            }else if(!getter.getReturnType().isPrimitive() && !(getter.getReturnType().isAssignableFrom(ret.getClass()))){
                 ret = (T)getter.invoke(record);
             }
         	return ret;
