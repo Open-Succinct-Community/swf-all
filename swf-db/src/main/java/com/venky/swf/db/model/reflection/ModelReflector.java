@@ -205,7 +205,7 @@ public class ModelReflector<M extends Model> {
                 if (ret == null) {
                     ret = (T) getJdbcTypeHelper().getTypeRef(getter.getReturnType()).getTypeConverter().valueOf(null);
                 }
-            }else if(!getter.getReturnType().isPrimitive() && !(getter.getReturnType().isAssignableFrom(ret.getClass()))){
+            }else if( ret != null && !(getter.getReturnType().isAssignableFrom(ret.getClass()))){
                 ret = (T)getter.invoke(record);
             }
         	return ret;
