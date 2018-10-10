@@ -289,18 +289,15 @@ public class AsyncTaskManager  {
             //addAll(taskHolders);
             InMemoryTaskQueueManager.getPendingTasks().addAll(taskHolders); //To ensures tasks are executed after commit.
 		}else {
+			SerializationHelper helper = new SerializationHelper();
 			for (Task task: tasks){ 
-				try {
-					DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
-					ByteArrayOutputStream os = new ByteArrayOutputStream(); 
-					ObjectOutputStream oos = new ObjectOutputStream(os);
-					oos.writeObject(task);
-					de.setPriority(task.getTaskPriority().getValue());
-					de.setData(new ByteArrayInputStream(os.toByteArray()));
-					de.save();
-				} catch (IOException ex) {
-					throw new RuntimeException(task.getClass().getName() ,ex);
-				}
+				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
+				ByteArrayOutputStream os = new ByteArrayOutputStream();
+				helper.write(os,task);
+				//ObjectOutputStream oos = new ObjectOutputStream(os);
+				de.setPriority(task.getTaskPriority().getValue());
+				de.setData(new ByteArrayInputStream(os.toByteArray()));
+				de.save();
 			}
 			Database.getInstance().getCurrentTransaction().setAttribute(PersistedTaskPollingAgent.class.getName()+".trigger", true);
 		}

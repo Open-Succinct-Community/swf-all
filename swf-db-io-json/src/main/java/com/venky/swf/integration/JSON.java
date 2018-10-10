@@ -162,6 +162,13 @@ public class JSON extends FormatHelper<JSONObject>{
 		}
 	}
 
-	
-	
+	@Override
+	public void removeElementAttribute(String name){
+		root.remove(name);
+	}
+	@Override
+	public void removeAttribute(String name){
+		root.remove(name);
+	}
+
 }

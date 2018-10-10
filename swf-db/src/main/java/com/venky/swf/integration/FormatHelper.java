@@ -107,6 +107,7 @@ public abstract class FormatHelper<T> {
 	
 	public abstract Set<String> getAttributes();
 	public abstract String getAttribute(String name);
-
+	public abstract void removeElementAttribute(String name);
+	public abstract void removeAttribute(String name) ;
 	
 }

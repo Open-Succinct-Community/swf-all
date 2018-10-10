@@ -29,6 +29,10 @@ public class TaskHolder implements Task {
 		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();
 		this.taskId = task.getTaskId() > 0 ? task.getTaskId() : fakeIdGenerator.incrementAndGet();
 	}
+
+	public Task innerTask(){
+		return task;
+	}
 	
 
 	@Override

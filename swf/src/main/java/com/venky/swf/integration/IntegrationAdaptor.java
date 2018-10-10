@@ -92,12 +92,20 @@ public class IntegrationAdaptor<M extends Model,T> {
 		return createResponse(path, m,includeFields,new HashSet<>(), new HashMap<>());
 	}
 	public View createResponse(Path path, M m, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childFields) {
-		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); 
+		return createResponse(path,m,true, includeFields, ignoreParents,childFields);
+	}
+	public View createResponse(Path path, M m, boolean rootElementRequiresName, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childFields) {
+
+		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); ;
 		T element = helper.getRoot();
 		T elementAttribute = helper.getElementAttribute(modelReflector.getModelClass().getSimpleName());
 		if (elementAttribute == null) {
 			elementAttribute = element;
+		}else if (!rootElementRequiresName){
+			helper.removeElementAttribute(modelReflector.getModelClass().getSimpleName());
+			elementAttribute = element;
 		}
+
 		writer.write(m, elementAttribute , includeFields, ignoreParents, childFields);
 		return new BytesView(path, helper.toString().getBytes());
 	}

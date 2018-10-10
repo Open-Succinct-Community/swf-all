@@ -27,7 +27,11 @@ public class AsyncTaskWorker extends Thread{
 		}
 	}
 	protected <T extends Task> String getTaskIdentifier(T task){
-		return task.getClass().getName();
+		if (task instanceof  TaskHolder) {
+			return ((TaskHolder)task).innerTask().getClass().getName();
+		}else {
+			return task.getClass().getName();
+		}
 	}
 	public void run(){
 		Task task = null ;

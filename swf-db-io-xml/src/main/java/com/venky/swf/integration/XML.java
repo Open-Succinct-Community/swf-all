@@ -125,6 +125,13 @@ public class XML extends FormatHelper<XMLElement>{
 	public XMLElement getElementAttribute(String name) {
 		return root.getChildElement(name);
 	}
-	
-	
+
+	@Override
+	public void removeElementAttribute(String name){
+		root.removeChild(root.getChildElement(name));
+	}
+	@Override
+	public void removeAttribute(String name){
+		root.removeAttribute(name);
+	}
 }
