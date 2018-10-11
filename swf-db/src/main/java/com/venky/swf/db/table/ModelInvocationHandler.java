@@ -740,8 +740,8 @@ public class ModelInvocationHandler implements InvocationHandler {
         insertSQL.executeUpdate(generatedValues, generatedKeys.toArray(new String[]{}));
         
         if (generatedKeys.size() == 1){
-            if (generatedValues.getDirtyFields().size() == 1){
-                String virtualFieldName = generatedValues.getDirtyFields().iterator().next();
+            if (generatedValues.getFieldNames().size() == 1){
+                String virtualFieldName = generatedValues.getFieldNames().iterator().next();
                 long id = ((Number)generatedValues.get(virtualFieldName)).longValue();
                 String fieldName = generatedKeys.get(0);
                 record.put(fieldName, id);
