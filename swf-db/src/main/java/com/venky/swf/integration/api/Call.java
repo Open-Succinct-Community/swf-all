@@ -97,6 +97,13 @@ public class Call<T> {
 
     }
 
+    int timeOut = 60000;
+    public Call<T> timeOut(int timeOut){
+        checkExpired();
+        this.timeOut = timeOut;
+        return this;
+    }
+
     private Call<T> invoke(){
         checkExpired();
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
@@ -127,8 +134,9 @@ public class Call<T> {
 
             curl = new URL(sUrl.toString());
             connection = (HttpURLConnection)(curl.openConnection());
-            connection.setConnectTimeout(60000);
-            connection.setReadTimeout(60000);
+
+            connection.setConnectTimeout(timeOut);
+            connection.setReadTimeout(timeOut);
             connection.setRequestMethod(method.toString());
 
             connection.setRequestProperty("Accept-Encoding", "gzip");
