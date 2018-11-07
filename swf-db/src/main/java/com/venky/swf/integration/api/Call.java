@@ -145,6 +145,23 @@ public class Call<T> {
                 connection.setRequestProperty(k, v);
                 fakeCurlRequest.append(" -H '").append(k).append(": ").append(v).append("' ");
             };
+            try {
+                Map<String,List<String>> map = CookieManager.getDefault().get(curl.toURI(), new HashMap<>());
+                for (String key: map.keySet()){
+                    List<String> values = map.get(key);
+                    StringBuilder value = new StringBuilder();
+                    for (String v :values){
+                        if (value.length() > 0){
+                            value.append(";");
+                        }
+                        value.append(v);
+                    }
+                    connection.setRequestProperty(key,value.toString());
+                    fakeCurlRequest.append(" -H '").append(key).append(": ").append(value.toString()).append("' ");
+                };
+            }catch (Exception ex){
+                //
+            }
 
             connection.setDoOutput(true);
             connection.setDoInput(true);
