@@ -145,6 +145,7 @@ public class Call<T> {
                 connection.setRequestProperty(k, v);
                 fakeCurlRequest.append(" -H '").append(k).append(": ").append(v).append("' ");
             };
+            /*
             try {
                 Map<String,List<String>> map = CookieManager.getDefault().get(curl.toURI(), new HashMap<>());
                 for (String key: map.keySet()){
@@ -162,6 +163,7 @@ public class Call<T> {
             }catch (Exception ex){
                 //
             }
+            */
 
             connection.setDoOutput(true);
             connection.setDoInput(true);
