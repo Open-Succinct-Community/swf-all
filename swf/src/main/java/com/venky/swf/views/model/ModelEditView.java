@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -219,7 +220,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 								try {
 									addChildModelToTab(childPath,tab,childClass,childGetter);
 								} catch (Exception e) {
-									//
+									Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
 								}
 							}
 						}
