@@ -772,7 +772,7 @@ public class ModelReflector<M extends Model> {
 		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
 		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
 	    	List<Count> counts  = new ArrayList<Count>();
-	    	if (!isVirtual() && !fieldDescriptor.isVirtual()){
+	    	if (size  == 0 && !isVirtual() && !fieldDescriptor.isVirtual() && Database.getTable(getModelClass()).recordCount() < 100000 ){
 	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Count.class);
 		    	if (!counts.isEmpty()){
 		    		size = counts.get(0).getCount(); 
@@ -780,7 +780,6 @@ public class ModelReflector<M extends Model> {
 		    		size = MAX_DATA_LENGTH_FOR_TEXT_BOX;
 		    	}
 	    	}else {
-	    		size = fieldDescriptor.getSize();
 	    		size = size == 0 ? MAX_DATA_LENGTH_FOR_TEXT_BOX + 1 :  size;
 	    	}
 		}
@@ -815,10 +814,12 @@ public class ModelReflector<M extends Model> {
 		if (Reader.class.isAssignableFrom(returnType) || 
     					(String.class.isAssignableFrom(returnType))){
 
-	    	int len = getMaxDataLength(fieldName);
+	    	int len = 0;
 			if (!isFieldEditable(fieldName) && String.class.isAssignableFrom(returnType)){
 				len = WordWrapUtil.getNumRowsRequired(StringUtil.valueOf(fieldValue),MAX_DATA_LENGTH_FOR_TEXT_BOX) * MAX_DATA_LENGTH_FOR_TEXT_BOX;
-	    	}
+	    	}else {
+				len = getMaxDataLength(fieldName);
+			}
 			return (len > MAX_DATA_LENGTH_FOR_TEXT_BOX) ;	
 		}
 		return false;
