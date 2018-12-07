@@ -239,7 +239,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 			List<T> children = (List<T>)childGetter.invoke(getRecord());
 			new ModelListView<T>(childPath,null,children, true).createBody(tab);
 		} catch (Exception ex){
-
+            Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , ex);
 		}
 
 	}
