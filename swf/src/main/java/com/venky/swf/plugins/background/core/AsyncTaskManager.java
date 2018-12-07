@@ -2,22 +2,42 @@ package com.venky.swf.plugins.background.core;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.io.SeekableByteArrayOutputStream;
 import com.venky.core.util.Bucket;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.SWFHttpResponse;
+import com.venky.swf.db.model.io.ModelReader;
+import com.venky.swf.db.model.io.json.JSONModelReader;
+import com.venky.swf.integration.IntegrationAdaptor;
+import com.venky.swf.integration.JSON;
+import com.venky.swf.integration.api.Call;
+import com.venky.swf.integration.api.HttpMethod;
+import com.venky.swf.integration.api.InputFormat;
 import com.venky.swf.plugins.background.core.agent.Agent;
+import com.venky.swf.plugins.background.core.agent.AgentSeederTask;
 import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
+import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent.PersistedTaskPoller;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.plugins.background.extensions.InMemoryTaskQueueManager;
 import com.venky.swf.routing.Config;
+import org.json.simple.JSONAware;
+import org.json.simple.JSONObject;
 
 public class AsyncTaskManager  {
 	
@@ -109,12 +129,31 @@ public class AsyncTaskManager  {
 		if (tasks.isEmpty()) {
 			return;
 		}
-		synchronized (queue) {
-			if (!keepAlive()) {
-				throw new ShutdownInitiatedException();
+		if (!keepAlive()) {
+			throw new ShutdownInitiatedException();
+		}
+		if (ObjectUtil.isVoid(getQueueServerURL())){
+			synchronized (queue) {
+				queue.addAll(tasks);
+				queue.notifyAll();
 			}
-			queue.addAll(tasks);
-			queue.notifyAll();
+		}else {
+			HashMap<String,String> headers = new HashMap<>();
+			headers.put("content-type", MimeType.APPLICATION_JSON.toString());
+			if (!ObjectUtil.isVoid(getApiKey())){
+				headers.put("ApiKey",getApiKey());
+			}
+			int timeOut = 0 ;
+			SeekableByteArrayOutputStream os = new SeekableByteArrayOutputStream();
+			new SerializationHelper().write(os,tasks);
+
+			JSONObject jsonObject = new Call<Object>().url(getQueueServerURL()).headers(headers).timeOut(timeOut).
+					method(HttpMethod.POST).inputFormat(InputFormat.INPUT_STREAM).input(os.toByteArray()).getResponseAsJson();
+			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read(jsonObject);
+
+			if (!ObjectUtil.equals(response.getStatus(),"OK")){
+				throw new RuntimeException("Unable to push Tasks to the queue server.");
+			}
 		}
 	}
 
@@ -143,34 +182,77 @@ public class AsyncTaskManager  {
 		}
 	}
 
-	public Task waitUntilNextTask() {
+	public Task waitUntilNextTask(boolean local, boolean wait) {
 		Task dt = null;
-		synchronized (queue) {
-			while (!evicted() && keepAlive() && queue.isEmpty() ) {
-				try {
+		if (ObjectUtil.isVoid(getQueueServerURL())){
+			synchronized (queue) {
+				while (wait && (!local || !evicted()) && keepAlive() && queue.isEmpty()) {
+					try {
+						Config.instance().getLogger(getClass().getName())
+								.finest("Worker: going back to sleep as there is no work to be done.");
+						//queue.wait(30*1000);
+						queue.wait();
+					} catch (InterruptedException ex) {
+						Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
+						//
+					}
+				}
+				if ((!local || !evicted())&& keepAlive() && !queue.isEmpty() ) {
+					dt = queue.poll();
 					Config.instance().getLogger(getClass().getName())
-							.finest("Worker: going back to sleep as there is no work to be done.");
-					//queue.wait(30*1000);
-					queue.wait();
-				} catch (InterruptedException ex) {
-					Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
-					//
+							.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
+					queue.notifyAll();
 				}
 			}
-			if (!evicted() && keepAlive() && !queue.isEmpty() ) {
-				dt = queue.poll();
+		}else if ((!local || !evicted()) && keepAlive()) {
+			JSONObject parameters = new JSONObject();
+			parameters.put("Wait",wait);
+
+			HashMap<String,String> headers = new HashMap<>();
+			headers.put("content-type", MimeType.APPLICATION_JSON.toString());
+			if (!ObjectUtil.isVoid(getApiKey())){
+				headers.put("ApiKey",getApiKey());
+			}
+			int timeOut = 10000;
+			if (wait){
+				timeOut = 0;
+			}
+			InputStream stream = new Call<JSONAware>().url(getQueueServerURL()).headers(headers).timeOut(timeOut).method(HttpMethod.POST).inputFormat(InputFormat.JSON).input(parameters).getResponseStream();
+			try {
+				if (stream.available() > 0 ){
+					SerializationHelper helper = new SerializationHelper();
+					dt = helper.read(stream);
+				}
+				if (dt == null){
+					Config.instance().getLogger(getClass().getName())
+							.log(Level.INFO,"No Tasks Found");
+				}
+			}catch (Exception ex){
 				Config.instance().getLogger(getClass().getName())
-				.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
-				queue.notifyAll();
+						.log(Level.WARNING,"Exception in finding tasks",ex);
+				shutdown();
 			}
 		}
 		return dt;
 	}
-	
+
+	public String getQueueServerURL(){
+		return Config.instance().getProperty("swf.plugins.background.queue.server.url");
+	}
+
+	public String getApiKey() {
+		return Config.instance().getProperty("swf.plugins.background.queue.server.apikey");
+	}
+
 	public Task next() {
-		decrementWorkerCount();
-		Task task =  waitUntilNextTask();
-		if (task != null) {
+		return next(true,true);
+	}
+	public Task next(boolean local,boolean wait) {
+		if (local){
+			decrementWorkerCount();
+		}
+		Task task =  waitUntilNextTask(local,wait);
+		if (task != null && local) {
 			incrementWorkerCount();
 		}
 		return task;
@@ -299,7 +381,8 @@ public class AsyncTaskManager  {
 				de.setData(new ByteArrayInputStream(os.toByteArray()));
 				de.save();
 			}
-			Database.getInstance().getCurrentTransaction().setAttribute(PersistedTaskPollingAgent.class.getName()+".trigger", true);
+			//Database.getInstance().getCurrentTransaction().setAttribute(PersistedTaskPollingAgent.class.getName()+".trigger", true);
+			//Trigger PersistedTaskPollingAgent through Cron. KEep loosely coupled.
 		}
 	}
 }

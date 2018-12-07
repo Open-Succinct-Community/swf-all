@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views.model;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -210,7 +211,19 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	ModelAwareness childModelAwareness = new ModelAwareness(childPath, null);
 	        	if (childPath.canAccessControllerAction()){
 	            	FluidContainer tab = new FluidContainer();
-	            	addChildModelToTab(childPath,tab);
+	            	if (!getModelAwareness().getReflector().isVirtual()) {
+						addChildModelToTab(childPath,tab);
+					}else {
+	            		for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
+	            			if (getModelAwareness().getReflector().getChildModelClass(childGetter).isAssignableFrom(childClass)){
+								try {
+									addChildModelToTab(childPath,tab,childClass,childGetter);
+								} catch (Exception e) {
+									//
+								}
+							}
+						}
+					}
 	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
 	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
@@ -219,13 +232,23 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         }
         hiddenHashField.setValue(Encryptor.encrypt(getModelAwareness().getHashFieldValue().toString()));
     }
-    
-    protected final void addChildModelToTab(Path childPath,Div tab){
+
+	private <T extends  Model> void addChildModelToTab(Path childPath, Div tab, Class<T> childClass, Method childGetter) {
+		try {
+			List<T> children = (List<T>)childGetter.invoke(getRecord());
+			new ModelListView<T>(childPath,null,children, true).createBody(tab);
+		} catch (Exception ex){
+
+		}
+
+	}
+
+	protected final void addChildModelToTab(Path childPath,Div tab){
     	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
     	excludeLinks.addAll(getHotLinks());
     	//Exclude back link on included child as it is a redundant link to the record in focus currently.
     	HotLink childBack = new HotLink(childPath.controllerPath() + "/back");
-    	excludeLinks.add(childBack); 
+    	excludeLinks.add(childBack);
 
     	DashboardView view =  (DashboardView)childPath.invoke();
     	view.createBody(tab,true,false,excludeLinks);
