@@ -73,8 +73,14 @@ public class AsyncTaskManager  {
 	}
 	public void evictWorker(int number){
 		synchronized (numWorkersToEvict) {
-			numWorkersToEvict.increment(number);
-			numWorkersToEvict.notifyAll();
+			synchronized (numWorkersWorking){
+				if (number < 0 || number > numWorkersWorking.intValue()){
+					numWorkersToEvict.increment(numWorkersWorking.intValue());
+				}else {
+					numWorkersToEvict.increment(number);
+				}
+				numWorkersToEvict.notifyAll();
+			}
 		}
 		wakeUp();
 	}
@@ -259,6 +265,12 @@ public class AsyncTaskManager  {
 	}
 
 	private Bucket numWorkersWorking = new Bucket();
+
+	public int workerCount(){
+		synchronized (numWorkersWorking){
+			return numWorkersWorking.intValue();
+		}
+	}
 
 	public void decrementWorkerCount() {
 		synchronized (numWorkersWorking) {
