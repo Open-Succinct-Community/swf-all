@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 Type=forking
-PidFile=/home/ubuntu/eta-%i/tmp/pid
+PidFile=/home/ubuntu/${artifactId}-%i/tmp/pid
 
 User=ubuntu
 Group=ubuntu
 
-ExecStart=/bin/bash -c /home/ubuntu/eta-%i/bin/swfstart
+ExecStart=/bin/bash -c /home/ubuntu/${artifactId}-%i/bin/swfstart
 SuccessExitStatus=SIGKILL
 
 StartLimitBust=2
