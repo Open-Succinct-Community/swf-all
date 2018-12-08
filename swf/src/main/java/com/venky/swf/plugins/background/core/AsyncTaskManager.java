@@ -73,14 +73,8 @@ public class AsyncTaskManager  {
 	}
 	public void evictWorker(int number){
 		synchronized (numWorkersToEvict) {
-			synchronized (numWorkersWorking){
-				if (number < 0 || number > numWorkersWorking.intValue()){
-					numWorkersToEvict.increment(numWorkersWorking.intValue());
-				}else {
-					numWorkersToEvict.increment(number);
-				}
-				numWorkersToEvict.notifyAll();
-			}
+			numWorkersToEvict.increment(number);
+			numWorkersToEvict.notifyAll();
 		}
 		wakeUp();
 	}
