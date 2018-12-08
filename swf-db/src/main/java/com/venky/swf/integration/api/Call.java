@@ -189,6 +189,8 @@ public class Call<T> {
                         contentType.contains(MimeType.APPLICATION_XML.toString()) ||
                         contentType.startsWith("text")){
                     fakeCurlRequest.append(StringUtil.read(responseStream,true));
+                }else {
+                    fakeCurlRequest.append("**Raw binary Stream**");
                 }
             }else if (errorStream.available() >0){
                 fakeCurlRequest.append("\n Error:\n");
