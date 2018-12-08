@@ -151,7 +151,7 @@ public class AsyncTaskManager  {
 			SeekableByteArrayOutputStream os = new SeekableByteArrayOutputStream();
 			new SerializationHelper().write(os,tasks);
 
-			JSONObject jsonObject = new Call<Object>().url(getQueueServerURL()).headers(headers).timeOut(timeOut).
+			JSONObject jsonObject = new Call<Object>().url(getQueueServerURL()+"/push").headers(headers).timeOut(timeOut).
 					method(HttpMethod.POST).inputFormat(InputFormat.INPUT_STREAM).input(os.toByteArray()).getResponseAsJson();
 			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read(jsonObject);
 
@@ -190,7 +190,7 @@ public class AsyncTaskManager  {
 		Task dt = null;
 		if (ObjectUtil.isVoid(getQueueServerURL())){
 			synchronized (queue) {
-				while (wait && (!local || !evicted()) && keepAlive() && queue.isEmpty()) {
+				while (wait && isWorkerAlive(local) && queue.isEmpty()) {
 					try {
 						Config.instance().getLogger(getClass().getName())
 								.finest("Worker: going back to sleep as there is no work to be done.");
@@ -201,45 +201,60 @@ public class AsyncTaskManager  {
 						//
 					}
 				}
-				if ((!local || !evicted())&& keepAlive() && !queue.isEmpty() ) {
+				if (isWorkerAlive(local) && !queue.isEmpty() ) {
 					dt = queue.poll();
 					Config.instance().getLogger(getClass().getName())
 							.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
 					queue.notifyAll();
 				}
 			}
-		}else if ((!local || !evicted()) && keepAlive()) {
-			JSONObject parameters = new JSONObject();
-			parameters.put("Wait",wait);
+		}else if (isWorkerAlive(local)){
+			do{
+				dt = getNextRemoteTask();
 
-			HashMap<String,String> headers = new HashMap<>();
-			headers.put("content-type", MimeType.APPLICATION_JSON.toString());
-			if (!ObjectUtil.isVoid(getApiKey())){
-				headers.put("ApiKey",getApiKey());
-			}
-			int timeOut = 10000;
-			if (wait){
-				timeOut = 0;
-			}
-			InputStream stream = new Call<JSONAware>().url(getQueueServerURL()).headers(headers).timeOut(timeOut).method(HttpMethod.POST).inputFormat(InputFormat.JSON).input(parameters).getResponseStream();
-			try {
-				if (stream.available() > 0 ){
-					SerializationHelper helper = new SerializationHelper();
-					dt = helper.read(stream);
-				}
-				if (dt == null){
+				if (dt == null && wait){
 					Config.instance().getLogger(getClass().getName())
 							.log(Level.INFO,"No Tasks Found");
+					try {
+						Thread.sleep(30 * 1000);
+					}catch (InterruptedException ex){
+						//
+					}
 				}
-			}catch (Exception ex){
-				Config.instance().getLogger(getClass().getName())
-						.log(Level.WARNING,"Exception in finding tasks",ex);
-				shutdown();
-			}
+			}while (dt == null && wait && isWorkerAlive(local));
 		}
 		return dt;
 	}
+	private boolean isWorkerAlive(boolean local){
+		return (!local || !evicted()) && keepAlive();
+	}
 
+	private Task getNextRemoteTask(){
+		JSONObject parameters = new JSONObject();
+
+		HashMap<String,String> headers = new HashMap<>();
+		headers.put("content-type", MimeType.APPLICATION_JSON.toString());
+		if (!ObjectUtil.isVoid(getApiKey())){
+			headers.put("ApiKey",getApiKey());
+		}
+		int timeOut = 10000;
+		Task dt = null;
+		try {
+			InputStream stream = new Call<JSONAware>().url(getQueueServerURL() + "/next").headers(headers).timeOut(timeOut).method(HttpMethod.POST).
+					inputFormat(InputFormat.JSON).input(parameters).getResponseStream();
+
+			if (stream.available() > 0 ){
+				SerializationHelper helper = new SerializationHelper();
+				dt = helper.read(stream);
+			}
+
+		}catch (Exception ex){
+			Config.instance().getLogger(getClass().getName())
+					.log(Level.WARNING,"Exception in finding tasks",ex);
+			shutdown();
+		}
+		return dt;
+	}
 	public String getQueueServerURL(){
 		return Config.instance().getProperty("swf.plugins.background.queue.server.url");
 	}

@@ -24,6 +24,11 @@ public class TaskHolder implements Task {
 	
 	
 	private static AtomicLong fakeIdGenerator = new AtomicLong();
+	@Deprecated //Kept for Kryo Serialization
+	public TaskHolder(){
+
+	}
+
 	public TaskHolder(Task task){
 		this.task = task;
 		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();

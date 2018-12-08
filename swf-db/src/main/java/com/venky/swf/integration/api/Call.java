@@ -5,6 +5,8 @@ import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.routing.Config;
 import com.venky.xml.XMLDocument;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -182,7 +184,12 @@ public class Call<T> {
 
             if (responseStream.available()> 0){
                 fakeCurlRequest.append("\n Response:\n");
-                fakeCurlRequest.append(StringUtil.read(responseStream,true));
+                String contentType = responseHeaders.get("content-type").isEmpty() ? MimeType.TEXT_PLAIN.toString() : responseHeaders.get("content-type").get(0);
+                if (contentType.equals(MimeType.APPLICATION_JSON.toString()) ||
+                        contentType.contains(MimeType.APPLICATION_XML.toString()) ||
+                        contentType.startsWith("text")){
+                    fakeCurlRequest.append(StringUtil.read(responseStream,true));
+                }
             }else if (errorStream.available() >0){
                 fakeCurlRequest.append("\n Error:\n");
                 fakeCurlRequest.append(StringUtil.read(errorStream,true));
