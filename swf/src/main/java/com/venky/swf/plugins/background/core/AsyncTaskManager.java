@@ -74,6 +74,10 @@ public class AsyncTaskManager  {
 	public void evictWorker(int number){
 		synchronized (numWorkersToEvict) {
 			numWorkersToEvict.increment(number);
+			if (workerThreads.size() < numWorkersToEvict.intValue()) {
+				int diff = numWorkersToEvict.intValue() - workerThreads.size();
+				numWorkersToEvict.decrement(diff);
+			}
 			numWorkersToEvict.notifyAll();
 		}
 		wakeUp();
