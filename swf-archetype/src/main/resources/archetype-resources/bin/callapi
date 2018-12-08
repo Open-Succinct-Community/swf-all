@@ -4,7 +4,7 @@ projpath=$toolpath/..
 cd $projpath
 
 source $HOME/.bash_aliases
-source src/main/resources/config/envvars
+source overrideProperties/config/envvars
 user=$1
 shift
 api=$1
@@ -21,6 +21,15 @@ echo "user=$user"
 echo "api=$api"
 echo "data=$data"
 echo "apiKey=$apiKey"
+if [ "${baseurl}" = "" ] 
+then 
+    baseurl="http://localhost:${wport}"
+fi
 
-curl  "http://localhost:${wport}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}" -d "$data"
 
+if [ "$data" = "" ]
+then 
+curl  -v "${baseurl}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  
+else
+curl  -v "${baseurl}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  -d  "$data"
+fi

@@ -2,7 +2,7 @@
 toolpath=`dirname $0`
 projpath=$toolpath/../
 cd $projpath
-source src/main/resources/config/envvars
+source overrideProperties/config/envvars
 
 source $HOME/.bash_aliases
 agent_name=$1

@@ -1,4 +1,4 @@
-source src/main/resources/config/envvars
+source overrideProperties/config/envvars
 source bin/initconnection $1
 if [ -f ~/.inputrc ] 
 then 

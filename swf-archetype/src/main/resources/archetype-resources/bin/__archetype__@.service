@@ -1,0 +1,27 @@
+[Unit]
+Description=Eta Server
+After=network.target
+
+[Service]
+Type=forking
+PidFile=/home/ubuntu/eta-%i/tmp/pid
+
+User=ubuntu
+Group=ubuntu
+
+ExecStart=/bin/bash -c /home/ubuntu/eta-%i/bin/swfstart
+SuccessExitStatus=SIGKILL
+
+StartLimitBust=2
+StartLimitIntervalSec=300
+
+
+TimeoutSec=300
+
+Restart=always
+
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

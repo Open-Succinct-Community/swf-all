@@ -1,5 +1,5 @@
 source $HOME/.bash_aliases
-source src/main/resources/config/envvars
+source overrideProperties/config/envvars
 
 toolpath=`dirname $0`
 projpath=$toolpath/../
