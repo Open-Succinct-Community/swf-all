@@ -67,8 +67,11 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
         }
         JSON criteria = getCriteria();
 
-		Task task = AsyncTaskManager.getInstance().next(false,
-				Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(criteria.getAttribute("Wait")));
+
+		// boolean wait = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(criteria.getAttribute("Wait");
+		//wait  should not be from request.
+
+		Task task = AsyncTaskManager.getInstance().next(false, false);
 
 		SeekableByteArrayOutputStream byteArrayOutputStream = new SeekableByteArrayOutputStream();
 		SerializationHelper helper = new SerializationHelper();
