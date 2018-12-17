@@ -13,7 +13,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
@@ -276,4 +278,11 @@ public class Config {
 		getLogger(fromClazz.getName()).fine(sw.toString());
 	}
 
+	public Map<String,String> getGeoProviderParams(){
+		Map<String,String> params  =new HashMap<>();
+		params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
+		params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
+		params.put("google.api_key",Config.instance().getProperty("geocoder.google.api_key"));
+		return params;
+	}
 }
