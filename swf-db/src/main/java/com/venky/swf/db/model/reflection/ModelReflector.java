@@ -780,7 +780,7 @@ public class ModelReflector<M extends Model> {
 		    		size = MAX_DATA_LENGTH_FOR_TEXT_BOX;
 		    	}
 	    	}else {
-	    		size = size == 0 ? MAX_DATA_LENGTH_FOR_TEXT_BOX + 1 :  size;
+	    		size = size == 0 ? MAX_DATA_LENGTH_FOR_TEXT_BOX  :  size;
 	    	}
 		}
     	return size;
@@ -810,13 +810,15 @@ public class ModelReflector<M extends Model> {
     }
     public boolean isFieldValueALongText(String fieldName,Object fieldValue){
 		Method getter = getFieldGetter(fieldName);
+		COLUMN_SIZE columnSizeSpecified = getAnnotation(getter,COLUMN_SIZE.class);
+
 		Class<?> returnType = getter.getReturnType();
 		if (Reader.class.isAssignableFrom(returnType) || 
-    					(String.class.isAssignableFrom(returnType))){
+				(columnSizeSpecified != null && (String.class.isAssignableFrom(returnType)))){
 
 	    	int len = 0;
 			if (!isFieldEditable(fieldName) && String.class.isAssignableFrom(returnType)){
-				len = WordWrapUtil.getNumRowsRequired(StringUtil.valueOf(fieldValue),MAX_DATA_LENGTH_FOR_TEXT_BOX) * MAX_DATA_LENGTH_FOR_TEXT_BOX;
+				len = WordWrapUtil.getNumRowsRequired(StringUtil.valueOf(fieldValue),columnSizeSpecified.value()) * MAX_DATA_LENGTH_FOR_TEXT_BOX;
 	    	}else {
 				len = getMaxDataLength(fieldName);
 			}
