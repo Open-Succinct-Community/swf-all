@@ -12,7 +12,9 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.TimeZone;
 
+import com.venky.core.date.DateUtils;
 import com.venky.core.util.Bucket;
 import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
@@ -120,9 +122,9 @@ public class MySqlHelper extends JdbcTypeHelper{
                                                                                                                                                             // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,
-                            "DATE", 0, 0, true, true, new DateConverter()));
+                            "DATE", 0, 0, true, true, new DateConverter(DateUtils.ISO_DATE_FORMAT_STR, TimeZone.getDefault())));
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.TIME, "TIME", 0, 0, true, true ,new TimeConverter()));
+                            java.sql.Types.TIME, "TIME", 0, 0, true, true ,new TimeConverter(DateUtils.ISO_TIME_FORMAT_STR,TimeZone.getDefault())));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.TIMESTAMP, "DATETIME", 0, 0, true, false,

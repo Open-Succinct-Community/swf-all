@@ -144,7 +144,13 @@ $(function() {
 /* Set DatePicker for dateboxes */
 $(function(){
     $(".date-box").each(function(index){
-        $(this).datetimepicker({format: 'DD/MM/YYYY'});
+        var date = moment($(this).val(),'YYYY-MM-DD');
+
+        $(this).datetimepicker({format: 'YYYY-MM-DD'})
+        .on('change',function(ev){
+            $(this).valid();
+        }) ;
+        $(this).data("DateTimePicker").date(date);
     });
 });
 

@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.TimeZone;
 
+import com.venky.core.date.DateUtils;
 import com.venky.core.util.Bucket;
 
 /**
@@ -114,9 +116,9 @@ public class DerbyHelper extends JdbcTypeHelper{
                                                                                                                                                     // FLOAT
 
             registerjdbcSQLType(Date.class, new TypeRef<Date>(java.sql.Types.DATE,
-                            "DATE", 0, 0, true,false, new DateConverter()));
+                            "DATE", 0, 0, true,false,new DateConverter(DateUtils.ISO_DATE_FORMAT_STR, TimeZone.getDefault())));
             registerjdbcSQLType(Time.class, new TypeRef<Time>(
-                            java.sql.Types.TIME, "TIME", 0, 0, true ,false, new TimeConverter()));
+                            java.sql.Types.TIME, "TIME", 0, 0, true ,false, new TimeConverter(DateUtils.ISO_TIME_FORMAT_STR, TimeZone.getDefault())));
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.TIMESTAMP, "TIMESTAMP", 0, 0, true,false,
