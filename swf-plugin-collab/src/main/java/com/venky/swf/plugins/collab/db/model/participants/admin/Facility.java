@@ -14,45 +14,10 @@ import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 
 
-public interface Facility extends CompanySpecific, GeoLocation, Model{
+public interface Facility extends CompanySpecific, Address{
 	@UNIQUE_KEY
 	public String getName();
 	public void setName(String name);
-	
-	public String getAddressLine1();
-	public void setAddressLine1(String line1);
-	
-	public String getAddressLine2();
-	public void setAddressLine2(String line2);
-	
-	public String getAddressLine3();
-	public void setAddressLine3(String line3);
-
-	public String getAddressLine4();
-	public void setAddressLine4(String line4);
-	
-	@PARTICIPANT("CITY")
-	@OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.FacilityCitySelectionProcessor")
-	public long getCityId();
-	public void setCityId(long cityId);
-	public City getCity();
-
-	@PARTICIPANT("STATE")
-	@OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.FacilityStateSelectionProcessor")
-	public long getStateId();
-	public void setStateId(long stateId);
-	public State getState();
-	
-	@PARTICIPANT("COUNTRY")
-	public long getCountryId();
-	public void setCountryId(long countryId);
-	public Country getCountry();
-	
-
-	@RegEx("[0-9]*")
-	@COLUMN_SIZE(6)
-	public String getPincode();
-	public void setPincode(String pincode);
 	
 	public List<FacilityUser> getFacilityUsers();
 }

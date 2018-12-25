@@ -53,7 +53,7 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 			String nextToken = fieldPartTokenizer.nextToken();
 			if (fieldPartTokenizer.hasMoreTokens()){
 				String referenceFieldName = StringUtil.underscorize(nextToken + "Id");
-				Integer value = ref.get(current, referenceFieldName);
+				Long value = ref.get(current, referenceFieldName);
 				if (Database.getJdbcTypeHelper(ref.getPool()).isVoid(value)){
 					break;
 				}

@@ -42,6 +42,10 @@ public interface Company extends Model{
 	public String getName();
 	public void setName(String name);
 
+
+	public String getDomainName();
+	public void setDomainName(String domainName);
+
 	public Date getDateOfIncorporation();
 	public void setDateOfIncorporation(Date date);
 	

@@ -144,6 +144,7 @@ $(function() {
 /* Set DatePicker for dateboxes */
 $(function(){
     $(".date-box").each(function(index){
+        /*
         var date = moment($(this).val(),'YYYY-MM-DD');
 
         $(this).datetimepicker({format: 'YYYY-MM-DD'})
@@ -151,6 +152,8 @@ $(function(){
             $(this).valid();
         }) ;
         $(this).data("DateTimePicker").date(date);
+        */
+        $(this).datetimepicker({format: 'YYYY-MM-DD'});
     });
 });
 

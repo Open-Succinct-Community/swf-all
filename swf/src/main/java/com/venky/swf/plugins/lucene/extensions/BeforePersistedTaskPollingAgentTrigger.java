@@ -16,8 +16,7 @@ import com.venky.swf.plugins.lucene.index.background.IndexManager;
 public class BeforePersistedTaskPollingAgentTrigger implements Extension{
 	private static BeforePersistedTaskPollingAgentTrigger instance = new BeforePersistedTaskPollingAgentTrigger();
 	static {
-        String triggerAgent = PersistedTaskPollingAgent.class.getName()+".trigger" ;
-		Registry.instance().registerExtension("before." +triggerAgent, instance);
+		Registry.instance().registerExtension("before.commit", instance);
 	}
 	@SuppressWarnings("unchecked")
 	public void invoke(Object... context) {
