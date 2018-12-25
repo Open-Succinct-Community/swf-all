@@ -3,7 +3,6 @@ package com.venky.swf.plugins.lucene.extensions;
 import java.util.List;
 
 import com.venky.swf.plugins.background.core.agent.Agent;
-import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
 import com.venky.swf.plugins.lucene.index.agents.IndexUpdatorAgent;
 import org.apache.lucene.document.Document;
 
@@ -13,8 +12,8 @@ import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase._ITransaction;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 
-public class BeforePersistedTaskPollingAgentTrigger implements Extension{
-	private static BeforePersistedTaskPollingAgentTrigger instance = new BeforePersistedTaskPollingAgentTrigger();
+public class LuceneBeforeCommitExtension implements Extension{
+	private static LuceneBeforeCommitExtension instance = new LuceneBeforeCommitExtension();
 	static {
 		Registry.instance().registerExtension("before.commit", instance);
 	}
