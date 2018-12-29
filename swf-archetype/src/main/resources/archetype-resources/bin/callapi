@@ -11,7 +11,7 @@ api=$1
 shift
 data="$@"
 
-if [ "${content_type}"="" ] 
+if [ "${content_type}" = "" ] 
 then 
     content_type="application/xml" 
 fi
