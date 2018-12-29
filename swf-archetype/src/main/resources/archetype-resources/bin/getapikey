@@ -1,3 +1,4 @@
+#!/bin/bash
 source $HOME/.bash_aliases
 source overrideProperties/config/envvars
 
@@ -13,7 +14,13 @@ else
     user=$1
     password=$1
 fi
+if [ "${baseurl}" = "" ]
+then
+    baseurl="http://localhost:${wport}"
+fi
 
-curl -s -H "content-type: application/json" "http://localhost:${wport}/login" -d '{ "User" : { "Name":"'$user'" , "Password":"'$password'"} } ' |grep 'ApiKey' |cut -f2 -d ':' |sed -e 's/ //g' -e 's/"//g' 
+curl -s -H "content-type: application/json" "${baseurl}/login" -d '{ "User" : { "Name":"'$user'" , "Password":"'$password'"} } ' |grep 'ApiKey' |cut -f2 -d ':' |sed -e 's/ //g' -e 's/"//g'
+
+
 
 
