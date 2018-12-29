@@ -3,7 +3,16 @@ package com.venky.swf.plugins.background.core.agent;
 import com.venky.swf.plugins.background.core.Task;
 
 public class AgentFinishUpTask implements Task{
-	private String agentName; 
+	private String agentName;
+	private Priority priority  = Priority.DEFAULT;
+	public void setPriority(Priority priority){
+		this.priority = priority;
+	}
+	@Override
+	public Priority getTaskPriority(){
+		return priority;
+	}
+
 	public AgentFinishUpTask(){
 		
 	}

@@ -212,11 +212,11 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	ModelAwareness childModelAwareness = new ModelAwareness(childPath, null);
 	        	if (childPath.canAccessControllerAction()){
 	            	FluidContainer tab = new FluidContainer();
-	            	if (!getModelAwareness().getReflector().isVirtual()) {
+	            	if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() ) {
 						addChildModelToTab(childPath,tab);
 					}else {
 	            		for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
-	            			if (getModelAwareness().getReflector().getChildModelClass(childGetter).isAssignableFrom(childClass)){
+	            			if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
 								try {
 									addChildModelToTab(childPath,tab,childClass,childGetter);
 								} catch (Exception e) {

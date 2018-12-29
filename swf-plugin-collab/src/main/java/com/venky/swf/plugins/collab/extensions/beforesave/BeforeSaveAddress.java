@@ -79,6 +79,12 @@ public class BeforeSaveAddress extends BeforeModelSaveExtension<Address>{
 		if (!addressFieldsChanged) {
 			return;
 		}
+		if (!oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())){
+			if (oAddress.getRawRecord().isNewRecord()){
+				//Prefilled at creation. So ignore regetting it.
+				return;
+			}
+		}
 		oAddress.setLat(null);
 		oAddress.setLng(null);
 
