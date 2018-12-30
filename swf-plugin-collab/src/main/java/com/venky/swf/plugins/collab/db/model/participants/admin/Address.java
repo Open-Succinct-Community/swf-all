@@ -31,21 +31,21 @@ public interface Address extends Model, GeoLocation {
     public void setAddressLine4(String line4);
 
     @IS_NULLABLE
-    @PARTICIPANT("CITY")
+    @PARTICIPANT(value = "CITY", redundant = true)
     @OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.AddressCitySelectionProcessor")
     public Long getCityId();
     public void setCityId(Long cityId);
     public City getCity();
 
     @IS_NULLABLE
-    @PARTICIPANT("STATE")
+    @PARTICIPANT(value = "STATE",  redundant = true)
     @OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.AddressStateSelectionProcessor")
     public Long getStateId();
     public void setStateId(Long stateId);
     public State getState();
 
     @IS_NULLABLE
-    @PARTICIPANT("COUNTRY")
+    @PARTICIPANT(value = "COUNTRY",  redundant = true)
 
     public Long getCountryId();
     public void setCountryId(Long countryId);

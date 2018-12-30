@@ -219,6 +219,7 @@ public class UserImpl extends ModelImpl<User>{
 							fields.addAll(referredModelParticipatingGroupOptions.get(g).keySet());
 						}
 						fields.removeAll(DataSecurityFilter.getRedundantParticipationFields(fields, referredModelReflector));
+						//This should have been done for partication redundant too. But that is done is getDatasecurity Whereclause.
 						
 						boolean couldFilterUsingDSW = !DataSecurityFilter.anyFieldIsVirtual(fields,referredModelReflector); 
 						
@@ -279,7 +280,11 @@ public class UserImpl extends ModelImpl<User>{
 		    	if (cd.isVirtual()){
 		    		continue;
 		    	}
-		    	
+				PARTICIPANT participant = ref.getAnnotation(ref.getFieldGetter(key),PARTICIPANT.class);
+		    	if (participant.redundant()){
+		    		continue;
+				}
+
 		    	Expression dsw = optionalWhere.get(participantRoleGroup);
 				
 		    	if (values.isEmpty()){
