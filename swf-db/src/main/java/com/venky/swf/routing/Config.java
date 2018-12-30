@@ -96,19 +96,28 @@ public class Config {
 	}
 
 	public int getPortNumber(){
-		String port =  getProperty("swf.port",getProperty("PORT","8080"));
-		return Integer.valueOf(port);
+		return Integer.valueOf(getPort());
 	}
 
-	public int getExternalPortNumber(){
-		String port =  getProperty("swf.external.port", getProperty("swf.port",getProperty("PORT","8080"));
-		return Integer.valueOf(port);
+	private String getPort(){
+		return getProperty("swf.port",getProperty("PORT","8080"));
+	}
+	private String getExternalPort(){
+    	return getProperty("swf.external.port",getPort());
+	}
+
+	private int getExternalPortNumber(){
+    	if (ObjectUtil.isVoid(getExternalPort())){
+    		return 80;
+		}else {
+			return Integer.valueOf(getExternalPort());
+		}
 	}
 
 	public String getServerBaseUrl(){
 		StringBuilder url = new StringBuilder().append("http://").append(getHostName());
 
-		if (!ObjectUtil.isVoid(getExternalPortNumber()) && !ObjectUtil.equals("80",getExternalPortNumber())){
+		if (getExternalPortNumber() != 80){
 			url.append(":").append(getExternalPortNumber());
 		}
 
