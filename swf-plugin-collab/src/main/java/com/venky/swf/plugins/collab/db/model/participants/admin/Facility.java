@@ -15,8 +15,7 @@ import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 
 
-@IS_VIRTUAL(false)
-public interface Facility extends CompanySpecific, Address{
+public interface Facility extends CompanySpecific, Address , Model{
 	@UNIQUE_KEY
 	public String getName();
 	public void setName(String name);

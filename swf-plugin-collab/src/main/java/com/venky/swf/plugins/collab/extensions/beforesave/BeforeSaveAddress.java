@@ -6,6 +6,7 @@ import com.venky.extension.Registry;
 import com.venky.geo.GeoCoder;
 import com.venky.geo.GeoLocation;
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
+import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.routing.Config;
 
@@ -16,11 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BeforeSaveAddress extends BeforeModelSaveExtension<Address>{
-	static {
-		Registry.instance().registerExtension("Address.before.save", new BeforeSaveAddress());
-	}
-	
+public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSaveExtension<M>{
+
 	private StringBuilder[] getAddressQueries(Address oAddress){
 		StringBuilder[] address = new StringBuilder[]{
 				new StringBuilder()
@@ -71,7 +69,7 @@ public class BeforeSaveAddress extends BeforeModelSaveExtension<Address>{
 		return address;
 	}
 	@Override
-	public void beforeSave(Address oAddress) {
+	public void beforeSave(M oAddress) {
 
 		Set<String> dirtyFields = oAddress.getRawRecord().getDirtyFields();
 		boolean addressFieldsChanged = dirtyFields.contains("ADDRESS_LINE_1") || dirtyFields.contains("ADDRESS_LINE_2") || dirtyFields.contains("ADDRESS_LINE_3") ||

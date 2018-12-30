@@ -18,8 +18,7 @@ import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 
-@IS_VIRTUAL
-public interface Address extends Model, GeoLocation {
+public interface Address extends GeoLocation {
     public String getAddressLine1();
     public void setAddressLine1(String line1);
 
