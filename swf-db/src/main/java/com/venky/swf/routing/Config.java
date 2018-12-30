@@ -105,6 +105,9 @@ public class Config {
 	private String getExternalPort(){
     	return getProperty("swf.external.port",getPort());
 	}
+	private String getExternalURIScheme(){
+		return getProperty("swf.external.scheme", getExternalPortNumber() == 443 ? "https" : "http" );
+	}
 
 	private int getExternalPortNumber(){
     	if (ObjectUtil.isVoid(getExternalPort())){
@@ -115,7 +118,8 @@ public class Config {
 	}
 
 	public String getServerBaseUrl(){
-		StringBuilder url = new StringBuilder().append("http://").append(getHostName());
+    	String protocol = getExternalURIScheme();
+		StringBuilder url = new StringBuilder().append(protocol).append(getHostName());
 
 		if (getExternalPortNumber() != 80){
 			url.append(":").append(getExternalPortNumber());
