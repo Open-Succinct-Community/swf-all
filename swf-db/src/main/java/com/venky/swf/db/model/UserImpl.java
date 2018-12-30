@@ -297,7 +297,13 @@ public class UserImpl extends ModelImpl<User>{
 		    			dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ, values.get(0)));
 		    		}
 		    	}else {
-	    			dsw.add(Expression.createExpression(getPool(),cd.getName(),Operator.IN, values.toArray()));
+		    		if (values.contains(null)){
+		    			values.remove(null);
+						dsw.add(Expression.createExpression(getPool(),cd.getName(),Operator.EQ));
+					}
+					if (!values.isEmpty()){
+						dsw.add(Expression.createExpression(getPool(),cd.getName(),Operator.IN, values.toArray()));
+					}
 		    	}
 			}
 		}
