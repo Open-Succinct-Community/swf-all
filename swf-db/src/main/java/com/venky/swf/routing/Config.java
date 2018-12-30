@@ -112,12 +112,12 @@ public class Config {
 	private int getExternalPortNumber(){
     	if (ObjectUtil.isVoid(getExternalPort())){
 			String bareScheme = getProperty("swf.external.scheme");
-    		if (ObjectUtil.isVoid(bareScheme)){
-				return 80;
-			}else if (ObjectUtil.equals("http",bareScheme)){
+    		if (ObjectUtil.equals("http",bareScheme)){
     			return 80;
 			}else if (ObjectUtil.equals("https",bareScheme)){
 				return 443;
+			}else {
+				return 80;
 			}
 		}else {
 			return Integer.valueOf(getExternalPort());
