@@ -94,16 +94,22 @@ public class Config {
 	public String getHostName(){
     	return getProperty("swf.host","localhost");
 	}
+
 	public int getPortNumber(){
 		String port =  getProperty("swf.port",getProperty("PORT","8080"));
 		return Integer.valueOf(port);
 	}
-	
+
+	public int getExternalPortNumber(){
+		String port =  getProperty("swf.external.port", getProperty("swf.port",getProperty("PORT","8080"));
+		return Integer.valueOf(port);
+	}
+
 	public String getServerBaseUrl(){
 		StringBuilder url = new StringBuilder().append("http://").append(getHostName());
 
-		if (!ObjectUtil.isVoid(getPortNumber()) && !ObjectUtil.equals("80",getPortNumber())){
-			url.append(":").append(getPortNumber());
+		if (!ObjectUtil.isVoid(getExternalPortNumber()) && !ObjectUtil.equals("80",getExternalPortNumber())){
+			url.append(":").append(getExternalPortNumber());
 		}
 
 		return url.toString();
