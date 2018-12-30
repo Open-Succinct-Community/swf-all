@@ -9,6 +9,7 @@ import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
+import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
 import com.venky.swf.db.annotations.column.validations.RegEx;
@@ -66,11 +67,13 @@ public interface Address extends Model, GeoLocation {
 
     @RegEx("\\+[0-9]+") //Ensures that it starts with + and all other characters are numbers.
     @ExactLength(13) // Ensures that user types in 13 characters in all in a phone field.
+    @WATERMARK("e.g +911234567890")
     public String getPhoneNumber();
     public void setPhoneNumber(String phoneNumber);
 
     @RegEx("\\+[0-9]+") //Ensures that it starts with + and all other characters are numbers.
     @ExactLength(13) // Ensures that user types in 13 characters in all in a phone field.
+    @WATERMARK("e.g +911234567890")
     public String getAlternatePhoneNumber();
     public  void setAlternatePhoneNumber(String phoneNumber);
 }
