@@ -119,7 +119,7 @@ public class Config {
 
 	public String getServerBaseUrl(){
     	String protocol = getExternalURIScheme();
-		StringBuilder url = new StringBuilder().append(protocol).append(getHostName());
+		StringBuilder url = new StringBuilder().append(protocol).append("//").append(getHostName());
 
 		if (getExternalPortNumber() != 80){
 			url.append(":").append(getExternalPortNumber());
