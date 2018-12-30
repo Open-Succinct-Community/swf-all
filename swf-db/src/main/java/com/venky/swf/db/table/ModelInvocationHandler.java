@@ -22,6 +22,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.validations.processors.*;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
@@ -298,8 +299,10 @@ public class ModelInvocationHandler implements InvocationHandler {
     			Map<String,List<Long>> pOptions = pGroupOptions.get(participantRoleGroup);
     			for (String referencedModelIdFieldName :pOptions.keySet()){
     				Number referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);
+
+    				PARTICIPANT participant = reflector.getAnnotation(reflector.getFieldGetter(referencedModelIdFieldName), PARTICIPANT.class);
     				
-    				if (pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+    				if (participant.redundant() || pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
     					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
     				}
     			}
