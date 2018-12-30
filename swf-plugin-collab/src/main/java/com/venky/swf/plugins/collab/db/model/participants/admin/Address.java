@@ -10,6 +10,7 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
+import com.venky.swf.db.annotations.column.validations.ExactLength;
 import com.venky.swf.db.annotations.column.validations.RegEx;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.config.City;
@@ -63,9 +64,13 @@ public interface Address extends Model, GeoLocation {
     public String getEmail();
     public void setEmail(String emailId);
 
+    @RegEx("\\+[0-9]+") //Ensures that it starts with + and all other characters are numbers.
+    @ExactLength(13) // Ensures that user types in 13 characters in all in a phone field.
     public String getPhoneNumber();
     public void setPhoneNumber(String phoneNumber);
 
+    @RegEx("\\+[0-9]+") //Ensures that it starts with + and all other characters are numbers.
+    @ExactLength(13) // Ensures that user types in 13 characters in all in a phone field.
     public String getAlternatePhoneNumber();
     public  void setAlternatePhoneNumber(String phoneNumber);
 }
