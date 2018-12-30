@@ -102,7 +102,7 @@ public class Config {
 	public String getServerBaseUrl(){
 		StringBuilder url = new StringBuilder().append("http://").append(getHostName());
 
-		if (ObjectUtil.isVoid(getPortNumber()) || "80".equals(getPortNumber())){
+		if (!ObjectUtil.isVoid(getPortNumber()) && !ObjectUtil.equals("80",getPortNumber())){
 			url.append(":").append(getPortNumber());
 		}
 
