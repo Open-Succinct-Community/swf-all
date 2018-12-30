@@ -92,7 +92,7 @@ public class Config {
 	}	
 
 	public String getHostName(){
-		return getProperty("swf.host","localhost");
+    	return getProperty("swf.host","localhost");
 	}
 	public int getPortNumber(){
 		String port =  getProperty("swf.port",getProperty("PORT","8080"));
@@ -100,7 +100,13 @@ public class Config {
 	}
 	
 	public String getServerBaseUrl(){
-		return "http://"+ getHostName() + ":" + getPortNumber() ;
+		StringBuilder url = new StringBuilder().append("http://").append(getHostName());
+
+		if (ObjectUtil.isVoid(getPortNumber()) || "80".equals(getPortNumber())){
+			url.append(":").append(getPortNumber());
+		}
+
+		return url.toString();
 	}
 	public String getClientId(String opendIdProvider){
 		return getProperty("swf."+opendIdProvider +".client.id");
