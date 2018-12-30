@@ -1,31 +1,24 @@
 package com.venky.swf.controller;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.controller.annotations.RequireLogin;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.Transaction;
+import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.UserEmail;
+import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
+import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.HtmlView.StatusType;
+import com.venky.swf.views.RedirectorView;
+import com.venky.swf.views.View;
 import org.apache.oltu.oauth2.client.HttpClient;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
-import org.apache.oltu.oauth2.client.response.GitHubTokenResponse;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.client.response.OAuthAuthzResponse;
 import org.apache.oltu.oauth2.client.response.OAuthClientResponse;
@@ -42,21 +35,25 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.annotations.RequireLogin;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.Transaction;
-import com.venky.swf.db.model.User;
-import com.venky.swf.db.model.UserEmail;
-import com.venky.swf.path.Path;
-import com.venky.swf.routing.Config;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
-import com.venky.swf.views.HtmlView;
-import com.venky.swf.views.HtmlView.StatusType;
-import com.venky.swf.views.RedirectorView;
-import com.venky.swf.views.View;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 
 public class OidController extends Controller{
@@ -156,7 +153,7 @@ public class OidController extends Controller{
 		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"accounts.google.com",
 				OAuthJSONAccessTokenResponse.class,""));
 		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"",
-				GitHubTokenResponse.class,"https://graph.facebook.com/me?fields=email,name"));
+				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name"));
 
 	}
 	
