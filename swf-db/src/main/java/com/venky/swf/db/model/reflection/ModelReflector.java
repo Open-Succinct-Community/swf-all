@@ -770,8 +770,10 @@ public class ModelReflector<M extends Model> {
 		String fieldColumnName = fieldDescriptor.getName();
 		int size = fieldDescriptor.getSize();
 		Class<?> javaClass = getFieldGetter(fieldName).getReturnType();
-		if (String.class.isAssignableFrom(javaClass) || Reader.class.isAssignableFrom(javaClass)){
-	    	List<Count> counts  = new ArrayList<Count>();
+
+		if (String.class.isAssignableFrom(javaClass)){
+
+			List<Count> counts  = new ArrayList<Count>();
 	    	if (size  == 0 && !isVirtual() && !fieldDescriptor.isVirtual() && Config.instance().getBooleanProperty(modelClass.getSimpleName()+ "."+fieldColumnName+ ".checkMaxLength")){
 	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Count.class);
 		    	if (!counts.isEmpty()){
@@ -782,6 +784,8 @@ public class ModelReflector<M extends Model> {
 	    	}else {
 	    		size = size == 0 ? MAX_DATA_LENGTH_FOR_TEXT_BOX  :  size;
 	    	}
+		}else if (Reader.class.isAssignableFrom(javaClass)){
+			size = MAX_DATA_LENGTH_FOR_TEXT_BOX + 1;
 		}
     	return size;
     }
