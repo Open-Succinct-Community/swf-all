@@ -9,4 +9,5 @@ public interface _IControl {
 	public List<_IControl> getContainedControls();
 	public String getTag();
 	public boolean isVisible();
+	public _IControl getParent();
 }

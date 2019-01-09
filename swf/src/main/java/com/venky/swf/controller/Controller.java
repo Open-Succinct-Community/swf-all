@@ -168,8 +168,13 @@ public class Controller {
     
     @RequireLogin(false)
     public View logout(){
-        invalidateSession();
-        return new RedirectorView(getPath(), "login");
+        String redirectPath = getPath().getRequest().getParameter("_redirect_to");
+		invalidateSession();
+		if (ObjectUtil.isVoid(redirectPath)){
+			redirectPath = "login";
+		}
+
+		return new RedirectorView(getPath(), redirectPath);
     }
 
     @RequireLogin(false)

@@ -89,12 +89,12 @@ public abstract class HtmlView extends View{
     protected void createHtml(Html html){
         
     	Head head = new Head();
-        createHead(head);
         html.addControl(head);
-        
+        createHead(head);
+
         Body body = new Body();
-        _createBody(body,true);
         html.addControl(body);
+        _createBody(body,true);
 
         Registry.instance().callExtensions("finalize.view" + getPath().getTarget() ,  this , html);
     }
