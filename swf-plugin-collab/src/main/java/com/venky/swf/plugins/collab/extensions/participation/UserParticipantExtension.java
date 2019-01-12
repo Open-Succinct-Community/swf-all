@@ -23,7 +23,7 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 			String fieldName) {
 		
 		SequenceSet<Long> ret = null;
-		if (fieldName.equals("SELF_USER_ID")){
+		if (fieldName.equals("COMPANY_ID")){
 			ret = new SequenceSet<>();
 			
 			User operator = (User)user;
@@ -34,20 +34,7 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 			for (UserCompany uc : operator.getUserCompanies()){
 				accessableCompanies.add(uc.getCompanyId());
 			}
-			if (!Database.getJdbcTypeHelper(partiallyFilledModel.getReflector().getPool()).isVoid(partiallyFilledModel.getId())){
-				User other = (User)partiallyFilledModel;
-				for (UserCompany uc : other.getUserCompanies()){
-					if (accessableCompanies.contains(uc.getCompanyId())){
-						ret.add(partiallyFilledModel.getId());
-						break;
-					}
-				}
-			}else { 
-				List<UserCompany> ucs = new Select().from(UserCompany.class).where(new Expression(ModelReflector.instance(UserCompany.class).getPool(),"COMPANY_ID",Operator.IN,accessableCompanies.toArray())).execute();
-				for (UserCompany uc: ucs){ 
-					ret.add(uc.getUserId());
-				}
-			}
+
 		}
 		return ret;
 	}

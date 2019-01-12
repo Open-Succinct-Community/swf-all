@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.venky.core.date.DateUtils;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.commons.fileupload.FileItem;
@@ -555,6 +556,7 @@ public class Path implements _IPath{
     }
     
     public void createUserSession(User user,boolean autoInvalidate){
+        invalidateSession();
         HttpSession session = getRequest().getSession(true);
         session.setAttribute("user", user);
         session.setAttribute("user.id",user.getId());
@@ -577,6 +579,7 @@ public class Path implements _IPath{
             autoInvalidate = true;
             user = getUser("api_key",apiKey);
             if (user == null) {
+                addErrorMessage("Invalid Api Key");
                 return false;
             }
         }
@@ -591,8 +594,26 @@ public class Path implements _IPath{
                 String username = null;
                 String password = null;
                 if (adaptor == null){
-                    username = getRequest().getParameter("name");
-                    password = getRequest().getParameter("password");
+                    Map<String,Object> map = getFormFields();
+                    username = String.valueOf(map.get("name"));
+                    password = String.valueOf(map.get("password"));
+                    String password2 = String.valueOf(map.get("password2"));
+                    if (map.containsKey("_REGISTER")){
+                        if (ObjectUtil.equals(password,password2)){
+                            user = getUser("name",username);
+                            if (user != null){
+                                addErrorMessage("Username "+ username + " is already registered");
+                                return  false;
+                            }
+                            user = Database.getTable(User.class).newRecord();
+                            user.setName(username);
+                            user.setPassword(password);
+                            user.save();
+                        }else {
+                            addErrorMessage("Passwords entered do not match");
+                            return false;
+                        }
+                    }
                 }else {
                     List<User> input = adaptor.readRequest(this);
                     if (input.size() == 1){
@@ -607,7 +628,8 @@ public class Path implements _IPath{
                     if (user != null && user.authenticate(password)){
                         createUserSession(user,autoInvalidate);
                     }else {
-                        Config.instance().getLogger(Path.class.getName()).fine("Authentication Failed");
+                        addErrorMessage("Login Failed");
+                        Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
                     }
                 }
             }
@@ -615,7 +637,11 @@ public class Path implements _IPath{
             createUserSession(user,autoInvalidate);
         }
         
-        return isUserLoggedOn();
+        boolean loggedOn= isUserLoggedOn();
+        if (!loggedOn){
+            addErrorMessage("Login Failed");
+        }
+        return loggedOn;
     }
     public boolean redirectOnException(){
         return getProtocol().equals(MimeType.TEXT_HTML);
@@ -1120,10 +1146,12 @@ public class Path implements _IPath{
     }
 
     public void addMessage(StatusType type, String message){
-        if (getSession() == null){
-            return ;
-        }
         HttpSession session = getSession();
+
+        if (session == null){
+            session = getRequest().getSession(true);
+            setSession(session);
+        }
         @SuppressWarnings("unchecked")
         List<String> existing = (List<String>) session.getAttribute(type.getSessionKey());
         if (existing == null){

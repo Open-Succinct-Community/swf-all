@@ -162,7 +162,7 @@ public class OidController extends Controller{
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
 		
 		if (ObjectUtil.isVoid(selectedOpenId)){
-			HtmlView lv = createLoginView();
+			HtmlView lv = createLoginView(false);
 			lv.setStatus(StatusType.ERROR, "Open id provider not specified");
 			return lv;
 		}

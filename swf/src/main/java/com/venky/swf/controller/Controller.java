@@ -19,6 +19,7 @@ import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 
 import com.venky.swf.integration.IntegrationAdaptor;
+import com.venky.swf.plugins.background.core.agent.Agent.Status;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -101,26 +102,30 @@ public class Controller {
     @RequireLogin(false)
     public View login(){
         if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null ) {
-        	if (getPath().getRequest().getParameterMap().isEmpty()){
-                return createLoginView();
+        	if (getPath().getFormFields().isEmpty() || getPath().getFormFields().containsKey("_REGISTER")){
+				return createLoginView();
         	}else {
         		return authenticate();
         	}
         }else if (getPath().getSession() != null){
         	if ( getSessionUser() == null ) {
-        		return  createLoginView();
+				return  createLoginView();
         	}else {
         		return new RedirectorView(getPath(), loginSuccessful());
         	}
-		}else{ 
-			return authenticate();
+		}else{
+        	return authenticate();
         }
     }
     
     protected String loginSuccessful(){
 		String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
 		if (ObjectUtil.isVoid(redirectedTo)){
-			redirectedTo="dashboard";
+			redirectedTo = "dashboard";
+		}else {
+			if (getFormFields().containsKey("_REGISTER")){
+				redirectedTo = redirectedTo+"/users/edit/"+ getSessionUser().getId();
+			}
 		}
 		return redirectedTo;
     }
@@ -130,9 +135,11 @@ public class Controller {
         boolean authenticated = getPath().isRequestAuthenticated();
         if (getPath().getProtocol() == MimeType.TEXT_HTML) {
             if (authenticated) {
-                return new RedirectorView(getPath(), loginSuccessful());
+				return new RedirectorView(getPath(), loginSuccessful());
             }else {
-                return createLoginView(StatusType.ERROR, "Login incorrect!");
+            	StringBuilder msg = new StringBuilder();
+            	getPath().getErrorMessages().forEach(m->msg.append(m));
+            	return createLoginView(StatusType.ERROR,msg.toString());
             }
         }else {
             IntegrationAdaptor<User,?> adaptor = IntegrationAdaptor.instance(User.class,FormatHelper.getFormatClass(getPath().getProtocol()));
@@ -148,7 +155,7 @@ public class Controller {
     }
 	protected final HtmlView createLoginView(StatusType statusType, String text){
 		invalidateSession();
-		HtmlView lv = createLoginView(); 
+		HtmlView lv = createLoginView();
 		lv.setStatus(statusType, text);
 		return lv;
 	}
@@ -156,9 +163,20 @@ public class Controller {
 	protected void invalidateSession(){
 		path.invalidateSession();
 	}
-    protected HtmlView createLoginView(){
+	protected HtmlView createLoginView(){
+		if (getPath().getFormFields().containsKey("_REGISTER")) {
+			return createLoginView(true);
+		}else {
+			return createLoginView(false);
+		}
+	}
+
+	protected boolean isRegistrationRequired(){
+    	return Config.instance().getBooleanProperty("swf.application.requires.registration", false);
+	}
+    protected HtmlView createLoginView(boolean registrationInProgress){
     	invalidateSession();
-    	return new LoginView(getPath());
+    	return new LoginView(getPath(),isRegistrationRequired(), registrationInProgress);
     }
     
 	@SuppressWarnings("unchecked")
@@ -168,13 +186,8 @@ public class Controller {
     
     @RequireLogin(false)
     public View logout(){
-        String redirectPath = getPath().getRequest().getParameter("_redirect_to");
 		invalidateSession();
-		if (ObjectUtil.isVoid(redirectPath)){
-			redirectPath = "login";
-		}
-
-		return new RedirectorView(getPath(), redirectPath);
+		return createLoginView();
     }
 
     @RequireLogin(false)

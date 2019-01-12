@@ -4,12 +4,14 @@
  */
 package com.venky.swf.views.login;
 
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
+import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.LinkedImage;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
@@ -23,19 +25,26 @@ import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  *
  * @author venky
  */
 public class LoginView extends HtmlView{
-    public LoginView(Path path){
+	private boolean requiresRegistration;
+	private boolean registrationInProgress;
+
+    public LoginView(Path path,boolean requiresRegistration, boolean registrationInProgress){
         super(path);
-    }
+        this.registrationInProgress = registrationInProgress;
+		this.requiresRegistration = requiresRegistration || registrationInProgress;
+
+	}
     @Override
     protected void createBody(_IControl b) {
 
-    	String _redirect_to = getPath().getRequest().getParameter("_redirect_to");
+    	String _redirect_to = StringEscapeUtils.escapeHtml4(StringUtil.valueOf(getPath().getFormFields().get("_redirect_to")));
 
     	FluidContainer loginPanel = new FluidContainer();
     	loginPanel.addClass("application-pannel");
@@ -48,15 +57,14 @@ public class LoginView extends HtmlView{
     	String applicationName = Config.instance().getProperty("swf.application.name", "Application Login");
     	Label appLabel = new Label(applicationName);
     	appLabel.addClass("application-title");
-    	if (!ObjectUtil.isVoid(Config.instance().getClientId("GOOGLE"))){
-            appLabel.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
-    	}
-    	if (!ObjectUtil.isVoid(Config.instance().getClientId("FACEBOOK"))){
-    		appLabel.addControl(new LinkedImage("/resources/images/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
-    	}
+		if (!ObjectUtil.isVoid(Config.instance().getClientId("GOOGLE"))){
+			appLabel.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
+		}
+		if (!ObjectUtil.isVoid(Config.instance().getClientId("FACEBOOK"))){
+			appLabel.addControl(new LinkedImage("/resources/images/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
+		}
+		applicationDescPannel.addControl(appLabel);
 
-        applicationDescPannel.addControl(appLabel);
-        
         Form form = new Form();
         form.setAction(getPath().controllerPath(),"login");
         form.setMethod(Form.SubmitMethod.POST);
@@ -67,10 +75,16 @@ public class LoginView extends HtmlView{
         FormGroup fg = new FormGroup();
     	fg.createTextBox("User", "name",false);
     	form.addControl(fg);
-    	
+
         fg = new FormGroup();
     	fg.createTextBox("Password", "password",true);
     	form.addControl(fg);
+
+    	if (requiresRegistration){
+			fg = new FormGroup();
+			fg.createTextBox("Reenter Password", "password2",true);
+			form.addControl(fg);
+		}
 
         if (!ObjectUtil.isVoid(_redirect_to)){
             TextBox hidden = new TextBox();
@@ -78,11 +92,19 @@ public class LoginView extends HtmlView{
             hidden.setName("_redirect_to");
             hidden.setValue(_redirect_to);
             form.addControl(hidden);
+
         }
-        
+
         fg = new FormGroup();
-        fg.createSubmit("Login");
-        form.addControl(fg);
+        if (!requiresRegistration){
+			Submit btn = fg.createSubmit("Login",4,1);
+			btn.setName("_LOGIN");
+		}else {
+			Submit link = fg.createSubmit("Register",4,1);
+			link.setName("_REGISTER");
+		}
+
+		form.addControl(fg);
         
     }
 
@@ -134,10 +156,21 @@ public class LoginView extends HtmlView{
     		cb.setName(fieldName);
     		return cb;
     	}
+    	public Link createLink(String label,String url, int offset, int width){
+			Div div = new Div();
+			div.addClass("col-sm-offset-"+offset+ " col-sm-"+width);
+			addControl(div);
 
-    	public Submit createSubmit(String label){
+			Link submit = new Link(url);
+			div.addControl(submit);
+			submit.addClass("btn btn-primary");
+			submit.setText(label);
+			return submit;
+		}
+
+    	public Submit createSubmit(String label, int offset, int width){
     		Div div = new Div();
-    		div.addClass("col-sm-offset-4 col-sm-4");
+    		div.addClass("col-sm-offset-"+offset+ " col-sm-"+width);
     		addControl(div);
     		
     		Submit submit = new Submit(label);

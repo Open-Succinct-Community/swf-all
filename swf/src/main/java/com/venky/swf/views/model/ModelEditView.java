@@ -86,6 +86,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     		return "back";
     	}
     }
+
+    protected String getDetailTabName(){
+		return getModelAwareness().getReflector().getModelClass().getSimpleName() + " Information";
+	}
     
     @Override
     protected void createBody(_IControl body) {
@@ -94,7 +98,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	Tabs multiTab = new Tabs();
 		String selectedTab = StringUtil.valueOf(getPath().getFormFields().get("_select_tab"));
 		if (ObjectUtil.isVoid(selectedTab)){
-			selectedTab = "Detail";
+			selectedTab = getDetailTabName();
 		}
 		body.addControl(multiTab);
 
@@ -102,7 +106,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	
     	final int NUM_COLUMNS_PER_ROW = 2; 
     	FluidTable table = new FluidTable(NUM_COLUMNS_PER_ROW, form);
-    	multiTab.addSection(table,"Detail",StringUtil.equals("Detail", selectedTab));
+    	multiTab.addSection(table,getDetailTabName(),StringUtil.equals(getDetailTabName(), selectedTab));
     	
     	addHotLinks(table, 0, getTabLinks(), new SequenceSet<HotLink>());
     	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());

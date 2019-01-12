@@ -90,7 +90,7 @@ public abstract class HtmlView extends View{
         
     	Head head = new Head();
         html.addControl(head);
-        createHead(head);
+        _createHead(head);
 
         Body body = new Body();
         html.addControl(body);
@@ -131,8 +131,10 @@ public abstract class HtmlView extends View{
     	
 		this.status.setText(statusText);
 	}
-    
     protected void createHead(Head head){
+
+    }
+    protected void _createHead(Head head){
         head.addControl(new Script("/resources/scripts/jquery/js/jquery.min.js"));
 
         head.addControl(new Css("/resources/scripts/bootstrap/css/bootstrap.min.css"));
@@ -169,6 +171,7 @@ public abstract class HtmlView extends View{
         }
 
         addProgressiveWebAppLinks(head);
+        createHead(head);
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
     }
     public void addProgressiveWebAppLinks(Head head){

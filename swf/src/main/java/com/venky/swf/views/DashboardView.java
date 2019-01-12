@@ -9,6 +9,7 @@ import com.venky.core.util.MultiException;
 import com.venky.swf.extensions.MenuBuilderFactory;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.controls._IControl;
+import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page._IMenu;
 import com.venky.swf.views.controls.page.layout.Nav;
@@ -32,6 +33,12 @@ public class DashboardView extends HtmlView{
     		throw ex;
     	}
         this.child = child;
+    }
+    protected void createHead(Head head){
+        super.createHead(head);
+        if (child!= null){
+            child.createHead(head);
+        }
     }
     @Override
     protected void _createBody(_IControl b, boolean includeStatusMessage) {
