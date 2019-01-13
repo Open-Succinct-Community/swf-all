@@ -50,7 +50,7 @@ public class LoginView extends HtmlView{
     	loginPanel.addClass("application-pannel");
     	b.addControl(loginPanel);
     	
-    	Column applicationDescPannel = loginPanel.createRow().createColumn(3,6);
+    	Column applicationDescPannel = loginPanel.createRow().createColumn(4,4);
     	applicationDescPannel.addClass("text-center");
     	
 
@@ -97,10 +97,10 @@ public class LoginView extends HtmlView{
 
         fg = new FormGroup();
         if (!requiresRegistration){
-			Submit btn = fg.createSubmit("Login",4,1);
+			Submit btn = fg.createSubmit("Login",5,2);
 			btn.setName("_LOGIN");
 		}else {
-			Submit link = fg.createSubmit("Register",4,1);
+			Submit link = fg.createSubmit("Register",5,2);
 			link.setName("_REGISTER");
 		}
 

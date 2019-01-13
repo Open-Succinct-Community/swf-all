@@ -173,6 +173,7 @@ public abstract class HtmlView extends View{
         addProgressiveWebAppLinks(head);
         createHead(head);
         Registry.instance().callExtensions("after.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
+        Registry.instance().callExtensions("after.create.head",getPath(),head); // Global.
     }
     public void addProgressiveWebAppLinks(Head head){
         URL r = getClass().getResource("/web_manifest/manifest.json");

@@ -63,6 +63,9 @@ div.empty-row {
   padding-bottom: 7px;
   /* border-bottom: 1px solid #DDD */
 }
+.btn-primary {
+    width:100%;
+}
 
 
 .btn-file {

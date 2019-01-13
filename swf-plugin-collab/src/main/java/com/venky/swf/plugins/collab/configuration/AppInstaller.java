@@ -13,14 +13,17 @@ import com.venky.swf.sql.Select;
 public class AppInstaller implements Installer{
 
   public void install() {
-	  List<User> users = new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(), "COMPANY_ID", Operator.NE)).execute(User.class);
-	  users.forEach(u->{
-		  UserCompany uc = Database.getTable(UserCompany.class).newRecord();
-		  uc.setUserId(u.getId());
-		  uc.setCompanyId(u.getCompanyId());
-		  uc.save();
-		  u.setCompanyId(null);
-	  });
+  	if ( Database.getTable(User.class).getColumnDescriptor("COMPANY_ID") != null ){
+		List<User> users = new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(), "COMPANY_ID", Operator.NE)).execute(User.class);
+		users.forEach(u->{
+			UserCompany uc = Database.getTable(UserCompany.class).newRecord();
+			uc.setUserId(u.getId());
+			uc.setCompanyId(u.getCompanyId());
+			uc.save();
+			u.setCompanyId(null);
+		});
+	}
   }
+
 }
 

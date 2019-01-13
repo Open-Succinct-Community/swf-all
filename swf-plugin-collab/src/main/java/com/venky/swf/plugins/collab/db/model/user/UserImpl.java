@@ -21,6 +21,9 @@ public class UserImpl extends ModelImpl<User> {
         return null;
     }
     public void setCompanyId(Long id){
+        if (id == null){
+            return ;
+        }
         Set<Long> companyIds = new HashSet<>();
         getProxy().getUserCompanies().forEach(uc->companyIds.add(uc.getCompanyId()));
         if (!companyIds.contains(id)){
