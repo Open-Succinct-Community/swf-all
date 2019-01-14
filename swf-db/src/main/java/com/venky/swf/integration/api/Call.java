@@ -106,6 +106,8 @@ public class Call<T> {
         return this;
     }
 
+    private boolean beingRedirected = true;
+    private String redirectedUrl = null;
     private Call<T> invoke(){
         checkExpired();
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
@@ -176,6 +178,12 @@ public class Call<T> {
                 responseStream = new ByteArrayInputStream(StringUtil.readBytes(in));
                 errorStream= new ByteArrayInputStream(new byte[]{});
                 this.hasErrors = false;
+            }else if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP || connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM ){
+                redirectedUrl = connection.getHeaderField("Location");
+                beingRedirected = true;
+                responseStream = new ByteArrayInputStream(new byte[]{});
+                errorStream = new ByteArrayInputStream(new byte[]{});
+                hasErrors = false;
             }else {
                 errorStream = new ByteArrayInputStream(StringUtil.readBytes(connection.getErrorStream()));
                 responseStream = new ByteArrayInputStream(new byte[] {});

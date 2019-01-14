@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
@@ -51,4 +52,9 @@ public interface State extends Model{
 			return state;
 		}
 	}
+
+	@IS_NULLABLE
+	@COLUMN_SIZE(2)
+    public String getCode();
+	public void setCode(String code);
 }
