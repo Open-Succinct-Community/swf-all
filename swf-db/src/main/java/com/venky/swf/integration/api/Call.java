@@ -108,10 +108,16 @@ public class Call<T> {
 
     private boolean beingRedirected = false;
     private boolean isBeingRedirected(){
+        if (responseStream == null){
+            invoke();
+        }
         return beingRedirected;
     }
     private String redirectedUrl = null;
     public String getRedirectedUrl(){
+        if (responseStream == null){
+            invoke();
+        }
         return redirectedUrl;
     }
 
