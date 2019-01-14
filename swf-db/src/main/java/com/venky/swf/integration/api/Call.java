@@ -107,7 +107,7 @@ public class Call<T> {
     }
 
     private boolean beingRedirected = false;
-    private boolean isBeingRedirected(){
+    public boolean isBeingRedirected(){
         if (responseStream == null){
             invoke();
         }
