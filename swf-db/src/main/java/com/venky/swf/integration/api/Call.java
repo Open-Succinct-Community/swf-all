@@ -106,8 +106,15 @@ public class Call<T> {
         return this;
     }
 
-    private boolean beingRedirected = true;
+    private boolean beingRedirected = false;
+    private boolean isBeingRedirected(){
+        return beingRedirected;
+    }
     private String redirectedUrl = null;
+    public String getRedirectedUrl(){
+        return redirectedUrl;
+    }
+
     private Call<T> invoke(){
         checkExpired();
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
