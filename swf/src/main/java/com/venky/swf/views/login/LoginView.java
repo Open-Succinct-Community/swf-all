@@ -128,7 +128,7 @@ public class LoginView extends HtmlView{
     		Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
     		lbl.addClass("control-label");
-    		lbl.addClass("col-sm-offset-3 col-sm-1");
+    		lbl.addClass("offset-3 col-sm-1");
     		
     		Div div = new Div();
     		div.addClass("col-sm-4");
@@ -141,7 +141,7 @@ public class LoginView extends HtmlView{
     	
     	public CheckBox createCheckBox(String label, String fieldName) {
     		Div div = new Div();
-    		div.addClass("col-sm-offset-4 col-sm-4");
+    		div.addClass("offset-4 col-sm-4");
     		addControl(div);
     		
     		Div divcb = new Div();
@@ -158,7 +158,7 @@ public class LoginView extends HtmlView{
     	}
     	public Link createLink(String label,String url, int offset, int width){
 			Div div = new Div();
-			div.addClass("col-sm-offset-"+offset+ " col-sm-"+width);
+			div.addClass("offset-"+offset+ " col-sm-"+width);
 			addControl(div);
 
 			Link submit = new Link(url);
@@ -170,7 +170,7 @@ public class LoginView extends HtmlView{
 
     	public Submit createSubmit(String label, int offset, int width){
     		Div div = new Div();
-    		div.addClass("col-sm-offset-"+offset+ " col-sm-"+width);
+    		div.addClass("offset-"+offset+ " col-sm-"+width);
     		addControl(div);
     		
     		Submit submit = new Submit(label);
@@ -187,7 +187,7 @@ public class LoginView extends HtmlView{
     		Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
     		lbl.addClass("control-label");
-    		lbl.addClass("col-sm-offset-3 col-sm-1");
+    		lbl.addClass("offset-3 col-sm-1");
     		
     		Span span = new Span();
     		span.addClass("input-group-addon");

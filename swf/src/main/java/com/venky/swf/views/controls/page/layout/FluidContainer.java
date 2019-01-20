@@ -22,7 +22,7 @@ public class FluidContainer extends Div{
 
 		public Column createColumn(int offset, int width){
 			Column c = new Column();
-			c.addClass("col-sm-offset-" + offset);
+			c.addClass("offset-" + offset);
 			c.addClass("col-sm-" + width);
 			addControl(c);
 			return c;

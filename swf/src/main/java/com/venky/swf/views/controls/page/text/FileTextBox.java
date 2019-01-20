@@ -73,7 +73,7 @@ public class FileTextBox extends Input{
 		ig.addControl(fakeButtonGroup);
 		
 		Span fakeButton = new Span();
-		fakeButton.addClass("btn btn-default btn-file");
+		fakeButton.addClass("btn btn-secondary btn-file");
 		fakeButton.setText("Browse...");
 		fakeButtonGroup.addControl(fakeButton);
 		fakeButton.addControl(this);
