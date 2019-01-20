@@ -78,8 +78,8 @@ public class UserImpl extends ModelImpl<User>{
 	public int getNumMinutesToKeyExpiration(){
         int keyLifeInMinutes = Config.instance().getIntProperty("api.key.expiration.days",30) * 24 * 60;
         User user = getProxy();
-	    if (user.getApiKeyGeneratedTs() == null){
-	        //Backward compatibility
+	    if (user.getApiKey() != null && user.getApiKeyGeneratedTs() == null){
+	        //Backward compatibility dont expire.
             return keyLifeInMinutes;
         }
         if (user.getApiKey() == null){
