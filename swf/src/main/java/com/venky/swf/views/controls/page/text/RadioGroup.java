@@ -89,6 +89,7 @@ public class RadioGroup extends DivOptionGroup<Radio>{
 		public Radio(Object value) {
 			super();
 			setProperty("value", StringUtil.valueOf(value));
+			addClass("form-check");
 		}
 
 		@Override

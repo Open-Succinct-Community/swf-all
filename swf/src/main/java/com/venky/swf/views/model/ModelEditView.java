@@ -145,7 +145,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
                 fg.addClass("form-group");
                 
                 Label fieldLabel = new Label(getModelAwareness().getFieldLiteral(fieldName));
-                fieldLabel.addClass("control-label");
+                fieldLabel.addClass("col-form-label");
 
             	tmp.addControl(fieldLabel, forceNewRow, 0, forceNewRow ? 2 : 4);
             	Control fieldControl = fieldData; 

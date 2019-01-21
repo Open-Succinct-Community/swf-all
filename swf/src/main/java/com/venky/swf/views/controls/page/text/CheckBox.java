@@ -22,6 +22,7 @@ public class CheckBox extends Input{
         super();
         setValue(true);
         removeClass("form-control");
+        addClass("form-check");
     }
 
     @Override

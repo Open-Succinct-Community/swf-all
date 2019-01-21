@@ -131,7 +131,7 @@ public class LoginView extends HtmlView{
     			
     		Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
-    		lbl.addClass("control-label");
+    		lbl.addClass("col-form-label");
     		lbl.addClass("offset-3 col-sm-1");
     		
     		Div div = new Div();
@@ -149,7 +149,7 @@ public class LoginView extends HtmlView{
     		addControl(div);
     		
     		Div divcb = new Div();
-    		divcb.addClass("checkbox");
+    		divcb.addClass(".form-check");
     		div.addControl(divcb);
     		
     		Label lblCheckBox = new Label(label);
@@ -190,7 +190,7 @@ public class LoginView extends HtmlView{
     			
     		Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
-    		lbl.addClass("control-label");
+    		lbl.addClass("col-form-label");
     		lbl.addClass("offset-3 col-sm-1");
     		
     		Span span = new Span();
