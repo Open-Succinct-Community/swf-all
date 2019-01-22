@@ -299,7 +299,7 @@ public class Database implements _IDatabase{
 		try { 
 			Connection conn =  getInstance().getConnection(pool);
 			DatabaseMetaData meta = conn.getMetaData();
-            tablesResultSet = meta.getTables(null, getSchema(pool), "%", new String[]{"TABLE"});
+            tablesResultSet = meta.getTables(conn.getCatalog(), getSchema(pool), "%", new String[]{"TABLE"});
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);

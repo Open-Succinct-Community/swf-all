@@ -58,9 +58,6 @@ public interface Address extends GeoLocation {
     public String getPincode();
     public void setPincode(String pincode);
 
-    public  static final String ADDRESS_TYPE_SHIP_TO = "ST";
-    public  static final String ADDRESS_TYPE_BILL_TO = "BT";
-
 
     public String getEmail();
     public void setEmail(String emailId);
