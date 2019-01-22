@@ -108,8 +108,10 @@ public class ConnectionManager {
             info.setProperty("validationQuery",Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".validationQuery"), "select 1 as dbcp_connection_test"));
             info.setProperty("testOnBorrow", "true");
             info.setProperty("testOnReturn", "true");
-            info.setProperty("testWhileIdle", "false");
+            info.setProperty("testWhileIdle", "true");
             info.setProperty("maxActive", "-1");
+            info.setProperty("maxTotal","-1");
+			info.setProperty("maxWaitMillis","-1");
             
             String poolFix = ObjectUtil.isVoid(pool) ? "" : "\\." + pool;
             for (String key : Config.instance().getPropertyKeys("swf\\.jdbc"+poolFix+"\\.datasource\\..*")){
