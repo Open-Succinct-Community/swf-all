@@ -310,7 +310,7 @@ public class Database implements _IDatabase{
 				table.setExistingInDatabase(true);
                 ResultSet columnResultSet = null; 
                 try {
-	                columnResultSet = meta.getColumns(null,getSchema(pool), tableName, null);
+	                columnResultSet = meta.getColumns(conn.getCatalog(),getSchema(pool), tableName, null);
 					while (columnResultSet.next()) {
 	                    String columnName  = columnResultSet.getString("COLUMN_NAME");
 	                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
