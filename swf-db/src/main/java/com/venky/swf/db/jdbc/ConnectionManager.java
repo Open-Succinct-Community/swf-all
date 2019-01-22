@@ -122,7 +122,7 @@ public class ConnectionManager {
             //Config.instance().getLogger(getClass().getName()).finest("Connection Pool Properties:\n" + info.toString());
             
             try {
-                Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
+                Class<?> c = Class.forName("org.apache.commons.dbcp2.BasicDataSourceFactory");
                 Method m = c.getMethod("createDataSource", Properties.class);
                 return (DataSource) m.invoke(c, info);
             }catch (Exception e) {
