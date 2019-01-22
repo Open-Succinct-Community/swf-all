@@ -299,7 +299,7 @@ public class Database implements _IDatabase{
 		try { 
 			Connection conn =  getInstance().getConnection(pool);
 			DatabaseMetaData meta = conn.getMetaData();
-            tablesResultSet = meta.getTables(conn.getCatalog(), getSchema(pool), "%", new String[]{"TABLE"});
+            tablesResultSet = meta.getTables(null, getSchema(pool), "%", new String[]{"TABLE"});
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);
@@ -310,7 +310,7 @@ public class Database implements _IDatabase{
 				table.setExistingInDatabase(true);
                 ResultSet columnResultSet = null; 
                 try {
-	                columnResultSet = meta.getColumns(conn.getCatalog(),getSchema(pool), tableName, null);
+	                columnResultSet = meta.getColumns(null,getSchema(pool), tableName, null);
 					while (columnResultSet.next()) {
 	                    String columnName  = columnResultSet.getString("COLUMN_NAME");
 	                    table.getColumnDescriptor(columnName,true).load(columnResultSet);
