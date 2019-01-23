@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 
 import com.venky.cache.Cache;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
@@ -109,8 +110,8 @@ public class ConnectionManager {
             info.setProperty("testOnBorrow", "true");
             info.setProperty("testOnReturn", "true");
             info.setProperty("testWhileIdle", "true");
-            info.setProperty("maxActive", "-1");
-            info.setProperty("maxTotal","-1");
+            info.setProperty("maxActive", "-1"); // for dbcp
+            info.setProperty("maxTotal","-1"); // For dbcp2
 			info.setProperty("maxWaitMillis","-1");
             
             String poolFix = ObjectUtil.isVoid(pool) ? "" : "\\." + pool;
@@ -126,7 +127,16 @@ public class ConnectionManager {
                 Method m = c.getMethod("createDataSource", Properties.class);
                 return (DataSource) m.invoke(c, info);
             }catch (Exception e) {
-                throw new RuntimeException(e);
+				MultiException ex = new MultiException();
+				ex.add(e);
+            	try {
+					Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
+					Method m = c.getMethod("createDataSource", Properties.class);
+					return (DataSource) m.invoke(c, info);
+				}catch (Exception e2){
+            		ex.add(e2);
+					throw ex;
+				}
             }
         }
         public boolean isConnectionPooled(String pool){

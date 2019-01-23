@@ -23,6 +23,8 @@ import java.util.Set;
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerUtils;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
@@ -296,19 +298,25 @@ public class Database implements _IDatabase{
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	private static void loadTablesFromDB(String pool) {
 		ResultSet tablesResultSet = null;
+		SWFLogger cat = Config.instance().getLogger(Database.class.getName());
+
 		try { 
 			Connection conn =  getInstance().getConnection(pool);
 			DatabaseMetaData meta = conn.getMetaData();
+			cat.info("Starting To Load Tables from " + pool );
+
             tablesResultSet = meta.getTables(null, getSchema(pool), "%", new String[]{"TABLE"});
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);
+				cat.info("Loading " + pool +"." + tableName);
 				if (table == null){ //
 					table = new Table(tableName,pool);
                     getTables(pool).put(tableName, table);
 				}
 				table.setExistingInDatabase(true);
-                ResultSet columnResultSet = null; 
+                ResultSet columnResultSet = null;
+				cat.info("Loading Columns for " + pool +"." + tableName);
                 try {
 	                columnResultSet = meta.getColumns(null,getSchema(pool), tableName, null);
 					while (columnResultSet.next()) {
