@@ -244,11 +244,9 @@ public class Database implements _IDatabase{
             	}
                 Config.instance().getLogger(Database.class.getName()).info("Table " + table.getRealTableName() + " :" + pool + "Model " + table.getModelClass()    + " :" + table.getPool());
                 if (!table.isExistingInDatabase() && ObjectUtil.equals(table.getReflector().getPool(),pool)) {
-                    table.createTable();
-                    dbModified = true;
+                    dbModified = table.createTable() || dbModified;
                 } else if (table.getModelClass() == null || !ObjectUtil.equals(table.getReflector().getPool(),pool)) {
-                    table.dropTable();
-                    dbModified = true;
+                    dbModified = table.dropTable() || dbModified ;
                 } else {
                     dbModified = table.sync() || dbModified;
                 }
@@ -309,6 +307,7 @@ public class Database implements _IDatabase{
 			while (tablesResultSet.next()) {
 				String tableName = tablesResultSet.getString("TABLE_NAME");
 				Table table = getTables(pool).get(tableName);
+
 				cat.info("Loading " + pool +"." + tableName);
 				if (table == null){ //
 					table = new Table(tableName,pool);

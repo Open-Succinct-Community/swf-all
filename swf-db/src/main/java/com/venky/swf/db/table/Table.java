@@ -181,13 +181,20 @@ public class Table<M extends Model> {
     public Class<M> getModelClass() {
         return modelClass;
     }
-    private void runDDL(DDL ddl){
-    	_runDML(ddl,true);
+    private boolean runDDL(DDL ddl){
+    	return _runDML(ddl,true);
     }
-    private void runDML(DataManupulationStatement q){
-    	_runDML(q,false);
+    private boolean runDML(DataManupulationStatement q){
+        return _runDML(q,false);
     }
-    private void _runDML(DataManupulationStatement q, boolean isDDL){
+
+    /**
+     * RReturn true if modification was done..
+     * @param q
+     * @param isDDL
+     * @return
+     */
+    private boolean _runDML(DataManupulationStatement q, boolean isDDL){
     	boolean readOnly = ConnectionManager.instance().isPoolReadOnly(getPool());
     	Transaction txn = Database.getInstance().getCurrentTransaction();
         
@@ -201,15 +208,16 @@ public class Table<M extends Model> {
         }else {
         	cat.fine("Pool " + getPool() +" Skipped running" + q.getRealSQL());
         }
+        return !readOnly;
     }
     
-    public void dropTable(){
+    public boolean dropTable(){
     	DDL.DropTable q = new DDL.DropTable(getPool(),getRealTableName());
-        runDDL(q);
+        return runDDL(q);
     }
-    public void createTable() {
+    public boolean createTable() {
         CreateTable q = createTableQuery();
-        runDDL(q);
+        return runDDL(q);
     }
     private CreateTable createTableQuery(){
     	return createTableQuery(getRealTableName());
