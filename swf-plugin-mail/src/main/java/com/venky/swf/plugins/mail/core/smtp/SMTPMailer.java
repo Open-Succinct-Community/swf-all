@@ -21,6 +21,8 @@ public class SMTPMailer implements com.venky.swf.plugins.mail.core.Mailer {
 			mailer = new Mailer(host, port, emailId,password,TransportStrategy.SMTP_SSL);
 		}else if (port == 587){
 			mailer = new Mailer(host, port, emailId,password,TransportStrategy.valueOf(transportStrategy));
+		}else {
+			mailer = new Mailer(host, port, emailId,password,TransportStrategy.valueOf(transportStrategy));
 		}
 	}
 	public void sendMail(Email email){
