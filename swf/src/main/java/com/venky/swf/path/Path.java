@@ -669,7 +669,7 @@ public class Path implements _IPath{
     }
     
     //Can be cast to any user model class as the proxy implements all the user classes.
-    protected User getUser(String fieldName, String fieldValue){
+    public User getUser(String fieldName, String fieldValue){
         Select q = new Select().from(User.class);
         String nameColumn = ModelReflector.instance(User.class).getColumnDescriptor(fieldName).getName();
         q.where(new Expression(q.getPool(),nameColumn,Operator.EQ,new BindVariable(q.getPool(),fieldValue)));
