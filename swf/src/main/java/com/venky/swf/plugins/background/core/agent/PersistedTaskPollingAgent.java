@@ -41,6 +41,12 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 		public PersistedTaskPoller(){
 			
 		}
+
+		@Override
+		public Priority getTaskPriority() {
+			return Priority.LOW;
+		}
+
 		public PersistedTaskPoller(long lastRecordId) {
 			this.lastRecordId = lastRecordId;
 		}
