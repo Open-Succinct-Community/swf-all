@@ -23,6 +23,10 @@ public class MailerTask implements Task{
 	String subject; 
 	String text; 
 	boolean isHtml = false;
+	@Deprecated
+	public MailerTask(){
+
+	}
 	public MailerTask(User to,String subject, String text){
 		this.toUserId = to.getId();
 		this.subject = subject;
