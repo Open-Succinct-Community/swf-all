@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.mail.core;
 
 import java.util.LinkedList;
+import java.util.logging.Level;
 
 import org.codemonkey.simplejavamail.Email;
 //import org.codemonkey.simplejavamail.Mailer;
@@ -58,7 +59,11 @@ public class AsyncMailer extends Thread{
 	public void run(){
 		Email email = null;
 		while ((email = next()) != null ){
-			mailer.sendMail(email);
+			try {
+				mailer.sendMail(email);
+			}catch (Exception ex){
+				Config.instance().getLogger(getClass().getName()).log(Level.WARNING, "Could not send mail" , ex);
+			}
 		}
 	}
 }
