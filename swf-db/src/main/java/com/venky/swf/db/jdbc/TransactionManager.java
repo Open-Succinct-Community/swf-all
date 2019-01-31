@@ -77,6 +77,7 @@ public class TransactionManager {
             	m.add(e);
                 throw m;
             } finally {
+                Registry.instance().callExtensions("after.rollback",transaction);
             	Database.getInstance().resetTransactionIsolationLevel();
             }
         }else{
