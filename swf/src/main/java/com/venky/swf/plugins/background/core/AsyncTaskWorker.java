@@ -19,6 +19,7 @@ public class AsyncTaskWorker extends Thread{
 		super(asyncTaskManager.getClass().getSimpleName() + ":" + instanceNumber);
 		setDaemon(false);
 		this.manager = asyncTaskManager;
+		setPriority(Thread.MAX_PRIORITY);
 	}
 	private SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	private void log(Level level,String message){
