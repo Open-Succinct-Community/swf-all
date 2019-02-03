@@ -156,6 +156,20 @@ $(function(){
         $(this).datetimepicker({format: 'YYYY-MM-DD'});
     });
 });
+$(function(){
+    $(".timestamp-box").each(function(index){
+        /*
+        var date = moment($(this).val(),'YYYY-MM-DD');
+
+        $(this).datetimepicker({format: 'YYYY-MM-DD'})
+        .on('change',function(ev){
+            $(this).valid();
+        }) ;
+        $(this).data("DateTimePicker").date(date);
+        */
+        $(this).datetimepicker({format: 'YYYY-MM-DD hh:mm a'});
+    });
+});
 
 /* Table Sorter */
 $(function(){

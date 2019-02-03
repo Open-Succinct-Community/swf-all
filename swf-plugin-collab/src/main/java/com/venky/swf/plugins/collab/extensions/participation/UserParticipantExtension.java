@@ -17,7 +17,7 @@ import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
 
-public class UserParticipantExtension extends ParticipantExtension<User>{
+public class 	UserParticipantExtension extends ParticipantExtension<User>{
 	static {
 		registerExtension(new UserParticipantExtension());
 	}
@@ -40,18 +40,18 @@ public class UserParticipantExtension extends ParticipantExtension<User>{
 			}
 
 		}else if (fieldName.equals("COUNTRY_ID")){
-			ret =  DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
+			ret =  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
 		}else if (fieldName.equals("STATE_ID")){
 			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getCountryId())){
 				ret =  DataSecurityFilter.getIds(partiallyFilledModel.getCountry().getStates());
 			}else {
-				ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(State.class, user));
+				ret = null ;//DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(State.class, user));
 			}
 		}else if (fieldName.equals("CITY_ID")){
 			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getStateId())){
 				ret = DataSecurityFilter.getIds(partiallyFilledModel.getState().getCities());
 			}else {
-				ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(City.class, user));
+				ret = null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(City.class, user));
 			}
 		}
 		return ret;

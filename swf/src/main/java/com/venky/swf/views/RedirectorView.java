@@ -37,6 +37,7 @@ public class RedirectorView extends View{
     
     public RedirectorView(_IPath path){
     	super(path);
+        setRedirectUrl(path.getTarget());
     }
     
 

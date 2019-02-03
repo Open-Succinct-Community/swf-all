@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +41,7 @@ import com.venky.swf.views.controls.page.text.RadioGroup;
 import com.venky.swf.views.controls.page.text.Select;
 import com.venky.swf.views.controls.page.text.TextArea;
 import com.venky.swf.views.controls.page.text.TextBox;
+import com.venky.swf.views.controls.page.text.TimestampBox;
 import com.venky.swf.views.model.FieldUIMetaProvider;
 
 public class ModelAwareness implements FieldUIMetaProvider{
@@ -153,7 +155,9 @@ public class ModelAwareness implements FieldUIMetaProvider{
                 }
             }else if (Date.class.isAssignableFrom(returnType)){
             	control = new DateBox(); 
-            }else if (reflector.isFieldPassword(fieldName)){
+            }else if (Timestamp.class.isAssignableFrom(returnType)){
+				control = new TimestampBox();
+			}else if (reflector.isFieldPassword(fieldName)){
                 control = new PasswordText();
             }else if (reflector.isFieldEnumeration(fieldName)){
                 //Select select = new Select();
