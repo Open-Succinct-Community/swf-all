@@ -40,5 +40,6 @@ public interface DelayedTask extends Task, Model {
 	public void execute();
 	
 	public static final String[] DEFAULT_ORDER_BY_COLUMNS = new String[] {"PRIORITY", "NUM_ATTEMPTS", "UPDATED_AT", "ID"}; //Field and column names are same.
-	
+
+	public boolean canExecuteRemotely() ;
 }

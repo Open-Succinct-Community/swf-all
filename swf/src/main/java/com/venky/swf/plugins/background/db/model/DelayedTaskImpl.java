@@ -80,4 +80,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 			parentTxn.rollback(ex);
 		}
 	}
+
+	public boolean canExecuteRemotely() {
+		return true;
+	}
 }

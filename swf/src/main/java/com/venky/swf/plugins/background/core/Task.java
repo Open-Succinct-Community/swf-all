@@ -20,7 +20,7 @@ public interface Task extends Serializable , Comparable<Task>{
 	}
 
 	default boolean canExecuteRemotely(){
-		return true;
+		return false;
 	}
 	
 	@Override
