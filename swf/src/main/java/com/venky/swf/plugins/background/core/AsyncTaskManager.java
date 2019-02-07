@@ -25,6 +25,7 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.SWFHttpResponse;
 import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.io.json.JSONModelReader;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.integration.JSON;
 import com.venky.swf.integration.api.Call;
@@ -154,7 +155,7 @@ public class AsyncTaskManager  {
 
 			JSONObject jsonObject = new Call<Object>().url(getQueueServerURL()+"/push").headers(headers).timeOut(timeOut).
 					method(HttpMethod.POST).inputFormat(InputFormat.INPUT_STREAM).input(os.toByteArray()).getResponseAsJson();
-			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read(jsonObject);
+			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read((JSONObject)jsonObject.get(ModelReflector.instance(SWFHttpResponse.class).getModelClass().getSimpleName()));
 
 			if (!ObjectUtil.equals(response.getStatus(),"OK")){
 				throw new RuntimeException("Unable to push Tasks to the queue server.");
