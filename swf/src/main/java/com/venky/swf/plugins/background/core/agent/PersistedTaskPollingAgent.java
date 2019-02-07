@@ -19,9 +19,10 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 	public static class PersistedTaskPoller extends AgentSeederTask {
 
 		private static final long serialVersionUID = 512886938185460373L;
-		private final ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
-		
+
 		private Expression getWhereClause(DelayedTask lastRecord){
+			ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
+
 			Expression where = new Expression(ref.getPool(),Conjunction.OR);
 			for (int i = 0 ; i < DelayedTask.DEFAULT_ORDER_BY_COLUMNS.length ; i++ ){
 				String gtF = DelayedTask.DEFAULT_ORDER_BY_COLUMNS[i];
@@ -58,7 +59,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 		@Override
 		public List<Task> getTasks() {
 	        DelayedTask lastRecord = lastRecordId > 0 ? Database.getTable(DelayedTask.class).get(lastRecordId) : null ;
-			
+			ModelReflector<DelayedTask> ref = ModelReflector.instance(DelayedTask.class);
 			Expression where = new Expression(ref.getPool(),Conjunction.AND);
 			where.add(new Expression(ref.getPool(),ref.getColumnDescriptor("NUM_ATTEMPTS").getName(), Operator.LT , 10 ));
 			if (lastRecord != null){
