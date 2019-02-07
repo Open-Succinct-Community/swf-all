@@ -206,13 +206,8 @@ public class AsyncTaskManager  {
 					if (local) {
 						dt = queue.poll();
 					}else {
-						for (Iterator<Task> i = queue.iterator(); i.hasNext() ; ){
-							Task t = i.next();
-							if (t.canExecuteRemotely()) {
-								i.remove();
-								dt = t;
-								break;
-							}
+						if (queue.peek().canExecuteRemotely()){
+							dt = queue.poll();
 						}
 					}
 					Config.instance().getLogger(getClass().getName())
