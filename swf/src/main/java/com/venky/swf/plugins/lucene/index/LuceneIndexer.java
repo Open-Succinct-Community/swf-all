@@ -1,22 +1,5 @@
 package com.venky.swf.plugins.lucene.index;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Version;
-
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
@@ -33,6 +16,21 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class LuceneIndexer {
 	static {
@@ -104,7 +102,7 @@ public class LuceneIndexer {
 		return indexedColumns;
 	}
 	
-	private Document getDocument(Record r) throws IOException {
+	public Document getDocument(Record r) throws IOException {
 		if (!hasIndexedFields()){
 			return null;
 		}
@@ -122,7 +120,7 @@ public class LuceneIndexer {
 				if (!ref.isBLOB()){
 					addedFields = true;
 					if (Reader.class.isAssignableFrom(ref.getJavaClass())){
-						doc.add(new Field(fieldName,converter.toString(value),Field.Store.NO,Index.ANALYZED));
+						doc.add(new TextField(fieldName,converter.toString(value),Field.Store.NO));
 					}else{
 						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
 						String sValue = converter.toString(value);
@@ -130,25 +128,25 @@ public class LuceneIndexer {
 							ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
 							Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
 							if (referred != null){ 
-								doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
+								doc.add(new TextField(fieldName.substring(0,fieldName.length()-"_ID".length()),
 										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())), 
-										Field.Store.YES,Field.Index.ANALYZED));
+										Field.Store.YES));
 							}
 						}
-						doc.add(new Field(fieldName,sValue, Field.Store.YES,Field.Index.ANALYZED));
+						doc.add(new TextField(fieldName,sValue, Field.Store.YES));
 					}
 				}
 			}else {
 				addedFields = true;
 				if (indexedReferenceColumns.containsKey(fieldName)){
-					doc.add(new Field(fieldName.substring(0,fieldName.length()-"_ID".length()),
-							"NULL", Field.Store.YES,Field.Index.ANALYZED));
+					doc.add(new TextField(fieldName.substring(0,fieldName.length()-"_ID".length()),
+							"NULL", Field.Store.YES));
 				}
-				doc.add(new Field(fieldName,"NULL",Field.Store.YES,Field.Index.ANALYZED));
+				doc.add(new TextField(fieldName,"NULL",Field.Store.YES));
 			}
 		}
 		if (addedFields){
-			doc.add(new Field("ID",StringUtil.valueOf(r.getId()), Field.Store.YES,Field.Index.NOT_ANALYZED));
+			doc.add(new TextField("ID",StringUtil.valueOf(r.getId()), Field.Store.YES));
 		}else {
 			doc = null;
 		}
@@ -156,18 +154,18 @@ public class LuceneIndexer {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<Document> getDocuments(String luceneOperation){
-		Cache<String,List<Document>> documentsByTable = (Cache<String,List<Document>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
+	public List<Record> getDocuments(String luceneOperation){
+		Cache<String,List<Record>> documentsByTable = (Cache<String,List<Record>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
 		if (documentsByTable == null){
-			documentsByTable = new Cache<String, List<Document>>() {
+			documentsByTable = new Cache<String, List<Record>>() {
 				/**
 				 * 
 				 */
 				private static final long serialVersionUID = 3445427618501574899L;
 
 				@Override
-				protected List<Document> getValue(String k) {
-					return new ArrayList<Document>();
+				protected List<Record> getValue(String k) {
+					return new ArrayList<Record>();
 				}
 				
 			};
@@ -177,38 +175,29 @@ public class LuceneIndexer {
 	}
 	
 	public void addDocument(Record r) throws IOException{
-		if (!hasIndexedFields()){
+		if (!hasIndexedFields() || r == null){
 			return;
 		}
-		Document doc = getDocument(r);
-		if (doc != null){
-			getDocuments("lucene.added").add(doc);
-		}
+		getDocuments("lucene.added").add(r);
 	}
 	public void updateDocument(Record r) throws IOException{
-		if (!hasIndexedFields()){
+		if (!hasIndexedFields() || r == null){
 			return;
 		}
-		Document doc = getDocument(r);
-		if (doc != null){
-			getDocuments("lucene.updated").add(doc);
-		}
+		getDocuments("lucene.updated").add(r);
 	}
 	public void removeDocument(Record r) throws IOException{
-		if (!hasIndexedFields()){
+		if (!hasIndexedFields() || r == null){
 			return;
 		}
-		Document doc = getDocument(r);
-		if (doc != null){
-			getDocuments("lucene.removed").add(doc);
-		}
+		getDocuments("lucene.removed").add(r);
 	}
 	
 	public List<Long> findIds(Query q, int numHits){
 		final List<Long> ids = new ArrayList<>();
 		fire(q ,numHits,new ResultCollector() {
 			public void found(Document d) {
-				ids.add(Long.valueOf(d.getFieldable("ID").stringValue()));
+				ids.add(Long.valueOf(d.getField("ID").stringValue()));
 			}
 		});
 		return ids;
@@ -227,7 +216,9 @@ public class LuceneIndexer {
 			defaultField = "ID";
 		}
 		try {
-			return new QueryParser(Version.LUCENE_35,defaultField,new StandardAnalyzer(Version.LUCENE_35)).parse(queryString);
+			//return new QueryParser(Version.LUCENE_35,defaultField,new StandardAnalyzer(Version.LUCENE_35)).parse(queryString);
+			return new QueryParser(defaultField,new StandardAnalyzer()).parse(queryString);
+
 		} catch (ParseException e) {
 			MultiException ex = new MultiException("Could not form lucene query for:\n" + queryString + "\n");
 			ex.add(e);

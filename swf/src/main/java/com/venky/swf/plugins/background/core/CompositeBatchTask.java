@@ -21,13 +21,19 @@ public class CompositeBatchTask implements Task{
     }
     public CompositeBatchTask(List<Task> tasks, int batchSize, boolean persistTaskQueue) {
 		this.batchSize = batchSize;
-		this.tasks.addAll(tasks);
 		this.persistTaskQueue = persistTaskQueue;
+		add(tasks);
 	}
 	
 	public CompositeBatchTask() {
 		
 		
+	}
+	public void add(List<Task> tasks){
+		for (Task task: tasks){
+			this.tasks.add(task);
+			canExecuteRemotely = canExecuteRemotely && task.canExecuteRemotely();
+		}
 	}
     @Override
 	public void execute() {
@@ -45,5 +51,11 @@ public class CompositeBatchTask implements Task{
 			batch.add(new CompositeBatchTask(tasks,batchSize,persistTaskQueue));
 		}
 		TaskManager.instance().executeAsync(new CompositeTask(batch.toArray(new Task[]{})), persistTaskQueue);
+	}
+
+	boolean canExecuteRemotely = true;
+	@Override
+	public boolean canExecuteRemotely() {
+		return canExecuteRemotely;
 	}
 }

@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -202,7 +203,18 @@ public class AsyncTaskManager  {
 					}
 				}
 				if (isWorkerAlive(local) && !queue.isEmpty() ) {
-					dt = queue.poll();
+					if (local) {
+						dt = queue.poll();
+					}else {
+						for (Iterator<Task> i = queue.iterator(); i.hasNext() ; ){
+							Task t = i.next();
+							if (t.canExecuteRemotely()) {
+								i.remove();
+								dt = t;
+								break;
+							}
+						}
+					}
 					Config.instance().getLogger(getClass().getName())
 							.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
 					queue.notifyAll();

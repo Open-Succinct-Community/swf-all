@@ -86,16 +86,9 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
 			if (!jobs.isEmpty()){
 			    Task lastTask = jobs.remove(jobs.size()-1);
-                jobs.add(new CompositeTask(new PersistedTaskPoller(lastRecordId),lastTask) {
-                    @Override
-                    public void execute(){
-                        try {
-                            super.execute();
-                        }catch (Exception ex){
-                            finish(); // Don't leave Agent in bad state of Running and having no Seeder!.
-                        }
-                    }
-                });
+				FinalizerTask compositeTask = new FinalizerTask();
+			    compositeTask.add(new PersistedTaskPoller(lastRecordId),lastTask);
+                jobs.add(compositeTask);
                 //First do get jobs then the task or else the task would be removed and then we will do full select again.
 			}
 
@@ -115,5 +108,14 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 		return new PersistedTaskPoller();
 	}
 
-
+	public static class FinalizerTask extends CompositeTask {
+		@Override
+		public void execute(){
+			try {
+				super.execute();
+			}catch (Exception ex){
+				new AgentFinishUpTask(PERSISTED_TASK_POLLER,false).execute();
+			}
+		}
+	}
 }

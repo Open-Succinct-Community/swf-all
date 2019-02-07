@@ -3,6 +3,10 @@ package com.venky.swf.plugins.lucene.index.background;
 import java.io.IOException;
 import java.util.List;
 
+import com.venky.swf.db.Database;
+import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.table.Record;
+import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -20,7 +24,7 @@ public class IndexTask implements Task{
 	 */
 	private static final long serialVersionUID = -5049941893423693143L;
 	private String directory;
-	private List<Document> documents;
+	private List<Record> documents;
 	private Operation operation;
 	public static enum Operation { 
 		ADD,
@@ -33,28 +37,29 @@ public class IndexTask implements Task{
 	}
 	private IndexWriter getIndexWriter() throws CorruptIndexException, LockObtainFailedException, IOException{
 		return new IndexWriter(IndexManager.instance().getDirectory(directory),
-				new IndexWriterConfig(Version.LUCENE_35,new StandardAnalyzer(Version.LUCENE_35)));
+				new IndexWriterConfig(new StandardAnalyzer()));
 	}
 
 	@Override
 	public void execute() {
 		try {
 			IndexWriter w = getIndexWriter();
-			for (Document document: getDocuments()){
+			for (Record record: getDocuments()){
+				Document document = LuceneIndexer.instance(Database.getTable(getDirectory()).getModelClass()).getDocument(record);
 				switch(getOperation()){
 				case ADD:
 					w.addDocument(document);
 					break;
 				case MODIFY:
-					w.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
+					w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
 					w.addDocument(document);
 					break;
 				case DELETE: 
-					w.deleteDocuments(new Term("ID",document.getFieldable("ID").stringValue()));
+					w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
 					break;
 				}
 			}
-			w.close(false);
+			w.close();
 		}catch (Exception ex){
 			throw new RuntimeException(ex);
 		}
@@ -68,11 +73,11 @@ public class IndexTask implements Task{
 		this.directory = directory;
 	}
 
-	public List<Document> getDocuments() {
+	public List<Record> getDocuments() {
 		return documents;
 	}
 
-	public void setDocuments(List<Document> documents) {
+	public void setDocuments(List<Record> documents) {
 		this.documents = documents;
 	}
 	public Operation getOperation() {

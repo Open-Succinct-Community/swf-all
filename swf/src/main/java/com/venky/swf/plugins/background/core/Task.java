@@ -18,6 +18,10 @@ public interface Task extends Serializable , Comparable<Task>{
 	default long getTaskId(){
 		return -1L;
 	}
+
+	default boolean canExecuteRemotely(){
+		return true;
+	}
 	
 	@Override
 	default int compareTo(Task o) {

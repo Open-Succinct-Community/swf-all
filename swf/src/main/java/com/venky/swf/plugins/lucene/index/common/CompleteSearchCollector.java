@@ -6,33 +6,29 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 
-public class CompleteSearchCollector extends Collector{
+public class CompleteSearchCollector extends SimpleCollector {
 
-	private int docBase = 0 ;
 	List<Integer> docIds = new ArrayList<>();
 	public List<Integer> getDocIds(){
 		return docIds;
 	}
 	@Override
 	public void setScorer(Scorer scorer) throws IOException {
+
 	}
 
 	@Override
 	public void collect(int doc) throws IOException {
-		docIds.add(docBase + doc);
+		docIds.add(doc);
 	}
+
 
 	@Override
-	public void setNextReader(IndexReader reader, int docBase)
-			throws IOException {
-		this.docBase = docBase;
+	public boolean needsScores() {
+		return false;
 	}
-
-	@Override
-	public boolean acceptsDocsOutOfOrder() {
-		return true;
-	}
-
 }

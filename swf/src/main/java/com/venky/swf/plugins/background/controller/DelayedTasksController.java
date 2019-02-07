@@ -17,6 +17,7 @@ import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.background.core.agent.AgentSeederTask;
 import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent.PersistedTaskPoller;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.views.BytesView;

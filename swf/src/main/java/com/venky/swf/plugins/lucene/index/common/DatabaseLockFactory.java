@@ -3,45 +3,44 @@ package com.venky.swf.plugins.lucene.index.common;
 import com.venky.swf.db.Database;
 import com.venky.swf.exceptions.SWFTimeoutException;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
+import com.venky.swf.plugins.lucene.db.model.IndexFile;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
 
 import java.io.IOException;
 
 public class DatabaseLockFactory extends LockFactory {
-    private long id = -1;
-    public DatabaseLockFactory(IndexDirectory directory){
-        this.id = directory.getId();
+    IndexDirectory directory ;
+    public IndexDirectory getDirectory(){
+        return directory;
+    }
+
+    public DatabaseLockFactory(IndexDirectory directory) {
+        this.directory = directory;
     }
 
     @Override
-    public Lock makeLock(String lockName) {
+    public Lock obtainLock(Directory dir, String lockName) throws IOException {
+
         return new Lock() {
             @Override
-            public boolean obtain() throws IOException {
+            public void close() throws IOException {
+
+            }
+
+            @Override
+            public void ensureValid() throws IOException {
                 try {
-                    IndexDirectory directory = Database.getTable(IndexDirectory.class).lock(id);
-                    return directory != null;
+                    IndexFile file = ((DatabaseDirectory)dir).getFile(lockName);
+                    if (file != null){
+                        Database.getTable(IndexFile.class).lock(file.getId());
+                    }
                 }catch (SWFTimeoutException ex){
-                    return  false;
+                    throw new IOException(ex);
                 }
-            }
-
-            @Override
-            public void release() throws IOException {
-                // Will happen on commit any way.
-            }
-
-            @Override
-            public boolean isLocked() throws IOException {
-                IndexDirectory directory = Database.getTable(IndexDirectory.class).get(id);
-                return directory.getRawRecord().isLocked();
             }
         };
     }
-
-    @Override
-    public void clearLock(String lockName) throws IOException {
-        // Locks all are cleared on commit.
-    }
 }
+

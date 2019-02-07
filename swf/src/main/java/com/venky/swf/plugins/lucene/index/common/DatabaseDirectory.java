@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.lucene.index.common;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -7,8 +8,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import com.venky.core.util.Bucket;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.store.BaseDirectory;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.SingleInstanceLockFactory;
@@ -21,47 +28,92 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
-public class DatabaseDirectory extends Directory {
+public class DatabaseDirectory extends BaseDirectory {
 	
 	public DatabaseDirectory() throws IOException{
 		this("MODEL");
 	}
-	
-	public DatabaseDirectory(String tableName) throws IOException{
-		super();
+	public static IndexDirectory getIndexDirectory(String tableName) throws  FileNotFoundException{
 		ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
 		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute(IndexDirectory.class);
 		if (dirs.size() == 1){
-			directory = dirs.get(0);
+			return dirs.get(0);
 		}
-		if (directory == null){
-			throw new FileNotFoundException("Directory entry missing for " + tableName +". Check if there are any field getters marked with annotation @Index in any of it's models.");
-		}
-		setLockFactory(new DatabaseLockFactory(directory));
+		throw new FileNotFoundException("Directory entry missing for " + tableName +". Check if there are any field getters marked with annotation @Index in any of it's models.");
 	}
-	
-	private IndexDirectory directory = null;
-	IndexDirectory getModelDirectory() {
-		return directory;
+
+	public DatabaseDirectory(String tableName) throws IOException{
+		super(new DatabaseLockFactory(getIndexDirectory(tableName)));
 	}
-	
+	public IndexDirectory getModelDirectory(){
+		return ((DatabaseLockFactory)lockFactory).getDirectory();
+	}
 	@Override
 	public String[] listAll() throws IOException {
 		return getFileNames().toArray(new String[] {});
 	}
 
 	@Override
-	public boolean fileExists(String name) throws IOException {
-		return getFileNames().contains(name);
+	public void deleteFile(String name) throws IOException {
+		IndexFile file = getFile(name);
+
+		if (file == null) {
+            throw new FileNotFoundException();
+        }
+        if (!file.getRawRecord().isNewRecord() && file.getId() > 0 ) {
+            file.destroy();
+        }
 	}
 
 	@Override
-	public long fileModified(String name) throws IOException {
+	public long fileLength(String name) throws IOException {
 		IndexFile file = getFile(name);
-		if (file == null){
-			throw new FileNotFoundException();
+        if (file == null) {
+            throw new FileNotFoundException();
+        }
+        return file.getLength();
+	}
+
+	@Override
+	public IndexOutput createOutput(String name, IOContext context) throws IOException {
+		return new DbIndexOutput(this,name);
+	}
+
+	@Override
+	public IndexOutput createTempOutput(String prefix, String suffix, IOContext context) throws IOException {
+		String tmpName = prefix + UUID.randomUUID() + suffix + ".tmp";
+		return new DbIndexOutput(this, tmpName);
+	}
+
+	@Override
+	public void sync(Collection<String> names) throws IOException {
+
+	}
+
+	@Override
+	public void syncMetaData() throws IOException {
+
+	}
+
+	@Override
+	public void rename(String source, String dest) throws IOException {
+		IndexFile sourcefile = getFile(source);
+		IndexFile targetFile = getFile(dest);
+		if (targetFile != null && !targetFile.getRawRecord().isNewRecord() && targetFile.getId() > 0){
+			targetFile.destroy();
 		}
-		return file.getUpdatedAt().getTime();
+		sourcefile.setName(dest);
+		sourcefile.save();
+	}
+
+	@Override
+	public IndexInput openInput(String name, IOContext context) throws IOException {
+		return new DbIndexInput(getFile(name));
+	}
+
+	@Override
+	public void close() throws IOException {
+
 	}
 
 	private List<IndexFile> getFiles() {
@@ -76,7 +128,6 @@ public class DatabaseDirectory extends Directory {
 		}
 		return names;
 	}
-
 	public IndexFile getFile(String name) {
 		for (IndexFile file: getFiles()){
 			if (StringUtil.equals(file.getName(),name)){
@@ -86,61 +137,31 @@ public class DatabaseDirectory extends Directory {
 		return null;
 	}
 
-	@Override
-	public void touchFile(String name) throws IOException {
-		IndexFile file = getFile(name);
-		if (file == null) {
-			throw new FileNotFoundException();
+	private DirectoryReader reader = null;
+	public DirectoryReader getReader() {
+		synchronized (this){
+			try {
+				if (reader == null){
+					reader  = DirectoryReader.open(this);
+				}
+			}catch (Exception ex){
+				throw new RuntimeException(ex);
+			}
 		}
-		file.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
-		file.save();
+		return reader;
 	}
 
-	@Override
-	public void deleteFile(String name) throws IOException {
-		IndexFile file = getFile(name);
-		if (file == null) {
-			throw new FileNotFoundException();
+	private IndexSearcher searcher = null;
+	public IndexSearcher getIndexSearcher() throws IOException{
+		synchronized (this) {
+			if (!getReader().isCurrent()) {
+				reader = DirectoryReader.openIfChanged(getReader());
+				searcher = new IndexSearcher(reader);
+			}
+			if (searcher == null){
+				searcher = new IndexSearcher(getReader());
+			}
 		}
-		if (!file.getRawRecord().isNewRecord() && file.getId() > 0 ) {
-			file.destroy();
-		}
+		return  searcher;
 	}
-
-	@Override
-	public long fileLength(String name) throws IOException {
-		IndexFile file = getFile(name);
-		if (file == null) {
-			throw new FileNotFoundException();
-		}
-		return file.getLength();
-	}
-
-
-	@Override
-	public IndexOutput createOutput(String name) throws IOException {
-		return new DbIndexOutput(this,name);	
-	}
-
-	@Override
-	public IndexInput openInput(String name) throws IOException {
-		final IndexFile file = getFile(name);
-		if (file == null) {
-			throw new FileNotFoundException(name);
-		}
-		return new DbIndexInput(file);
-	}
-
-	@Override
-	public void close() throws IOException {
-		isOpen = false;
-		directory = null;
-	}
-
-	@Override
-	public void sync(Collection<String> names) throws IOException {
-		//Db Commit. 
-		//Commit happening elsewhere. 
-	}
-
 }

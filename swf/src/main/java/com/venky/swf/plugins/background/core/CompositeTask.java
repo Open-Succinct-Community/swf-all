@@ -17,19 +17,30 @@ public class CompositeTask implements Task {
 		this.tasks = new LinkedList<>();
 	}
 	private Priority priority = Priority.LOW;
-    public CompositeTask(Task...tasks ) {
+	public CompositeTask(Task...tasks ) {
         this(false,tasks);
     }
 	public CompositeTask(boolean splitTasksOnException , Task...tasks ) {
         this.splitTasksOnException = splitTasksOnException;
-		this.tasks = new LinkedList<>(); 
-		for (Task t : tasks){
-			this.tasks.add(t);
-			if (priority.getValue() > t.getTaskPriority().getValue()){ //Lower the value higher the priority.
-				priority = t.getTaskPriority();
-			}
-		}
+		this.tasks = new LinkedList<>();
+		add(tasks);
 	}
+	public void add(Task... tasks){
+        for (Task t : tasks){
+            this.tasks.add(t);
+            if (priority.getValue() > t.getTaskPriority().getValue()){ //Lower the value higher the priority.
+                priority = t.getTaskPriority();
+            }
+            canExecuteRemotely = canExecuteRemotely && t.canExecuteRemotely();
+        }
+    }
+
+    private boolean canExecuteRemotely = true;
+
+	@Override
+    public boolean canExecuteRemotely(){
+        return canExecuteRemotely;
+    }
 	@Override
 	public Priority getTaskPriority(){
 		return priority;

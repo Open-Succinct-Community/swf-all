@@ -49,7 +49,7 @@ public abstract class AgentSeederTask implements Task{
         }
 	    synchronized (this){
 	        if (finishUpTask == null){
-	            finishUpTask = new AgentFinishUpTask(getAgentName());
+	            finishUpTask = new AgentFinishUpTask(getAgentName(),canExecuteRemotely());
             }
         }
         return finishUpTask;
@@ -58,5 +58,9 @@ public abstract class AgentSeederTask implements Task{
 	public void finish(){
 	    getFinishUpTask().execute();
     }
-	
+
+	@Override
+	public boolean canExecuteRemotely() {
+		return isAgentTaskQPersistent();
+	}
 }

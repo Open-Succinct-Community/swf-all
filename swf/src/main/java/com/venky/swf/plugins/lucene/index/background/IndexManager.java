@@ -4,6 +4,8 @@ import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.Bucket;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.table.Record;
+import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.lucene.db.model.IndexQueue;
 import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
@@ -11,13 +13,15 @@ import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import com.venky.swf.sql.Select;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.*;
-import org.apache.lucene.store.Directory;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.List;
 
 public class IndexManager {
@@ -31,14 +35,14 @@ public class IndexManager {
 
 	}
 
-	private Cache<String, Directory> directoryCache = new Cache<String, Directory>() {
+	private Cache<String, DatabaseDirectory> directoryCache = new Cache<String, DatabaseDirectory>() {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -7199535528835102853L;
 
 		@Override
-		protected Directory getValue(String k) {
+		protected DatabaseDirectory getValue(String k) {
 			try {
 				return new DatabaseDirectory(k);
 			} catch (IOException e) {
@@ -48,11 +52,11 @@ public class IndexManager {
 
 	};
 	
-	public Directory getDirectory(String name){
+	public DatabaseDirectory getDirectory(String name){
 		return directoryCache.get(name);
 	}
 
-	private IndexTask createIndexTask(String tableName,List<Document> documents, Operation operation){
+	private IndexTask createIndexTask(String tableName,List<Record> documents, Operation operation){
 		IndexTask task = new IndexTask();
 		task.setDirectory(tableName);
 		task.setDocuments(documents);
@@ -60,24 +64,26 @@ public class IndexManager {
 		return task;
 	}
 	
-	public void addDocuments(String tableName, List<Document> documents){
+	public void addDocuments(String tableName, List<Record> documents){
 		executeDelayed(createIndexTask(tableName, documents, Operation.ADD));
 	}
 
-	public void updateDocuments(String tableName, List<Document> documents) {
+	public void updateDocuments(String tableName, List<Record> documents) {
 		executeDelayed(createIndexTask(tableName, documents, Operation.MODIFY));
 	}
 
-	public void removeDocuments(String tableName, List<Document> documents) {
+	public void removeDocuments(String tableName, List<Record> documents) {
 		executeDelayed(createIndexTask(tableName, documents, Operation.DELETE));
 	}
 
     private void executeDelayed(IndexTask indexTask) {
         IndexQueue q = Database.getTable(IndexQueue.class).newRecord();
         try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(os);
-            oos.writeObject(indexTask);
+			SerializationHelper helper = new SerializationHelper();
+
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			helper.write(os,indexTask);
+			os.close();
             q.setIndexTask(new ByteArrayInputStream(os.toByteArray()));
             q.save();
         }catch(Exception e){
@@ -85,23 +91,6 @@ public class IndexManager {
         }
     }
 
-    private Cache<String, IndexSearcher> indexSearcherCache = new Cache<String, IndexSearcher>() {
-		
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -7984161420681471139L;
-
-		@Override
-		protected IndexSearcher getValue(String k) {
-			try {
-				return new IndexSearcher(
-						IndexReader.open(directoryCache.get(k)));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	};
 
 	private Cache<IndexSearcher, Bucket> searcherReferenceCount = new Cache<IndexSearcher, Bucket>() {
 		/**
@@ -124,11 +113,10 @@ public class IndexManager {
 		Bucket bucket = searcherReferenceCount.get(searcher);
 		bucket.decrement();
 		if (bucket.intValue() <= 0) {
-			IndexSearcher currentSearcher = indexSearcherCache.get(tableName);
+			IndexSearcher currentSearcher = getIndexSearcher(tableName);
 			if (currentSearcher != searcher){
 				try {
 					searcher.getIndexReader().close();
-					searcher.close();
 				}catch (IOException ex){
 					throw new RuntimeException(ex);
 				}
@@ -138,17 +126,8 @@ public class IndexManager {
 
 	private IndexSearcher getIndexSearcher(String tableName) {
 		try {
-			IndexSearcher searcher = null;
-			synchronized (indexSearcherCache) {
-				searcher = indexSearcherCache.get(tableName);
-				IndexReader newReader = IndexReader.openIfChanged(searcher.getIndexReader());
-				if (newReader != null) {
-					searcher = new IndexSearcher(newReader);
-					indexSearcherCache.put(tableName, searcher);
-				}
-			}
-			return searcher;
-		} catch (IOException ex) {
+			return getDirectory(tableName).getIndexSearcher();
+		}catch (Exception ex){
 			throw new RuntimeException(ex);
 		}
 	}
@@ -167,7 +146,7 @@ public class IndexManager {
 					callback.found(d);
 				}
 			}else {
-				TopDocs tDocs = searcher.search(q,numHits,new Sort(new SortField("ID", SortField.INT ,true)));
+				TopDocs tDocs = searcher.search(q,numHits,new Sort(new SortField("ID", SortField.Type.INT ,true)));
 				/*
 				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
 				searcher.search(q, collector);

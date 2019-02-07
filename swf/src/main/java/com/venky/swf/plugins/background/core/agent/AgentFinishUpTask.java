@@ -17,9 +17,12 @@ public class AgentFinishUpTask implements Task{
 		
 	}
 	public AgentFinishUpTask(String agentName){
-		setAgentName(agentName);
+		this(agentName,false);
 	}
-	
+	public AgentFinishUpTask(String agentName,boolean canExecuteRemotely){
+		setAgentName(agentName);
+		this.canExecuteRemotely = canExecuteRemotely;
+	}
 	private static final long serialVersionUID = -912134633747814136L;
 
 	@Override
@@ -34,5 +37,12 @@ public class AgentFinishUpTask implements Task{
 	public void setAgentName(String agentName) {
 		this.agentName = agentName;
 	}
-	
+
+
+
+	private boolean canExecuteRemotely ;
+	@Override
+	public boolean canExecuteRemotely() {
+		return canExecuteRemotely;
+	}
 }
