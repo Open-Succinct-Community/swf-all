@@ -45,4 +45,10 @@ public class TaskHolder implements Task {
 		task.execute();
 	}
 
+
+	public boolean canExecuteRemotely(){
+		return innerTask().canExecuteRemotely();
+	}
+
+
 }
