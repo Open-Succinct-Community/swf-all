@@ -3,6 +3,7 @@ package com.venky.swf.plugins.background.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.venky.core.io.SeekableByteArrayOutputStream;
@@ -72,11 +73,18 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 		// boolean wait = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(criteria.getAttribute("Wait");
 		//wait  should not be from request.
 
-		Task task = AsyncTaskManager.getInstance().next(false, false);
+        int batch = Database.getJdbcTypeHelper("").getTypeRef(Integer.class).getTypeConverter().valueOf(criteria.getAttribute("BatchSize"));
+
+        batch = Math.max(batch,1);
+        Task task = null;
+        List<Task> tasks = new ArrayList<>();
+		while (((task = AsyncTaskManager.getInstance().next(false, false)) != null) && tasks.size() <= batch ){
+		    tasks.add(task);
+        }
 
 		SeekableByteArrayOutputStream byteArrayOutputStream = new SeekableByteArrayOutputStream();
 		SerializationHelper helper = new SerializationHelper();
-		helper.write(byteArrayOutputStream,task);
+		helper.write(byteArrayOutputStream,tasks);
 		return new BytesView(getPath(),byteArrayOutputStream.toByteArray(), MimeType.APPLICATION_OCTET_STREAM);
 	}
 

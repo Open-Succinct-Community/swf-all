@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,6 +17,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
+import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.SeekableByteArrayOutputStream;
 import com.venky.core.util.Bucket;
@@ -130,15 +132,27 @@ public class AsyncTaskManager  {
 	public static class ShutdownInitiatedException extends RuntimeException {
 		private static final long serialVersionUID = -8216421138960049897L;
 	}
-
 	public void addAll(Collection<Task> tasks) {
+		Cache<Boolean,List<Task>> remoteableTasks = new Cache<Boolean, List<Task>>() {
+			@Override
+			protected List<Task> getValue(Boolean aBoolean) {
+				return new ArrayList<>();
+			}
+		};
+		for (Task task :tasks){
+			remoteableTasks.get(task.canExecuteRemotely()).add(task);
+		}
+		addAll(remoteableTasks.get(true),true);
+		addAll(remoteableTasks.get(false),false);
+	}
+	private void addAll(Collection<Task> tasks, boolean canExecuteRemote) {
 		if (tasks.isEmpty()) {
 			return;
 		}
 		if (!keepAlive()) {
 			throw new ShutdownInitiatedException();
 		}
-		if (ObjectUtil.isVoid(getQueueServerURL())){
+		if (ObjectUtil.isVoid(getQueueServerURL()) || !canExecuteRemote){
 			synchronized (queue) {
 				queue.addAll(tasks);
 				queue.notifyAll();
@@ -188,57 +202,46 @@ public class AsyncTaskManager  {
 		}
 	}
 
-	public Task waitUntilNextTask(boolean local, boolean wait) {
+	public Task waitUntilNextTask(boolean localWorker, boolean waitForTask) {
 		Task dt = null;
-		if (ObjectUtil.isVoid(getQueueServerURL())){
-			synchronized (queue) {
-				while (wait && isWorkerAlive(local) && queue.isEmpty()) {
+		synchronized (queue){
+			while (waitForTask && isWorkerAlive(localWorker) && queue.isEmpty() ){
+				pullRemoteTasks(1);
+				if (queue.isEmpty()){
 					try {
 						Config.instance().getLogger(getClass().getName())
 								.finest("Worker: going back to sleep as there is no work to be done.");
 						//queue.wait(30*1000);
-						queue.wait();
+						queue.wait(30*1000);//Wait for 30 seconds on the queue
 					} catch (InterruptedException ex) {
 						Config.instance().getLogger(getClass().getName()).finest("Worker: waking up to look for work.");
-						//
 					}
-				}
-				if (isWorkerAlive(local) && !queue.isEmpty() ) {
-					if (local) {
-						dt = queue.poll();
-					}else {
-						if (queue.peek().canExecuteRemotely()){
-							dt = queue.poll();
-						}
-					}
-					Config.instance().getLogger(getClass().getName())
-							.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
-					queue.notifyAll();
 				}
 			}
-		}else if (isWorkerAlive(local)){
-			do{
-				dt = getNextRemoteTask();
-
-				if (dt == null && wait){
-					Config.instance().getLogger(getClass().getName())
-							.log(Level.INFO,"No Tasks Found");
-					try {
-						Thread.sleep(30 * 1000);
-					}catch (InterruptedException ex){
-						//
-					}
+			if (isWorkerAlive(localWorker) && !queue.isEmpty() ) {
+				if (localWorker || queue.peek().canExecuteRemotely()){
+					dt = queue.poll();
+					queue.notifyAll();
 				}
-			}while (dt == null && wait && isWorkerAlive(local));
+				Config.instance().getLogger(getClass().getName())
+						.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
+			}
 		}
+
 		return dt;
 	}
 	private boolean isWorkerAlive(boolean local){
 		return (!local || !evicted()) && keepAlive();
 	}
 
-	private Task getNextRemoteTask(){
+	private void pullRemoteTasks(int batch){
+		if (ObjectUtil.isVoid(getQueueServerURL())){
+			return ;
+		}
+
+		List<Task> tasks = new ArrayList<>();
 		JSONObject parameters = new JSONObject();
+		parameters.put("BatchSize",100);
 
 		HashMap<String,String> headers = new HashMap<>();
 		headers.put("content-type", MimeType.APPLICATION_JSON.toString());
@@ -246,23 +249,26 @@ public class AsyncTaskManager  {
 			headers.put("ApiKey",getApiKey());
 		}
 		int timeOut = 10000;
-		Task dt = null;
 		try {
 			InputStream stream = new Call<JSONAware>().url(getQueueServerURL() + "/next").headers(headers).timeOut(timeOut).method(HttpMethod.POST).
 					inputFormat(InputFormat.JSON).input(parameters).getResponseStream();
 
 			if (stream.available() > 0 ){
 				SerializationHelper helper = new SerializationHelper();
-				dt = helper.read(stream);
+				tasks = helper.read(stream);
 			}
 
 		}catch (Exception ex){
 			Config.instance().getLogger(getClass().getName())
 					.log(Level.WARNING,"Exception in finding tasks",ex);
-			shutdown();
+
 		}
-		return dt;
+
+		addAll(tasks, true); //I Ihave pulled from remote.
 	}
+
+
+
 	public String getQueueServerURL(){
 		return Config.instance().getProperty("swf.plugins.background.queue.server.url");
 	}
