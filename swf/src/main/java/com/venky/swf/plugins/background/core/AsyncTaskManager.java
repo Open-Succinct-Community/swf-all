@@ -206,7 +206,7 @@ public class AsyncTaskManager  {
 		Task dt = null;
 		synchronized (queue){
 			while (waitForTask && isWorkerAlive(localWorker) && queue.isEmpty() ){
-				pullRemoteTasks(100);
+				pullRemoteTasks(Config.instance().getIntProperty("swf.plugins.background.queue.server.batch",1000));
 				if (queue.isEmpty()){
 					try {
 						Config.instance().getLogger(getClass().getName())
