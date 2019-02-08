@@ -206,7 +206,7 @@ public class AsyncTaskManager  {
 		Task dt = null;
 		synchronized (queue){
 			while (waitForTask && isWorkerAlive(localWorker) && queue.isEmpty() ){
-				pullRemoteTasks(1);
+				pullRemoteTasks(100);
 				if (queue.isEmpty()){
 					try {
 						Config.instance().getLogger(getClass().getName())
@@ -241,7 +241,7 @@ public class AsyncTaskManager  {
 
 		List<Task> tasks = new ArrayList<>();
 		JSONObject parameters = new JSONObject();
-		parameters.put("BatchSize",100);
+		parameters.put("BatchSize",batch);
 
 		HashMap<String,String> headers = new HashMap<>();
 		headers.put("content-type", MimeType.APPLICATION_JSON.toString());
