@@ -18,6 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.ByteArrayOutputStream;
@@ -146,7 +147,7 @@ public class IndexManager {
 					callback.found(d);
 				}
 			}else {
-				TopDocs tDocs = searcher.search(q,numHits,new Sort(new SortField("ID", SortField.Type.INT ,true)));
+				TopDocs tDocs = searcher.search(q,numHits);
 				/*
 				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
 				searcher.search(q, collector);
