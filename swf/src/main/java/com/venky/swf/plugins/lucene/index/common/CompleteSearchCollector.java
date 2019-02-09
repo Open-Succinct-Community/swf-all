@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.Scorer;
@@ -21,9 +22,15 @@ public class CompleteSearchCollector extends SimpleCollector {
 
 	}
 
+	int docBase = 0;
+	protected void doSetNextReader(LeafReaderContext context) throws IOException {
+		docBase = context.docBase;
+	}
+
+
 	@Override
 	public void collect(int doc) throws IOException {
-		docIds.add(doc);
+		docIds.add(doc + docBase);
 	}
 
 

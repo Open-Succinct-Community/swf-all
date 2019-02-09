@@ -178,7 +178,7 @@ public class LuceneIndexer {
 		if (!hasIndexedFields() || r == null){
 			return;
 		}
-		getDocuments("lucene.added").add(r);
+		getDocuments("lucene.added").add	(r);
 	}
 	public void updateDocument(Record r) throws IOException{
 		if (!hasIndexedFields() || r == null){
