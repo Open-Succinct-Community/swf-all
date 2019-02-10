@@ -50,6 +50,7 @@ public abstract class AgentSeederTask implements Task{
 	    synchronized (this){
 	        if (finishUpTask == null){
 	            finishUpTask = new AgentFinishUpTask(getAgentName(),canExecuteRemotely());
+	            finishUpTask.setPriority(getTaskPriority());
             }
         }
         return finishUpTask;

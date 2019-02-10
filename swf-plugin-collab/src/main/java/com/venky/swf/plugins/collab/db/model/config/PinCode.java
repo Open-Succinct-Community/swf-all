@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
@@ -13,6 +14,7 @@ public interface PinCode extends Model {
     public String getOfficeName();
     public void setOfficeName(String name);
 
+    @Index
     public String getPinCode();
     public void setPinCode(String code);
 
@@ -33,18 +35,22 @@ public interface PinCode extends Model {
     public void setRegionName(String regionName);
 
 
+    @Index
     public String getCircleName();
     public void setCircleName(String circleName);
 
+    @Index
     public String getTaluk();
     public void setTaluk(String taluk);
 
+    @Index
     public String getDistrict();
     public void setDistrict(String district);
 
     public String getStateName();
     public void setStateName(String stateName);
 
+    @Index
     public Long getStateId();
     public void setStateId(Long id);
     public State getState();
