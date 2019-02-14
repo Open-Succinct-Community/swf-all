@@ -7,8 +7,8 @@ import com.venky.swf.db.model.Model;
 
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
 public interface PinCode extends Model {
-    public long getCountryId();
-    public void setCountryId(long id);
+    public Long getCountryId();
+    public void setCountryId(Long id);
     public Country getCountry();
 
     public String getOfficeName();

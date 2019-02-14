@@ -6,7 +6,6 @@ import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.Model;
 
-@CONFIGURATION
 @EXPORTABLE(false)
 public interface IndexDirectory extends Model{
 	public String getName();

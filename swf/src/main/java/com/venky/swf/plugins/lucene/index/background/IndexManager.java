@@ -1,12 +1,9 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import com.venky.cache.Cache;
-import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.Bucket;
-import com.venky.swf.db.Database;
 import com.venky.swf.db.table.Record;
-import com.venky.swf.plugins.background.core.SerializationHelper;
-import com.venky.swf.plugins.lucene.db.model.IndexQueue;
+import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
@@ -16,13 +13,11 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
-import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.TopDocs;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class IndexManager {
@@ -57,39 +52,42 @@ public class IndexManager {
 		return directoryCache.get(name);
 	}
 
-	private IndexTask createIndexTask(String tableName,List<Record> documents, Operation operation){
-		IndexTask task = new IndexTask();
-		task.setDirectory(tableName);
-		task.setDocuments(documents);
-		task.setOperation(operation);
-		return task;
+	private List<IndexTask> createIndexTasks(String tableName,List<Record> documents, Operation operation){
+		List<IndexTask> tasks =  new ArrayList<>();
+		int batchSize = 50;
+		for (Iterator<Record> i = documents.iterator() ; i .hasNext() ; ){
+			Record record = i.next();
+			IndexTask task = null;
+			if (tasks.isEmpty() || tasks.get(tasks.size()-1).getDocuments().size() >= batchSize){
+				task = new IndexTask();
+				task.setDirectory(tableName);
+				task.setDocuments(new ArrayList<>());
+				task.setOperation(operation);
+				tasks.add(task);
+			}else {
+				task = tasks.get(tasks.size()-1);
+			}
+			task.getDocuments().add(record);
+			i.remove();
+		}
+
+		return tasks;
 	}
 	
 	public void addDocuments(String tableName, List<Record> documents){
-		executeDelayed(createIndexTask(tableName, documents, Operation.ADD));
+		executeDelayed(createIndexTasks(tableName, documents, Operation.ADD));
 	}
 
 	public void updateDocuments(String tableName, List<Record> documents) {
-		executeDelayed(createIndexTask(tableName, documents, Operation.MODIFY));
+		executeDelayed(createIndexTasks(tableName, documents, Operation.MODIFY));
 	}
 
 	public void removeDocuments(String tableName, List<Record> documents) {
-		executeDelayed(createIndexTask(tableName, documents, Operation.DELETE));
+		executeDelayed(createIndexTasks(tableName, documents, Operation.DELETE));
 	}
 
-    private void executeDelayed(IndexTask indexTask) {
-        IndexQueue q = Database.getTable(IndexQueue.class).newRecord();
-        try {
-			SerializationHelper helper = new SerializationHelper();
-
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			helper.write(os,indexTask);
-			os.close();
-            q.setIndexTask(new ByteArrayInputStream(os.toByteArray()));
-            q.save();
-        }catch(Exception e){
-            throw new RuntimeException(e);
-        }
+    private void executeDelayed(List<IndexTask> tasks) {
+		TaskManager.instance().executeAsync(tasks,false);
     }
 
 
@@ -109,6 +107,8 @@ public class IndexManager {
 		Bucket bucket = searcherReferenceCount.get(searcher);
 		bucket.increment();
 	}
+
+
 
 	private void decRef(String tableName,IndexSearcher searcher) {
 		Bucket bucket = searcherReferenceCount.get(searcher);

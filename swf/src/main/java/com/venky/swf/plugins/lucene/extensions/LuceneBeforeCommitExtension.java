@@ -5,10 +5,7 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase._ITransaction;
 import com.venky.swf.db.table.Record;
-import com.venky.swf.plugins.background.core.agent.Agent;
-import com.venky.swf.plugins.lucene.index.agents.IndexUpdatorAgent;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
-import org.apache.lucene.document.Document;
 
 import java.util.List;
 
@@ -24,9 +21,7 @@ public class LuceneBeforeCommitExtension implements Extension{
 		fireAgent = addDocuments((Cache<String,List<Record>>)completedTransaction.getAttribute("lucene.added")) || fireAgent;
 		fireAgent = updateDocuments((Cache<String,List<Record>>)completedTransaction.getAttribute("lucene.updated")) || fireAgent;
 		fireAgent = removeDocuments((Cache<String,List<Record>>)completedTransaction.getAttribute("lucene.removed")) || fireAgent;
-		if (fireAgent) {
-            Agent.instance().start(new IndexUpdatorAgent.IndexUpdatorAgentSeeder());
-        }
+
     }
 	public boolean addDocuments(Cache<String,List<Record>> documentsByTable){
 		boolean documentsSubmittedForUpdate = false;

@@ -17,6 +17,7 @@ import com.venky.swf.db.annotations.column.validations.RegEx;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
+import com.venky.swf.plugins.collab.db.model.config.PinCode;
 import com.venky.swf.plugins.collab.db.model.config.State;
 
 public interface Address extends GeoLocation {
@@ -53,10 +54,9 @@ public interface Address extends GeoLocation {
     public void setCountryId(Long countryId);
     public Country getCountry();
 
-    @RegEx("[0-9]*")
-    @COLUMN_SIZE(6)
-    public String getPincode();
-    public void setPincode(String pincode);
+    public Long getPinCodeId();
+    public void setPinCodeId(Long pincodeId);
+    public PinCode getPinCode();
 
 
     public String getEmail();

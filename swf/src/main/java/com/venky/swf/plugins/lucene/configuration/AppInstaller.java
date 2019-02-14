@@ -46,7 +46,7 @@ public class AppInstaller implements Installer{
 			}
 		}
 		mkdir("MODEL");
-        TaskManager.instance().executeAsync(new CompositeBatchTask(tasks,1,false),false);
+        TaskManager.instance().executeAsync(tasks,false);
 	}
 	public static class Mkdir implements Task {
         String tableName;

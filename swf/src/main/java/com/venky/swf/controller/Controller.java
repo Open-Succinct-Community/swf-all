@@ -44,9 +44,9 @@ import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.model.FileUploadView;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONObject;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -344,7 +344,7 @@ public class Controller {
 		List<ModelReflector<? extends Model>> modelReflectorsOfImportedTables = new ArrayList<ModelReflector<? extends Model>>();
 		Workbook book =  null;
 		try {
-			book = new HSSFWorkbook(in);
+			book = new XSSFWorkbook(in);
 			for (Sheet sheet : getSheetsToImport(book,filter)){ 
 				Table<? extends Model> table = getTable(sheet);
 				if (table == null){
@@ -453,7 +453,7 @@ public class Controller {
 
 
     public View exportxls(){
-    	Workbook wb = new HSSFWorkbook();
+    	Workbook wb = new XSSFWorkbook();
     	for (String pool: ConnectionManager.instance().getPools()){
     		Map<String,Table<? extends Model>> tables = Database.getTables(pool);
         	for (String tableName: tables.keySet()){
@@ -471,7 +471,7 @@ public class Controller {
     		ByteArrayOutputStream os = new ByteArrayOutputStream();
     		
     		ZipOutputStream zos = new ZipOutputStream(os);
-    		zos.putNextEntry(new ZipEntry(baseFileName + ".xls"));
+    		zos.putNextEntry(new ZipEntry(baseFileName + ".xlsx"));
     		wb.write(zos);
     		zos.closeEntry();
     		zos.close();

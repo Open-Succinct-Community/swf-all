@@ -34,7 +34,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 				.append(" ")
 				.append(oAddress.getState() == null ? "" : oAddress.getState().getName())
 				.append(" ")
-				.append(oAddress.getPincode() == null ? "" : oAddress.getPincode())
+				.append(oAddress.getPinCode() == null ? "" : oAddress.getPinCode().getPinCode())
 				.append(" ")
 				.append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
 				new StringBuilder()
@@ -48,7 +48,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 				.append(" ")
 				.append(oAddress.getState() == null ? "" : oAddress.getState().getName())
 				.append(" ")
-				.append(oAddress.getPincode() == null ? "" : oAddress.getPincode())
+				.append(oAddress.getPinCode() == null ? "" : oAddress.getPinCode().getPinCode())
 				.append(" ")
 				.append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
 				new StringBuilder()

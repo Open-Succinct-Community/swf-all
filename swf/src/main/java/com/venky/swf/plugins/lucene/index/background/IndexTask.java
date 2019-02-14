@@ -3,6 +3,8 @@ package com.venky.swf.plugins.lucene.index.background;
 import java.io.IOException;
 import java.util.List;
 
+import com.venky.cache.Cache;
+import com.venky.cache.UnboundedCache;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
@@ -12,6 +14,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LiveIndexWriterConfig;
+import org.apache.lucene.index.MergeScheduler;
+import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Version;
@@ -36,8 +41,10 @@ public class IndexTask implements Task{
 	
 	}
 	private IndexWriter getIndexWriter() throws CorruptIndexException, LockObtainFailedException, IOException{
-		return new IndexWriter(IndexManager.instance().getDirectory(directory),
-				new IndexWriterConfig(new StandardAnalyzer()));
+		IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+		config.setCommitOnClose(true);
+		config.setMergeScheduler(new SerialMergeScheduler());
+		return new IndexWriter(IndexManager.instance().getDirectory(directory), config);
 	}
 
 	@Override
@@ -47,18 +54,20 @@ public class IndexTask implements Task{
 			for (Record record: getDocuments()){
 				Document document = LuceneIndexer.instance(Database.getTable(getDirectory()).getModelClass()).getDocument(record);
 				switch(getOperation()){
-				case ADD:
-					w.addDocument(document);
-					break;
-				case MODIFY:
-					w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
-					w.addDocument(document);
-					break;
-				case DELETE: 
-					w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
-					break;
+					case ADD:
+						w.addDocument(document);
+						break;
+					case MODIFY:
+						w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
+						w.addDocument(document);
+						break;
+					case DELETE:
+						w.deleteDocuments(new Term("ID",document.getField("ID").stringValue()));
+						break;
 				}
 			}
+			w.prepareCommit();
+			w.commit();
 			w.close();
 		}catch (Exception ex){
 			throw new RuntimeException(ex);

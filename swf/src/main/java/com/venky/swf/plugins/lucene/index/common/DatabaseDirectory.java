@@ -3,6 +3,7 @@ package com.venky.swf.plugins.lucene.index.common;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.venky.core.util.Bucket;
+import com.venky.swf.db.Database;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.BaseDirectory;
@@ -61,7 +63,10 @@ public class DatabaseDirectory extends BaseDirectory {
             throw new FileNotFoundException();
         }
         if (!file.getRawRecord().isNewRecord() && file.getId() > 0 ) {
-            file.destroy();
+        	file = Database.getTable(IndexFile.class).lock(file.getId());
+        	if (file != null) {
+				file.destroy();
+			}
         }
 	}
 
@@ -108,7 +113,12 @@ public class DatabaseDirectory extends BaseDirectory {
 
 	@Override
 	public IndexInput openInput(String name, IOContext context) throws IOException {
-		return new DbIndexInput(getFile(name));
+		IndexFile e = getFile(name);
+		if (e == null) {
+			throw new NoSuchFileException(name);
+		} else {
+			return new DbIndexInput(e);
+		}
 	}
 
 	@Override

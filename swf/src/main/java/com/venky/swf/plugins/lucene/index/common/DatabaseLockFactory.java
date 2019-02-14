@@ -32,10 +32,13 @@ public class DatabaseLockFactory extends LockFactory {
             @Override
             public void ensureValid() throws IOException {
                 try {
+                    Database.getTable(IndexDirectory.class).lock(((DatabaseDirectory)dir).getModelDirectory().getId());
+                    /*
                     IndexFile file = ((DatabaseDirectory)dir).getFile(lockName);
                     if (file != null){
                         Database.getTable(IndexFile.class).lock(file.getId());
                     }
+                    */
                 }catch (SWFTimeoutException ex){
                     throw new IOException(ex);
                 }
