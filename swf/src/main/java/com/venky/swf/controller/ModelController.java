@@ -982,9 +982,13 @@ public class ModelController<M extends Model> extends Controller {
     	
     	JSONObject obj = new JSONObject();
     	Record record = model.getRawRecord();
-    	for (String f:record.getDirtyFields()){
-    		Object value = record.get(f);
-    		obj.put(f,value);
+    	List<String> fieldsToSet = new ArrayList<>();
+    	fieldsToSet.addAll(reflector.getVirtualFields());
+    	fieldsToSet.addAll(record.getDirtyFields());
+
+		for (String f:fieldsToSet){
+			Object value = reflector.get(record,f);
+			obj.put(f,value);
 
     		Method fieldGetter = reflector.getFieldGetter(f);
     		Method referredModelGetter = reflector.getReferredModelGetterFor(fieldGetter);
@@ -992,7 +996,7 @@ public class ModelController<M extends Model> extends Controller {
     			Class<? extends Model> referredModelClass = reflector.getReferredModelClass(referredModelGetter);
     			ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
 
-    			long referredModelId = longTypeConverter.valueOf(record.get(f));
+    			long referredModelId = longTypeConverter.valueOf(value);
     			Model referredModel = Database.getTable(referredModelClass).get(referredModelId);
 
     			String referredModelDescriptionField = referredModelReflector.getDescriptionField(); 
