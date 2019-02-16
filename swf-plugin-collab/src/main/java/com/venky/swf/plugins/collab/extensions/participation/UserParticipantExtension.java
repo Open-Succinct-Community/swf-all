@@ -31,13 +31,13 @@ public class 	UserParticipantExtension extends ParticipantExtension<User>{
 			ret = new SequenceSet<>();
 			
 			User operator = (User)user;
-			ret.add(operator.getId());
-			
+
 			SequenceSet<Long> accessableCompanies = new SequenceSet<>();
 			
 			for (UserCompany uc : operator.getUserCompanies()){
 				accessableCompanies.add(uc.getCompanyId());
 			}
+			ret.addAll(accessableCompanies);
 
 		}else if (fieldName.equals("COUNTRY_ID")){
 			ret =  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
