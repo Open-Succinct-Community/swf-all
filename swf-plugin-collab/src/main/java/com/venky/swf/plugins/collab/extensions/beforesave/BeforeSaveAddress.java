@@ -77,6 +77,12 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 		if (!addressFieldsChanged) {
 			return;
 		}
+		if (oAddress.getCityId() != null){
+			oAddress.setStateId(oAddress.getCity().getStateId());
+		}
+		if (oAddress.getStateId() != null){
+			oAddress.setCountryId(oAddress.getState().getCountryId());
+		}
 		if (!oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())){
 			if (oAddress.getRawRecord().isNewRecord()){
 				//Prefilled at creation. So ignore regetting it.

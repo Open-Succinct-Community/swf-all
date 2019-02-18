@@ -1,24 +1,17 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
 
 import com.venky.geo.GeoLocation;
-import com.venky.swf.db.annotations.column.COLUMN_DEF;
-import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
-import com.venky.swf.db.annotations.column.IS_VIRTUAL;
-import com.venky.swf.db.annotations.column.UNIQUE_KEY;
-import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
-import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
 import com.venky.swf.db.annotations.column.validations.RegEx;
-import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
-import com.venky.swf.plugins.collab.db.model.config.PinCode;
 import com.venky.swf.plugins.collab.db.model.config.State;
+import com.venky.swf.plugins.collab.db.model.config.PinCode;
 
 public interface Address extends GeoLocation {
     public String getAddressLine1();
