@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
@@ -212,10 +213,13 @@ public class OidController extends Controller{
     			u.setName(email);
     			u.setPassword(null);
     			u.save();
-    			UserEmail oid = Database.getTable(UserEmail.class).newRecord();
-    			oid.setUserId(u.getId());
-    			oid.setEmail(email);
-    			oid.save();
+				List<UserEmail> emails = u.getUserEmails();
+				if (emails.isEmpty()){
+					UserEmail oid = Database.getTable(UserEmail.class).newRecord();
+					oid.setUserId(u.getId());
+					oid.setEmail(email);
+					oid.save();
+				}
     			txn.commit();
     		}
     		getPath().createUserSession(u, false);
