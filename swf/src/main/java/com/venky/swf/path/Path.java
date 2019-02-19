@@ -619,6 +619,7 @@ public class Path implements _IPath{
                     if (input.size() == 1){
                         username = input.get(0).getName();
                         password = input.get(0).getPassword();
+                        autoInvalidate = true;
                     }
                 }
                 if (!ObjectUtil.isVoid(username)){
