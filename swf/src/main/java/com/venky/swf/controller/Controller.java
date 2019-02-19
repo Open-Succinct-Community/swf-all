@@ -151,7 +151,7 @@ public class Controller {
                 throw new RuntimeException(" content-type in request header should be " + MimeType.APPLICATION_JSON + " or " + MimeType.APPLICATION_XML);
             }
             if (authenticated) {
-                return adaptor.createResponse(getPath(), (User) getSessionUser(), Arrays.asList("API_KEY"));
+                return adaptor.createResponse(getPath(), (User) getSessionUser(), Arrays.asList("ID","NAME","API_KEY"));
             }else {
                 throw new AccessDeniedException("Login incorrect!");
             }
