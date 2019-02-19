@@ -13,6 +13,9 @@ import java.util.Set;
 
 public class InMemoryTaskQueueManager implements Extension {
     private static InMemoryTaskQueueManager instance = new InMemoryTaskQueueManager();
+    public static InMemoryTaskQueueManager getInstance(){
+        return instance;
+    }
     static {
         Registry.instance().registerExtension("after.commit", instance);
     }
