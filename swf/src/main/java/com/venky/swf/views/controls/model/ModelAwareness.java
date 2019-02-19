@@ -220,7 +220,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
         	control.setToolTip(null);
         }
 
-        if (control.isEnabled() && getReflector().isFieldSettable(fieldName)){
+        if (control.isEnabled() && !control.isReadOnly()  && getReflector().isFieldSettable(fieldName)){
         	if (hashFieldValue.length() > 0){
         		hashFieldValue.append(",");
         	}
