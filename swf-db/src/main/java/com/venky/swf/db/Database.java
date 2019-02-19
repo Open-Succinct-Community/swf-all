@@ -79,7 +79,10 @@ public class Database implements _IDatabase{
     public void close() {
 		closeConnections();
 		currentUser = null;
-		
+		if (context != null){
+			context.clear();
+			context = null;
+		}
 	}
 
 	private void closeConnections() {
@@ -370,6 +373,20 @@ public class Database implements _IDatabase{
     public static Database getInstance() {
         return getInstance(false);
     }
+
+    Map<String,Object> context = null;
+    public <T> void setContext(String name, T value){
+    	if (context == null){
+    		context = new HashMap<>();
+		}
+		context.put(name,value);
+	}
+	public <T> T getContext(String name){
+    	if (context == null){
+    		return  null;
+		}
+		return (T)context.get(name);
+	}
 
     public static Database getInstance(boolean migrate) {
 		if (_instance.get() == null) {

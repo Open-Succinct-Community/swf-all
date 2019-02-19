@@ -205,7 +205,8 @@ public class Router extends AbstractHandler {
 	        Logger logger = Config.instance().getLogger(getClass().getName());
 	        _IDatabase db = null ;
 	        try {
-	        	db = getDatabase(); 
+	        	db = getDatabase();
+	        	db.setContext(_IPath.class.getName(),p);
 	            view = p.invoke();
 				if (db != getDatabase()){
 					// If Class Loader is reset.
