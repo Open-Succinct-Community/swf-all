@@ -53,6 +53,7 @@ import org.apache.lucene.search.Query;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONObject;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -105,7 +106,7 @@ public class ModelController<M extends Model> extends Controller {
     
     public View exportxls(){
     	ensureUI();
-		Workbook wb = new HSSFWorkbook();
+		Workbook wb = new XSSFWorkbook();
     	super.exportxls(getModelClass(), wb);
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
@@ -113,7 +114,7 @@ public class ModelController<M extends Model> extends Controller {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-    	return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xls");
+    	return new BytesView(getPath(), os.toByteArray(),MimeType.APPLICATION_XLS,"content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xlsx");
     }
     
     @Depends("save")
