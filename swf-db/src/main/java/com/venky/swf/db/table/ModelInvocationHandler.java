@@ -52,7 +52,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     private List<String> virtualFields = new IgnoreCaseList(false);
     private String modelName = null;
 
-    private Model proxy = null;
+    private transient Model proxy = null;
     private transient ModelReflector<? extends Model> reflector = null;
 
 	@SuppressWarnings("unchecked")
