@@ -1,4 +1,4 @@
-package com.venky.swf.integration.api; 
+package com.venky.swf.integration.api;
 
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.io.ByteArrayInputStream;
@@ -6,17 +6,20 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.routing.Config;
 import com.venky.xml.XMLDocument;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.json.simple.JSONAware;
-import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import java.io.*;
-import java.lang.reflect.ParameterizedType;
-import java.net.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -71,10 +71,6 @@ public class Config {
 	    }
 	    properties.putAll(System.getProperties());
 	    properties.putAll(System.getenv());
-		if (!properties.contains("swf.host")){
-			properties.put("swf.host",StringUtil.read(new Call<String>().url("http://bot.whatismyipaddress.com").getResponseStream()));
-		}
-
     }
     private Properties properties;
     private static Config _instance ;
@@ -97,9 +93,16 @@ public class Config {
 	}	
 
 	public String getHostName(){
+    	loadExternalIp();
     	return getProperty("swf.host","localhost");
 	}
 
+	public void loadExternalIp(){
+		if (properties.getProperty("swf.host") == null){
+			String externalIp = StringUtil.read(new Call<String>().url("http://bot.whatismyipaddress.com").getResponseStream());
+			properties.put("swf.host", externalIp);
+		}
+	}
 	public int getPortNumber(){
 		return Integer.valueOf(getPort());
 	}
