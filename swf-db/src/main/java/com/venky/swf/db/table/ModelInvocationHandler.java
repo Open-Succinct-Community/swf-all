@@ -362,6 +362,12 @@ public class ModelInvocationHandler implements InvocationHandler {
 				for (Class<?> implClass: modelImplClasses){
 					addModelImplObject(constructImpl(implClass, m));
 				}
+			}else {
+				modelImplObjects.forEach((c,o) ->{
+				    if (o instanceof  ModelInvocationHandler) {
+                        ((ModelInvocationHandler) o).bootStrapProxy(m);
+                    }
+				});
 			}
 		}
 
