@@ -52,7 +52,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     private List<String> virtualFields = new IgnoreCaseList(false);
     private String modelName = null;
 
-    private transient Model proxy = null;
+    private Model proxy = null;
     private transient ModelReflector<? extends Model> reflector = null;
 
 	@SuppressWarnings("unchecked")
@@ -355,13 +355,14 @@ public class ModelInvocationHandler implements InvocationHandler {
 	private <M extends Model> void bootStrapProxy(M m) {
 		if (proxy == null) {
 	    	setProxy(m);
-		}
-		if (modelImplObjects.isEmpty()){
-			List<Class<?>> modelImplClasses = getModelImplClasses(modelClass);
-			for (Class<?> implClass: modelImplClasses){
-				addModelImplObject(constructImpl(implClass, m));
+			if (modelImplObjects.isEmpty()){
+				List<Class<?>> modelImplClasses = getModelImplClasses(modelClass);
+				for (Class<?> implClass: modelImplClasses){
+					addModelImplObject(constructImpl(implClass, m));
+				}
 			}
 		}
+
 	}
 	@SuppressWarnings("unchecked")
 	private static <M extends Model> Object constructImpl(Class<?> implClass, M m){
