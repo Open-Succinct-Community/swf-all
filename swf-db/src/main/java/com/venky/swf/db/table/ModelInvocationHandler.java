@@ -190,7 +190,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         }
     	Method inImplClass = implClass.getMethod(mName, parameters);
     	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
-	        Timer timer = cat.startTimer(inImplClass.toString());
+	        Timer timer = cat().startTimer(inImplClass.toString());
 	        try {
 	        	return inImplClass.invoke(implObject, args);
 	        }catch (InvocationTargetException ex){
@@ -202,7 +202,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     		throw new NoSuchMethodException("Donot know how to execute " + getReflector().getSignature(method));
     	}
     }
-    private transient final SWFLogger cat = Config.instance().getLogger(getClass().getName()+"."+getModelName());
+    private SWFLogger cat() {
+		return Config.instance().getLogger(getClass().getName()+"."+getModelName());
+	}
 
     @SuppressWarnings("unchecked")
 	public <P extends Model> P getParent(Method parentGetter) {
@@ -291,7 +293,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	return getParticipatingRoles(user, user.getParticipationOptions(asModel,getProxy()));
     }
     private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Long>>> pGroupOptions){
-    	Timer timer = cat.startTimer();
+    	Timer timer = cat().startTimer();
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
         	Set<String> participantingRoles = new HashSet<String>();
@@ -316,7 +318,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	}
     }
     public boolean isAccessibleBy(User user,Class<? extends Model> asModel){
-    	Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive());
+    	Timer timer = cat().startTimer(null,Config.instance().isTimerAdditive());
     	try {
 	    	if (!getReflector().reflects(asModel)){
 	    		return false;
