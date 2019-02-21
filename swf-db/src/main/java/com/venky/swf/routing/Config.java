@@ -25,6 +25,7 @@ import com.venky.core.log.SWFLogger;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
+import com.venky.swf.integration.api.Call;
 
 /**
  *
@@ -70,6 +71,10 @@ public class Config {
 	    }
 	    properties.putAll(System.getProperties());
 	    properties.putAll(System.getenv());
+		if (!properties.contains("swf.host")){
+			properties.put("swf.host",StringUtil.read(new Call<String>().url("http://bot.whatismyipaddress.com").getResponseStream()));
+		}
+
     }
     private Properties properties;
     private static Config _instance ;
