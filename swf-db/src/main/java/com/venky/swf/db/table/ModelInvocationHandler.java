@@ -192,6 +192,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     	if (retType.isAssignableFrom(inImplClass.getReturnType())) {
 	        Timer timer = cat().startTimer(inImplClass.toString());
 	        try {
+                if (implObject instanceof  ModelInvocationHandler) {
+                    ((ModelInvocationHandler) implObject).bootStrapProxy(getModelClass().cast(proxy));
+                }
 	        	return inImplClass.invoke(implObject, args);
 	        }catch (InvocationTargetException ex){
 	        	throw ex.getCause();
@@ -362,12 +365,6 @@ public class ModelInvocationHandler implements InvocationHandler {
 				for (Class<?> implClass: modelImplClasses){
 					addModelImplObject(constructImpl(implClass, m));
 				}
-			}else {
-				modelImplObjects.forEach((c,o) ->{
-				    if (o instanceof  ModelInvocationHandler) {
-                        ((ModelInvocationHandler) o).bootStrapProxy(m);
-                    }
-				});
 			}
 		}
 
