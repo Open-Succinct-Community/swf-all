@@ -1,8 +1,10 @@
 package com.venky.swf.plugins.background.core;
 
 import java.util.AbstractQueue;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import com.venky.cache.Cache;
@@ -127,7 +129,8 @@ public class WeightedPriorityQueue extends AbstractQueue<Task> {
 	@Override
 	public int size() {
 		int size = 0 ;
-		for (Priority p : cache.keySet()){
+		List<Priority> priorityList = new ArrayList<>(cache.keySet());
+		for (Priority p : priorityList){
 			size+= cache.get(p).size();
 		}
 		return size;
