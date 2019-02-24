@@ -16,6 +16,9 @@ import com.venky.swf.plugins.background.core.Task.Priority;
 import com.venky.swf.routing.Config;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
+	public DelayedTaskImpl(){
+		//For Serialization.
+	}
 
 	public DelayedTaskImpl(DelayedTask proxy) {
 		super(proxy);
