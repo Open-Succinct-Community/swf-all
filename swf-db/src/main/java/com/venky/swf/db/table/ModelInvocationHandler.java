@@ -729,7 +729,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         while (columnIterator.hasNext()) {
             String columnName = columnIterator.next();
             String fieldName =  getReflector().getFieldName(columnName);
-            if (fieldName == null || getReflector().isFieldVirtual(columnName)){
+            if (fieldName == null || getReflector().isFieldVirtual(fieldName)){
             	continue;
             }
             TypeRef<?> ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(getReflector().getFieldGetter(fieldName).getReturnType());
