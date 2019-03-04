@@ -82,11 +82,12 @@ public class OidController extends Controller{
 		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
 		String resourceUrl;
 		String redirectUrl; 
-		public OAuthClientRequest createRequest(){
+		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
+				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" +_redirect_to);
 				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope("email").
-						setRedirectURI(redirectUrl).buildQueryMessage();
+						setRedirectURI(redirectTo).buildQueryMessage();
 			} catch (OAuthSystemException e) {
 				throw new RuntimeException(e);
 			}
@@ -169,7 +170,8 @@ public class OidController extends Controller{
 		}
 		
 		try {
-			OAuthClientRequest request = oidproviderMap.get(selectedOpenId).createRequest();
+			String _redirect_to= getPath().getRequest().getParameter("_redirect_to");
+			OAuthClientRequest request = oidproviderMap.get(selectedOpenId).createRequest(_redirect_to);
 			RedirectorView ret = new RedirectorView(getPath());
 			ret.setRedirectUrl(request.getLocationUri());
 			return ret;
