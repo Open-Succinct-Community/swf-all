@@ -9,4 +9,8 @@ public interface SWFHttpResponse extends Model{
 	
 	public void setError(String error);
 	public String getError();
+
+	public void setMessage(String message);
+	public String getMessage();
+
 }

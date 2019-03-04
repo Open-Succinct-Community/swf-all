@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +18,7 @@ import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
@@ -129,20 +132,21 @@ public class IntegrationAdaptor<M extends Model,T> {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	
+
 	public View createStatusResponse(Path path, Throwable th){
+		return createStatusResponse(path,th,"");
+	}
+	public View createStatusResponse(Path path, Throwable th, String message){
 		IntegrationAdaptor<SWFHttpResponse,T> respAdaptor = IntegrationAdaptor.instance(SWFHttpResponse.class, getFormatClass());
 		SWFHttpResponse response = Database.getTable(SWFHttpResponse.class).newRecord();
+		response.setMessage(message);
 		if (th == null){
 			response.setStatus("OK");
-			return respAdaptor.createResponse(path,response,Arrays.asList("STATUS"));
+			return respAdaptor.createResponse(path,response,Arrays.asList("STATUS","MESSAGE"));
 		}else {
 			response.setStatus("FAILED");
 			response.setError(th.getMessage());
-			return respAdaptor.createResponse(path,response,Arrays.asList(new String[]{"STATUS","ERROR"}));
+			return respAdaptor.createResponse(path,response,Arrays.asList(new String[]{"STATUS","ERROR","MESSAGE"}));
 		}
 	}
-	
-	
 }
