@@ -226,10 +226,13 @@ public class OidController extends Controller{
     		}
     		getPath().createUserSession(u, false);
             
-			return new RedirectorView(getPath(), loginSuccessful());
+			return redirectSuccess();
 		} catch (Exception e) {
 			return createLoginView(StatusType.ERROR, e.getMessage());
 		}
+	}
+	protected RedirectorView redirectSuccess(){
+		return new RedirectorView(getPath(),loginSuccessful());
 	}
 	
 	public static class OidHttpClient implements HttpClient {
