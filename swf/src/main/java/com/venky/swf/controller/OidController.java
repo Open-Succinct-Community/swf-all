@@ -92,14 +92,15 @@ public class OidController extends Controller{
 				throw new RuntimeException(e);
 			}
 		}
-		public String authorize(String code){
+		public String authorize(String code,String _redirect_to){
 			try {
+				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
 				        .tokenProvider(providerType)
 				        .setGrantType(GrantType.AUTHORIZATION_CODE)
 				        .setClientId(clientId)
 				        .setClientSecret(clientSecret)
-				        .setRedirectURI(redirectUrl)
+				        .setRedirectURI(redirectTo)
 				        .setCode(code)
 				        .setScope("email")
 				        .buildBodyMessage();
@@ -192,7 +193,7 @@ public class OidController extends Controller{
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
 		try {
-	        String email = provider.authorize(code);
+	        String email = provider.authorize(code,getPath().getRequest().getParameter("_redirect_to"));
     		User u = null;
 			Select select = new Select().from(UserEmail.class);
 			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
