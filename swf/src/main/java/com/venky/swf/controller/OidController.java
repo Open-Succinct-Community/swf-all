@@ -43,6 +43,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
@@ -84,7 +85,7 @@ public class OidController extends Controller{
 		String redirectUrl; 
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
-				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" +_redirect_to);
+				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" + URLEncoder.encode(_redirect_to));
 				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope("email").
 						setRedirectURI(redirectTo).buildQueryMessage();
