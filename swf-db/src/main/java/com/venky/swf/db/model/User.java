@@ -107,4 +107,5 @@ public interface User extends Model{
 	public List<UserEmail> getUserEmails();
 	
 	public void generateApiKey();
+    public void generateApiKey(boolean save);
 }

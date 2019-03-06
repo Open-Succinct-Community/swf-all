@@ -36,13 +36,18 @@ public class UserImpl extends ModelImpl<User>{
 		super(user);
 	}
 	public void generateApiKey(){
+		generateApiKey(true);
+	}
+	public void generateApiKey(boolean save){
 	    User user = getProxy();
 		StringBuilder key = new StringBuilder();
 		key.append(getProxy().getId()).append(":").append(getProxy().getName()).append(":").append(getProxy().getPassword()).append(":").append(System.currentTimeMillis());
 		String encryptedKey = Encryptor.encrypt(key.toString());
 		user.setApiKey(encryptedKey);
 		user.setApiKeyGeneratedTs(new Timestamp(System.currentTimeMillis()));
-		user.save();
+		if (save) {
+			user.save();
+		}
 	}
 	
 	public String getChangePassword(){
