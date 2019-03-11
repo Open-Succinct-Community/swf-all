@@ -255,11 +255,15 @@ public class Path implements _IPath{
             if (pathelements.isEmpty() ){
                 if (token.equals("resources")) {
                     isResource = true;
-                }else if((token.contains(".") && !stok.hasMoreElements())){
-                    isResource = true;
-                    resourcePath.append("/").append(token);
                 }
-            }else if (isResource){
+            }
+            if((token.contains(".") && !stok.hasMoreElements())){
+                isResource = true;
+                if (resourcePath.length() == 0){
+                    pathelements.forEach(pe->resourcePath.append("/").append(pe));
+                }
+            }
+            if (isResource && !token.equals("resources")){
                 resourcePath.append("/").append(token);
             }
             pathelements.add(token);

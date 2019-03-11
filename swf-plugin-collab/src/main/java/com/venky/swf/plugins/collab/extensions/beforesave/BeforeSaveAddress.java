@@ -11,7 +11,9 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.routing.Config;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -68,15 +70,27 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 		};
 		return address;
 	}
+	protected String[] getAddressFields(){
+		return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE"};
+	}
+	protected boolean isAddressChanged(M oAddress){
+		Set<String> dirtyFields = oAddress.getRawRecord().getDirtyFields();
+		boolean addressFieldsChanged = false;
+		for (String field : getAddressFields()){
+			addressFieldsChanged = addressFieldsChanged || dirtyFields.contains(field);
+			if (addressFieldsChanged){
+				break;
+			}
+		}
+		return addressFieldsChanged;
+	}
 	@Override
 	public void beforeSave(M oAddress) {
-
-		Set<String> dirtyFields = oAddress.getRawRecord().getDirtyFields();
-		boolean addressFieldsChanged = dirtyFields.contains("ADDRESS_LINE_1") || dirtyFields.contains("ADDRESS_LINE_2") || dirtyFields.contains("ADDRESS_LINE_3") ||
-				dirtyFields.contains("ADDRESS_LINE_4") || dirtyFields.contains("CITY_ID") || dirtyFields.contains("STATE_ID") || dirtyFields.contains("COUNTRY_ID") || dirtyFields.contains("PIN_CODE");
-		if (!addressFieldsChanged) {
+		if (!isAddressChanged(oAddress)) {
 			return;
 		}
+
+
 		if (oAddress.getCityId() != null){
 			oAddress.setStateId(oAddress.getCity().getStateId());
 		}
