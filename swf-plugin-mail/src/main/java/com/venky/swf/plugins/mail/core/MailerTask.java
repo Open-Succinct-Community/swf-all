@@ -32,9 +32,10 @@ public class MailerTask implements Task{
 		this.subject = subject;
 		this.text = text;
 		if (!ObjectUtil.isVoid(text)){
-			int len = text.trim().length();
+			String trim = text.trim();
+			int len = trim.length();
 			if (len > 5 ) { 
-				this.isHtml = text.trim().substring(0, 5).equalsIgnoreCase("<html");
+				this.isHtml = trim.substring(0, 5).equalsIgnoreCase("<html") || trim.substring(0,14).equalsIgnoreCase("<!DOCTYPE html");
 			}
 		}
 	}
