@@ -167,7 +167,7 @@ $(function(){
         }) ;
         $(this).data("DateTimePicker").date(date);
         */
-        $(this).datetimepicker({format: 'DD/MM/YYYY hh:mm a'});
+        $(this).datetimepicker({format: 'DD/MM/YYYY HH:mm:00'});
     });
 });
 

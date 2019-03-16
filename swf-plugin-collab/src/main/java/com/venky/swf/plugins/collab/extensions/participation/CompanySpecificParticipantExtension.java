@@ -10,20 +10,16 @@ import com.venky.swf.plugins.collab.db.model.CompanySpecific;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 
-public class CompanySpecificParticipantExtension<M extends Model> extends ParticipantExtension<M>{
+public class CompanySpecificParticipantExtension<M extends Model & CompanySpecific> extends ParticipantExtension<M>{
 
 	@Override
 	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, M partiallyFilledModel, String fieldName) {
 		
-		CompanySpecific cs = null;
 		User u = (User)user;
-		if (CompanySpecific.class.isInstance(partiallyFilledModel)){
-			cs = (CompanySpecific)partiallyFilledModel;
-		}
-		if (cs != null){
+		if (partiallyFilledModel != null){
 			if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
-				if (cs.getCompanyId() != null && cs.getCompany().isAccessibleBy(user)){
-					return Arrays.asList(cs.getCompanyId());
+				if (!partiallyFilledModel.getReflector().isVoid(partiallyFilledModel.getCompanyId()) && partiallyFilledModel.getCompany().isAccessibleBy(user)){
+					return Arrays.asList(partiallyFilledModel.getCompanyId());
 				}else {
 					List<UserCompany> ucs = u.getUserCompanies();
 					SequenceSet<Long> ids =  new SequenceSet<>();
