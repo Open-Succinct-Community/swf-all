@@ -192,7 +192,7 @@ public class Router extends AbstractHandler {
     		return;
     	}
     	SWFLogger cat = Config.instance().getLogger(getClass().getName());
-    	Timer timer = cat.startTimer("handleRequest",true);
+    	Timer timer = cat.startTimer("handleRequest : " + target ,true);
     	try {
 	        _IView view = null;
 	        _IView ev = null ;	

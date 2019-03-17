@@ -153,7 +153,7 @@ $(function(){
         }) ;
         $(this).data("DateTimePicker").date(date);
         */
-        $(this).datetimepicker({format: 'YYYY-MM-DD'});
+        $(this).datetimepicker({format: 'YYYY-MM-DD',allowInputToggle : true});
     });
 });
 $(function(){
@@ -167,7 +167,7 @@ $(function(){
         }) ;
         $(this).data("DateTimePicker").date(date);
         */
-        $(this).datetimepicker({format: 'DD/MM/YYYY HH:mm:00'});
+        $(this).datetimepicker({format: 'DD/MM/YYYY HH:mm:00',allowInputToggle : true});
     });
 });
 

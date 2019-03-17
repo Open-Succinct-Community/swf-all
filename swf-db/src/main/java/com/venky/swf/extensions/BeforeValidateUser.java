@@ -12,7 +12,15 @@ public class BeforeValidateUser extends BeforeModelValidateExtension<User>{
 	@Override
 	public void beforeValidate(User model) {
 		if (ObjectUtil.isVoid(model.getLongName())){
-			model.setLongName(model.getName());
+			if (!ObjectUtil.isVoid(model.getName())){
+				String name = model.getName();
+				int at_position =  name.indexOf('@');
+				if (at_position >= 0){
+					name.substring(0,at_position);  //Avoid Special Characters of email id
+				}
+
+				model.setLongName(name);
+			}
 		}
 	}
 
