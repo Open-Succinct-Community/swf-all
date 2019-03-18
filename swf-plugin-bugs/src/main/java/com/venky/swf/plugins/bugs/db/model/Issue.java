@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
@@ -35,6 +36,7 @@ public interface Issue extends Model{
 	@CLONING_PROTECT
 	@UNIQUE_KEY
 	@IS_NULLABLE(false)
+	@COLUMN_SIZE(1024)
 	public String getTitle();
 	public void setTitle(String title);
 

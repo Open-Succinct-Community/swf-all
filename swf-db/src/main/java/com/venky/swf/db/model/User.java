@@ -40,12 +40,13 @@ import com.venky.swf.sql.Expression;
 public interface User extends Model{
 	
 	@IS_NULLABLE(false)
-	@UNIQUE_KEY
+	@UNIQUE_KEY("K1,K2")
 	@Index
     public String getName();
     public void setName(String name);
     
     @Index
+    @UNIQUE_KEY("K2")
     public String getLongName();
     public void setLongName(String name);
 
