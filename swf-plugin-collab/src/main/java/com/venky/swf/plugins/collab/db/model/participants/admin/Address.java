@@ -55,8 +55,6 @@ public interface Address extends GeoLocation {
     public String getEmail();
     public void setEmail(String emailId);
 
-    @RegEx("\\+[0-9]+") //Ensures that it starts with + and all other characters are numbers.
-    @ExactLength(13) // Ensures that user types in 13 characters in all in a phone field.
     @WATERMARK("e.g +911234567890")
     @Index
     public String getPhoneNumber();
