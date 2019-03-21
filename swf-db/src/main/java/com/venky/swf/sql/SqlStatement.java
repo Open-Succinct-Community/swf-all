@@ -34,7 +34,11 @@ public abstract class SqlStatement {
             	}
             }else if (value.getJdbcType() == Types.CLOB || value.getJdbcType() == Types.LONGVARCHAR){
             	StringReader reader = value.getCharacterInputStream();
-            	st.setCharacterStream(i+1, reader, reader.length());
+            	if (reader == null){
+            		st.setNull(i+1,value.getJdbcType());
+				}else {
+					st.setCharacterStream(i + 1, reader, reader.length());
+				}
             }else {
             	if (value.getValue() == null){
             		st.setNull(i+1, value.getJdbcType());
