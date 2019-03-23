@@ -36,7 +36,6 @@ public interface Issue extends Model{
 	@CLONING_PROTECT
 	@UNIQUE_KEY
 	@IS_NULLABLE(false)
-	@COLUMN_SIZE(1024)
 	public String getTitle();
 	public void setTitle(String title);
 

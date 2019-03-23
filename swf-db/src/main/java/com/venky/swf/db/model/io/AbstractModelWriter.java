@@ -61,11 +61,11 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		Set<Class<? extends Model>> parentsWritten = new HashSet<>();
 		write (records,os,fields,parentsWritten,mapFields);
 	}
-	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<? extends Model>> ignoreParents , Map<Class<? extends Model>,List<String>> childFields) throws IOException {
+	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<? extends Model>> ignoreParents , Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
 		FormatHelper<T> helper  = FormatHelper.instance(getMimeType(),StringUtil.pluralize(getBeanClass().getSimpleName()),true);
 		for (M record: records){
 			T childElement = helper.createChildElement(getBeanClass().getSimpleName());
-			write(record,childElement,fields,ignoreParents, childFields);
+			write(record,childElement,fields,ignoreParents, templateFields);
 		}
 		os.write(helper.toString().getBytes());
 	}
@@ -161,7 +161,10 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
-		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
+		List<String> parentFieldsToAdd = templateFields.get(referredModelReflector.getModelClass());
+		if (parentFieldsToAdd == null){
+			parentFieldsToAdd = referredModelReflector.getUniqueFields();
+		}
 		for (Iterator<String> fi = parentFieldsToAdd.iterator(); fi.hasNext();){
 			String f = fi.next();
 			if (referredModelReflector.isFieldHidden(f)){

@@ -36,13 +36,13 @@ public class AutoIssueCreator implements Extension {
             AsyncTaskManager.getInstance().addAll(Arrays.asList(new Task() {
                 @Override
                 public void execute() {
-                    String title =  "Exception found " + throwable.getMessage() + getLocation(throwable);
-                    List<Issue> issues = new Select().from(Issue.class).where(new Expression(ModelReflector.instance(Issue.class).getPool(),"TITLE", Operator.EQ,title)).execute(1);
+                    String title =  "Exception found " + throwable.getMessage() + " " + getLocation(throwable);
+                    List<Issue> issues = new Select().from(Issue.class).where(new Expression(ModelReflector.instance(Issue.class).getPool(),"TITLE", Operator.LK,title+"%")).execute(1);
                     if (issues.isEmpty()){
                         Issue issue = Database.getTable(Issue.class).newRecord();
                         StringWriter w = new StringWriter(); throwable.printStackTrace(new PrintWriter(w));
                         issue.setDescription(new StringReader(w.toString()));
-                        issue.setTitle(title);
+                        issue.setTitle(title.substring(0,200));
                         issue.save();
                     }
                 }

@@ -82,10 +82,10 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public View createResponse(Path path, List<M> m, List<String> includeFields) {
 		return createResponse(path, m, includeFields, new HashSet<>(), new HashMap<>());
 	}
-	public View createResponse(Path path, List<M> m, List<String> includeFields, Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childFields) {
+	public View createResponse(Path path, List<M> m, List<String> includeFields, Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> templateFields) {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			writer.write(m, baos, includeFields,ignoreParents,childFields);
+			writer.write(m, baos, includeFields,ignoreParents,templateFields);
 			return new BytesView(path, baos.toByteArray());
 		}catch (IOException ex){ 
 			throw new RuntimeException(ex);
@@ -97,10 +97,11 @@ public class IntegrationAdaptor<M extends Model,T> {
 	public View createResponse(Path path, M m, List<String> includeFields) {
 		return createResponse(path, m,includeFields,new HashSet<>(), new HashMap<>());
 	}
-	public View createResponse(Path path, M m, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childFields) {
-		return createResponse(path,m,true, includeFields, ignoreParents,childFields);
+	public View createResponse(Path path, M m, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> templateFields) {
+		return createResponse(path,m,true, includeFields, ignoreParents,templateFields);
 	}
-	public View createResponse(Path path, M m, boolean rootElementRequiresName, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childFields) {
+	public View createResponse(Path path, M m, boolean rootElementRequiresName, List<String> includeFields,  Set<Class<? extends Model>> ignoreParents, Map<Class<? extends Model>,
+			List<String>> templateFields) {
 
 		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); ;
 		T element = helper.getRoot();
@@ -114,7 +115,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 
 		T elementAttributeToWrite = elementAttribute;
 		TimerUtils.time(cat,"Write Response" , ()-> {
-			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, childFields);
+			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, templateFields);
 			return true;
 		});
 		return TimerUtils.time(cat, "Returning Bytes View" , () -> new BytesView(path, helper.toString().getBytes()));

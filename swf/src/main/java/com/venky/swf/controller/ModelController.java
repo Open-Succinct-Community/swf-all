@@ -50,7 +50,6 @@ import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -65,6 +64,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -319,7 +319,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View list(List<M> records,boolean isCompleteList){
     	View v = null;
     	if (integrationAdaptor != null){
-    		v = integrationAdaptor.createResponse(getPath(),records);
+    		v = integrationAdaptor.createResponse(getPath(),records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),getIgnoredParentModels(), getIncludedModelFields());
     	}else {
     		View lv = constructModelListView(records,isCompleteList);
     		if (lv instanceof HtmlView){
@@ -331,7 +331,7 @@ public class ModelController<M extends Model> extends Controller {
     	}
     	return v;
     }
-    
+
     protected View constructModelListView(List<M> records, boolean isCompleteList){
     	return new ModelListView<M>(getPath(), getIncludedFields(), records, isCompleteList);
     }
@@ -358,7 +358,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View show(M record){
     	View view = null ;
 		if (integrationAdaptor != null){
-			view = integrationAdaptor.createResponse(getPath(),record,null,getIgnoredParentModels(), getIncludedChildModelFields());
+			view = integrationAdaptor.createResponse(getPath(),record,null,getIgnoredParentModels(), getIncludedModelFields());
 		}else {
 			view = dashboard(createModelShowView(record));
 		}
@@ -368,7 +368,7 @@ public class ModelController<M extends Model> extends Controller {
 		return new HashSet<>();
 	}
 
-	protected Map<Class<? extends Model>, List<String>> getIncludedChildModelFields() {
+	protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
 		return new HashMap<>();
 	}
 

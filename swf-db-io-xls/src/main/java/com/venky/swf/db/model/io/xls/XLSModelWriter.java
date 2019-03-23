@@ -83,9 +83,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	@Override
 	public void write(List<M> records, OutputStream os, List<String> fields, Set<Class<? extends Model>> ignoreParents,
-			Map<Class<? extends Model>, List<String>> childfields) throws IOException {
+			Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
 		Workbook wb = new XSSFWorkbook();
-		write(records,wb,fields,ignoreParents,childfields);
+		write(records,wb,fields,ignoreParents, templateFields);
 		wb.write(os);
 	}
 	
@@ -156,8 +156,8 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(m,r,fields,new HashSet<Class<? extends Model>>(), new HashMap<Class<? extends Model>,List<String>>());
 	}
 	@Override
-	public void write(M record, Row into, List<String> fields, Set<Class<?extends  Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childfields) {
-		write (record,into,fields,ignoreParents,childfields,null);
+	public void write(M record, Row into, List<String> fields, Set<Class<?extends  Model>> ignoreParents, Map<Class<? extends Model>, List<String>> templateFields) {
+		write (record,into,fields,ignoreParents, templateFields,null);
 	}
 	public void alignTop(CellStyle style){
 		style.setAlignment(HorizontalAlignment.LEFT);

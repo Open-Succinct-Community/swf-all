@@ -10,7 +10,7 @@ import com.venky.swf.db.model.Model;
 
 public interface ModelWriter<M extends Model,T> {
 	public void write (M record, T into , List<String> fields);
-	public void write (M record, T into , List<String> fields, Set<Class<?extends Model>> ignoreParents,Map<Class<? extends Model>,List<String>> childfields);
+	public void write (M record, T into , List<String> fields, Set<Class<?extends Model>> ignoreParents,Map<Class<? extends Model>,List<String>> templateFields);
 	public void write (List<M> records,OutputStream os, List<String> fields) throws IOException;
-	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<?extends Model>> ignoreParents, Map<Class<? extends Model>,List<String>> childfields) throws IOException ;
+	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<?extends Model>> ignoreParents, Map<Class<? extends Model>,List<String>> templateFields) throws IOException ;
 }
