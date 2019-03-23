@@ -42,7 +42,7 @@ public class AutoIssueCreator implements Extension {
                         Issue issue = Database.getTable(Issue.class).newRecord();
                         StringWriter w = new StringWriter(); throwable.printStackTrace(new PrintWriter(w));
                         issue.setDescription(new StringReader(w.toString()));
-                        issue.setTitle(title.substring(0,200));
+                        issue.setTitle(title.substring(0,Math.min(200,title.length())));
                         issue.save();
                     }
                 }
