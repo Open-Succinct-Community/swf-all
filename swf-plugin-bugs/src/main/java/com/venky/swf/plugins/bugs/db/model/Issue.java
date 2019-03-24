@@ -14,6 +14,7 @@ import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.CLONING_PROTECT;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
@@ -23,10 +24,11 @@ import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.plugins.collab.db.model.CompanySpecific;
 
 @MENU("Help")
 @HAS_DESCRIPTION_FIELD("TITLE")
-public interface Issue extends Model{
+public interface Issue extends Model , CompanySpecific {
 	@HIDDEN(false)
 	@PROTECTION(Kind.NON_EDITABLE)
 	@EXPORTABLE
@@ -67,9 +69,12 @@ public interface Issue extends Model{
 	
 	@IS_NULLABLE
 	@CLONING_PROTECT
+	@PARTICIPANT
 	public Long getAssignedToId();
 	public void setAssignedToId(Long id);
 	public User getAssignedTo();
+
+
 	
 	@Index
 	@COLUMN_NAME("creator_id")

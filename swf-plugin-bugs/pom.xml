@@ -36,7 +36,7 @@
   <dependencies>
   	<dependency>
         <groupId>${project.groupId}</groupId>
-  		  <artifactId>swf</artifactId>
+  		  <artifactId>swf-plugin-collab</artifactId>
         <version>${project.version}</version>
   	</dependency>
   	<dependency>
