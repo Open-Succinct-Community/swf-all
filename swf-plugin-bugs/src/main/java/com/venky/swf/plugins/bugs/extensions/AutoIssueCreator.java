@@ -33,7 +33,8 @@ public class AutoIssueCreator implements Extension {
     @Override
     public void invoke(Object... context) {
         Transaction transaction = context.length <=  0? null : (Transaction)context[0];
-        User sessionUser = Database.getInstance().getCurrentUser().getRawRecord().getAsProxy(User.class);
+        com.venky.swf.db.model.User u = Database.getInstance().getCurrentUser();
+        User sessionUser = u == null ? null : u.getRawRecord().getAsProxy(User.class);
         if (sessionUser == null || sessionUser.getUserCompanies().isEmpty()){
             return;
         }
