@@ -191,7 +191,7 @@ public class Controller {
     @RequireLogin(false)
     public View logout(){
 		invalidateSession();
-		return new RedirectorView(getPath(),"/","login");
+		return new RedirectorView(getPath(),"","login");
     }
 
     @RequireLogin(false)
