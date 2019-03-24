@@ -12,6 +12,8 @@ import com.venky.swf.plugins.background.core.AsyncTaskWorker;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.bugs.db.model.Issue;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -31,6 +33,10 @@ public class AutoIssueCreator implements Extension {
     @Override
     public void invoke(Object... context) {
         Transaction transaction = context.length <=  0? null : (Transaction)context[0];
+        User sessionUser = Database.getInstance().getCurrentUser().getRawRecord().getAsProxy(User.class);
+        if (sessionUser == null || sessionUser.getUserCompanies().isEmpty()){
+            return;
+        }
         Throwable throwable = context.length <= 1 ? null : ExceptionUtil.getRootCause((Throwable)context[1]);
         if (throwable != null){
             AsyncTaskManager.getInstance().addAll(Arrays.asList(new Task() {
@@ -43,6 +49,7 @@ public class AutoIssueCreator implements Extension {
                         StringWriter w = new StringWriter(); throwable.printStackTrace(new PrintWriter(w));
                         issue.setDescription(new StringReader(w.toString()));
                         issue.setTitle(title.substring(0,Math.min(issue.getReflector().getColumnDescriptor("TITLE").getSize(),title.length())));
+                        issue.setCompanyId(sessionUser.getUserCompanies().get(0).getCompanyId());
                         issue.save();
                     }
                 }
