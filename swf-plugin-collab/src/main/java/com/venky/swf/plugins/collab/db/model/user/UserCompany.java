@@ -20,12 +20,5 @@ public interface UserCompany extends Model, CompanySpecific {
 	public void setUserId(long userId);
 	public User getUser(); 
 	
-	@IS_NULLABLE(false)
-	@Index
-	@UNIQUE_KEY
-	@PARTICIPANT("COMPANY")
-	public Long getCompanyId();
-	public void setCompanyId(Long id);
-	public Company getCompany();
 
 }
