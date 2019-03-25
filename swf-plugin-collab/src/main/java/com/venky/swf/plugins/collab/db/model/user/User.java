@@ -19,4 +19,7 @@ public interface User extends com.venky.swf.plugins.security.db.model.User , Add
 	public Company getCompany();
 
 	public List<UserCompany> getUserCompanies();
+
+	@IS_VIRTUAL
+	public boolean isStaff();
 }
