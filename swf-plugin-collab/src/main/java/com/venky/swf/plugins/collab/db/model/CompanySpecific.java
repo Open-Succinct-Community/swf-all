@@ -9,7 +9,6 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 public interface CompanySpecific {
 	@PARTICIPANT
 	@IS_NULLABLE(false)
-	@Index
 	@UNIQUE_KEY
 	public Long getCompanyId();
 	public void setCompanyId(Long id);
