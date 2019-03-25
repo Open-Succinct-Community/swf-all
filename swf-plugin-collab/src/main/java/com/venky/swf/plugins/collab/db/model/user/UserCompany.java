@@ -15,7 +15,6 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 public interface UserCompany extends Model, CompanySpecific {
 	@PARTICIPANT
 	@UNIQUE_KEY
-	@HIDDEN
 	public long getUserId();
 	public void setUserId(long userId);
 	public User getUser(); 
