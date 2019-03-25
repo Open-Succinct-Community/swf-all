@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class AutoIssueCreator implements Extension {
     static {
-        Registry.instance().registerExtension("after.rollback",new AutoIssueCreator());
+        //Causes Issues Registry.instance().registerExtension("after.rollback",new AutoIssueCreator());
     }
     @Override
     public void invoke(Object... context) {
