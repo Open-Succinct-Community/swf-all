@@ -161,10 +161,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
-		List<String> parentFieldsToAdd = templateFields.get(referredModelReflector.getModelClass());
-		if (parentFieldsToAdd == null){
-			parentFieldsToAdd = referredModelReflector.getUniqueFields();
-		}
+
+		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
 		for (Iterator<String> fi = parentFieldsToAdd.iterator(); fi.hasNext();){
 			String f = fi.next();
 			if (referredModelReflector.isFieldHidden(f)){
@@ -172,8 +170,13 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			}
 		}
 		parentFieldsToAdd.add("ID");
-        if (templateFields != null && templateFields.get(referredModelClass) != null) {
-            parentFieldsToAdd.addAll(templateFields.get(referredModelClass));
+
+		if (templateFields != null){
+			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
+				if (templateFields.get(clazz) != null) {
+					parentFieldsToAdd.addAll(templateFields.get(clazz));
+				}
+			}
         }
 		writer.write(referredModel , referredModelElement, parentFieldsToAdd);
 	}
