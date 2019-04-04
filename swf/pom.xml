@@ -41,12 +41,12 @@
 			<version>4.8.2</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty</groupId>
-			<artifactId>jetty-server</artifactId>
-            <version>9.4.11.v20180605</version>
-			<scope>compile</scope>
-		</dependency>
+        <dependency>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-server</artifactId>
+          <version>[9.4.12.v20180830,)</version>
+		  <scope>compile</scope>
+        </dependency>
   	<dependency>
   		<groupId>com.github.venkatramanm.swf-all</groupId>
   		<artifactId>swf-db</artifactId>
