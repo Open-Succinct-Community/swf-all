@@ -202,20 +202,23 @@ public class Router extends AbstractHandler {
 	        p.setSession(request.getSession(false));
 	        p.setRequest(request);
 	        p.setResponse(response);
-			String origins = Config.instance().getProperty("swf.cors.allowed.origins", "localhost");
-			response.addHeader("Access-Control-Allow-Origin" , origins );
-			response.addHeader ("Access-Control-Allow-Credentials" ,"true" );
-			response.addHeader ("Access-Control-Allow-Methods" ,"GET, POST, PUT, DELETE, OPTIONS");
-			response.addHeader ("Access-Control-Allow-Headers" ,"Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,Range,ApiKey");
 
-			if (p.getRequest().getMethod().equalsIgnoreCase("OPTIONS")){
-				response.addHeader ("Content-Type", "text/plain charset=UTF-8");
-				response.addIntHeader ("Access-Control-Max-Age" ,1728000);
-				response.addIntHeader ("Content-Length" , 0);
-				response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-				return;
+			String origins = Config.instance().getProperty("swf.cors.allowed.origins");
+			if (!ObjectUtil.isVoid(origins)){
+				response.addHeader("Access-Control-Allow-Origin" , origins );
+				response.addHeader ("Access-Control-Allow-Credentials" ,"true" );
+				response.addHeader ("Access-Control-Allow-Methods" ,"GET, POST, PUT, DELETE, OPTIONS");
+				response.addHeader ("Access-Control-Allow-Headers" ,"Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,Range,ApiKey");
+
+				if (p.getRequest().getMethod().equalsIgnoreCase("OPTIONS")){
+					response.addHeader ("Content-Type", "text/plain charset=UTF-8");
+					response.addIntHeader ("Access-Control-Max-Age" ,1728000);
+					response.addIntHeader ("Content-Length" , 0);
+					response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+					return;
+				}
 			}
-	        
+
 	        Logger logger = Config.instance().getLogger(getClass().getName());
 	        _IDatabase db = null ;
 	        try {
