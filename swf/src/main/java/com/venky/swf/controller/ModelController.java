@@ -778,7 +778,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View defaultActionView(M record){
     	View v = null; 
     	if (integrationAdaptor != null){
-    		v = integrationAdaptor.createResponse(getPath(),record);
+    		v = integrationAdaptor.createResponse(getPath(),record,null,getIgnoredParentModels(), getIncludedModelFields());
     	}else{
     		v = back();
     	}
@@ -926,7 +926,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     private <T> View saveModelsFromRequest(){
     	List<M> models = persistModelsFromRequest();
-    	return integrationAdaptor.createResponse(getPath(),models);
+    	return integrationAdaptor.createResponse(getPath(),models,null,getIgnoredParentModels(), getIncludedModelFields());
     }
     protected <T> List<M> persistModelsFromRequest(){
     	List<M> models = integrationAdaptor.readRequest(getPath());
@@ -1110,7 +1110,7 @@ public class ModelController<M extends Model> extends Controller {
 					i.remove();
 				}
 			}
-			return integrationAdaptor.createResponse(getPath(),models);
+			return integrationAdaptor.createResponse(getPath(),models,null,getIgnoredParentModels(), getIncludedModelFields());
 		}
 		throw new AccessDeniedException("Cannot call this api from ui");
 
