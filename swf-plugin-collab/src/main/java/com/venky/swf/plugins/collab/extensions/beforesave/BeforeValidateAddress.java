@@ -9,9 +9,7 @@ import com.venky.swf.plugins.collab.db.model.user.User;
 import java.util.regex.Pattern;
 
 public class BeforeValidateAddress<M extends Address & Model> extends BeforeModelValidateExtension<M> {
-    static {
-        registerExtension(new BeforeValidateAddress());
-    }
+
 
     @Override
     public void beforeValidate(M model) {
