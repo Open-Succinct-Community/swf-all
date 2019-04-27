@@ -10,6 +10,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class IssueParticipantExtension extends CompanySpecificParticipantExtension<Issue> {
+    static {
+        registerExtension(new IssueParticipantExtension());
+    }
     @Override
     protected List<Long> getAllowedFieldValues(User user, Issue partiallyFilledModel, String fieldName) {
         if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
