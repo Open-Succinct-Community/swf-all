@@ -61,7 +61,10 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		Map<String,List<Long>> participatingOptions = participatingGroupOptions.get(participant.value());
 		List<Long> allowedValues = getAllowedFieldValues(user,model,fieldName);
 
-		if (allowedValues != null){ 
+		if (allowedValues != null){
+			if (getReflector().getColumnDescriptor(fieldName).isNullable()){
+				allowedValues.add(null);
+			}
 			List<Long> existing = participatingOptions.get(fieldName);
 			if (existing == null){
 				existing = new SequenceSet<Long>();

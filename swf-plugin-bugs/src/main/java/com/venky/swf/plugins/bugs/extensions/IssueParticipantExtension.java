@@ -6,6 +6,7 @@ import com.venky.swf.plugins.bugs.db.model.Issue;
 import com.venky.swf.plugins.collab.extensions.participation.CompanySpecificParticipantExtension;
 import com.venky.swf.pm.DataSecurityFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
