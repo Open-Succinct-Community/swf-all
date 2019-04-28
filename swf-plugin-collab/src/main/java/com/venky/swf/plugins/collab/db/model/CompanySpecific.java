@@ -7,7 +7,7 @@ import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 
 public interface CompanySpecific {
-	@PARTICIPANT
+	@PARTICIPANT("COMPANY")//To ensure it is anded and not ored  in queries.
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY
 	public Long getCompanyId();
