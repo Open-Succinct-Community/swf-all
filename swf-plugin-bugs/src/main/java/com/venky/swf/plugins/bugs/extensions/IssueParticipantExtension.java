@@ -18,7 +18,7 @@ public class IssueParticipantExtension extends CompanySpecificParticipantExtensi
         if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
             return super.getAllowedFieldValues(user,partiallyFilledModel,fieldName);
         }else if ("ASSIGNED_TO_ID".equalsIgnoreCase(fieldName)){
-            return Arrays.asList(user.getId());
+            return super.getAllowedUserIds(user,partiallyFilledModel,fieldName,true);
         }
 
         return null;

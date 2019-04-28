@@ -241,7 +241,7 @@ public class Router extends AbstractHandler {
 	            db.getCurrentTransaction().commit();
 	        }catch(Exception e){
 	        	try {
-	        		logger.log(Level.INFO, "Request failed", e);
+	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" + p.getRequest().getMethod(), e);
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
 	        		logger.log(Level.INFO, "Rollback failed", ex);

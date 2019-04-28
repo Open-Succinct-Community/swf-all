@@ -1,15 +1,21 @@
 package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.CompanySpecific;
 import com.venky.swf.db.model.User;
 import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.sql.Select;
+import com.venky.swf.sql.Select.ResultFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CompanySpecificParticipantExtension<M extends Model & CompanySpecific> extends ParticipantExtension<M>{
 
@@ -30,14 +36,35 @@ public class CompanySpecificParticipantExtension<M extends Model & CompanySpecif
 					return ids;
 				}
 			}else if ("USER_ID".equalsIgnoreCase(fieldName)){
-				if (user.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.User.class).isStaff()) {
-					return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(com.venky.swf.db.model.User.class, user));
-				}else{
-					return Arrays.asList(user.getId());
-				}
+				return getAllowedUserIds(user,partiallyFilledModel,fieldName,false);
 			}
 		}
 		return null;
 	}
 
+	protected List<Long> getAllowedUserIds(User user,  M partiallyFilledModel, String fieldName, boolean onlyStaff){
+
+		if (!getReflector().getReferredModelGetterFor(getReflector().getFieldGetter(fieldName)).getReturnType().getSimpleName().equals(User.class.getSimpleName())){
+			return null;
+		}
+		Long userId = getReflector().get(partiallyFilledModel,fieldName);
+		if (!getReflector().isVoid(userId)){
+			if (!ObjectUtil.equals(userId,user.getId())) {
+				User other = Database.getTable(User.class).get(userId);
+				if (other.isAccessibleBy(user)) {
+					return Arrays.asList(other.getId());
+				}
+			}
+		}else if (user.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.User.class).isStaff()) {
+			return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(com.venky.swf.db.model.User.class, user).stream().filter((u)->{
+				return !onlyStaff || u.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.User.class).isStaff();
+			}).collect(Collectors.toList()));
+		}
+
+		return Arrays.asList(user.getId());
+
+
+
+
+	}
 }

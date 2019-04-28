@@ -13,10 +13,10 @@ public interface User extends com.venky.swf.plugins.security.db.model.User , Add
 
 	@PARTICIPANT
 	@HIDDEN
-	@IS_VIRTUAL
-	public Long getCompanyId();
-	public void setCompanyId(Long companyId);
-	public Company getCompany();
+	@COLUMN_NAME("ID")
+	public Long getCompanyUserId();
+	public void setCompanyUserId(Long companyUserId);
+	public User getCompanyUser();
 
 	public List<UserCompany> getUserCompanies();
 
