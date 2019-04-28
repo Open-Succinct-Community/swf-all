@@ -62,6 +62,10 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		List<Long> allowedValues = getAllowedFieldValues(user,model,fieldName);
 
 		if (allowedValues != null){
+			List<Long> ret = new SequenceSet<>();
+			ret.addAll(allowedValues);
+			allowedValues = ret;
+
 			if (getReflector().getColumnDescriptor(fieldName).isNullable()){
 				allowedValues.add(null);
 			}
