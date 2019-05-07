@@ -7,6 +7,7 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -15,6 +16,20 @@ public class AppInstaller implements Installer {
 	public void install(){
 		installUsers();
 		fixUserName();
+		fixUserPasswords();
+	}
+	protected void fixUserPasswords(){
+		if (Config.instance().shouldPasswordsBeEncrypted()){
+			List<User> users = new Select().from(User.class).
+					where(new Expression(ModelReflector.instance(User.class).getPool(),
+							"PASSWORD_ENCRYPTED", Operator.EQ,false)).execute();
+			for (User user : users) {
+				String encryptedPassword = user.getEncryptedPassword(user.getPassword());
+				user.setPassword(encryptedPassword);
+				user.setPasswordEncrypted(true);
+				user.save();
+			}
+		}
 	}
 	protected void fixUserName(){
 		Select q = new Select().from(User.class);

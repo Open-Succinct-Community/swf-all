@@ -55,25 +55,28 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	
 	public void setChangePassword(String password){
-		if (!ObjectUtil.isVoid(password)){ 
+		if (!ObjectUtil.isVoid(password)){
 			getProxy().setPassword(password);
 		}
 	}
-	
+	public String getEncryptedPassword(String unencyptedPassword){
+		String password = unencyptedPassword;
+		if (Config.instance().getBooleanProperty("swf.user.password.encrypted",false)){
+			User user = getProxy();
+			if (user.getReflector().isVoid(user.getCreatedAt())){
+				user.setCreatedAt(user.getReflector().getNow());
+			}
+			String salt = user.getCreatedAt().getTime() + "--" + user.getName() + "--" ;
+			password = Encryptor.encrypt(unencyptedPassword + "--" + salt);
+		}
+		return password;
+	}
+
 	public boolean authenticate(String password){
 		boolean ret = true;
 		try {
 			User user = getProxy();
-			if (Registry.instance().hasExtensions(User.USER_AUTHENTICATE)){
-				Registry.instance().callExtensions(User.USER_AUTHENTICATE, user,password);
-			}else {
-				ret = ObjectUtil.equals(user.getPassword(),password);
-				if (!ret){
-					Config.instance().getLogger(getClass().getName()).fine("Password mismatch '" + password + "' <> '" + user.getPassword() + "'");
-				}else if (getNumMinutesToKeyExpiration() < 0 ) {
-                    generateApiKey();
-                }
-			}
+			Registry.instance().callExtensions(User.USER_AUTHENTICATE, user,password);
 		}catch (AccessDeniedException ex){
 			ret  = false;
 		}

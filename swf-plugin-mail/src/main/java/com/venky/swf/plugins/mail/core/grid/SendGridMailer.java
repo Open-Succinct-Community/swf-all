@@ -1,23 +1,22 @@
 package com.venky.swf.plugins.mail.core.grid;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.plugins.mail.core.Mailer;
+import com.venky.swf.routing.Config;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.codemonkey.simplejavamail.Email;
 import org.codemonkey.simplejavamail.Recipient;
 
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.plugins.mail.core.Mailer;
-import com.venky.swf.routing.Config;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SendGridMailer implements Mailer{
 	private static final String WSURL = "http://sendgrid.com/api/mail.send.xml";
@@ -27,7 +26,7 @@ public class SendGridMailer implements Mailer{
 	}
 
 	public void sendMail(Email mail) {
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClientBuilder.create().build();
 		HttpPost post = new HttpPost(WSURL);
 		List<NameValuePair> attributes = new ArrayList<NameValuePair>();
 		try {

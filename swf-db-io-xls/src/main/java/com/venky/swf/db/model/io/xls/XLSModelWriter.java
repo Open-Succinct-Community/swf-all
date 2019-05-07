@@ -299,7 +299,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(value.getClass()).getTypeConverter().toString(value);
 		int currentValueLength = sValue.length() ;
 		int numRowsRequiredForCurrentValue = WordWrapUtil.getNumRowsRequired(sValue,maxColumnLength);
-		Font font = sheet.getWorkbook().getFontAt(style.getFontIndex());
+		Font font = sheet.getWorkbook().getFontAt(style.getFontIndexAsInt());
 		
 		if (currentColumnWidth < maxColumnLength * CHARACTER_WIDTH){
 			int currentValueWidth = (currentValueLength + 1)* CHARACTER_WIDTH; 

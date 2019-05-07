@@ -326,4 +326,8 @@ public class Config {
 		params.put("google.api_key",Config.instance().getProperty("geocoder.google.api_key"));
 		return params;
 	}
+
+	public boolean shouldPasswordsBeEncrypted(){
+		return getBooleanProperty("swf.user.password.encrypted",false);
+	}
 }

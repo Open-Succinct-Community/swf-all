@@ -108,4 +108,17 @@ public interface User extends Model{
 	
 	public void generateApiKey();
     public void generateApiKey(boolean save);
+
+    @IS_VIRTUAL
+    public String getEncryptedPassword(String unencryptedPassword);
+
+
+    @IS_VIRTUAL
+    public int getNumMinutesToKeyExpiration();
+
+
+    @COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
+    public boolean isPasswordEncrypted();
+    public void setPasswordEncrypted(boolean encrypted);
+
 }
