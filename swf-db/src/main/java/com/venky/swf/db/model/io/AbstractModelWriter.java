@@ -39,15 +39,17 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	public MimeType getMimeType(){
 		return FormatHelper.getMimeType(getFormatClass());
 	}
-	
-	private List<String> getFields(List<String> includeFields) {
+	private List<String> getFields(List<String> includeFields){
+		return getFields(getReflector(),includeFields);
+	}
+	private static <R extends Model> List<String> getFields(ModelReflector<R> reflector, List<String> includeFields) {
 		List<String> fields = includeFields;
 		if (fields == null){
-			fields = getReflector().getFields();
+			fields = reflector.getFields();
 			Iterator<String> fi = fields.iterator();
 			while (fi.hasNext()){
 				String field = fi.next();
-				if (getReflector().isFieldHidden(field) && !"ID".equalsIgnoreCase(field)){
+				if (reflector.isFieldHidden(field) && !"ID".equalsIgnoreCase(field)){
 					fi.remove();
 				}
 			}
@@ -173,8 +175,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 		if (templateFields != null){
 			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
-				if (templateFields.get(clazz) != null) {
-					parentFieldsToAdd.addAll(templateFields.get(clazz));
+				if (templateFields.containsKey(clazz)) {
+					parentFieldsToAdd.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
 				}
 			}
         }
