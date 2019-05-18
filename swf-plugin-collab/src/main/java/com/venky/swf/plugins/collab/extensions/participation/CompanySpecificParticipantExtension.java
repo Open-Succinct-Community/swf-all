@@ -8,6 +8,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.CompanySpecific;
 import com.venky.swf.db.model.User;
 import com.venky.swf.plugins.collab.db.model.user.UserCompany;
+import com.venky.swf.plugins.security.db.model.UserRole;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.Select.ResultFilter;
