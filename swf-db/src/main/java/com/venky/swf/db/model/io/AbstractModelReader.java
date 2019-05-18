@@ -48,7 +48,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 				Model referredModel = reader.read(refElement);
 				if (referredModel != null){
 					if (referredModel.getRawRecord().isNewRecord()) {
-						throw new RuntimeException(referredModelClass.getSimpleName() + " passed is not associated with " +  getReflector().getModelClass().getSimpleName());
+						throw new RuntimeException(referredModelClass.getSimpleName() + " passed does not exist " );
 					}
 					getReflector().set(m, getReflector().getReferenceField(referredModelGetter), referredModel.getId());
 				}else {
