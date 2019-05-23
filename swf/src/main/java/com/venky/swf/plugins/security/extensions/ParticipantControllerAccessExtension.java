@@ -219,25 +219,24 @@ public class ParticipantControllerAccessExtension implements Extension{
 		List<RolePermission> permissions = permissionQuery.execute();
 		
 		selectingRolePermissions.stop();
-		
-		if (selectedModel != null){ 
-			Timer removingPermissionRecords = cat.startTimer("Remove permission records based on condition.");
-			for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
-				RolePermission permission = permissionIterator.next();
-				Reader condition = permission.getConditionText();
-				String sCondition = (condition == null ? null : StringUtil.read(condition));
-				if (!ObjectUtil.isVoid(sCondition)){
-					Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);
-					if (expression == null ){
-						expression = new XMLExpressionParser(modelClass).parse(sCondition);
-					}
-					if (!expression.eval(selectedModel)) {
-						permissionIterator.remove();
-					}
+
+		//VENKY Fixed on May 23 2019.  to ensure that condition based permissions dont' cause to be picked up incorrectly.
+		Timer removingPermissionRecords = cat.startTimer("Remove permission records based on condition.");
+		for (Iterator<RolePermission> permissionIterator = permissions.iterator(); permissionIterator.hasNext() ; ){
+			RolePermission permission = permissionIterator.next();
+			Reader condition = permission.getConditionText();
+			String sCondition = (condition == null ? null : StringUtil.read(condition));
+			if (!ObjectUtil.isVoid(sCondition)){
+				Expression expression = new SQLExpressionParser(modelClass).parse(sCondition);
+				if (expression == null ){
+					expression = new XMLExpressionParser(modelClass).parse(sCondition);
+				}
+				if (selectedModel == null || !expression.eval(selectedModel)) {
+					permissionIterator.remove();
 				}
 			}
-			removingPermissionRecords.stop();
 		}
+		removingPermissionRecords.stop();
 
 		if (permissions.isEmpty()){
 			return true ;
