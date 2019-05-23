@@ -115,7 +115,7 @@ public class Controller {
         	if ( getSessionUser() == null ) {
 				return  createLoginView();
         	}else {
-        		return new RedirectorView(getPath(), "", loginSuccessful());
+				return new RedirectorView(getPath(),loginSuccessful(),"");
         	}
 		}else{
         	return authenticate();
@@ -125,7 +125,7 @@ public class Controller {
     protected String loginSuccessful(){
 		String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
 		if (ObjectUtil.isVoid(redirectedTo)){
-			redirectedTo = "dashboard";
+			redirectedTo = "/dashboard";
 		}else {
 			if (getFormFields().containsKey("_REGISTER")){
 				redirectedTo = redirectedTo+"/users/edit/"+ getSessionUser().getId();
