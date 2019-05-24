@@ -208,16 +208,15 @@ public class OidController extends Controller{
 	}
 
 
-	@RequireLogin(false)
-	public View linkedin() throws OAuthProblemException, OAuthSystemException, ParseException{
-		return verify("LINKEDIN");
+	public View linkedin(String redirectUrl) throws OAuthProblemException, OAuthSystemException, ParseException{
+		return verify("LINKEDIN",redirectUrl);
 	}
 	@SuppressWarnings("rawtypes")
 	@RequireLogin(false)
 	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException {
-		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"));
+		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"),getPath().getRequest().getParameter("_redirect_to"));
 	}
-	private View verify(String selectedOpenId) throws OAuthProblemException, OAuthSystemException, ParseException{
+	private View verify(String selectedOpenId,String redirect_to) throws OAuthProblemException, OAuthSystemException, ParseException{
 		HttpServletRequest request = getPath().getRequest();
 		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
 		String code = oar.getCode();
@@ -225,7 +224,7 @@ public class OidController extends Controller{
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
 		try {
-	        String email = provider.authorize(code,getPath().getRequest().getParameter("_redirect_to"));
+	        String email = provider.authorize(code,redirect_to);
     		User u = null;
 			Select select = new Select().from(UserEmail.class);
 			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
