@@ -87,3 +87,7 @@ div.empty-row {
     cursor: inherit;
     display: block;
 }
+
+a.linked-image.btn img { 
+    width:50px;
+}

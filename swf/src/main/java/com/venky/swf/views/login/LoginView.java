@@ -58,11 +58,15 @@ public class LoginView extends HtmlView{
     	Label appLabel = new Label(applicationName);
     	appLabel.addClass("application-title");
 		if (!ObjectUtil.isVoid(Config.instance().getClientId("GOOGLE"))){
-			appLabel.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
+			appLabel.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
 		}
 		if (!ObjectUtil.isVoid(Config.instance().getClientId("FACEBOOK"))){
-			appLabel.addControl(new LinkedImage("/resources/images/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (_redirect_to == null ? "" : "&_redirect_to=" + _redirect_to)));
+			appLabel.addControl(new LinkedImage("/resources/images/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
 		}
+		if (!ObjectUtil.isVoid(Config.instance().getClientId("LINKEDIN"))){
+			appLabel.addControl(new LinkedImage("/resources/images/linkedin-icon.png","/oid/login?SELECTED_OPEN_ID=LINKEDIN" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
+		}
+
 		applicationDescPannel.addControl(appLabel);
 
         Form form = new Form();

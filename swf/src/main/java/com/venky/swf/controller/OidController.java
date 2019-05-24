@@ -31,6 +31,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -61,18 +62,30 @@ public class OidController extends Controller{
 	public OidController(Path path) {
 		super(path);
 	}
-	
 	static class OIDProvider {
+		public String getRedirectUrl(String openIdProvider){
+			if (!openIdProvider.equals("LINKEDIN")){
+				return Config.instance().getServerBaseUrl() + "/oid/verify?SELECTED_OPEN_ID="+ openIdProvider;
+			}else {
+				return Config.instance().getServerBaseUrl() + "/oid/linkedin";
+			}
+		}
 		public OIDProvider(String opendIdProvider, OAuthProviderType providerType,
-				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl) {
+				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl,String scope,GrantType grantType , boolean resoureUrlNeedsHeaders) {
 			this.iss = issuer ; 
 			this.tokenResponseClass = tokenResponseClass;
 			this.resourceUrl = resourceUrl;
 			this.openIdProvider = opendIdProvider ;  this.providerType = providerType; 
 			this.clientId = Config.instance().getClientId(opendIdProvider); 
 			this.clientSecret = Config.instance().getClientSecret(opendIdProvider) ; 
-			this.redirectUrl = Config.instance().getServerBaseUrl() + "/oid/verify?SELECTED_OPEN_ID="+opendIdProvider;
+			this.redirectUrl = getRedirectUrl(opendIdProvider);
+			this.scope = scope;
+			this.grantType = grantType;
+			this.resourceUrlNeedsHeaders = resoureUrlNeedsHeaders;
+
 		}
+		boolean resourceUrlNeedsHeaders;
+		GrantType grantType;
 		String openIdProvider;
 		OAuthProviderType providerType;
 		String clientId;
@@ -80,12 +93,13 @@ public class OidController extends Controller{
 		String iss;
 		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
 		String resourceUrl;
-		String redirectUrl; 
+		String redirectUrl;
+		String scope;
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" + _redirect_to);
 				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
-						.setScope("email").
+						.setScope(scope).
 						setRedirectURI(redirectTo).buildQueryMessage();
 			} catch (OAuthSystemException e) {
 				throw new RuntimeException(e);
@@ -96,12 +110,12 @@ public class OidController extends Controller{
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
 				        .tokenProvider(providerType)
-				        .setGrantType(GrantType.AUTHORIZATION_CODE)
+				        .setGrantType(grantType)
 				        .setClientId(clientId)
 				        .setClientSecret(clientSecret)
 				        .setRedirectURI(redirectTo)
 				        .setCode(code)
-				        .setScope("email")
+				        .setScope(scope)
 				        .buildBodyMessage();
 
 				OAuthClient oAuthClient = new OAuthClient(new OidHttpClient());
@@ -113,9 +127,16 @@ public class OidController extends Controller{
 		        }else {
 		        	String accessToken = oAuthResponse.getAccessToken();
 			        Long expiresIn = oAuthResponse.getExpiresIn();
-			    	OAuthClientRequest bearerClientRequest = new OAuthBearerClientRequest(resourceUrl)
-					         .setAccessToken(accessToken).buildQueryMessage();
-					 
+
+			    	OAuthClientRequest bearerClientRequest = null;
+					OAuthBearerClientRequest oAuthBearerClientRequest = new OAuthBearerClientRequest(resourceUrl)
+							.setAccessToken(accessToken);
+
+			    	if (!resourceUrlNeedsHeaders){
+						bearerClientRequest = oAuthBearerClientRequest.buildQueryMessage();
+					}else{
+			    		bearerClientRequest = oAuthBearerClientRequest.buildHeaderMessage();
+					}
 					OAuthResourceResponse resourceResponse = oAuthClient.resource(bearerClientRequest, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
 					
 					return extractEmail(resourceResponse);
@@ -127,6 +148,9 @@ public class OidController extends Controller{
 		public String extractEmail(OAuthResourceResponse oAuthResponse) throws Exception{
 			JSONObject body = (JSONObject) new JSONParser().parse(oAuthResponse.getBody());
 			String email =  (String) body.get("email");
+			if (ObjectUtil.isVoid(email)){
+				email =  (String) ((JSONObject)(((JSONObject)((JSONArray)body.get("elements")).get(0)).get("handle~"))).get("emailAddress");
+			}
 			return email;
 		}
 		public String extractEmail(OAuthAccessTokenResponse oAuthResponse) throws Exception{
@@ -153,9 +177,12 @@ public class OidController extends Controller{
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
 		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"accounts.google.com",
-				OAuthJSONAccessTokenResponse.class,""));
+				OAuthJSONAccessTokenResponse.class,"","email",GrantType.AUTHORIZATION_CODE,false));
 		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"",
-				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name"));
+				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name","email",GrantType.AUTHORIZATION_CODE,false));
+
+		oidproviderMap.put("LINKEDIN", new OIDProvider("LINKEDIN",OAuthProviderType.LINKEDIN,"",
+				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",GrantType.AUTHORIZATION_CODE, true));
 
 	}
 	
@@ -179,16 +206,22 @@ public class OidController extends Controller{
 			return createLoginView(StatusType.ERROR,e.getMessage());
 		} 
 	}
-	
-	
+
+
+	@RequireLogin(false)
+	public View linkedin() throws OAuthProblemException, OAuthSystemException, ParseException{
+		return verify("LINKEDIN");
+	}
 	@SuppressWarnings("rawtypes")
 	@RequireLogin(false)
-	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException{
+	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException {
+		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"));
+	}
+	private View verify(String selectedOpenId) throws OAuthProblemException, OAuthSystemException, ParseException{
 		HttpServletRequest request = getPath().getRequest();
 		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
 		String code = oar.getCode();
 		
-		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
 		try {
