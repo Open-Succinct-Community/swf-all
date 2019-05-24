@@ -124,6 +124,9 @@ public class Controller {
     
     protected String loginSuccessful(){
 		String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
+		return loginSuccessful(redirectedTo);
+    }
+	protected String loginSuccessful(String redirectedTo){
 		if (ObjectUtil.isVoid(redirectedTo)){
 			redirectedTo = "/dashboard";
 		}else {
@@ -132,8 +135,8 @@ public class Controller {
 			}
 		}
 		return redirectedTo;
-    }
 
+	}
     
     protected View authenticate(){
         boolean authenticated = getPath().isRequestAuthenticated();

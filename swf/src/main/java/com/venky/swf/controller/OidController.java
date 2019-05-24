@@ -71,7 +71,8 @@ public class OidController extends Controller{
 			}
 		}
 		public OIDProvider(String opendIdProvider, OAuthProviderType providerType,
-				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl,String scope,GrantType grantType , boolean resoureUrlNeedsHeaders) {
+				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl,String scope,GrantType grantType ,
+						   boolean resoureUrlNeedsHeaders,boolean redirectUrlSupportsParams) {
 			this.iss = issuer ; 
 			this.tokenResponseClass = tokenResponseClass;
 			this.resourceUrl = resourceUrl;
@@ -82,8 +83,10 @@ public class OidController extends Controller{
 			this.scope = scope;
 			this.grantType = grantType;
 			this.resourceUrlNeedsHeaders = resoureUrlNeedsHeaders;
+			this.redirectUrlSupportsParams = redirectUrlSupportsParams;
 
 		}
+		boolean redirectUrlSupportsParams;
 		boolean resourceUrlNeedsHeaders;
 		GrantType grantType;
 		String openIdProvider;
@@ -97,7 +100,7 @@ public class OidController extends Controller{
 		String scope;
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
-				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" + _redirect_to);
+				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" )+ _redirect_to );
 				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope(scope).
 						setRedirectURI(redirectTo).buildQueryMessage();
@@ -107,7 +110,7 @@ public class OidController extends Controller{
 		}
 		public String authorize(String code,String _redirect_to){
 			try {
-				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : "&_redirect_to=" +_redirect_to);
+				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" ) +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
 				        .tokenProvider(providerType)
 				        .setGrantType(grantType)
@@ -177,12 +180,13 @@ public class OidController extends Controller{
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
 		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"accounts.google.com",
-				OAuthJSONAccessTokenResponse.class,"","email",GrantType.AUTHORIZATION_CODE,false));
+				OAuthJSONAccessTokenResponse.class,"","email",GrantType.AUTHORIZATION_CODE,false,true));
 		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"",
-				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name","email",GrantType.AUTHORIZATION_CODE,false));
+				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name","email",
+				GrantType.AUTHORIZATION_CODE,false,true));
 
 		oidproviderMap.put("LINKEDIN", new OIDProvider("LINKEDIN",OAuthProviderType.LINKEDIN,"",
-				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",GrantType.AUTHORIZATION_CODE, true));
+				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",GrantType.AUTHORIZATION_CODE, true,false));
 
 	}
 	
@@ -207,7 +211,11 @@ public class OidController extends Controller{
 		} 
 	}
 
-
+	@RequireLogin(false)
+	public View linkedin()throws OAuthProblemException, OAuthSystemException, ParseException{
+		return linkedin("");
+	}
+	@RequireLogin(false)
 	public View linkedin(String redirectUrl) throws OAuthProblemException, OAuthSystemException, ParseException{
 		return verify("LINKEDIN",redirectUrl);
 	}
@@ -216,7 +224,7 @@ public class OidController extends Controller{
 	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException {
 		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"),getPath().getRequest().getParameter("_redirect_to"));
 	}
-	private View verify(String selectedOpenId,String redirect_to) throws OAuthProblemException, OAuthSystemException, ParseException{
+	private View verify(String selectedOpenId,String redirectedTo) throws OAuthProblemException, OAuthSystemException, ParseException{
 		HttpServletRequest request = getPath().getRequest();
 		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
 		String code = oar.getCode();
@@ -224,7 +232,7 @@ public class OidController extends Controller{
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
 		try {
-	        String email = provider.authorize(code,redirect_to);
+	        String email = provider.authorize(code,redirectedTo);
     		User u = null;
 			Select select = new Select().from(UserEmail.class);
 			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
@@ -258,13 +266,13 @@ public class OidController extends Controller{
     		}
     		getPath().createUserSession(u, false);
             
-			return redirectSuccess();
+			return redirectSuccess(redirectedTo);
 		} catch (Exception e) {
 			return createLoginView(StatusType.ERROR, e.getMessage());
 		}
 	}
-	protected RedirectorView redirectSuccess(){
-		return new RedirectorView(getPath(),loginSuccessful());
+	protected RedirectorView redirectSuccess(String redirectedTo){
+		return new RedirectorView(getPath(),loginSuccessful(redirectedTo));
 	}
 	
 	public static class OidHttpClient implements HttpClient {
