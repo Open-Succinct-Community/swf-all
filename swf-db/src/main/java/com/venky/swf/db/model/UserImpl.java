@@ -317,9 +317,4 @@ public class UserImpl extends ModelImpl<User>{
 		}
 		return dswMandatory;
 	}
-	
-	public User getSelfUser(){
-		return getProxy();
-	}
-
 }

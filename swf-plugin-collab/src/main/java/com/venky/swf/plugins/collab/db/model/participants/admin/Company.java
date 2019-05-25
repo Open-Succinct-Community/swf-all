@@ -1,11 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
 
 
-
-import java.io.InputStream;
-import java.sql.Date;
-import java.util.List;
-
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.HOUSEKEEPING;
@@ -22,6 +17,11 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.plugins.collab.db.model.user.User;
+
+import java.io.InputStream;
+import java.sql.Date;
+import java.util.List;
 
 public interface Company extends Model{
 	@COLUMN_NAME("ID")
@@ -73,5 +73,7 @@ public interface Company extends Model{
 	public List<Facility> getFacilities();
 	
 	@CONNECTED_VIA("COMPANY_ID")
-	public List<CompanyUser> getCompanyUsers();
+	public List<User> getUsers();
+
+	public List<Long> getStaffUserIds();
 }

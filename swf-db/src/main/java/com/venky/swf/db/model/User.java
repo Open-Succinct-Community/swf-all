@@ -93,15 +93,6 @@ public interface User extends Model{
     @IS_VIRTUAL
     public boolean isAdmin();
     
-	@COLUMN_NAME("ID")
-	@PROTECTION
-	@PARTICIPANT
-	@HIDDEN
-	@HOUSEKEEPING
-	public Long getSelfUserId();
-	public void setSelfUserId(Long userId);
-	@IS_VIRTUAL
-	public User getSelfUser();
 
 	@CONNECTED_VIA("USER_ID")
 	public List<UserEmail> getUserEmails();

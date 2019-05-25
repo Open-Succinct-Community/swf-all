@@ -2,20 +2,13 @@ package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.extensions.ParticipantExtension;
-import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.user.User;
-import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 import com.venky.swf.pm.DataSecurityFilter;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
-import com.venky.swf.sql.Select.ResultFilter;
 
 import java.util.List;
 
 
-public class 	UserParticipantExtension extends ParticipantExtension<User>{
+public class 	UserParticipantExtension extends CompanySpecificParticipantExtension<User>{
 	static {
 		registerExtension(new UserParticipantExtension());
 	}
@@ -25,22 +18,15 @@ public class 	UserParticipantExtension extends ParticipantExtension<User>{
 			String fieldName) {
 		
 		SequenceSet<Long> ret = null;
-		if (fieldName.equals("COMPANY_USER_ID")){
+		User u = user.getRawRecord().getAsProxy(User.class);
+		if ("SELF_USER_ID".equalsIgnoreCase(fieldName)) {
+			if (!u.isStaff()){
+				ret = new SequenceSet<>();
+				ret.add(user.getId());
+			}
+		}else if (fieldName.equals("COMPANY_ID")){
 			ret = new SequenceSet<>();
-			
-			User operator = (User)user;
-
-			SequenceSet<Long> accessableCompanies = new SequenceSet<>();
-			for (UserCompany uc : operator.getUserCompanies()){
-				accessableCompanies.add(uc.getCompanyId());
-			}
-
-			List<UserCompany> userCompanies = new Select().from(UserCompany.class)
-					.where(new Expression(ModelReflector.instance(UserCompany.class).getPool(),"COMPANY_ID", Operator.IN, accessableCompanies.toArray()))
-					.execute();
-			for (UserCompany uc : userCompanies){
-				ret.add(uc.getUserId());
-			}
+			ret.add(u.getCompanyId());
 		}else if (fieldName.equals("COUNTRY_ID")){
 			ret =  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
 		}else if (fieldName.equals("STATE_ID")){

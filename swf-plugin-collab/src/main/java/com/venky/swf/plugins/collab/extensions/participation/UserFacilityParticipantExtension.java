@@ -63,8 +63,7 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					for (FacilityUser fu : f.getFacilityUsers()){
 						subscribedUserIds.add(fu.getUserId());
 					}
-					SequenceSet<Long> subscribableUserIds = new SequenceSet<>();
-					f.getCompany().getCompanyUsers().forEach((cu)->subscribableUserIds.add(cu.getUserId()));
+					SequenceSet<Long> subscribableUserIds = DataSecurityFilter.getIds(f.getCompany().getUsers());
 					subscribableUserIds.removeAll(subscribedUserIds);
 					ret.addAll(subscribableUserIds);
 				}else { 

@@ -21,25 +21,7 @@ public class UserImpl extends ModelImpl<User> {
         super(user);
     }
 
-    public Long getCompanyId(){
-        for (UserCompany uc : getProxy().getUserCompanies()){
-            return uc.getCompanyId();
-        }
-        return null;
-    }
-    public void setCompanyId(Long id){
-        if (id == null){
-            return ;
-        }
-        Set<Long> companyIds = new HashSet<>();
-        getProxy().getUserCompanies().forEach(uc->companyIds.add(uc.getCompanyId()));
-        if (!companyIds.contains(id)){
-            UserCompany uc = Database.getTable(UserCompany.class).newRecord();
-            uc.setUserId(getProxy().getId());
-            uc.setCompanyId(id);
-            uc.save();
-        }
-    }
+
     public boolean isStaff(){
         List<Long> roleIds = getProxy().getUserRoles().stream().map(userRole -> userRole.getRoleId()).collect(Collectors.toList());
         List<Role> roles = new Select().from(Role.class).where(new Expression(ModelReflector.instance(Role.class).getPool(),"ID", Operator.IN,roleIds.toArray())).execute();
@@ -52,4 +34,11 @@ public class UserImpl extends ModelImpl<User> {
         }
         return isStaff;
     }
+
+
+    public com.venky.swf.db.model.User getSelfUser(){
+        return getProxy();
+    }
+
+
 }

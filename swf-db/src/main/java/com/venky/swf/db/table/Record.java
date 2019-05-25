@@ -101,7 +101,8 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     public Object put( String fieldName, Object value){
         Object oldValue =  get(fieldName); 
 
-        if (!equals(oldValue, value)){
+        //Reading Models with fields made blank don't end up being dirty!! Bug.
+        if (value == null || !equals(oldValue, value)){
         	markDirty(fieldName, oldValue, value);
         	if (value != null && value instanceof ChangeObservable){
             	((ChangeObservable)value).registerChangeListener(new FieldChangeListener(this,fieldName));

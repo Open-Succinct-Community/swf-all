@@ -35,7 +35,7 @@ public class AutoIssueCreator implements Extension {
         Transaction transaction = context.length <=  0? null : (Transaction)context[0];
         com.venky.swf.db.model.User u = Database.getInstance().getCurrentUser();
         User sessionUser = u == null ? null : u.getRawRecord().getAsProxy(User.class);
-        if (sessionUser == null || sessionUser.getUserCompanies().isEmpty()){
+        if (sessionUser == null || sessionUser.getCompanyId() == null){
             return;
         }
         Throwable throwable = context.length <= 1 ? null : ExceptionUtil.getRootCause((Throwable)context[1]);
@@ -50,7 +50,7 @@ public class AutoIssueCreator implements Extension {
                         StringWriter w = new StringWriter(); throwable.printStackTrace(new PrintWriter(w));
                         issue.setDescription(new StringReader(w.toString()));
                         issue.setTitle(title.substring(0,Math.min(issue.getReflector().getColumnDescriptor("TITLE").getSize(),title.length())));
-                        issue.setCompanyId(sessionUser.getUserCompanies().get(0).getCompanyId());
+                        issue.setCompanyId(sessionUser.getCompanyId());
                         issue.save();
                     }
                 }

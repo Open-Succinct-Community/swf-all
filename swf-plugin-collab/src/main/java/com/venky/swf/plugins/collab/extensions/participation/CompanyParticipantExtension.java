@@ -3,9 +3,9 @@ package com.venky.swf.plugins.collab.extensions.participation;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.user.User;
-import com.venky.swf.plugins.collab.db.model.user.UserCompany;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CompanyParticipantExtension extends ParticipantExtension<Company>{
@@ -20,14 +20,11 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		List<Long> ret = null;
 		User u = (User)user;
 		if ("SELF_COMPANY_ID".equalsIgnoreCase(fieldName)){
-			ret = new ArrayList<>();
-			List<UserCompany> ucs = u.getUserCompanies(); 
-			for (UserCompany uc :ucs){ 
-				ret.add(uc.getCompanyId());
+			if (u.getCompanyId() != null){
+				ret = Arrays.asList(u.getCompanyId());
+			}else {
+				ret = new ArrayList<>();
 			}
-			/*if (partial.getId() > 0 && ret.contains(partial.getId())){
-				ret.add(partial.getId());
-			}*/
 		}
 		return ret;
 	}
