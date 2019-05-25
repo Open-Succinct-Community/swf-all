@@ -258,8 +258,8 @@ public class Select extends SqlStatement{
 	            try {
 		            st = prepare();
 		            if (maxRecords != Select.MAX_RECORDS_ALL_RECORDS ) { 
-		            	st.setMaxRows(maxRecords + 1);
-		            	st.setFetchSize(Math.min(st.getMaxRows(),10000));
+		            	//st.setMaxRows(maxRecords + 1);
+		            	st.setFetchSize(Math.min(maxRecords+1,10000));
 		            }
 		            if (this.orderBy != null){
 		            	sortResults = false;
