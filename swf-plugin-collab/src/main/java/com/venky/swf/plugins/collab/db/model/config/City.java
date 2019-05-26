@@ -7,6 +7,7 @@ import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.ORDER_BY;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.sql.Conjunction;
@@ -15,6 +16,7 @@ import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
 @CONFIGURATION
+@EXPORTABLE(false)
 @ORDER_BY("NAME")
 public interface City extends Model {
 	@Index

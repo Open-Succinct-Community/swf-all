@@ -3,10 +3,12 @@ package com.venky.swf.plugins.collab.db.model.config;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
+@EXPORTABLE(false)
 public interface PostalOffice extends Model {
     public Long getCountryId();
     public void setCountryId(Long id);

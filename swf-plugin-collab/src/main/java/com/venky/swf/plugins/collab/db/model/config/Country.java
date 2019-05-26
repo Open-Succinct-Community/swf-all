@@ -6,12 +6,14 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
 @CONFIGURATION
+@EXPORTABLE(false)
 public interface Country extends Model{
 	@UNIQUE_KEY
 	@Index
