@@ -486,7 +486,7 @@ public class Controller {
 	
     }
     
-    private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
+    protected final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     protected class DefaultModelFilter<M extends Model> implements Select.ResultFilter<M> {
     	Select.AccessibilityFilter<M> defaultFilter = new Select.AccessibilityFilter<M>();
     	Class<M> modelClass = null;

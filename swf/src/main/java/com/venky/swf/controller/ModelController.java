@@ -792,7 +792,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     private static void computeHash(StringBuilder hash, ModelReflector<? extends Model> reflector, Map<String,Object> formFields, String fieldPrefix){
     	for (String field: reflector.getFields()){
-        	if (!formFields.containsKey(field) || reflector.isFieldDisabled(field) ){
+        	if (!formFields.containsKey(field) || !reflector.isFieldEditable(field) ){
         		continue;
         	}
     		Object currentValue = formFields.get(field);
