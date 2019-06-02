@@ -217,12 +217,12 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	if (childPath.canAccessControllerAction()){
 	            	FluidContainer tab = new FluidContainer();
 	            	if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() ) {
-						addChildModelToTab(childPath,tab);
+						addChildModelToTab(childPath,tab,form);
 					}else {
 	            		for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
 	            			if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
 								try {
-									addChildModelToTab(childPath,tab,childClass,childGetter);
+									addChildModelToTab(childPath,tab,childClass,childGetter,form);
 								} catch (Exception e) {
 									Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
 								}
@@ -237,8 +237,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         }
         hiddenHashField.setValue(Encryptor.encrypt(getModelAwareness().getHashFieldValue().toString()));
     }
-
-	private <T extends  Model> void addChildModelToTab(Path childPath, Div tab, Class<T> childClass, Method childGetter) {
+	protected <T extends  Model> void addChildModelToTab(Path childPath, Div tab, Class<T> childClass, Method childGetter, Form form) {
+		addChildModelToTab(childPath,tab,childClass,childGetter);
+	}
+	protected <T extends  Model> void addChildModelToTab(Path childPath, Div tab, Class<T> childClass, Method childGetter) {
 		try {
 			List<T> children = (List<T>)childGetter.invoke(getRecord());
 			new ModelListView<T>(childPath,null,children, true).createBody(tab);
@@ -247,8 +249,10 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 		}
 
 	}
-
-	protected final void addChildModelToTab(Path childPath,Div tab){
+	protected void addChildModelToTab(Path childPath,Div tab, Form formContext){
+		addChildModelToTab(childPath,tab);
+	}
+	protected void addChildModelToTab(Path childPath,Div tab){
     	SequenceSet<HotLink> excludeLinks = new SequenceSet<HotLink>();
     	excludeLinks.addAll(getHotLinks());
     	//Exclude back link on included child as it is a redundant link to the record in focus currently.

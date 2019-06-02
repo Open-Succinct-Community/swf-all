@@ -53,6 +53,8 @@ public class CheckBox extends Input{
         hiddenTextBox.setVisible(false);
         hiddenTextBox.setName(getName());
         hiddenTextBox.setValue(false);
+        hiddenTextBox.setEnabled(isEnabled());
+        hiddenTextBox.setReadOnly(isReadOnly());
         parent.addControl(hiddenTextBox);
     }
 }

@@ -264,9 +264,9 @@ public class Controller {
         String columnName = fd.getName();
 
         Expression where = new Expression(reflector.getPool(),Conjunction.AND);
-        
-        //where.add(baseWhereClause);
-        
+
+        //where.add(baseWhereClause); baseWhereClause may have virtual columns,
+
     	int maxRecordsToGet = MAX_LIST_RECORDS;
     	if (!ObjectUtil.isVoid(value)){
 	        if (reflector.getIndexedColumns().contains(columnName)){

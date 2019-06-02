@@ -40,8 +40,10 @@ public class ModelListEditableTable<M extends Model> extends ModelListTable<M>{
 		if (!(control instanceof AutoCompleteText)){
 	        control.addClass(converter.getDisplayClassName());
 		}
-        control.setForm(submittedWithForm.getId());
-        
+		if (submittedWithForm != null){
+			control.setForm(submittedWithForm.getId());
+		}
+
         return control;
 	}
 	protected int length(String value){
@@ -73,7 +75,7 @@ public class ModelListEditableTable<M extends Model> extends ModelListTable<M>{
 				AutoCompleteText<? extends Model> act = (AutoCompleteText<? extends Model>)control;
 				length = act.getMaxDataLength();
 			}else if (control instanceof TextArea){
-				length = 50;
+				length = 25;
 			}
 		}
 		
