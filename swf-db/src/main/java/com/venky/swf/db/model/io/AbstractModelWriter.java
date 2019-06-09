@@ -184,7 +184,16 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				}
 			}
         }
-		writer.write(referredModel , referredModelElement, parentFieldsToAdd,ignoreParents,templateFields);
+        List<Class<? extends Model>> childModels = referredModelReflector.getChildModels();
+		Map<Class<? extends  Model>, List<String>> newTemplateFields = null;
+		if (templateFields != null){
+			newTemplateFields = new HashMap<>(templateFields);
+			for (Class<? extends  Model> childModelClass : childModels){
+				newTemplateFields.remove(childModelClass);
+			}
+		}
+
+		writer.write(referredModel , referredModelElement, parentFieldsToAdd,ignoreParents,newTemplateFields);
 	}
 	
 }
