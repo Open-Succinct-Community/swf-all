@@ -99,7 +99,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				if (!isParentIgnored(aParent,ignoreParents)) {
 					String refElementName = referredModelGetter.getName().substring("get".length());
 					T refElement = formatHelper.createElementAttribute(refElementName);
-					write(aParent , ((Number)value).intValue(),refElement,templateFields);
+					write(aParent, ((Number)value).intValue(),refElement,ignoreParents,templateFields);
 				}
 			}else {
 				String attributeName = TimerUtils.time(cat,"getAttributeName()" , ()->getAttributeName(field));
@@ -158,10 +158,14 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		
 	}
 	
-	private <R extends Model> void write(Class<R> referredModelClass, long id , T referredModelElement, Map<Class<? extends Model>,List<String>> templateFields){
+	private <R extends Model> void write(Class<R> referredModelClass, long id, T referredModelElement,  Set<Class<? extends Model>> ignoreParents,
+										 Map<Class<? extends Model>, List<String>> templateFields){
 		Class<T> formatClass = getFormatClass();
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
+		if (referredModel == null){
+			return;
+		}
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
 
 		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
@@ -180,7 +184,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				}
 			}
         }
-		writer.write(referredModel , referredModelElement, parentFieldsToAdd);
+		writer.write(referredModel , referredModelElement, parentFieldsToAdd,ignoreParents,templateFields);
 	}
 	
 }
