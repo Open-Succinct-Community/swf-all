@@ -273,8 +273,12 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 				if (cacheKey == null || cacheKey.eval(record)){
 					queryCache.get(cacheKey).add(record); // Will not be added if already exists.
 				}	
-			}else if (cacheKey != null && !cacheKey.eval(record)){
-				queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
+			}else if (cacheKey != null &&  !isIdWhereClause(cacheKey)){
+				if (!cacheKey.eval(record)){
+					queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
+				}else {
+					queryCache.get(cacheKey).add(record);
+				}
 			}
 		}
 		if (recordInCache == null){
