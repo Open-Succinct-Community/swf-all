@@ -39,7 +39,7 @@ import com.venky.swf.sql.Expression;
 public interface User extends Model{
 	
 	@IS_NULLABLE(false)
-	@UNIQUE_KEY("K1,K2")
+	@UNIQUE_KEY("K1,K2,K3")
 	@Index
     public String getName();
     public void setName(String name);
