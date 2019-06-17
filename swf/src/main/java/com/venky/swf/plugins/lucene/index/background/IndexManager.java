@@ -147,20 +147,26 @@ public class IndexManager {
 					callback.found(d);
 				}
 			}else {
-				TopDocs tDocs = searcher.search(q,numHits);
+				int numRecordsFound = 0;
+				TopDocs tDocs = searcher.search(q,numHits + 1);
 				/*
 				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
 				searcher.search(q, collector);
 				tDocs = collector.topDocs();
 				*/
-				ScoreDoc[] hits = tDocs.scoreDocs;
 
-				for (int i = 0; i < hits.length; ++i) {
-					int docId = hits[i].doc;
-					Document d = searcher.doc(docId);
-					callback.found(d);
+				ScoreDoc[] hits = tDocs.scoreDocs;
+				while (numRecordsFound < numHits && tDocs.totalHits > 0) {
+					for (int i = 0; i < hits.length; ++i) {
+						int docId = hits[i].doc;
+						Document d = searcher.doc(docId);
+						callback.found(d);
+					}
+					numRecordsFound += hits.length;
+					if (numRecordsFound < numHits){
+						tDocs = searcher.searchAfter(hits[hits.length-1],q,numHits+1);
+					}
 				}
-				
 			}
 			
 		} catch (Exception ex) {

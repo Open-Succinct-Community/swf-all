@@ -83,8 +83,11 @@ public class Router extends AbstractHandler {
 					}
 					_IDatabase db = getDatabase(true);
 					loadExtensions();
-					db.loadFactorySettings();
-					db.close();
+					try {
+						db.loadFactorySettings();
+					}finally {
+						db.close();
+					}
 					try {
 						getPathClass();
 						getExceptionViewClass();
