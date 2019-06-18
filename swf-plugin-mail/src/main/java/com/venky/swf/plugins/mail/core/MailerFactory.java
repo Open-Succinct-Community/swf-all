@@ -27,9 +27,6 @@ public class MailerFactory {
 	
 	public Mailer getMailer(String protocol){
 		Mailer m = mailer.get(protocol);
-		if (m == null){
-			throw new RuntimeException("Mailer not configured for protocol " + protocol);
-		}
 		return m;
 	}
 }

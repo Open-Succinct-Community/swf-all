@@ -60,7 +60,11 @@ public class AsyncMailer extends Thread{
 		Email email = null;
 		while ((email = next()) != null ){
 			try {
-				mailer.sendMail(email);
+				if (mailer != null){
+					mailer.sendMail(email);
+				}else {
+					Config.instance().getLogger(getClass().getName()).log(Level.WARNING, "Could not send mail. Mailer nor configured for \"swf.sendmail.protocol\"" );
+				}
 			}catch (Exception ex){
 				Config.instance().getLogger(getClass().getName()).log(Level.WARNING, "Could not send mail" , ex);
 			}
