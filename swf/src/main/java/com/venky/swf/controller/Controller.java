@@ -276,7 +276,7 @@ public class Controller {
 	        	Query q = indexer.constructQuery(qry.toString());
 	        	List<Long> topRecords = indexer.findIds(q, maxRecordsToGet);
 	        	int numRecordRetrieved = topRecords.size();
-	        	if (numRecordRetrieved > 0 && numRecordRetrieved < maxRecordsToGet){
+	        	if (numRecordRetrieved > 0){
 	            	Expression idExpression = Expression.createExpression(reflector.getPool(),"ID", Operator.IN, topRecords.toArray());
 	            	where.add(idExpression);
 	        	}
