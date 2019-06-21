@@ -137,6 +137,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
+            oAddress.save();
         }
     }
 
