@@ -279,7 +279,9 @@ public class Controller {
 	        	if (numRecordRetrieved > 0){
 	            	Expression idExpression = Expression.createExpression(reflector.getPool(),"ID", Operator.IN, topRecords.toArray());
 	            	where.add(idExpression);
-	        	}
+	        	}else {
+	        		return fh.getRoot();
+				}
         	}else if (!reflector.isFieldVirtual(fieldName)) {
 	        	where.add(new Expression(reflector.getPool(),columnName,Operator.LK,new BindVariable(reflector.getPool(),"%"+value+"%")));
 	        }
