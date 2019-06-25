@@ -6,6 +6,7 @@ import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.mail.core.MailerTask;
 
 import java.io.StringReader;
+import java.util.List;
 
 public class UserImpl extends ModelImpl<User>{
 
@@ -13,7 +14,10 @@ public class UserImpl extends ModelImpl<User>{
 		super(proxy);
 	}
 	public void sendMail(String subject, String text){
-		MailerTask task = new MailerTask(getProxy(), subject, text);
+		sendMail(subject,text,null,null);
+	}
+	public void sendMail(String subject, String text, List<User> cc , List<User> bcc){
+		MailerTask task = new MailerTask(getProxy(), subject, text, cc,bcc);
 		TaskManager.instance().executeAsync(task);
 	}
 
