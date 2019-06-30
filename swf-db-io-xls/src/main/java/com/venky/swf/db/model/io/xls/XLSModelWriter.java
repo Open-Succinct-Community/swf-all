@@ -39,7 +39,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.util.WordWrapUtil;
 
 public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
-	
+
 	private final HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
 	private final HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
 	public XLSModelWriter(Class<M> modelClass){
@@ -82,14 +82,20 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(records,os,fields, new HashSet<Class<? extends Model>>(), new HashMap<Class<? extends Model>,List<String>>());
 	}
 	@Override
-	public void write(List<M> records, OutputStream os, List<String> fields, Set<Class<? extends Model>> ignoreParents,
+	public void write(List<M> records, OutputStream os, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered,
 			Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
-		Workbook wb = new XSSFWorkbook();
-		write(records,wb,fields,ignoreParents, templateFields);
-		wb.write(os);
+		write(records,os,fields,parentsAlreadyConsidered,null,templateFields);
 	}
-	
-	
+
+	@Override
+	public void write(List<M> records, OutputStream os, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<Class<? extends Model>>> childrenToBeConsidered, Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
+		Workbook wb = new XSSFWorkbook();
+		write(records,wb,fields,parentsAlreadyConsidered, templateFields);
+		wb.write(os);
+
+	}
+
+
 	public Sheet createSheet(Workbook book, String sheetName){
 		Sheet sheet = book.createSheet(sheetName);
 		sheet.setAutobreaks(false);
@@ -156,9 +162,15 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(m,r,fields,new HashSet<Class<? extends Model>>(), new HashMap<Class<? extends Model>,List<String>>());
 	}
 	@Override
-	public void write(M record, Row into, List<String> fields, Set<Class<?extends  Model>> ignoreParents, Map<Class<? extends Model>, List<String>> templateFields) {
-		write (record,into,fields,ignoreParents, templateFields,null);
+	public void write(M record, Row into, List<String> fields, Set<Class<?extends  Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<String>> templateFields) {
+		write(record,into,fields,parentsAlreadyConsidered,null,templateFields);
 	}
+
+	@Override
+	public void write(M record, Row into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<Class<? extends Model>>> childrenToBeConsidered, Map<Class<? extends Model>, List<String>> templateFields) {
+		write (record,into,fields,parentsAlreadyConsidered, templateFields,null);
+	}
+
 	public void alignTop(CellStyle style){
 		style.setAlignment(HorizontalAlignment.LEFT);
 		style.setVerticalAlignment(VerticalAlignment.TOP);

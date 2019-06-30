@@ -18,6 +18,7 @@ import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -146,7 +147,12 @@ public class IntegrationAdaptor<M extends Model,T> {
 			return respAdaptor.createResponse(path,response,Arrays.asList("STATUS","MESSAGE"));
 		}else {
 			response.setStatus("FAILED");
-			response.setError(th.getMessage());
+			if (!ObjectUtil.isVoid(th.getMessage())){
+				response.setError(th.getMessage());
+			}else {
+				th = ExceptionUtil.getRootCause(th);
+				response.setError(th.getClass().getSimpleName());
+			}
 			return respAdaptor.createResponse(path,response,Arrays.asList(new String[]{"STATUS","ERROR","MESSAGE"}));
 		}
 	}
