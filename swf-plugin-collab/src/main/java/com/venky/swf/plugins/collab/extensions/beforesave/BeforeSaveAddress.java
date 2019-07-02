@@ -22,7 +22,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
 
 	protected String[] getAddressFields(){
-		return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE"};
+		return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
 	}
     protected boolean isAddressVoid(M oAddress){
         boolean addressFieldsVoid = true;
