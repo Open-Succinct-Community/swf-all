@@ -65,7 +65,9 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 				return;
 			}
 		}
-        TaskManager.instance().executeAsync(new LocationSetterTask<M>(oAddress),false);
+        if (!isAddressVoid(oAddress)){
+            TaskManager.instance().executeAsync(new LocationSetterTask<M>(oAddress),false);
+        }
 	}
 
 	public static class LocationSetterTask<M extends Address & Model> implements Task {
