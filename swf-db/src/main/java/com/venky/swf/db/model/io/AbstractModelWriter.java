@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -165,15 +166,24 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			return  true;
 		});
 	}
+	private <R extends  Model> boolean containsChild(Class<R> childModelClass, Collection<Class<? extends  Model>> considerChilden){
+		for (Class<? extends Model> possibleChildClass : ModelReflector.instance(childModelClass).getModelClasses()){
+			if (considerChilden.contains(possibleChildClass)){
+				return true;
+			}
+		}
+		return false;
+	}
 	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<Class<? extends Model>> parentsWritten ,
 										 Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChilden,
 										 Map<Class<? extends Model>, List<String>> templateFields){
 		@SuppressWarnings("unchecked")
 		Class<R> childModelClass = (Class<R>) getReflector().getChildModelClass(childGetter);
-		if (!considerChilden.get(getBeanClass()).contains(childModelClass)){
+		if (!containsChild(childModelClass,considerChilden.get(getBeanClass()))){
 			return;
 		}
-		if (!templateFields.containsKey(childModelClass)){
+
+		if (!containsChild(childModelClass,templateFields.keySet())){
 			return;
 		}
 		
