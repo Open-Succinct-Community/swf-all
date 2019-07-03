@@ -191,15 +191,18 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		try {
 			@SuppressWarnings("unchecked")
 			List<R> children = (List<R>)childGetter.invoke(record);
-			List<String> fields = templateFields.remove(childModelClass);
-			try {
-				for (R child : children) {
-					T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
-					childWriter.write(child, childElement, fields, parentsWritten, templateFields);
+			List<String> fields = new ArrayList<>();
+			for (Class<? extends Model> possibleChildClass : ModelReflector.instance(childModelClass).getModelClasses()) {
+				List<String> f = templateFields.get(possibleChildClass);
+				if (f != null) {
+					fields.addAll(f);
 				}
-			}finally {
-				templateFields.put(childModelClass, fields);
 			}
+			for (R child : children) {
+				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
+				childWriter.write(child, childElement, fields, parentsWritten, templateFields);
+			}
+
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
