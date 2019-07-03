@@ -216,7 +216,18 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	ModelAwareness childModelAwareness = new ModelAwareness(childPath, null);
 	        	if (childPath.canAccessControllerAction()){
 	            	FluidContainer tab = new FluidContainer();
-	            	if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() ) {
+
+					for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
+						if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
+							try {
+								addChildModelToTab(childPath,tab,childClass,childGetter,form);
+							} catch (Exception e) {
+								Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
+							}
+						}
+					}
+					/*
+					if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() ) {
 						addChildModelToTab(childPath,tab,form);
 					}else {
 	            		for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
@@ -229,6 +240,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 							}
 						}
 					}
+					*/
 	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
 	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
