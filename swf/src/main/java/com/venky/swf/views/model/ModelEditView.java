@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.core.collections.LowerCaseStringCache;
@@ -217,30 +218,29 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        	if (childPath.canAccessControllerAction()){
 	            	FluidContainer tab = new FluidContainer();
 
+	            	Method correctChildGetter = null;
 					for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
 						if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
 							try {
-								addChildModelToTab(childPath,tab,childClass,childGetter,form);
+								correctChildGetter = childGetter;
+								break;
 							} catch (Exception e) {
 								Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
 							}
 						}
 					}
-					/*
-					if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() ) {
+					IS_VIRTUAL is_virtual =  correctChildGetter == null ? null : getModelAwareness().getReflector().getAnnotation(correctChildGetter, IS_VIRTUAL.class);
+
+					if (!getModelAwareness().getReflector().isVirtual() && !childModelAwareness.getReflector().isVirtual() &&
+							(is_virtual == null || !is_virtual.value()) ) {
 						addChildModelToTab(childPath,tab,form);
 					}else {
-	            		for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
-	            			if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
-								try {
-									addChildModelToTab(childPath,tab,childClass,childGetter,form);
-								} catch (Exception e) {
-									Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
-								}
-							}
+						try{
+							addChildModelToTab(childPath,tab,childClass,correctChildGetter,form);
+						} catch (Exception e) {
+							Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
 						}
 					}
-					*/
 	        		String tabName = childModelAwareness.getLiteral(childClass.getSimpleName());
 	        		multiTab.addSection(tab,tabName,StringUtil.equals(selectedTab,tabName));
 	        	}
