@@ -198,6 +198,9 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					fields.addAll(f);
 				}
 			}
+			if (fields.isEmpty()){
+				fields = null;
+			}
 			for (R child : children) {
 				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
 				childWriter.write(child, childElement, fields, parentsWritten, templateFields);
