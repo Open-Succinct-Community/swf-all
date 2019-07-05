@@ -521,7 +521,8 @@ public class Controller {
 					fieldIterator.remove();
 				}
 			}else if (reflector.isHouseKeepingField(field)){
-				if (!field.equals("ID") || numUniqueKeys > 0){
+				//if (!field.equals("ID") || numUniqueKeys > 0){
+				if (!field.equals("ID")){
 					fieldIterator.remove();
 				}
 			}
