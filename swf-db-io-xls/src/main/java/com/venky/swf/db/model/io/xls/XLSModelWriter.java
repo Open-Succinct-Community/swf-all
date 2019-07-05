@@ -123,7 +123,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			String fieldName = fi.next();
 			if (referedModelMap.get(fieldName) == null){
 				if (fieldName.equalsIgnoreCase("ID")){
-					fieldName = "REMOVE_PREFIX_ID";
+					fieldName = "ORIGINAL_ID";
 				}
 				createCell(sheet, header, columnNum, StringUtil.camelize(fieldName), helper.headerStyle);
 			}else {
