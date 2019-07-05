@@ -25,7 +25,7 @@ public class UniqueKeyValidator extends ModelValidator{
 			}
 			Count count = new Select("COUNT(1) AS COUNT").from(reflector.getModelClass()).where(countWhere).execute(Count.class).get(0);
 			if (count.getCount() > 0){
-				modelValidationException.add(new UniqueConstraintViolatedException(reflector.getModelClass().getSimpleName() + " already present. "));
+				modelValidationException.add(new UniqueConstraintViolatedException(reflector.getModelClass().getSimpleName() + " already present. " + where.getRealSQL()));
 				Config.instance().getLogger(getClass().getName()).log(Level.FINE, where.getRealSQL());
 				return false;
 			}
