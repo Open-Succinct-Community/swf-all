@@ -299,23 +299,26 @@ public class ModelInvocationHandler implements InvocationHandler {
     	Timer timer = cat().startTimer();
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
-        	Set<String> participantingRoles = new HashSet<String>();
+        	Set<String> participatingRoles = new HashSet<String>();
     		for (String participantRoleGroup : pGroupOptions.keySet()){
     			Map<String,List<Long>> pOptions = pGroupOptions.get(participantRoleGroup);
+				Set<String> participatingRolesInCurrentGroup = new HashSet<String>();
+
     			for (String referencedModelIdFieldName :pOptions.keySet()){
     				Number referenceValue = reflector.get(getRawRecord(),referencedModelIdFieldName);
 
     				PARTICIPANT participant = reflector.getAnnotation(reflector.getFieldGetter(referencedModelIdFieldName), PARTICIPANT.class);
     				
     				if (participant.redundant() || pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
-    					participantingRoles.add(reflector.getParticipatingRole(referencedModelIdFieldName));
+						participatingRolesInCurrentGroup.add(reflector.getParticipatingRole(referencedModelIdFieldName));
     				}
     			}
-    			if (!pOptions.isEmpty() && participantingRoles.isEmpty()){
+    			if (!pOptions.isEmpty() && participatingRolesInCurrentGroup.isEmpty()){
     				throw new AccessDeniedException(); // User is not a participant on the model.
     			}
+				participatingRoles.addAll(participatingRolesInCurrentGroup);
     		}
-    		return participantingRoles;
+    		return participatingRoles;
     	}finally{
     		timer.stop();
     	}
