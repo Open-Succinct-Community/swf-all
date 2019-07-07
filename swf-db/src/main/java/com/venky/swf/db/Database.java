@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
@@ -362,6 +363,7 @@ public class Database implements _IDatabase{
 			}
 			Database.getInstance().getCurrentTransaction().commit();
 		} catch (Exception e) {
+			Config.instance().getLogger(Database.class.getName()).log(Level.WARNING,"Installers Failed!",e);
 			throw new RuntimeException(e);
 		}
 
