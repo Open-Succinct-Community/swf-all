@@ -29,10 +29,8 @@ public class BeforeValidateUser extends BeforeModelValidateExtension<User>{
 				model.setCreatedAt(model.getReflector().getNow());
 			}
 			if (model.getRawRecord().isFieldDirty("PASSWORD")){
-				if (!model.isPasswordEncrypted()){
-					model.setPassword(model.getEncryptedPassword(model.getPassword()));
-					model.setPasswordEncrypted(true);
-				}
+				model.setPassword(model.getEncryptedPassword(model.getPassword()));
+				model.setPasswordEncrypted(true);
 			}
 		}
 	}

@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.logging.Level;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
@@ -268,6 +269,7 @@ public class OidController extends Controller{
             
 			return redirectSuccess(redirectedTo);
 		} catch (Exception e) {
+			cat.log(Level.WARNING,e.getMessage(),e);
 			return createLoginView(StatusType.ERROR, e.getMessage());
 		}
 	}
