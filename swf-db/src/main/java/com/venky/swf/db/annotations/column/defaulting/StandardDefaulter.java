@@ -82,11 +82,13 @@ public class StandardDefaulter {
 	}
 
 	public static Timestamp getNow(TimeZone tz) {
+		Calendar target = null;
 	    if (tz == null || tz.equals(TimeZone.getDefault())) {
-	        return new Timestamp(System.currentTimeMillis());
-        }
-	    Calendar target = Calendar.getInstance(tz);
-        target.setTimeInMillis(System.currentTimeMillis());
+	    	target = Calendar.getInstance();
+        }else {
+	    	target = Calendar.getInstance(tz);
+		}
+	    target.setTimeInMillis(System.currentTimeMillis());
 
         Calendar sys = Calendar.getInstance(TimeZone.getDefault());
         sys.set(Calendar.YEAR,target.get(Calendar.YEAR));
@@ -96,6 +98,7 @@ public class StandardDefaulter {
         sys.set(Calendar.MINUTE,target.get(Calendar.MINUTE));
         sys.set(Calendar.SECOND,target.get(Calendar.SECOND));
         sys.set(Calendar.MILLISECOND,target.get(Calendar.MILLISECOND));
+        sys.set(Calendar.MILLISECOND,0);//Make millis 0;; //Mysql stores ts in seconds precision by default
 
         return new Timestamp(sys.getTimeInMillis());
     }

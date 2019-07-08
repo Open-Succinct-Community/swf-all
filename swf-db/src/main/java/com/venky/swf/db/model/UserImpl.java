@@ -2,6 +2,7 @@ package com.venky.swf.db.model;
 
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -61,12 +62,13 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	public String getEncryptedPassword(String unencyptedPassword){
 		String password = unencyptedPassword;
-		if (Config.instance().getBooleanProperty("swf.user.password.encrypted",false)){
+		if (Config.instance().shouldPasswordsBeEncrypted()){
 			User user = getProxy();
 			if (user.getReflector().isVoid(user.getCreatedAt())){
 				user.setCreatedAt(user.getReflector().getNow());
 			}
-			String salt = user.getCreatedAt().getTime() + "--" + user.getName() + "--" ;
+			long time = user.getCreatedAt().getTime();
+			String salt = time + "--" + user.getName() + "--" ;
 			password = Encryptor.encrypt(unencyptedPassword + "--" + salt);
 		}
 		return password;

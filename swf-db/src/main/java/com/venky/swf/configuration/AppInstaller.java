@@ -11,6 +11,8 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.sql.Update;
+import com.venky.swf.sql.parser.SQLExpressionParser.EQ;
 
 public class AppInstaller implements Installer {
 	public void install(){
@@ -57,10 +59,11 @@ public class AppInstaller implements Installer {
 			u.setName("root");
 			u.setLongName("Application Adminstrator");
 			u.setPassword("root");
+			u.setPasswordEncrypted(false);
 			u.save();
 			if (u.getId() != 1){
-				u.setId(1);
-				u.save(false);
+				new Update(ref).set("ID", new BindVariable(ref.getPool(),1L)).where(new Expression(ref.getPool(),"ID",Operator.EQ,u.getId())).executeUpdate();
+				u.setId(1L); //Coorect memory object.
 			}
 		}
 	}
