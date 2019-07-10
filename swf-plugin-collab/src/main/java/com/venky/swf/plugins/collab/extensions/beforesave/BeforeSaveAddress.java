@@ -22,29 +22,13 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
 
 	protected String[] getAddressFields(){
-		return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
+		return Address.getAddressFields();
 	}
     protected boolean isAddressVoid(M oAddress){
-        boolean addressFieldsVoid = true;
-        for (String field : getAddressFields()){
-            addressFieldsVoid = addressFieldsVoid && oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress,field));
-            if (!addressFieldsVoid){
-                break;
-            }
-        }
-        return addressFieldsVoid;
-
+        return Address.isAddressVoid(oAddress);
     }
 	protected boolean isAddressChanged(M oAddress){
-		Set<String> dirtyFields = oAddress.getRawRecord().getDirtyFields();
-		boolean addressFieldsChanged = false;
-		for (String field : getAddressFields()){
-			addressFieldsChanged = addressFieldsChanged || dirtyFields.contains(field);
-			if (addressFieldsChanged){
-				break;
-			}
-		}
-		return addressFieldsChanged;
+		return Address.isAddressChanged(oAddress);
 	}
 	@Override
 	public void beforeSave(M oAddress) {

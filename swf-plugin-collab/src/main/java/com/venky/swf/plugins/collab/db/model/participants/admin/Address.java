@@ -8,10 +8,14 @@ import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
 import com.venky.swf.db.annotations.column.validations.RegEx;
+import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.config.PinCode;
+import org.apache.commons.math3.analysis.function.Add;
+
+import java.util.Set;
 
 public interface Address extends GeoLocation {
     public String getAddressLine1();
@@ -64,4 +68,45 @@ public interface Address extends GeoLocation {
     @Index
     public String getAlternatePhoneNumber();
     public  void setAlternatePhoneNumber(String phoneNumber);
+
+
+    public static String[] getAddressFields(){
+        return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
+    }
+
+    public static <F extends Model & Address,T extends Model & Address> void copy(F from, T to){
+       for (String f : getAddressFields()){
+           to.getRawRecord().put(f,from.getRawRecord().get(f));
+       }
+       to.setLat(from.getLat());
+       to.setLng(from.getLng());
+       to.setEmail(from.getEmail());
+       to.setPhoneNumber(from.getPhoneNumber());
+       to.setAlternatePhoneNumber(from.getAlternatePhoneNumber());
+    }
+
+    public static <M extends Model&Address> boolean isAddressVoid(M oAddress){
+        boolean addressFieldsVoid = true;
+        for (String field : getAddressFields()){
+            addressFieldsVoid = addressFieldsVoid && oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress,field));
+            if (!addressFieldsVoid){
+                break;
+            }
+        }
+        return addressFieldsVoid;
+
+    }
+
+    public static <M extends Model & Address> boolean isAddressChanged(M oAddress){
+        Set<String> dirtyFields = oAddress.getRawRecord().getDirtyFields();
+        boolean addressFieldsChanged = false;
+        for (String field : getAddressFields()){
+            addressFieldsChanged = addressFieldsChanged || dirtyFields.contains(field);
+            if (addressFieldsChanged){
+                break;
+            }
+        }
+        return addressFieldsChanged;
+    }
+
 }
