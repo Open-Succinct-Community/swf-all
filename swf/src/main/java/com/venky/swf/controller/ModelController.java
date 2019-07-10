@@ -1008,7 +1008,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public View autocomplete() {
-    	ensureUI();
+    	//ensureUI();
 		List<String> fields = reflector.getFields();
 		Map<String,Object> formData = getFormFields();
 		M model = null;
