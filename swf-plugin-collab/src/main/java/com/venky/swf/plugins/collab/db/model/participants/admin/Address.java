@@ -1,6 +1,8 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.geo.GeoLocation;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -9,12 +11,18 @@ import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.ExactLength;
 import com.venky.swf.db.annotations.column.validations.RegEx;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.config.PinCode;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 import org.apache.commons.math3.analysis.function.Add;
 
+import java.util.List;
 import java.util.Set;
 
 public interface Address extends GeoLocation {
@@ -108,5 +116,24 @@ public interface Address extends GeoLocation {
         }
         return addressFieldsChanged;
     }
+    public static <M extends Model & Address, A extends  Model&Address> M find(A address,Class<M> modelClass){
+        ModelReflector<M> ref = ModelReflector.instance(modelClass);
 
+        Expression where = new Expression(ref.getPool(), Conjunction.AND);
+        for (String field : getAddressFields()){
+            Object value = address.getReflector().get(address,field);
+            if (!ObjectUtil.isVoid(value)){
+                where.add(new Expression(ref.getPool(),field, Operator.EQ, value));
+            }else{
+                where.add(new Expression(ref.getPool(),field,Operator.EQ));
+            }
+        }
+
+        List<M> objects = new Select().from(modelClass).where(where).execute();
+        M object = null;
+        if (!objects.isEmpty()){
+            object = objects.get(0);
+        }
+        return object;
+    }
 }
