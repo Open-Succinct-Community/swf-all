@@ -7,7 +7,6 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.User;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
-import com.venky.swf.plugins.collab.db.model.participants.admin.FacilityUser;
 import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 import com.venky.swf.pm.DataSecurityFilter;
 
@@ -60,7 +59,7 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 				Facility f = model.getFacility();
 				if (f != null ){ 
 					SequenceSet<Long> subscribedUserIds = new SequenceSet<>();
-					for (FacilityUser fu : f.getFacilityUsers()){
+					for (UserFacility fu : f.getFacilityUsers()){
 						subscribedUserIds.add(fu.getUserId());
 					}
 					SequenceSet<Long> subscribableUserIds = DataSecurityFilter.getIds(f.getCompany().getUsers());

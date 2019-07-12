@@ -9,14 +9,12 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
 public interface UserFacility extends Model {
 	@PARTICIPANT
 	@UNIQUE_KEY
-	@HIDDEN(true)
 	public long getUserId();
 	public void setUserId(long id);
 	public User getUser();
 	
 	@PARTICIPANT
 	@UNIQUE_KEY
-	@HIDDEN(false)
 	public long getFacilityId();
 	public void setFacilityId(long id);
 	public Facility getFacility();

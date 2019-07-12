@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.core.collections.LowerCaseStringCache;
@@ -220,12 +221,15 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 
 	            	Method correctChildGetter = null;
 					for (Method childGetter : getModelAwareness().getReflector().getChildGetters()){
-						if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
-							try {
-								correctChildGetter = childGetter;
-								break;
-							} catch (Exception e) {
-								Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
+						HIDDEN hidden = getModelAwareness().getReflector().getAnnotation(childGetter, HIDDEN.class);
+						if (hidden == null || !hidden.value()){
+							if (getModelAwareness().getReflector().getChildModelClass(childGetter).equals(childClass)){
+								try {
+									correctChildGetter = childGetter;
+									break;
+								} catch (Exception e) {
+									Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not add model " + childClass.getSimpleName() , e);
+								}
 							}
 						}
 					}

@@ -14,6 +14,7 @@ import com.venky.swf.plugins.collab.db.model.CompanySpecific;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.State;
+import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 
 
 @CONFIGURATION
@@ -22,5 +23,5 @@ public interface Facility extends CompanySpecific, Address , Model{
 	public String getName();
 	public void setName(String name);
 	
-	public List<FacilityUser> getFacilityUsers();
+	public List<UserFacility> getFacilityUsers();
 }
