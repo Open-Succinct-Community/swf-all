@@ -26,7 +26,7 @@ public interface State extends Model{
 	public String getName();
 	public void setName(String name);
 
-	@UNIQUE_KEY
+	@UNIQUE_KEY("K1,K2")
 	@IS_NULLABLE(false)
 	@COLUMN_DEF(StandardDefault.ONE)
 	public Long getCountryId();
@@ -59,6 +59,7 @@ public interface State extends Model{
 
 	@IS_NULLABLE
 	@COLUMN_SIZE(2)
+	@UNIQUE_KEY("K2")
     public String getCode();
 	public void setCode(String code);
 }
