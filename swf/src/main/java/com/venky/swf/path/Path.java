@@ -558,12 +558,14 @@ public class Path implements _IPath{
         
         return currentUser != null ; 
     }
-    
+
     public void createUserSession(User user,boolean autoInvalidate){
         invalidateSession();
         HttpSession session = getRequest().getSession(true);
-        session.setAttribute("user", user);
-        session.setAttribute("user.id",user.getId());
+        if (user != null){
+            session.setAttribute("user", user);
+            session.setAttribute("user.id",user.getId());
+        }
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
     }
@@ -634,6 +636,7 @@ public class Path implements _IPath{
                         createUserSession(user,autoInvalidate);
                     }else {
                         addErrorMessage("Login Failed");
+                        createUserSession(null,true);
                         Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
                     }
                 }
