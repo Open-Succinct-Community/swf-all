@@ -101,7 +101,30 @@ public class LuceneIndexer {
 	public Set<String> getIndexedColumns(){
 		return indexedColumns;
 	}
-	
+	private String sanitize(String value){
+		if (value == null){
+			return value;
+		}
+		StringBuilder sanitized = new StringBuilder();
+		for (int i = 0 ; i < value.length() ; i ++){
+			char c = value.charAt(i);
+			if (c >= '0' && c <= '9' ){
+				sanitized.append(c);
+			}else if (c >= 'a' && c <= 'z'){
+				sanitized.append(c);
+			}else if (c >= 'A' && c <= 'Z') {
+				sanitized.append(c);
+			}else {
+				if (sanitized.length() > 0){
+					if (sanitized.charAt(sanitized.length()-1) != ' '){
+						sanitized.append(' ');
+					}
+				}
+			}
+		}
+		return sanitized.toString();
+	}
+
 	public Document getDocument(Record r) throws IOException {
 		if (!hasIndexedFields()){
 			return null;
@@ -120,7 +143,7 @@ public class LuceneIndexer {
 				if (!ref.isBLOB()){
 					addedFields = true;
 					if (Reader.class.isAssignableFrom(ref.getJavaClass())){
-						doc.add(new TextField(fieldName,converter.toString(value),Field.Store.NO));
+						doc.add(new TextField(fieldName,sanitize(converter.toString(value)),Field.Store.NO));
 					}else{
 						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
 						String sValue = converter.toString(value);
@@ -129,11 +152,11 @@ public class LuceneIndexer {
 							Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
 							if (referred != null){ 
 								doc.add(new TextField(fieldName.substring(0,fieldName.length()-"_ID".length()),
-										StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())), 
+										sanitize(StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField()))),
 										Field.Store.YES));
 							}
 						}
-						doc.add(new TextField(fieldName,sValue, Field.Store.YES));
+						doc.add(new TextField(fieldName,sanitize(sValue), Field.Store.YES));
 					}
 				}
 			}else {
