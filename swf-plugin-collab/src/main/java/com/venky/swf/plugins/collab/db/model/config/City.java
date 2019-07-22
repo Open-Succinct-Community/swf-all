@@ -2,6 +2,7 @@ package com.venky.swf.plugins.collab.db.model.config;
 
 import java.util.List;
 
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
@@ -18,7 +19,7 @@ import com.venky.swf.sql.Select;
 @CONFIGURATION
 @EXPORTABLE(false)
 @ORDER_BY("NAME")
-public interface City extends Model {
+public interface City extends Model , GeoLocation {
 	@Index
 	@UNIQUE_KEY
 	public String getName();
