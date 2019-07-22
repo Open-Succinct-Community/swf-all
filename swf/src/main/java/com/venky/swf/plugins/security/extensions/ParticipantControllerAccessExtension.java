@@ -281,8 +281,8 @@ public class ParticipantControllerAccessExtension implements Extension{
 			Timer sortingPermissions = cat.startTimer("sorting permissions", Config.instance().isTimerAdditive());
 			Collections.sort(permissions, rolepermissionComparator);
 			sortingPermissions.stop();
-			
-			//permissions,userRoleIds, 
+
+			//permissions,userRoleIds,
 
 			Timer permissionsChecking = cat.startTimer("Checking Permissions for being allowed");
             try {
@@ -335,8 +335,15 @@ public class ParticipantControllerAccessExtension implements Extension{
 				if (ret == 0){
 					ret = StringUtil.valueOf(o2.getActionPathElementName()).compareTo(StringUtil.valueOf(o1.getActionPathElementName()));	
 				}
+
 				if (ret == 0 && o1.getRoleId() != null && o2.getRoleId() != null){
-					ret = o1.getRoleId().compareTo(o2.getRoleId());
+					if (o1.isAllowed() && !o2.isAllowed()){
+						ret = -1;
+					}else if (!o1.isAllowed() && o2.isAllowed()){
+						ret = 1;
+					}else {
+						ret = o1.getRoleId().compareTo(o2.getRoleId());
+					}
 				}
 				return ret;
 			}
