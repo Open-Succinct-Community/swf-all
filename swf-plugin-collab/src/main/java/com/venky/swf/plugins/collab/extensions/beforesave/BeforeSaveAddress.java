@@ -134,7 +134,9 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
-            oAddress.save();
+            if (oAddress.getLat() != null && oAddress.getLng() != null){
+                oAddress.save();
+            }
         }
     }
 
