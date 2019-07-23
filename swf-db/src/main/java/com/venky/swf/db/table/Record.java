@@ -88,7 +88,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     		if (equals(oldestValue,newValue)){ // Value is rolled back.
     			dirtyFields.remove(fieldName);
     		}
-		}else {
+		}else if (!equals(oldValue,newValue)){
 			dirtyFields.put(fieldName,oldValue);
 		}
     }
