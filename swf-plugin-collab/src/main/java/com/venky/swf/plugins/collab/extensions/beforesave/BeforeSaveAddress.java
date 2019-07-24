@@ -78,8 +78,32 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                             .append(" ")
                             .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
                     new StringBuilder()
+                            .append(StringUtil.valueOf(oAddress.getAddressLine1()))
+                            .append(" ")
                             .append(StringUtil.valueOf(oAddress.getAddressLine2()))
                             .append(" ")
+                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
+                            .append(" ")
+                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
+                            .append(" ")
+                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
+                    new StringBuilder()
+                            .append(StringUtil.valueOf(oAddress.getAddressLine1()))
+                            .append(" ")
+                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
+                            .append(" ")
+                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
+                            .append(" ")
+                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
+                    new StringBuilder()
+                            .append(StringUtil.valueOf(oAddress.getAddressLine2()))
+                            .append(" ")
+                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
+                            .append(" ")
+                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
+                            .append(" ")
+                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
+                    new StringBuilder()
                             .append(StringUtil.valueOf(oAddress.getAddressLine3()))
                             .append(" ")
                             .append(StringUtil.valueOf(oAddress.getAddressLine4()))
@@ -92,7 +116,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                             .append(" ")
                             .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
                     new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine4()))
+                            .append(StringUtil.valueOf(oAddress.getAddressLine3()))
                             .append(" ")
                             .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
                             .append(" ")
@@ -116,8 +140,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
             List<GeoCoder> coders = new ArrayList<GeoCoder>();
             coders.add(new GeoCoder("google"));
-            coders.add(new GeoCoder("openstreetmap"));
             coders.add(new GeoCoder("here"));
+            coders.add(new GeoCoder("openstreetmap"));
             Map<String,String> params = new HashMap<>();
             params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
             params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
