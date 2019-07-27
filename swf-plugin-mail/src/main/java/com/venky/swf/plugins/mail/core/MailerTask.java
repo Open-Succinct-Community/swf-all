@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.mail.core;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,15 +8,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.mail.Message.RecipientType;
-import javax.sound.midi.Receiver;
-import javax.xml.crypto.Data;
 
+import com.venky.core.io.ByteArrayInputStream;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.plugins.attachment.db.model.Attachment;
+import com.venky.swf.plugins.mail.db.model.MailAttachment;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import com.venky.swf.sql.parser.SQLExpressionParser.IN;
 import org.codemonkey.simplejavamail.Email;
 
 import com.venky.core.io.StringReader;
@@ -37,14 +39,30 @@ public class MailerTask implements Task{
 	boolean isHtml = false;
 	List<Long> cc;
 	List<Long> bcc;
+	List<AttachedElement> attachedElements;
+
+	public static class AttachedElement implements Serializable {
+		public AttachedElement(){
+
+		}
+		public AttachedElement(MimeType mimeType, String name, byte[] bytes){
+			this.bytes = bytes;
+			this.name = name;
+			this.mimeType = mimeType;
+		}
+		byte[] bytes;
+		String name;
+		MimeType mimeType;
+	}
+
 	@Deprecated
 	public MailerTask(){
 
 	}
 	public MailerTask(User to,String subject, String text){
-		this(to,subject,text,null,null);
+		this(to,subject,text,null,null, null);
 	}
-	public MailerTask(User to,String subject, String text, List<User> cc , List<User> bcc){
+	public MailerTask(User to, String subject, String text, List<User> cc , List<User> bcc, List<AttachedElement> attachedElements){
 		this.toUserId = to.getId();
 		this.subject = subject;
 		this.text = text;
@@ -60,6 +78,9 @@ public class MailerTask implements Task{
 		}
 		if (bcc != null){
 			this.bcc = DataSecurityFilter.getIds(bcc);
+		}
+		if (attachedElements != null){
+			this.attachedElements = attachedElements;
 		}
 	}
 	
@@ -97,12 +118,14 @@ public class MailerTask implements Task{
 
 		StringBuilder emailString = new StringBuilder();
 		for (RecipientType type : map.keySet()){
-			emailString.append(type.toString()).append(": ");
 			List<User> users = map.get(type);
-			for (User user : users){
-				for (UserEmail useremail : user.getUserEmails()){
-					email.addRecipient(useremail.getAlias() + "(" + useremail.getEmail() + ")" , useremail.getEmail(), type);
-					emailString.append(useremail.getEmail()).append(";");
+			if (!users.isEmpty()){
+				emailString.append(type.toString()).append(": ");
+				for (User user : users){
+					for (UserEmail useremail : user.getUserEmails()){
+						email.addRecipient(useremail.getAlias() + "(" + useremail.getEmail() + ")" , useremail.getEmail(), type);
+						emailString.append(useremail.getEmail()).append(";");
+					}
 				}
 			}
 		}
@@ -113,13 +136,32 @@ public class MailerTask implements Task{
 		}else {
 			email.setText(text);
 		}
-		
+
 		Mail mail = Database.getTable(Mail.class).newRecord();
 		mail.setUserId(toUserId);
 		mail.setEmail(emailString.toString());
 		mail.setSubject(subject);
 		mail.setBody(new StringReader(text));
 		mail.save();
+
+		if (attachedElements != null && !attachedElements.isEmpty()){
+			for (AttachedElement element : attachedElements){
+				email.addAttachment(element.name, element.bytes, element.mimeType.toString());
+
+				MailAttachment mailAttachment = Database.getTable(MailAttachment.class).newRecord();
+				mailAttachment.setMailId(mail.getId());
+				Attachment attachment = Database.getTable(Attachment.class).newRecord();
+				attachment.setAttachment(new ByteArrayInputStream(element.bytes));
+				attachment.setAttachmentContentName(element.name);
+				attachment.setAttachmentContentSize(element.bytes.length);
+				attachment.setAttachmentContentType(element.mimeType.toString());
+				attachment.save();
+				mailAttachment.setAttachmentId(attachment.getId());
+				mailAttachment.save();
+			}
+		}
+
+
 
 		AsyncMailer.instance().addEmail(email);
 	}

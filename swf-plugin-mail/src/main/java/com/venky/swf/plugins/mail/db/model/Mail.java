@@ -2,6 +2,7 @@ package com.venky.swf.plugins.mail.db.model;
 
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
@@ -38,4 +39,6 @@ public interface Mail extends Model{
 	public Timestamp getSentOn();
 	public void setSentOn(Timestamp date);
 
+
+	public List<MailAttachment> getMailAttachments();
 }
