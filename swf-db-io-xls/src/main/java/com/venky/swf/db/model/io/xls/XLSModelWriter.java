@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
@@ -266,7 +269,9 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
             }else if (isDate(colClass)) {
             	cell = createCell(r.getSheet(), r, columnNum, value, dateStyle);
             }else if (isBoolean(colClass)) {
-                cell = createCell(r.getSheet(), r, columnNum, value, null);
+				TypeConverter<Boolean> converter = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(Boolean.class).getTypeConverter();
+
+                cell = createCell(r.getSheet(), r, columnNum, converter.toString(value), stringStyle);
             }else{
                 cell = createCell(r.getSheet(),r , columnNum, value , stringStyle);
             }
