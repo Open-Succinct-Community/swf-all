@@ -125,7 +125,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 			if (referredModelGetter != null){
 				Class<? extends Model> aParent = ref.getReferredModelClass(referredModelGetter);
-				if (!isParentIgnored(aParent,parentsAlreadyConsidered)) {
+				if (!isParentIgnored(aParent,parentsAlreadyConsidered) || fields != null) {
 					String refElementName = referredModelGetter.getName().substring("get".length());
 					T refElement = formatHelper.createElementAttribute(refElementName);
 					parentsAlreadyConsidered.add(aParent);
