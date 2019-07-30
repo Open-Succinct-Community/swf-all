@@ -173,7 +173,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	if (clearDirtyFields) {
 			dirtyFields.clear();
 		}
-        newRecord = fieldValues.isEmpty();
+        newRecord = newRecord || fieldValues.isEmpty();
     }
 
     public boolean isNewRecord() {
