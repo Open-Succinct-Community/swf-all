@@ -6,4 +6,9 @@ public class BeforeSaveUser extends BeforeSaveAddress<User> {
     static {
         registerExtension(new BeforeSaveUser());
     }
+
+    @Override
+    protected boolean isOkToSetLocationAsync() {
+        return false;
+    }
 }
