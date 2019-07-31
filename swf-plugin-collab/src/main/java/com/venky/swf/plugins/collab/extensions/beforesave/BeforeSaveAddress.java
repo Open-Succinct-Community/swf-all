@@ -30,6 +30,9 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 	protected boolean isAddressChanged(M oAddress){
 		return Address.isAddressChanged(oAddress);
 	}
+	protected boolean isOkToSetLocationAsync(){
+	    return true;
+    }
 	@Override
 	public void beforeSave(M oAddress) {
 		if (!isAddressChanged(oAddress)) {
@@ -50,7 +53,11 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 			}
 		}
         if (!isAddressVoid(oAddress)){
-            TaskManager.instance().executeAsync(new LocationSetterTask<M>(oAddress),false);
+            if (isOkToSetLocationAsync()){
+                TaskManager.instance().executeAsync(new LocationSetterTask<M>(oAddress),false);
+            }else{
+                TaskManager.instance().execute(new LocationSetterTask<M>(oAddress));
+            }
         }
 	}
 
