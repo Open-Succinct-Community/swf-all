@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.collab.extensions.beforesave;
 
+import com.venky.core.collections.SequenceMap;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.geo.GeoCoder;
@@ -13,6 +15,7 @@ import com.venky.swf.routing.Config;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -66,78 +69,50 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
         public LocationSetterTask(M address){
             this.oAddress = address;
         }
-        private StringBuilder[] getAddressQueries(Address oAddress){
-            StringBuilder[] address = new StringBuilder[]{
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine1()))
-                            .append(" ")
-                            .append(StringUtil.valueOf(oAddress.getAddressLine2()))
-                            .append(" ")
-                            .append(StringUtil.valueOf(oAddress.getAddressLine3()))
-                            .append(" ")
-                            .append(StringUtil.valueOf(oAddress.getAddressLine4()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getPinCode() == null ? "" : oAddress.getPinCode().getPinCode())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine1()))
-                            .append(" ")
-                            .append(StringUtil.valueOf(oAddress.getAddressLine2()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine1()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine2()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine3()))
-                            .append(" ")
-                            .append(StringUtil.valueOf(oAddress.getAddressLine4()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getPinCode() == null ? "" : oAddress.getPinCode().getPinCode())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine3()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getState() == null ? "" : oAddress.getState().getName())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-                    new StringBuilder()
-                            .append(StringUtil.valueOf(oAddress.getAddressLine4()))
-                            .append(" ")
-                            .append(oAddress.getCity() == null ? "" : oAddress.getCity().getName())
-                            .append(" ")
-                            .append(oAddress.getCountry() == null ? "" : oAddress.getCountry().getName()),
-            };
-            return address;
+
+        private Set<String> getAddressQueries(M oAddress){
+            SequenceMap<String,String> priorityFields = new SequenceMap<>();
+            for (String f : Address.getAddressFields()) {
+                if (!oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress,f))){
+                    priorityFields.put(f, StringUtil.valueOf(oAddress.getReflector().get(oAddress,f)));
+                }
+            }
+
+            StringBuilder defaultQueryString = new StringBuilder();
+            if (priorityFields.containsKey("CITY_ID")) {
+                defaultQueryString.append(oAddress.getCity().getName());
+                defaultQueryString.append(" ").append(oAddress.getState().getName());
+                defaultQueryString.append(" ").append(oAddress.getCountry().getName());
+                priorityFields.remove("CITY_ID");
+                priorityFields.remove("STATE_ID");
+                priorityFields.remove("COUNTRY_ID");
+            }
+            if (priorityFields.containsKey("PIN_CODE_ID")){
+                defaultQueryString.append(" ").append(oAddress.getPinCode().getPinCode());
+                priorityFields.remove("PIN_CODE_ID");
+            }
+
+            SequenceSet<String> addressQueries = new SequenceSet<>();
+
+            for (int i = priorityFields.size() -1 ; i >=0 ; i -- ){
+                StringBuilder addressQuery = new StringBuilder();
+                for (int j = 0 ; j <= i ; j ++) {
+                    addressQuery.append(priorityFields.getValueAt(j)).append(" ");
+                }
+                addressQuery.append(defaultQueryString.toString());
+                addressQueries.add(addressQuery.toString());
+            }
+            for (int i = priorityFields.size() -2 ; i >=0 ; i -- ){
+                StringBuilder addressQuery = new StringBuilder();
+                for (int j = 0 ; j <= i ; j ++) {
+                    addressQuery.insert(0, " ");
+                    addressQuery.insert(0, priorityFields.getValueAt(priorityFields.size()-1 - j));
+                }
+                addressQuery.append(defaultQueryString.toString());
+                addressQueries.add(addressQuery.toString());
+            }
+
+            return addressQueries;
         }
 
         @Override
@@ -156,8 +131,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
             for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(oAddress.getLat()) || ObjectUtil.isVoid(oAddress.getLng())) ; ){
                 GeoCoder coder = i.next();
-                for (StringBuilder address: getAddressQueries(oAddress)){
-                    GeoLocation location = coder.getLocation(address.toString(),params);
+                for (String address: getAddressQueries(oAddress)){
+                    GeoLocation location = coder.getLocation(address,params);
                     if (location != null){
                         oAddress.setLat(location.getLat());
                         oAddress.setLng(location.getLng());
@@ -165,8 +140,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
-            if (oAddress.getLat() != null && oAddress.getLng() != null){
-                oAddress.save();
+            if (oAddress.getLat() != null && oAddress.getLng() != null){    
+                oAddress.save(); //Prevent Reccursion.
             }
         }
     }
