@@ -140,7 +140,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
-            if (oAddress.getLat() != null && oAddress.getLng() != null){
+            if (oAddress.getLat() != null && ObjectUtil.equals(oAddress.getRawRecord().getOldValue("LAT") ,oAddress.getLat()) &&
+                    oAddress.getLng() != null && ObjectUtil.equals(oAddress.getRawRecord().getOldValue("LNG") ,oAddress.getLng())) {
                 oAddress.save(); //Prevent Reccursion.
             }
         }
