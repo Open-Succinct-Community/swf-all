@@ -117,9 +117,6 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
         @Override
         public void execute() {
-            oAddress.setLat(null);
-            oAddress.setLng(null);
-
             List<GeoCoder> coders = new ArrayList<GeoCoder>();
             coders.add(new GeoCoder("google"));
             coders.add(new GeoCoder("openstreetmap"));
