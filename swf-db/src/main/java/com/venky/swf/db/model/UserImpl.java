@@ -62,7 +62,7 @@ public class UserImpl extends ModelImpl<User>{
 	}
 	public String getEncryptedPassword(String unencyptedPassword){
 		String password = unencyptedPassword;
-		if (Config.instance().shouldPasswordsBeEncrypted()){
+		if (!ObjectUtil.isVoid(unencyptedPassword) && Config.instance().shouldPasswordsBeEncrypted()){
 			User user = getProxy();
 			if (user.getReflector().isVoid(user.getCreatedAt())){
 				user.setCreatedAt(user.getReflector().getNow());
