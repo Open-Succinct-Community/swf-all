@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.venky.core.collections.SequenceMap;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 
@@ -27,7 +28,7 @@ public class UniqueKey<M extends Model> {
 		return ModelReflector.instance(modelClass);
 	}
 
-	private Map<String,UniqueKeyFieldDescriptor<M>> fields = new HashMap<String, UniqueKeyFieldDescriptor<M>>();
+	private Map<String,UniqueKeyFieldDescriptor<M>> fields = new SequenceMap<>();
 	public void addField(String field, boolean exportable, boolean allowMultipleRecordsWithNull) {
 		UniqueKeyFieldDescriptor<M> ukfd = new UniqueKeyFieldDescriptor<M>(this,field);
 		ukfd.setMultipleRecordsWithNullAllowed(allowMultipleRecordsWithNull);
