@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.core.collections.SequenceMap;
 import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import org.apache.poi.ss.usermodel.Cell;
@@ -43,8 +44,8 @@ import com.venky.swf.util.WordWrapUtil;
 
 public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
 
-	private final HashMap<String, Class<? extends Model>> referedModelMap = new HashMap<String,Class<? extends Model>>();
-	private final HashMap<String, SequenceSet<String>> referredModelFieldsToExport = new HashMap<String, SequenceSet<String>>();
+	private final SequenceMap<String, Class<? extends Model>> referedModelMap = new SequenceMap<String,Class<? extends Model>>();
+	private final SequenceMap<String, SequenceSet<String>> referredModelFieldsToExport = new SequenceMap<String, SequenceSet<String>>();
 	public XLSModelWriter(Class<M> modelClass){
 		this(modelClass,false);
 	}
