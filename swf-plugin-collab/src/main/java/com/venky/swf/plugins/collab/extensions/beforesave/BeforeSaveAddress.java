@@ -13,6 +13,7 @@ import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.routing.Config;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,20 +126,23 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
             params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
             params.put("google.api_key",Config.instance().getProperty("geocoder.google.api_key"));
+            BigDecimal lat = null;
+            BigDecimal lng = null;
 
-            for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(oAddress.getLat()) || ObjectUtil.isVoid(oAddress.getLng())) ; ){
+            for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng)) ; ){
                 GeoCoder coder = i.next();
                 for (String address: getAddressQueries(oAddress)){
                     GeoLocation location = coder.getLocation(address,params);
                     if (location != null){
-                        oAddress.setLat(location.getLat());
-                        oAddress.setLng(location.getLng());
+                        lat = location.getLat();
+                        lng = location.getLng();
                         break ;
                     }
                 }
             }
-            if (oAddress.getLat() != null && oAddress.getRawRecord().isFieldDirty("LAT") &&
-                    oAddress.getLng() != null && oAddress.getRawRecord().isFieldDirty("LNG")) {
+            if (lat != null && lng != null){
+                oAddress.setLat(lat);
+                oAddress.setLng(lng);
                 oAddress.save(); //Prevent Reccursion.
             }
         }
