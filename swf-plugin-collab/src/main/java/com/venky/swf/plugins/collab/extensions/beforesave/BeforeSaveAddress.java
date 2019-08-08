@@ -52,15 +52,16 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 		}
 		if (!oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())){
 			if (oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG") ){
-				//Set by user
+				//Set by user or LocationSetterTask
 				return;
 			}
 		}
         if (!isAddressVoid(oAddress)){
+            LocationSetterTask<M> setterTask = new LocationSetterTask<M>(oAddress);
             if (isOkToSetLocationAsync()){
-                TaskManager.instance().executeAsync(new LocationSetterTask<M>(oAddress),false);
+                TaskManager.instance().executeAsync(setterTask,false);
             }else{
-                TaskManager.instance().execute(new LocationSetterTask<M>(oAddress));
+                setterTask.setLatLng(false);
             }
         }
 	}
@@ -116,8 +117,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             return addressQueries;
         }
 
-        @Override
-        public void execute() {
+        public void setLatLng(boolean persistAfterSetting){
             List<GeoCoder> coders = new ArrayList<GeoCoder>();
             coders.add(new GeoCoder("google"));
             coders.add(new GeoCoder("openstreetmap"));
@@ -140,11 +140,17 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
-            if (lat != null && lng != null){
+            if (lat != null && lng != null) {
                 oAddress.setLat(lat);
                 oAddress.setLng(lng);
-                oAddress.save(); //Prevent Reccursion.
+                if ((oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) && persistAfterSetting) {
+                    oAddress.save();
+                }
             }
+        }
+        @Override
+        public void execute() {
+            setLatLng(true);
         }
     }
 
