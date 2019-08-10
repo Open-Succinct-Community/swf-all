@@ -26,17 +26,8 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 	public M read(T source) {
 		M m = createInstance();
 		FormatHelper<T> helper = FormatHelper.instance(source);
-		for (String attributeName: helper.getAttributes()){
-			String fieldName = getFieldName(attributeName);
-			Object attrValue = helper.getAttribute(attributeName);
-			if (fieldName != null && attrValue != null) {
-				Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
-				Object value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
-				if (value != null){
-					getReflector().set(m, fieldName, value);
-				}
-			}
-		}
+		set(m,helper);
+
 		for (Method referredModelGetter : getReflector().getReferredModelGetters()){
 			Class<? extends Model> referredModelClass = getReflector().getReferredModelClass(referredModelGetter);
 			String refElementName = referredModelGetter.getName().substring("get".length());
@@ -57,6 +48,22 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			}
 		}
 		
-		return Database.getTable(getBeanClass()).getRefreshed(m);
+		M m1 = Database.getTable(getBeanClass()).getRefreshed(m);
+		set(m1,helper);
+		return m1;
+	}
+
+	private void set(M m, FormatHelper<T> helper) {
+		for (String attributeName: helper.getAttributes()){
+			String fieldName = getFieldName(attributeName);
+			Object attrValue = helper.getAttribute(attributeName);
+			if (fieldName != null && attrValue != null) {
+				Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
+				Object value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
+				if (value != null){
+					getReflector().set(m, fieldName, value);
+				}
+			}
+		}
 	}
 }
