@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.venky.swf.routing.Config;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.venky.core.collections.SequenceSet;
@@ -53,7 +54,8 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         	Iterator<String> fi = getIncludedFields().iterator(); 
         	while (fi.hasNext()){
         		String field = fi.next();
-        		if (reflector.isHouseKeepingField(field) || !reflector.isFieldVisible(field)) {
+        		if ((!Config.instance().getBooleanProperty("swf.listview.housekeeping.show",false) && reflector.isHouseKeepingField(field)) ||
+						!reflector.isFieldVisible(field)) {
 	        		fi.remove();
 	        	}
 	        }
