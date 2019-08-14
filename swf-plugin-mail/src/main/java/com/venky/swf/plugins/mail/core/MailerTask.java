@@ -80,7 +80,7 @@ public class MailerTask implements Task{
 			this.bcc = DataSecurityFilter.getIds(bcc);
 		}
 		if (attachedElements != null){
-			this.attachedElements = attachedElements;
+			this.attachedElements = new ArrayList<>(attachedElements);
 		}
 	}
 	
