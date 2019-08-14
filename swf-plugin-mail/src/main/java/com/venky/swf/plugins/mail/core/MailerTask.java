@@ -70,7 +70,7 @@ public class MailerTask implements Task{
 			String trim = text.trim();
 			int len = trim.length();
 			if (len > 5 ) { 
-				this.isHtml = trim.substring(0, 5).equalsIgnoreCase("<html") || trim.substring(0,14).equalsIgnoreCase("<!DOCTYPE html");
+				this.isHtml = trim.substring(0, 5).equalsIgnoreCase("<html") || (len > 14 && trim.substring(0,14).equalsIgnoreCase("<!DOCTYPE html"));
 			}
 		}
 		if (cc != null){
