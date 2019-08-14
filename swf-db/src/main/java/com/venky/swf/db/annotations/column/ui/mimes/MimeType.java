@@ -130,11 +130,10 @@ public enum MimeType {
 	private static void loadMimeTypeMap(){
 		if (mimeTypeMap.isEmpty()){
 			synchronized (mimeTypeMap){
-				if  (mimeTypeMap.isEmpty()){
-					return;
-				}
-				for (MimeType type : MimeType.values()){
-					mimeTypeMap.put(type.toString(),type);
+				if  (mimeTypeMap.isEmpty()) {
+					for (MimeType type : MimeType.values()) {
+						mimeTypeMap.put(type.toString(), type);
+					}
 				}
 			}
 		}
