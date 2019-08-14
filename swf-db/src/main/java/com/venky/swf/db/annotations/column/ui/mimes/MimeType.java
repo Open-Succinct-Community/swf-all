@@ -1,5 +1,10 @@
 package com.venky.swf.db.annotations.column.ui.mimes;
 
+import com.venky.core.util.ObjectUtil;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public enum MimeType {
 	TEXT_MARKDOWN() {
 		public String toString(){
@@ -119,4 +124,24 @@ public enum MimeType {
 	;
 
 	public abstract boolean isImage();
+
+
+	private static Map<String,MimeType> mimeTypeMap = new HashMap<>();
+	private static void loadMimeTypeMap(){
+		if (mimeTypeMap.isEmpty()){
+			synchronized (mimeTypeMap){
+				if  (mimeTypeMap.isEmpty()){
+					return;
+				}
+				for (MimeType type : MimeType.values()){
+					mimeTypeMap.put(type.toString(),type);
+				}
+			}
+		}
+	}
+
+	public static MimeType getMimeType(String mimeType){
+		loadMimeTypeMap();
+		return mimeTypeMap.get(mimeType);
+	}
 }
