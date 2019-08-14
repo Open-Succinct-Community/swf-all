@@ -150,12 +150,15 @@ public class MailerTask implements Task{
 
 				MailAttachment mailAttachment = Database.getTable(MailAttachment.class).newRecord();
 				mailAttachment.setMailId(mail.getId());
-				Attachment attachment = Database.getTable(Attachment.class).newRecord();
-				attachment.setAttachment(new ByteArrayInputStream(element.bytes));
-				attachment.setAttachmentContentName(element.name);
-				attachment.setAttachmentContentSize(element.bytes.length);
-				attachment.setAttachmentContentType(element.mimeType.toString());
-				attachment.save();
+				Attachment attachment = Attachment.find(element.name);
+				if (attachment == null){
+					attachment = Database.getTable(Attachment.class).newRecord() ;
+					attachment.setAttachment(new ByteArrayInputStream(element.bytes));
+					attachment.setAttachmentContentName(element.name);
+					attachment.setAttachmentContentSize(element.bytes.length);
+					attachment.setAttachmentContentType(element.mimeType.toString());
+					attachment.save();
+				}
 				mailAttachment.setAttachmentId(attachment.getId());
 				mailAttachment.save();
 			}
