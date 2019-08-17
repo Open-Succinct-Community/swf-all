@@ -34,8 +34,32 @@ public interface Company extends Model{
 	
 	@IS_VIRTUAL
 	public Company getSelfCompany();
+
+
+	@COLUMN_NAME("ID")
+	@PROTECTION
+	@HIDDEN
+	@HOUSEKEEPING
+	@PARTICIPANT
+	public long getVendorId();
+	public void setVendorId(long id);
+
+	@IS_VIRTUAL
+	public Company getVendor();
 	
 	
+	@COLUMN_NAME("ID")
+	@PROTECTION
+	@HIDDEN
+	@HOUSEKEEPING
+	@PARTICIPANT
+	public long getCustomerId();
+	public void setCustomerId(long id);
+
+	@IS_VIRTUAL
+	public Company getCustomer();
+
+
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY
 	@Index
@@ -76,4 +100,12 @@ public interface Company extends Model{
 	public List<User> getUsers();
 
 	public List<Long> getStaffUserIds();
+
+
+	@CONNECTED_VIA("CUSTOMER_ID")
+	public List<CompanyRelationShip> getVendors();
+
+	@CONNECTED_VIA("VENDOR_ID")
+	public List<CompanyRelationShip> getCustomers();
+
 }

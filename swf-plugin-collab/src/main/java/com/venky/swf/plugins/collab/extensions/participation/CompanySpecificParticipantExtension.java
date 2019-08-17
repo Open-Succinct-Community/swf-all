@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.extensions.participation;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.extensions.ParticipantExtension;
@@ -15,7 +16,9 @@ import com.venky.swf.sql.Select;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CompanySpecificParticipantExtension<M extends Model & CompanySpecific> extends ParticipantExtension<M>{
 
@@ -26,7 +29,11 @@ public class CompanySpecificParticipantExtension<M extends Model & CompanySpecif
 		if (partiallyFilledModel != null){
 			if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
 				if (u.getCompanyId() != null){
-					return Arrays.asList(u.getCompanyId());
+					List<Long> ret = new SequenceSet<>();
+					ret.add(u.getCompanyId());
+					ret.addAll(u.getCompany().getCustomers().stream().map(r->r.getCustomerId()).collect(Collectors.toList()));
+					ret.addAll(u.getCompany().getVendors().stream().map(r->r.getVendorId()).collect(Collectors.toList()));
+					return ret;
 				}else {
 					return new ArrayList<>();
 				}

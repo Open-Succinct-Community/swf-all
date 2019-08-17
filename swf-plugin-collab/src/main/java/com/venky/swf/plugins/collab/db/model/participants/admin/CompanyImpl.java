@@ -38,4 +38,13 @@ public class CompanyImpl extends ModelImpl<Company>{
 		List<User> users = select.execute();
 		return DataSecurityFilter.getIds(users);
 	}
+
+	public Company getCustomer(){
+		return getProxy();
+	}
+
+	public Company getVendor(){
+		return getProxy();
+	}
+
 }
