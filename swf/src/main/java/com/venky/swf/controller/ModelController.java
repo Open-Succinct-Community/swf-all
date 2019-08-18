@@ -350,9 +350,11 @@ public class ModelController<M extends Model> extends Controller {
     	if (record == null){
     	    throw new RecordNotFoundException();
         }
-		if (!record.isAccessibleBy(getSessionUser(),modelClass)){
+		if (getSessionUser() != null && !record.isAccessibleBy(getSessionUser(),modelClass)){
 			throw new AccessDeniedException();
 		}
+
+		// Either it is unsecured or is accessable
 		return show(record);
     }
     protected View show(M record){
