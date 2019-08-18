@@ -112,4 +112,12 @@ public interface User extends Model{
     public boolean isPasswordEncrypted();
     public void setPasswordEncrypted(boolean encrypted);
 
+
+    @IS_VIRTUAL
+    public String getFirstName();
+
+
+    @IS_VIRTUAL
+    public String  getLastName();
+
 }

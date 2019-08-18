@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
@@ -318,5 +319,40 @@ public class UserImpl extends ModelImpl<User>{
 			}
 		}
 		return dswMandatory;
+	}
+
+	private String firstName = null;
+	private String lastName = null;
+	private void loadNames(){
+		if (firstName != null){
+			return ;
+		}
+		firstName = "";
+		lastName = "";
+		User user = getProxy();
+		if (!ObjectUtil.isVoid(user.getLongName())){
+			StringTokenizer tok = new StringTokenizer(user.getLongName());
+			if (tok.hasMoreTokens()){
+				this.firstName = tok.nextToken();
+			}
+			if (tok.hasMoreTokens()){
+				StringBuilder lastName = new StringBuilder();
+				while (tok.hasMoreTokens()) {
+					if (lastName.length() >0){
+						lastName.append(" ");
+					}
+					lastName.append(tok.nextToken());
+				}
+				this.lastName = lastName.toString();
+			}
+		}
+	}
+	public String getFirstName(){
+		loadNames();
+		return firstName;
+	}
+	public String getLastName(){
+		loadNames();
+		return lastName;
 	}
 }
