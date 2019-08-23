@@ -60,7 +60,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			if (fieldName != null && attrValue != null) {
 				Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
 				Object value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
-				if (value != null){
+				if (value != null && getReflector().isFieldSettable(fieldName)){
 					getReflector().set(m, fieldName, value);
 				}
 			}
