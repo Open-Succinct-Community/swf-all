@@ -8,6 +8,7 @@ package com.venky.swf.controller;
 import com.venky.cache.Cache;
 import com.venky.cache.UnboundedCache;
 import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ExceptionUtil;
@@ -19,7 +20,9 @@ import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -266,7 +269,7 @@ public class ModelController<M extends Model> extends Controller {
 
 			@Override
 			protected List<Method> getValue(Class<? extends Model> parentClass) {
-				return new ArrayList<>();
+				return new SequenceSet<>();
 			}
 		};
     	
@@ -280,15 +283,19 @@ public class ModelController<M extends Model> extends Controller {
 				ModelReflector<? extends Model> childRef = ModelReflector.instance(ref.getChildModelClass(cg));
 				
 				if (StringUtil.equals(reflector.getTableName(),childRef.getTableName())){
-					childListMethodsOnParentClass.get(referredModelClass).add(cg);
+					HIDDEN hidden = ref.getAnnotation(cg,HIDDEN.class);
+					if (hidden == null || !hidden.value()) {
+						childListMethodsOnParentClass.get(referredModelClass).add(cg);
+					}
 				}
 			}
 		}
 		List<ControllerInfo> controllerElements = new ArrayList<ControllerInfo>(getPath().getControllerElements());
         Collections.reverse(controllerElements);
         Iterator<ControllerInfo> cInfoIter = controllerElements.iterator() ;
+        ControllerInfo selfModel = null;
         if (cInfoIter.hasNext()){
-            cInfoIter.next();// The last model was self.
+            selfModel = cInfoIter.next();// The last model was self.
         }
 		while(cInfoIter.hasNext()){
 			ControllerInfo info = cInfoIter.next();
