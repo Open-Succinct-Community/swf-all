@@ -4,4 +4,6 @@
 /tmp/
 nohup.out
 .idea/
-
+.classpath
+.project
+database/
