@@ -20,7 +20,7 @@ public class 	UserParticipantExtension extends CompanySpecificParticipantExtensi
 		SequenceSet<Long> ret = null;
 		User u = user.getRawRecord().getAsProxy(User.class);
 		if ("SELF_USER_ID".equalsIgnoreCase(fieldName)) {
-			if (!u.isStaff()){
+			if (!u.isStaff() || partiallyFilledModel.getId() == user.getId()){
 				ret = new SequenceSet<>();
 				ret.add(user.getId());
 			}
