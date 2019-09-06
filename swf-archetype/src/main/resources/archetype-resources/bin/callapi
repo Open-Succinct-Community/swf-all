@@ -5,18 +5,19 @@ cd $projpath
 
 source $HOME/.bash_aliases
 source overrideProperties/config/envvars
-user=$1
+user_password=$1
+user=`echo ${user_password} |cut -f1 -d '/'`
+password=`echo ${user_password} |cut -f2 -d '/'`
 shift
 api=$1
 shift
-data="$@"
 
 if [ "${content_type}" = "" ] 
 then 
     content_type="application/xml" 
 fi
 
-apiKey=`bin/getapikey $user`
+apiKey=`bin/getapikey $user $password`
 echo "user=$user"
 echo "api=$api"
 echo "data=$data"
@@ -27,9 +28,5 @@ then
 fi
 
 
-if [ "$data" = "" ]
-then 
-curl  -v "${baseurl}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  
-else
-curl  -v "${baseurl}/${api}" 	  -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  -d  "$data"
-fi
+echo curl  -L -v -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  ${baseurl}/$api $@
+curl  -L -s -H "ApiKey: $apiKey" -H "Content-Type: ${content_type}"  -H "ApiProtocol: ${ApiProtocol}"  ${baseurl}/$api "$@"

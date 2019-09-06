@@ -1,3 +1,7 @@
 /target/
 /.settings/
 /overrideProperties/
+/tmp/
+nohup.out
+.idea/
+
