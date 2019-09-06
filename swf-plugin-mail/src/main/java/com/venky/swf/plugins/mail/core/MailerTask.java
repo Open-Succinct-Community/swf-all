@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.mail.Message.RecipientType;
 
@@ -34,6 +35,7 @@ public class MailerTask implements Task{
 	private static final long serialVersionUID = 8083486775891668308L;
 	
 	long toUserId ;
+	String toEmail;
 	String subject; 
 	String text; 
 	boolean isHtml = false;
@@ -60,10 +62,14 @@ public class MailerTask implements Task{
 
 	}
 	public MailerTask(User to,String subject, String text){
-		this(to,subject,text,null,null, null);
+		this(to,null, subject,text);
 	}
-	public MailerTask(User to, String subject, String text, List<User> cc , List<User> bcc, List<AttachedElement> attachedElements){
+	public MailerTask(User to,String toEmail,String subject, String text){
+		this(to,toEmail,subject,text,null,null,null);
+	}
+	public MailerTask(User to, String toEmail, String subject, String text, List<User> cc , List<User> bcc, List<AttachedElement> attachedElements){
 		this.toUserId = to.getId();
+		this.toEmail = toEmail;
 		this.subject = subject;
 		this.text = text;
 		if (!ObjectUtil.isVoid(text)){
@@ -101,8 +107,11 @@ public class MailerTask implements Task{
 		map.put(RecipientType.BCC,bcc);
 
 		List<UserEmail> emails = to.getUserEmails();
+		if (!ObjectUtil.isVoid(this.toEmail)){
+			emails = emails.stream().filter(e->ObjectUtil.equals(e.getEmail(),this.toEmail)).collect(Collectors.toList());
+		}
 		if (emails.isEmpty()){
-			throw new RuntimeException("No email available for " + to.getName());
+			throw new RuntimeException("No toEmail available for " + to.getName());
 		}
 		
 		String emailId = Config.instance().getProperty("swf.sendmail.user");

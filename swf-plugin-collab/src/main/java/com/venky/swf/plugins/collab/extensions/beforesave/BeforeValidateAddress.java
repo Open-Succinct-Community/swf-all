@@ -15,6 +15,9 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
     public void beforeValidate(M model) {
         ModelReflector<User> reflector = model.getReflector();
         for (String field : new String[]{"PHONE_NUMBER", "ALTERNATE_PHONE_NUMBER"}){
+            if (!reflector.getFields().contains(field)){
+                continue;
+            }
             String phoneNumber = reflector.get(model,field);
 
             if (!reflector.isVoid(phoneNumber) && model.getRawRecord().isFieldDirty(field)){
@@ -33,6 +36,19 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
                 }else {
                     throw new RuntimeException("Phone number invalid e.g. +911234567890");
                 }
+            }
+        }
+
+        String email = model.getEmail();
+        if (!reflector.isVoid(email) && model.getRawRecord().isFieldDirty("EMAIL")){
+            String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\." +
+                    "[a-zA-Z0-9_+&*-]+)*@" +
+                    "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
+                    "A-Z]{2,7}$";
+
+            Pattern pat = Pattern.compile(emailRegex);
+            if (!pat.matcher(email).matches()){
+                throw new RuntimeException("Email is invalid!");
             }
         }
     }

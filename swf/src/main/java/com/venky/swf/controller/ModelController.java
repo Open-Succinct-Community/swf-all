@@ -66,6 +66,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -311,8 +312,11 @@ public class ModelController<M extends Model> extends Controller {
 					Model parent = Database.getTable(parentClass).get(info.getId());
 					for (Method childGetter :childListMethodsOnParentClass.get(parentClass)){
 						try {
-							children = (List<M>) childGetter.invoke(parent);
-							break;
+							if (ObjectUtil.equals(selfModel.getModelClass().getSimpleName(),
+									((Class)((ParameterizedType)childGetter.getGenericReturnType()).getActualTypeArguments()[0]).getSimpleName())){
+								children = (List<M>) childGetter.invoke(parent);
+								break;
+							}
 						} catch (Exception e) {
 							//
 						}

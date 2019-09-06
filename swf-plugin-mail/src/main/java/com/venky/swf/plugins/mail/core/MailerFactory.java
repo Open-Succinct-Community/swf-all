@@ -19,9 +19,12 @@ public class MailerFactory {
 		}
 		return instance;
 	}
+	public static final String PROTOCOL_SMTP = "SMTP";
+	public static final String PROTOCOL_SEND_GRID = "SENDGRID";
+
 	private MailerFactory() {
-		mailer.put("SMTP", new SMTPMailer());
-		mailer.put("SENDGRID", new SendGridMailer());
+		mailer.put(PROTOCOL_SMTP, new SMTPMailer());
+		mailer.put(PROTOCOL_SEND_GRID, new SendGridMailer());
 	}
 	private Map<String,Mailer> mailer = new HashMap<String, Mailer>();
 	

@@ -18,7 +18,7 @@ public class UserImpl extends ModelImpl<User>{
 		sendMail(subject,text,null,null,null);
 	}
 	public void sendMail(String subject, String text, List<User> cc , List<User> bcc, List<AttachedElement> attachedElements){
-		MailerTask task = new MailerTask(getProxy(), subject, text, cc,bcc,attachedElements);
+		MailerTask task = new MailerTask(getProxy(), null,subject, text, cc,bcc,attachedElements);
 		TaskManager.instance().executeAsync(task);
 	}
 
