@@ -126,7 +126,7 @@ public class ModelInvocationHandler implements InvocationHandler {
                     return converter.valueOf(value);
                 }
             }
-        } else if (getReflector().getFieldSetters().contains(method) ) {
+        } else if (getReflector().getFieldSetterSignatures().contains(getReflector().getSignature(method))) {
             String fieldName = StringUtil.underscorize(mName.substring(3));
             if (!virtualFields.contains(fieldName)){
                 String columnName = getReflector().getColumnDescriptor(fieldName).getName(); 

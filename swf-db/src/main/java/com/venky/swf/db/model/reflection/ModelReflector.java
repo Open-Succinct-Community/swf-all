@@ -275,7 +275,22 @@ public class ModelReflector<M extends Model> {
     	}
     	return fieldGetterSignatures;
     }
-    
+	private SequenceSet<String> fieldSetterSignatures = null;
+	public List<String> getFieldSetterSignatures(){
+		if (fieldSetterSignatures == null){
+			synchronized (this) {
+				if (fieldSetterSignatures == null ){
+					SequenceSet<String> fieldSetterSignatures = new SequenceSet<String>();
+					for (Method m : getFieldSetters()){
+						fieldSetterSignatures.add(getSignature(m));
+					}
+					this.fieldSetterSignatures = fieldSetterSignatures;
+				}
+			}
+		}
+		return fieldSetterSignatures;
+	}
+
     private SequenceSet<Method> indexedFieldGetters = null;
     public List<Method> getIndexedFieldGetters(){
     	if (indexedFieldGetters == null) {
