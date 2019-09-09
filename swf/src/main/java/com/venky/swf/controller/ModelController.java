@@ -134,6 +134,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     @Override
+
     @RequireLogin(true)
     public View index() {
     	Timer index = Config.instance().getLogger(getClass().getName()).startTimer(getReflector().getTableName() + ".index");
@@ -409,7 +410,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     private View view(long id,Boolean asAttachment){
 		M record = Database.getTable(modelClass).get(id);
-        if (record.isAccessibleBy(getSessionUser(),modelClass)){
+        if (getSessionUser() == null || record.isAccessibleBy(getSessionUser(),modelClass)){
             try {
             	for (Method getter : reflector.getFieldGetters()){
             		if (InputStream.class.isAssignableFrom(getter.getReturnType())){
