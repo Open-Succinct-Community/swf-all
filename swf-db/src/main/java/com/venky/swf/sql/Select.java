@@ -285,7 +285,7 @@ public class Select extends SqlStatement{
 			                    	if (!locked || locked == cachedRecord.isLocked()){
 			                    		r = cachedRecord;
 			                    	}else {
-			                    		cache.registerUpdate(r);
+			                    		r = cache.registerUpdate(r);
 			                    	}
 			                    }else {
 			                    	cache.add(r);
