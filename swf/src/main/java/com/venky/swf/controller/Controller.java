@@ -34,6 +34,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.Crypt;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
@@ -137,9 +138,14 @@ public class Controller {
 		return redirectedTo;
 
 	}
+	@RequireLogin(false)
+	public View publicKey(){
+    	return new BytesView(getPath(), Crypt.getInstance().getBase64PublicKey().getBytes());
+	}
     
     protected View authenticate(){
-        boolean authenticated = getPath().isRequestAuthenticated();
+    	boolean clientAuthenticated = getPath().isAppAuthenticated();
+        boolean authenticated = clientAuthenticated && getPath().isRequestAuthenticated();
         if (getPath().getProtocol() == MimeType.TEXT_HTML) {
             if (authenticated) {
 				return new RedirectorView(getPath(), "",loginSuccessful());

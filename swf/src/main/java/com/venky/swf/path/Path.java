@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
+import com.venky.swf.db.model.application.Application;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.commons.fileupload.FileItem;
@@ -344,7 +346,33 @@ public class Path implements _IPath{
         }
         loadControllerClassName(isResource);
     }
-    public static class ControllerInfo { 
+
+    public boolean isAppAuthenticated() {
+        boolean appAuthRequired = Config.instance().getBooleanProperty("swf.application.authentication.required",false);
+        if (!appAuthRequired){
+            return true;
+        }
+        String authorization = getRequest().getHeader("Authorization");
+        if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
+            // Authorization: Basic base64credentials
+            String base64Credentials = authorization.substring("basic".length()).trim();
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+            // credentials = username:password
+            final String[] values = credentials.split(":", 2);
+            if (values.length == 2){
+                String appId = values[0];
+                String plainPass = values[1];
+                Application app = Application.find(appId);
+                if (ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static class ControllerInfo {
         private String action = null; 
         private Object parameter = null; 
         private Class<? extends Model> modelClass = null;
