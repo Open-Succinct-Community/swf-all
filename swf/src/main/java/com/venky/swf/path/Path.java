@@ -348,7 +348,7 @@ public class Path implements _IPath{
     }
 
     public boolean isAppAuthenticated() {
-        boolean appAuthRequired = Config.instance().getBooleanProperty("swf.application.authentication.required",false);
+        boolean appAuthRequired = getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
         if (!appAuthRequired){
             return true;
         }

@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -76,8 +77,8 @@ public class Crypt {
         return serverKeyPair.getPrivate();
     }
 
-    public String getBase64Encoded(PublicKey publicKey){
-        byte[] encoded = publicKey.getEncoded();
+    public String getBase64Encoded(Key key){
+        byte[] encoded = key.getEncoded();
         String b64Key = Base64.getEncoder().encodeToString(encoded);
         return b64Key;
     }
