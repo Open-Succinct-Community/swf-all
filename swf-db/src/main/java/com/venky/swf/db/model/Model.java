@@ -99,6 +99,7 @@ public interface Model extends _Identifiable {
     public Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Integer>>> pGroupOptions) throws AccessDeniedException;
     
     public Record getRawRecord();
+    public void setRawRecord(Record record);
     public <M extends Model> M cloneProxy();
 
     

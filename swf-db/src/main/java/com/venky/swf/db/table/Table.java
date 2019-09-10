@@ -639,9 +639,6 @@ public class Table<M extends Model> {
 	
 	public M getRefreshed(M partiallyFilledModel){
         User loggedInUser = Database.getInstance().getCurrentUser();
-        if (loggedInUser == null) {
-            return partiallyFilledModel;
-        }
 
         M fullModel = null;
 		if (partiallyFilledModel.getId() > 0) {
@@ -659,7 +656,7 @@ public class Table<M extends Model> {
 		if (fullModel == null){
 			fullModel = partiallyFilledModel;
 		}else {
-			if (!fullModel.isAccessibleBy(Database.getInstance().getCurrentUser())){
+			if (loggedInUser != null && !fullModel.isAccessibleBy(loggedInUser)){
 				throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by "+ getReflector().get(fullModel,getReflector().getDescriptionField()) + " cannot be  modified.");
 			}
 			Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();

@@ -341,6 +341,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     public Record getRawRecord(){
     	return record;
     }
+    public void setRawRecord(Record record){
+		this.record = record;
+    }
 
 	public static void dispose(){
 		modelImplClassesCache.clear();

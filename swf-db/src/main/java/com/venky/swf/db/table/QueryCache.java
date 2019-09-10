@@ -303,7 +303,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 
 	public <M extends Model> void registerUpdate(M m) {
-		registerUpdate(m.getRawRecord());
+		m.setRawRecord(registerUpdate(m.getRawRecord()));
 	}
 
 	// Called from db record destroy.
