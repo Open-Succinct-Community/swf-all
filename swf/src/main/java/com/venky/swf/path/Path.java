@@ -623,6 +623,7 @@ public class Path implements _IPath{
                 }else {
                     List<User> input = adaptor.readRequest(this);
                     if (input.size() == 1){
+                        Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
                         username = input.get(0).getName();
                         password = input.get(0).getPassword();
                         autoInvalidate = true;
