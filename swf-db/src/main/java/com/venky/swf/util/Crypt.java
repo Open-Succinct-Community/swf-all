@@ -9,6 +9,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
@@ -49,6 +50,19 @@ public class Crypt {
             throw new RuntimeException(ex);
         }
     }
+    public PrivateKey getPrivateKey(String base64PrivateKey){
+        byte [] binCpk = Base64.getDecoder().decode(base64PrivateKey);
+        PKCS8EncodedKeySpec pkSpec = new PKCS8EncodedKeySpec(binCpk);
+
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGO);
+            PrivateKey pKey = keyFactory.generatePrivate(pkSpec);
+            return pKey;
+        }catch (NoSuchAlgorithmException | InvalidKeySpecException ex){
+            throw new RuntimeException(ex);
+        }
+    }
+
     public static final String KEY_ALGO = "RSA";
 
     public KeyPair generateKeyPair() {
