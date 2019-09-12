@@ -1,5 +1,6 @@
 package com.venky.swf.path;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public interface _IPath {
 	void setRequest(HttpServletRequest request);
 	HttpServletRequest getRequest();
 
-	InputStream getInputStream();
+	InputStream getInputStream() throws IOException;
 	
 	void setSession(HttpSession session);
 	HttpSession getSession();
