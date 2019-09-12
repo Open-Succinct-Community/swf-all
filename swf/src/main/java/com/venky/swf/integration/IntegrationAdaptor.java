@@ -69,8 +69,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 	
 	public List<M> readRequest(Path path){
 		try {
-			InputStream is = path.getRequest().getInputStream();
-			is = new ByteArrayInputStream(StringUtil.readBytes(is));
+			InputStream is = path.getInputStream();
 			return reader.read(is);
 		}catch(IOException ex){
 			throw new RuntimeException(ex);

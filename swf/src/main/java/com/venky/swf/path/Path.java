@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.util.ObjectHolder;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
@@ -206,6 +207,14 @@ public class Path implements _IPath{
 
     public HttpServletRequest getRequest() {
         return request;
+    }
+
+    private ByteArrayInputStream inputStream = null;
+    public ByteArrayInputStream getInputStream() throws IOException {
+        if (inputStream == null){
+            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream()));
+        }
+        return inputStream;
     }
 
     private static final String ORIGNAL_REQUEST_KEY = "swf.original.request.uri";
@@ -597,25 +606,21 @@ public class Path implements _IPath{
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
     }
+
+    public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
+
     public boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
             return true;
         }
-        User user = null;
+
+        ObjectHolder<User> userObjectHolder = new ObjectHolder<>(null);
+        Registry.instance().callExtensions(Path.REQUEST_AUTHENTICATOR,this, userObjectHolder);
+
+        User user = userObjectHolder.get();
         boolean autoInvalidate = false;
-        
-        String apiKey = getRequest().getHeader("ApiKey"); 
-        
-        if (ObjectUtil.isVoid(apiKey)){
-            apiKey = getRequest().getParameter("ApiKey");
-        }
-        if (!ObjectUtil.isVoid(apiKey)){
-            autoInvalidate = true;
-            user = getUser("api_key",apiKey);
-            if (user == null) {
-                addErrorMessage("Invalid Api Key");
-                return false;
-            }
+        if (user == null && !getErrorMessages().isEmpty()){
+            return false;
         }
 
         if (user == null){

@@ -138,11 +138,7 @@ public class Controller {
 		return redirectedTo;
 
 	}
-	@RequireLogin(false)
-	public View publicKey(){
-    	return new BytesView(getPath(), Crypt.getInstance().getBase64PublicKey().getBytes());
-	}
-    
+	
     protected View authenticate(){
     	boolean clientAuthenticated = getPath().isAppAuthenticated();
         boolean authenticated = clientAuthenticated && getPath().isRequestAuthenticated();

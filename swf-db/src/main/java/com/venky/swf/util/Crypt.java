@@ -1,12 +1,5 @@
 package com.venky.swf.util;
 
-import com.venky.swf.routing.Config;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -22,7 +15,7 @@ import java.util.Base64;
 public class Crypt {
     private static Crypt crypt;
     private Crypt(){
-        loadKeyPair();
+
     }
 
     public static Crypt getInstance() {
@@ -37,45 +30,6 @@ public class Crypt {
         return crypt;
     }
 
-    KeyPair serverKeyPair = null;
-    public void loadKeyPair(){
-        if ( serverKeyPair == null ){
-
-            File file = new File(Config.instance().getProperty("swf.temp.keys.dir","tmp"), "server.keys");
-            if (file.exists()){
-                try {
-                    ObjectInputStream objectInputStream =new ObjectInputStream(new FileInputStream(file));
-
-                    serverKeyPair = (KeyPair)(objectInputStream.readObject());
-                    objectInputStream.close();
-                    return;
-                }catch (Exception ex){
-                    serverKeyPair = null;
-                }
-            }
-            file.getParentFile().mkdirs();
-            serverKeyPair = generateKeyPair();
-            try {
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(file));
-                objectOutputStream.writeObject(serverKeyPair);
-                objectOutputStream.close();
-            }catch (Exception ex){
-                //
-            }
-
-        }
-
-    }
-
-    public String getBase64PublicKey(){
-        return getBase64Encoded(serverKeyPair.getPublic());
-    }
-    public PublicKey getPublicKey(){
-        return serverKeyPair.getPublic();
-    }
-    public PrivateKey getPrivateKey(){
-        return serverKeyPair.getPrivate();
-    }
 
     public String getBase64Encoded(Key key){
         byte[] encoded = key.getEncoded();
@@ -127,6 +81,5 @@ public class Crypt {
         return s.verify(signatureBytes);
 
     }
-
 
 }

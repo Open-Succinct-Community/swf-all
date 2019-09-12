@@ -52,7 +52,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	}
 	private JSON getCriteria() {
         try {
-            InputStream is = getPath().getRequest().getInputStream();
+            InputStream is = getPath().getInputStream();
             JSON criteria = new JSON(is);
             return criteria;
         }catch (IOException ex){
@@ -95,7 +95,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 			throw new RuntimeException("Cannot call save in any other method other than POST");
 		}
 		try {
-			InputStream is = getPath().getRequest().getInputStream();
+			InputStream is = getPath().getInputStream();
 			List<Task> tasks = new SerializationHelper().read(is);
 			TaskManager.instance().executeAsync(tasks,false);
 		}catch (IOException ex){
