@@ -41,6 +41,10 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 			}else {
 				return new ArrayList<>();
 			}
+		}else if ("CREATOR_COMPANY_ID".equalsIgnoreCase(fieldName)){
+			if (u.getCompanyId() != null){
+				return Arrays.asList(u.getCompanyId());
+			}
 		}
 		return ret;
 	}
