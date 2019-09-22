@@ -108,4 +108,13 @@ public interface Company extends Model{
 	@CONNECTED_VIA("VENDOR_ID")
 	public List<CompanyRelationShip> getCustomers();
 
+	@PARTICIPANT
+	public Long getCreatorCompanyId();
+	public void setCreatorCompanyId( Long id);
+	public Company getCreatorCompany();
+
+	@HIDDEN
+    @CONNECTED_VIA("CREATOR_COMPANY_ID")
+	public List<Company> getCreatedCompanies();
+
 }

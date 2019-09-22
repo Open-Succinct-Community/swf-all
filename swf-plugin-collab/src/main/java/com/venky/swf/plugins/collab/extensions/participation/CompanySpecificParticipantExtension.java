@@ -33,6 +33,7 @@ public class CompanySpecificParticipantExtension<M extends Model & CompanySpecif
 					ret.add(u.getCompanyId());
 					ret.addAll(u.getCompany().getCustomers().stream().map(r->r.getCustomerId()).collect(Collectors.toList()));
 					ret.addAll(u.getCompany().getVendors().stream().map(r->r.getVendorId()).collect(Collectors.toList()));
+					ret.addAll(u.getCompany().getCreatedCompanies().stream().map(c->c.getId()).collect(Collectors.toList()));
 					return ret;
 				}else {
 					return new ArrayList<>();
