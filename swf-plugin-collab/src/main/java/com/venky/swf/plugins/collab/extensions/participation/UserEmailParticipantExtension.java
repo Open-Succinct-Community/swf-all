@@ -23,7 +23,7 @@ public class UserEmailParticipantExtension extends ParticipantExtension<UserEmai
 			if (!partiallyFilledModel.getReflector().isVoid(partiallyFilledModel.getUserId())){
 				ret = new SequenceSet<>();
 				if (partiallyFilledModel.getUserId() == user.getId() || partiallyFilledModel.getUser().isAccessibleBy(user)) {
-					ret.add(user.getId());
+					ret.add(partiallyFilledModel.getUserId());
 				}
 			}else if (!user.getRawRecord().getAsProxy(User.class).isStaff()){
 				ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class, user));
