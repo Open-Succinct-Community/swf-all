@@ -28,7 +28,7 @@ public interface Country extends Model{
 	
 	public static Country findByName(String name) { 
 		Select s = new Select().from(Country.class); 
-		s.where(new Expression(s.getPool(),"NAME",Operator.EQ,name));
+		s.where(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,name.toLowerCase()));
 		List<Country> country = s.execute(); 
 		if (country.size() == 1) {
 			return country.get(0);

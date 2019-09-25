@@ -26,14 +26,14 @@ public class CompanyImpl extends ModelImpl<Company>{
 
 	public List<Long> getStaffUserIds(){
 		Company company = getProxy();
-
-		Role staff = Role.getRole("STAFF");
-
 		ModelReflector<User> ref = ModelReflector.instance(User.class);
 		Expression where = new Expression(ref.getPool(), "COMPANY_ID", Operator.EQ, company.getId());
+
 		Select select = new Select("ID").from(User.class).where(where);
 
-		select.add(" and exists (select 1 from user_roles where role_id = " + staff.getId() + " and user_id = users.id )");
+		select.add(" and exists (select 1 from user_roles , roles where user_roles.user_id = users.id " +
+						" and  roles.id = user_roles.role_id " +
+						" and ( roles.name = 'STAFF' or roles.staff = true ) )" );
 
 		List<User> users = select.execute();
 		return DataSecurityFilter.getIds(users);

@@ -42,7 +42,7 @@ public interface State extends Model{
 	public static State findByCountryAndName(Long countryId , String stateName) {
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
-		where.add(new Expression(s.getPool(),"NAME",Operator.EQ,stateName));
+		where.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,stateName.toLowerCase()));
 		where.add(new Expression(s.getPool(),"COUNTRY_ID",Operator.EQ,countryId));
 		
 		List<State> states = s.where(where).execute(); 
@@ -52,6 +52,24 @@ public interface State extends Model{
 			State state = Database.getTable(State.class).newRecord(); 
 			state.setCountryId(countryId);
 			state.setName(stateName);
+			state.save();
+			return state;
+		}
+	}
+	public static State findByCountryAndCode(Long countryId , String stateCode) {
+		Select s = new Select().from(State.class);
+		Expression where = new Expression(s.getPool(), Conjunction.AND);
+		where.add(new Expression(s.getPool(),"CODE",Operator.EQ,stateCode));
+		where.add(new Expression(s.getPool(),"COUNTRY_ID",Operator.EQ,countryId));
+
+		List<State> states = s.where(where).execute();
+		if (states.size() == 1) {
+			return states.get(0);
+		}else {
+			State state = Database.getTable(State.class).newRecord();
+			state.setCountryId(countryId);
+			state.setName(stateCode);
+			state.setCode(stateCode);
 			state.save();
 			return state;
 		}
