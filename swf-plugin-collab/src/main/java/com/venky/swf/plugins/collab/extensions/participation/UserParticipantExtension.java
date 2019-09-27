@@ -8,7 +8,7 @@ import com.venky.swf.pm.DataSecurityFilter;
 import java.util.List;
 
 
-public class 	UserParticipantExtension extends CompanySpecificParticipantExtension<User>{
+public class UserParticipantExtension extends CompanyNonSpecificParticipantExtension<User>{
 	static {
 		registerExtension(new UserParticipantExtension());
 	}
@@ -25,8 +25,7 @@ public class 	UserParticipantExtension extends CompanySpecificParticipantExtensi
 				ret.add(user.getId());
 			}
 		}else if (fieldName.equals("COMPANY_ID")){
-			ret = new SequenceSet<>();
-			ret.add(u.getCompanyId());
+			return super.getAllowedFieldValues(user,partiallyFilledModel,fieldName);
 		}else if (fieldName.equals("COUNTRY_ID")){
 			ret =  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
 		}else if (fieldName.equals("STATE_ID")){
