@@ -1,4 +1,4 @@
-package com.venky.swf.plugins.collab.controllers;
+package com.venky.swf.plugins.collab.controller;
 
 import com.venky.core.string.StringUtil;
 import com.venky.swf.controller.ModelController;

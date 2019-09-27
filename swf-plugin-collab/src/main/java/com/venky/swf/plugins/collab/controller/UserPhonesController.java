@@ -1,4 +1,4 @@
-package com.venky.swf.plugins.collab.controllers;
+package com.venky.swf.plugins.collab.controller;
 
 import com.venky.swf.path.Path;
 import com.venky.swf.views.View;
