@@ -1,9 +1,12 @@
 package com.venky.swf.plugins.collab.util;
 
+import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.mail.core.MailerFactory;
+import com.venky.swf.plugins.mail.db.model.Mail;
 import com.venky.swf.routing.Config;
 import org.codemonkey.simplejavamail.Email;
 
@@ -50,6 +53,12 @@ public class MailUtil {
                 throw new RuntimeException("Plugin not configured :swf.sendmail.user, swf.sendmail.protocol");
             }else {
                 String userName = Config.instance().getProperty("swf.sendmail.user.name",emailId);
+                Mail mail = Database.getTable(Mail.class).newRecord();
+                mail.setEmail(toEmailId);
+                mail.setSubject(subject);
+                mail.setBody(new StringReader(text));
+                mail.save();
+
                 monkeyMail.setFromAddress(userName, emailId);
                 monkeyMail.addRecipient(toEmailId, toUserName, RecipientType.TO);
                 monkeyMail.setSubject(subject);

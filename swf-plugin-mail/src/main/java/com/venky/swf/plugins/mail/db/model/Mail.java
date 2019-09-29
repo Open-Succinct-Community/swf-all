@@ -17,7 +17,6 @@ import com.venky.swf.db.model.Model;
 @EXPORTABLE(false)
 public interface Mail extends Model{
 	
-	@IS_NULLABLE(false)
 	@PARTICIPANT
 	@Index
 	public Long getUserId();
