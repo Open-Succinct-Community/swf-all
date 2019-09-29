@@ -58,7 +58,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
             throw new RuntimeException("Content-Type must be application/xml or application/json");
         }
 
-        FormatHelper<F> helper = FormatHelper.instance(getPath().getProtocol(),request.getInputStream());
+        FormatHelper<F> helper = FormatHelper.instance(getPath().getProtocol(),getPath().getInputStream());
         String otp = helper.getAttribute("Otp");
 
         otpEnabledModel.validateOtp(otp);
