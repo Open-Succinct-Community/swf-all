@@ -33,6 +33,7 @@ public class CompanyNonSpecificParticipantExtension<M extends Model & CompanyNon
 						ret.add(companyId);
 					}
 				}
+				return ret;
 			}else if ("USER_ID".equalsIgnoreCase(fieldName)){
 				if (u.isStaff()) {
 					return  null;
