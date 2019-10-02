@@ -28,9 +28,12 @@ public class CompanyNonSpecificParticipantExtension<M extends Model & CompanyNon
 					ret.addAll(u.getCompany().getCreatedCompanies().stream().map(c->c.getId()).collect(Collectors.toList()));
 				}
 				for (UserEmail userEmail : u.getUserEmails()){
-					Long companyId = userEmail.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.UserEmail.class).getCompanyId();
-					if (!getReflector().isVoid(companyId )){
-						ret.add(companyId);
+					com.venky.swf.plugins.collab.db.model.user.UserEmail ue = userEmail.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.UserEmail.class);
+					if (ue.isValidated()){
+						Long companyId = ue.getCompanyId();
+						if (!getReflector().isVoid(companyId )){
+							ret.add(companyId);
+						}
 					}
 				}
 				return ret;

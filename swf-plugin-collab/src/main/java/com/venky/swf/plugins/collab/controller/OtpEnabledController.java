@@ -22,8 +22,14 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
     public View sendOtp(long id, String otpField){
         T otpEnabledModel = Database.getTable(getModelClass()).get(id);
         _sendOtp(otpEnabledModel,otpField);
-        return getIntegrationAdaptor().createStatusResponse(getPath(),null,"Otp Sent to your " + StringUtil.camelize(otpField) + " :" +
-                getReflector().get(otpEnabledModel,otpField));
+        if (getIntegrationAdaptor() == null){
+            getPath().addInfoMessage("Otp Sent to your " + StringUtil.camelize(otpField) + " :" +
+                    getReflector().get(otpEnabledModel,otpField));
+            return back();
+        }else {
+            return getIntegrationAdaptor().createStatusResponse(getPath(), null, "Otp Sent to your " + StringUtil.camelize(otpField) + " :" +
+                    getReflector().get(otpEnabledModel, otpField));
+        }
 
     }
     public <F> View validateOtp(long id, String otpField) throws  Exception{

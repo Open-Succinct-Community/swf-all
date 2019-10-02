@@ -4,12 +4,6 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.plugins.collab.util.MailUtil;
-import com.venky.swf.plugins.mail.core.MailerFactory;
-import com.venky.swf.routing.Config;
-import org.codemonkey.simplejavamail.Email;
-
-import javax.mail.Message.RecipientType;
-import java.util.logging.Level;
 
 public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.user.Email> extends ModelImpl<T> {
     public EmailImpl(){

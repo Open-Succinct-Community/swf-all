@@ -284,7 +284,7 @@ public class Controller {
 	        		return fh.getRoot();
 				}
         	}else if (!reflector.isFieldVirtual(fieldName)) {
-	        	where.add(new Expression(reflector.getPool(),columnName,Operator.LK,new BindVariable(reflector.getPool(),"%"+value+"%")));
+	        	where.add(new Expression(reflector.getPool(),reflector.getJdbcTypeHelper().getLowerCaseFunction()+"("+columnName+")",Operator.LK,new BindVariable(reflector.getPool(),"%"+value.toLowerCase()+"%")));
 	        }
     	}
         Select q = new Select().from(modelClass);
@@ -297,7 +297,7 @@ public class Controller {
         		i.remove();
         	}else if (reflector.isFieldVirtual(fieldName)){
         		String fieldValue = reflector.get(m, fieldName); 
-        		if (!ObjectUtil.isVoid(value) && !fieldValue.contains(value)) {
+        		if (!ObjectUtil.isVoid(value) && !fieldValue.toLowerCase().contains(value.toLowerCase())) {
         			i.remove();
         		}
         	}

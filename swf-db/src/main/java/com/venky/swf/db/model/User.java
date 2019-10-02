@@ -4,11 +4,13 @@
  */
 package com.venky.swf.db.model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
 import com.venky.cache.Cache;
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
@@ -36,7 +38,7 @@ import com.venky.swf.sql.Expression;
  */
 @HAS_DESCRIPTION_FIELD("LONG_NAME")
 @MENU("Admin")
-public interface User extends Model{
+public interface User extends Model, GeoLocation {
 	
 	@IS_NULLABLE(false)
 	@UNIQUE_KEY("K1,K2,K3") //All keys needed for uniqueness within company etc context and independently  also.
@@ -119,5 +121,12 @@ public interface User extends Model{
 
     @IS_VIRTUAL
     public String  getLastName();
+
+
+    @IS_VIRTUAL
+    public BigDecimal getLat();
+
+    @IS_VIRTUAL
+    public BigDecimal getLng();
 
 }

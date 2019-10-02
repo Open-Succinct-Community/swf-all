@@ -4,8 +4,11 @@ import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
+
+import java.math.BigDecimal;
 
 public class RequestAuthenticator implements Extension {
     static{
@@ -16,15 +19,10 @@ public class RequestAuthenticator implements Extension {
         Path path = (Path)context[0];
         ObjectHolder<User> userObjectHolder = (ObjectHolder<User>)context[1];
 
-        String apiKey = path.getRequest().getHeader("X-ApiKey");
+        String apiKey = getHeader(path,"ApiKey");
+        String lat = getHeader( path,"Lat");
+        String lng = getHeader( path, "Lng");
 
-        if (ObjectUtil.isVoid(apiKey)){
-            apiKey = path.getRequest().getHeader("ApiKey");
-        }
-
-        if (ObjectUtil.isVoid(apiKey)){
-            apiKey = path.getRequest().getParameter("ApiKey");
-        }
 
 
         if (!ObjectUtil.isVoid(apiKey)){
@@ -40,6 +38,28 @@ public class RequestAuthenticator implements Extension {
             }else {
                 userObjectHolder.set(user);
             }
+            if (user != null){
+                TypeConverter<BigDecimal> tc = user.getReflector().getJdbcTypeHelper().getTypeRef(BigDecimal.class).getTypeConverter();
+                if (!ObjectUtil.isVoid(lat)){
+                    user.setLat(tc.valueOf(lat));
+                }
+                if (!ObjectUtil.isVoid(lng)){
+                    user.setLng(tc.valueOf(lng));
+                }
+            }
         }
+    }
+
+    public String getHeader(Path path, String key){
+        String value = path.getRequest().getHeader("X-"+key);
+
+        if (ObjectUtil.isVoid(value)){
+            value = path.getRequest().getHeader(key);
+        }
+
+        if (ObjectUtil.isVoid(value)){
+            value = path.getRequest().getParameter(key);
+        }
+        return value;
     }
 }

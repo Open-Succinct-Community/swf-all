@@ -1,6 +1,7 @@
 package com.venky.swf.db.model;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -354,5 +355,22 @@ public class UserImpl extends ModelImpl<User>{
 	public String getLastName(){
 		loadNames();
 		return lastName;
+	}
+
+	BigDecimal lat = null;
+	public BigDecimal getLat(){
+		return lat;
+	}
+
+	BigDecimal lng = null;
+	public BigDecimal getLng(){
+		return lng;
+	}
+
+	public void setLat(BigDecimal lat){
+		this.lat = lat;
+	}
+	public void setLng(BigDecimal lng){
+		this.lng = lng;
 	}
 }

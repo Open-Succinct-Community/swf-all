@@ -59,9 +59,21 @@ public class Expression {
 	}
 
 	String pool = null;
+	String realColumnName = null;
+	String functionName = null;
+	public boolean isLowerFunction(){
+		return functionName != null && Database.getJdbcTypeHelper(pool).getLowerCaseFunction().equalsIgnoreCase(functionName);
+	}
 	@SafeVarargs
 	public <T> Expression(String pool,String columnName,Operator op, T... values){
-		this.columnName = columnName; 
+		this.columnName = columnName;
+		if (columnName.contains("(")){
+			this.realColumnName = columnName.substring(columnName.indexOf("(")+1,columnName.lastIndexOf(")"));
+			this.functionName = columnName.substring(0,columnName.indexOf("("));
+		}else {
+			this.realColumnName = columnName;
+		}
+
 		this.op = op ;
 		this.values = new SequenceSet<BindVariable>();
 		this.pool = pool;
@@ -303,7 +315,10 @@ public class Expression {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public  boolean eval(Object record){
 		if (conjunction == null){
-			Object value = get(record,columnName);
+			Object value = get(record,getColumnName());
+			if (value != null && value instanceof  String && isLowerFunction()){
+				value = ((String) value).toLowerCase();
+			}
 			if (value == null){
 				if (values.isEmpty() || values.contains(null)){
 					return (op == Operator.EQ || op == Operator.IN);
@@ -422,9 +437,8 @@ public class Expression {
 		
 		return builder.toString();
 	}
-
 	public String getColumnName(){
-	    return columnName;
+		return realColumnName;
     }
     public Operator getOperator(){
 	    return op;
