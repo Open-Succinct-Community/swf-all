@@ -4,8 +4,6 @@
  */
 package com.venky.swf.menu;
 
-import java.util.Set;
-
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.model.MENU;
@@ -17,6 +15,9 @@ import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views.controls.model.ModelAwareness;
 import com.venky.swf.views.controls.page.Menu;
+import com.venky.swf.views.controls.page.Menu.SubMenu;
+
+import java.util.Set;
 
 /**
  *
@@ -35,8 +36,8 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         return appmenu;
     }
     protected void createUserMenu(_IPath path, Menu appmenu, User user){
-    	Menu userMenu = userMenu(path,appmenu,user);
-        userMenu.createMenuItem("Signout", "/logout");
+    	SubMenu userMenu = userMenu(path,appmenu,user);
+        userMenu.addMenuItem("Signout", "/logout");
     }
 
     protected void createApplicationMenu(_IPath path,Menu appmenu, User user){
@@ -48,14 +49,14 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
         return ;
     }
 
-    protected Menu userMenu(_IPath path, Menu appmenu, User user){
-        Menu userMenu = appmenu.getSubmenu(user.getLongName());
+    protected SubMenu userMenu(_IPath path, Menu appmenu, User user){
+        SubMenu userMenu = appmenu.getSubmenu(user.getLongName());
         _IPath userPath = path.getModelAccessPath(User.class);
         
         if (userPath.canAccessControllerAction("edit", String.valueOf(user.getId()))){
-            userMenu.createMenuItem("Settings", "/users/edit/" +user.getId());
+            userMenu.addMenuItem("Settings", "/users/edit/" +user.getId());
         }else if (userPath.canAccessControllerAction("show", String.valueOf(user.getId()))){
-        	userMenu.createMenuItem("Settings", "/users/show/" +user.getId());
+        	userMenu.addMenuItem("Settings", "/users/show/" +user.getId());
         }
         
         return userMenu;
@@ -81,9 +82,9 @@ public class DefaultMenuBuilder implements _IMenuBuilder{
     	_IPath modelAccessPath = path.getModelAccessPath(modelClass);
         
         if (modelAccessPath.canAccessControllerAction("index")){
-        	Menu subMenu = appMenu.getSubmenu(menuName);
+        	SubMenu subMenu = appMenu.getSubmenu(menuName);
             String modelName = new ModelAwareness((Path) modelAccessPath, null).getLiteral(modelClass.getSimpleName());
-        	subMenu.createMenuItem(modelName, modelAccessPath.controllerPath() + "/index");
+        	subMenu.addMenuItem(modelName, modelAccessPath.controllerPath() + "/index");
         }
     }
     

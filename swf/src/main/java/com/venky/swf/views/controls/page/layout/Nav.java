@@ -6,8 +6,7 @@ public class Nav extends Control{
 
 	public Nav() {
 		super("nav");
-		addClass("navbar navbar-default");
-		
+		addClass("navbar navbar-expand-lg navbar-light bg-light");
 	}
 	
 	private static final long serialVersionUID = 801018969454023032L;

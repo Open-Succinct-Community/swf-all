@@ -19,6 +19,7 @@ import com.venky.core.collections.UpperCaseStringCache;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
+import com.venky.core.util.pkg.JarIntrospector;
 import com.venky.extension.Registry;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
@@ -134,22 +135,27 @@ public abstract class HtmlView extends View{
     protected void createHead(Head head){
 
     }
+
     protected void _createHead(Head head){
-        head.addControl(new Script("/resources/scripts/jquery/js/jquery.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js"));
 
-        head.addControl(new Css("/resources/scripts/bootstrap/css/bootstrap.min.css"));
-        head.addControl(new Script("/resources/scripts/bootstrap/js/bootstrap.min.js"));
+        head.addControl(new Css("/resources/scripts/node_modules/bootstrap/dist/css/bootstrap.min.css"));
+        head.addControl(new Css("/resources/images/fontawesome/css/all.min.css"));
+        head.addControl(new Script("/resources/scripts/node_modules/bootstrap/dist/js/bootstrap/bootstrap.min.js"));
 
-        head.addControl(new Css("/resources/scripts/jquery.tablesorter/css/theme.bootstrap.min.css"));
-        head.addControl(new Script("/resources/scripts/jquery.tablesorter/js/jquery.tablesorter.min.js"));
-        head.addControl(new Script("/resources/scripts/jquery.tablesorter/js/jquery.tablesorter.widgets.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/popper.min.js"));
+        head.addControl(new Css("/resources/scripts/node_modules/tablesorter/dist/css/theme.bootstrap.min.css"));
+
+        head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.widgets.min.js"));
 
         
-        head.addControl(new Script("/resources/scripts/bootstrap-ajax-typeahead/js/bootstrap-typeahead.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/bootstrap-ajax-typeahead/bootstrap-typeahead.min.js"));
         
-        head.addControl(new Script("/resources/scripts/moment/js/moment.min.js"));
-        head.addControl(new Css("/resources/scripts/eonasdan-bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css"));
-        head.addControl(new Script("/resources/scripts/eonasdan-bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/moment/min/moment-with-locales.min.js"));
+
+        head.addControl(new Css("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
+        head.addControl(new Script("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"));
         
         
         

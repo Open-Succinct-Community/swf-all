@@ -4,100 +4,60 @@
  */
 package com.venky.swf.views.controls.page;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.venky.cache.Cache;
 import com.venky.swf.views.controls.Control;
-import com.venky.swf.views.controls.page.layout.Span;
+import com.venky.swf.views.controls.page.layout.Div;
+
+import java.util.Map;
 
 /**
  *
  * @author venky
  */
 public class Menu extends Control implements _IMenu{
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	public Menu(){
-		this(true);
-    }
-	private Menu(boolean isMainmenu){
+
+	public Menu() {
 		super("ul");
-		if (isMainmenu){
-			addClass("nav navbar-nav");
-		}else {
-			addClass("dropdown-menu");
-			setProperty("role", "menu");
+	}
+
+	private Map<String, SubMenu> map = new Cache<String, SubMenu>() {
+		@Override
+		protected SubMenu getValue(String menuName) {
+			SubMenu menu = new SubMenu(menuName);
+			Menu.this.addControl(menu);
+			return menu;
 		}
+	};
+
+	public SubMenu getSubmenu(String menuName) {
+		return map.get(menuName);
 	}
-    
-	public boolean isEmpty(){
-		return getContainedControls().isEmpty();
-	}
-	
-	public MenuItem createMenuItem(String text,String url){
-		return createMenuItem(text, url,null); 
-    }
-	public MenuItem createMenuItem(String text,String url,Icon img){
-	    MenuItem mi = new MenuItem(text, url,img) ;
-	    addControl(mi);
-	    return mi;
-	}
-	private transient Map<String,Menu> subMenuMap = new HashMap<String, Menu>();
-    
-	public MenuItem createMenuItem(String text,Menu subMenu){
-        MenuItem mi = new MenuItem(text, subMenu) ;
-        mi.addClass("dropdown");
-        addControl(mi);
-        subMenuMap.put(text, subMenu);
-        return mi;
-    }
-    
-    public static class MenuItem extends Control { 
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-		public MenuItem(String text,String url){
-            this(text,url,null);
-        }
-		public MenuItem(String text,String url,Icon img){
-            super("li");
-            Link link = new Link();
-            link.setUrl(url);
-            link.setText(text);
-            if (img != null){
-            	link.addControl(img);
-            }
-            addControl(link);
-        }
-        public MenuItem(String text,Menu submenu){
-            super("li");
-            addClass("dropdown");
-            
-            Link link = new Link();
-            link.setUrl("#");
-            link.setText(text);
-            link.addClass("dropdown-toggle");
-            link.setProperty("data-toggle", "dropdown");
-            link.setProperty("role", "button");
-            link.setProperty("aria-expanded", false);
-            
-            Span s = new Span();
-            s.addClass("caret");
-            
-            link.addControl(s);
-            addControl(link);
-            addControl(submenu);
-        }
-    }
-	public Menu getSubmenu(String menuName) {
-		Menu subMenu = subMenuMap.get(menuName);
-		if (subMenu == null){
-			subMenu = new Menu(false);
-			createMenuItem(menuName, subMenu);
+
+
+	public static class SubMenu extends Control {
+		public SubMenu(String text){
+			super("li");
+			addClass("nav-item dropdown");
+			Link link = new Link("#");
+			link.addClass("nav-link dropdown-toggle");
+			link.setProperty("role","button");
+			link.setProperty("data-toggle","dropdown");
+			link.setProperty("aria-haspopup",true);
+			link.setProperty("aria-expanded",false);
+			link.setText(text);
+			addControl(link);
+
+			submenuHolder = new Div();
+			submenuHolder.addClass("dropdown-menu");
+			submenuHolder.setProperty("aria-labelledby",link.getId());
+			addControl(submenuHolder);
 		}
-		return subMenu;
+		Div submenuHolder = null;
+		public void addMenuItem(String text, String url) {
+			Link link = new Link(url);
+			link.addClass("dropdown-item");
+			link.setText(text);
+			submenuHolder.addControl(link);
+		}
 	}
 }

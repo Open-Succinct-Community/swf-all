@@ -12,6 +12,8 @@ import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page._IMenu;
+import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.Nav;
 
 /**
@@ -56,7 +58,11 @@ public class DashboardView extends HtmlView{
             _IMenu menu = MenuBuilderFactory.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null && !menu.getContainedControls().isEmpty()){
                 Nav nav = new Nav();
-                nav.addControl(menu);
+                Div container = new Div();
+                container.addClass("collapse navbar-collapse");
+                nav.addControl(container);
+
+                container.addControl(menu);
                 b.addControl(nav);
             }
     	}
