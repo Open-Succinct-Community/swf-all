@@ -58,6 +58,8 @@ public class DashboardView extends HtmlView{
             _IMenu menu = MenuBuilderFactory.instance().getMenuBuilder().createAppMenu(getPath());
             if (menu != null && !menu.getContainedControls().isEmpty()){
                 Nav nav = new Nav();
+                nav.addClass("navbar navbar-expand-lg navbar-light bg-light");
+
                 Div container = new Div();
                 container.addClass("collapse navbar-collapse");
                 nav.addControl(container);

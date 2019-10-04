@@ -18,6 +18,7 @@ public class Menu extends Control implements _IMenu{
 
 	public Menu() {
 		super("ul");
+		addClass("navbar-nav mr-auto");
 	}
 
 	private Map<String, SubMenu> map = new Cache<String, SubMenu>() {

@@ -57,7 +57,7 @@ public class Control extends Properties implements _IControl{
     }
     public Control(String tag, String... pairs) {
         this.tag = tag;
-        setProperty("id", String.valueOf(nextId()));
+        setProperty("id", "id_"+String.valueOf(nextId()));
         Properties p = ObjectUtil.createProperties(true, pairs);
         putAll(p);
         addClass(getDefaultCssClass());
