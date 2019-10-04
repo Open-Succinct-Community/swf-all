@@ -614,6 +614,10 @@ public class Path implements _IPath{
             return true;
         }
 
+        if (!isAppAuthenticated()){
+            return false;
+        }
+
         ObjectHolder<User> userObjectHolder = new ObjectHolder<>(null);
         Registry.instance().callExtensions(Path.REQUEST_AUTHENTICATOR,this, userObjectHolder);
 

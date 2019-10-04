@@ -139,8 +139,7 @@ public class Controller {
 	}
 	
     protected View authenticate(){
-    	boolean clientAuthenticated = getPath().isAppAuthenticated();
-        boolean authenticated = clientAuthenticated && getPath().isRequestAuthenticated();
+        boolean authenticated = getPath().isRequestAuthenticated();
         if (getPath().getProtocol() == MimeType.TEXT_HTML) {
             if (authenticated) {
 				return new RedirectorView(getPath(), "",loginSuccessful());

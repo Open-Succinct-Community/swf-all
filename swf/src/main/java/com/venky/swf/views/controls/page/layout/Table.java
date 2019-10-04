@@ -67,6 +67,7 @@ public class Table extends Control{
 		private boolean header = false;
         public Row(boolean header){
             this("tr");
+            removeClass("row");
             this.header = header;
         }
         protected Row(String tag){
@@ -123,6 +124,7 @@ public class Table extends Control{
 
 		public Column(boolean heading){
             super(heading ? "th" : "td");
+            setProperty("scope","col");
         }
 		
 		public void setColspan(int colspan){
@@ -137,6 +139,7 @@ public class Table extends Control{
 
 		public THead() {
 			super("thead");
+			addClass("thead-light");
 		}
     }
     public static class TBody extends Control {

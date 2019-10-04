@@ -53,10 +53,9 @@ public class ModelListTable<M extends Model> extends Div{
 
 	private Table table = new Table();
 	public ModelListTable(Path path, ModelAwareness modelAwareness, FieldUIMetaProvider metaProvider) {
-		addControl(table);
 		addClass("table-responsive");
-		table.addClass("table-fixedheader");
-		table.addClass("tablesorter");
+		addControl(table);
+		table.addClass("table-fixedheader  tablesorter table-striped table-bordered table-hover");
 		this.modelAwareness = modelAwareness;
 		this.metaprovider = metaProvider;
 	}
