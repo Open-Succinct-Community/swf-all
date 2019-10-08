@@ -1,0 +1,21 @@
+{
+  "name": "YourViews.in - Matters that matter",
+  "short_name": "Your Views",
+  "description": "Your Views",
+  "lang": "en-US",
+  "start_url": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/resources/web_manifest/192x192.png",
+      "type" : "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/resources/web_manifest/512x512.png",
+      "type" : "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
+
