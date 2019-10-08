@@ -1,7 +1,7 @@
 {
-  "name": "YourViews.in - Matters that matter",
-  "short_name": "Your Views",
-  "description": "Your Views",
+  "name": "${artifactId}",
+  "short_name": "${artifactId}",
+  "description": "${artifactId}",
   "lang": "en-US",
   "start_url": "/",
   "display": "standalone",
@@ -16,6 +16,9 @@
       "type" : "image/png",
       "sizes": "512x512"
     }
-  ]
+  ], 
+   "theme_color": "#000000",
+   "background_color": "#FFFFFF"
+
 }
 
