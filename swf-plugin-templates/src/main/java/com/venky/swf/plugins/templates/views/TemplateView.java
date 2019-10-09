@@ -19,15 +19,16 @@ public class TemplateView extends HtmlView {
 
     @Override
     protected void createBody(_IControl b) {
-        b.addControl( new StringControl(TemplateEngine.getInstance().publish(templateName,data)));
+        b.addControl( new Dummy(TemplateEngine.getInstance().publish(templateName,data)));
 
     }
 
-    public static class StringControl extends Control {
+    public static class Dummy extends Control {
 
         String string = null;
-        public StringControl(String string) {
-            super("string");
+        public Dummy(String string) {
+            super("dummy");
+            this.string = string;
         }
 
         @Override
