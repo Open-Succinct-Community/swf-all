@@ -39,7 +39,6 @@
         <artifactId>swf-plugin-mail</artifactId>
         <version>${project.version}</version>
   	</dependency>
-
     <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>

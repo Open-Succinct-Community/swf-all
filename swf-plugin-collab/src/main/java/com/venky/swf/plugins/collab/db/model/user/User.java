@@ -11,7 +11,7 @@ import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 
 import java.util.List;
 
-public interface User extends com.venky.swf.plugins.security.db.model.User , Address, CompanyNonSpecific{
+public interface User extends com.venky.swf.plugins.templates.db.model.User, Address, CompanyNonSpecific{
 
 	@IS_VIRTUAL
 	public boolean isStaff();

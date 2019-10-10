@@ -8,6 +8,7 @@ import com.venky.swf.plugins.templates.db.model.alerts.Alert;
 import com.venky.swf.plugins.templates.db.model.alerts.Device;
 
 import java.util.List;
+
 public interface User extends com.venky.swf.plugins.mail.db.model.User {
 
     public List<Alert> getAlerts();
@@ -20,3 +21,4 @@ public interface User extends com.venky.swf.plugins.mail.db.model.User {
     public void setNotificationEnabled(boolean enabled);
 
 }
+
