@@ -25,12 +25,15 @@ public class IssuesController extends ModelController<Issue>{
     }
 	
 	@Override
-	protected AbstractModelView<Issue> createBlankView(Path path , Issue record, String formAction){
-		AbstractModelView<Issue> mev = super.createBlankView(path, record,formAction);
-		mev.getIncludedFields().removeAll(Arrays.asList("STATUS","RESOLUTION"));
-		Config.instance().getLogger(IssuesController.class.getName()).info(mev.getIncludedFields().toString());
-		
-		return mev;
+	protected HtmlView createBlankView(Path path , Issue record, String formAction){
+		HtmlView bv = super.createBlankView(path, record,formAction);
+		if (bv instanceof AbstractModelView){
+			AbstractModelView mev = ((AbstractModelView)bv);
+			mev.getIncludedFields().removeAll(Arrays.asList("STATUS","RESOLUTION"));
+			Config.instance().getLogger(IssuesController.class.getName()).info(mev.getIncludedFields().toString());
+		}
+
+		return bv;
 	}
 	
 	@SingleRecordAction(tooltip="Yank")

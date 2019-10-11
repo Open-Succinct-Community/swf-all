@@ -52,6 +52,7 @@ import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
+import org.apache.commons.math3.analysis.function.Abs;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -387,10 +388,10 @@ public class ModelController<M extends Model> extends Controller {
 		return new HashMap<>();
 	}
 
-	protected AbstractModelView<M> createModelShowView(M record){
+	protected HtmlView createModelShowView(M record){
     	return constructModelShowView(getPath(),record);
     }
-    protected AbstractModelView<M> constructModelShowView(Path path, M record){
+    protected HtmlView constructModelShowView(Path path, M record){
     	return new ModelShowView<M>(path, getIncludedFields(), record);
     }
     
@@ -456,21 +457,21 @@ public class ModelController<M extends Model> extends Controller {
     	ensureUI();
         return dashboard(createModelEditView(id, "save"));
     }
-    protected AbstractModelView<M> createModelEditView(long id, String formAction){
+    protected HtmlView createModelEditView(long id, String formAction){
     	M record = Database.getTable(modelClass).get(id);
     	return createModelEditView(record, formAction);
     }
-    protected AbstractModelView<M> createModelEditView(M record, String formAction){
+    protected HtmlView createModelEditView(M record, String formAction){
     	return createModelEditView(getPath(), record, formAction);
     }
-    protected AbstractModelView<M> createModelEditView(Path path, M record, String formAction){
+    protected HtmlView createModelEditView(Path path, M record, String formAction){
         if (record.isAccessibleBy(getSessionUser(),getModelClass())){
         	return constructModelEditView(path, record, formAction);
         }else {
         	throw new AccessDeniedException();
         }
     }
-    protected AbstractModelView<M> constructModelEditView(Path path, M record, String formAction){
+    protected HtmlView constructModelEditView(Path path, M record, String formAction){
     	return new ModelEditView<M>(path, getIncludedFields(), record,formAction);
     }
 
@@ -516,15 +517,17 @@ public class ModelController<M extends Model> extends Controller {
     	}
     }
 
-    protected AbstractModelView<M> createBlankView(M record,String formAction){
+    protected HtmlView createBlankView(M record,String formAction){
     	return createBlankView(getPath(), record, formAction);
     }
     
-    protected AbstractModelView<M> createBlankView(Path path , M record, String formAction){
-		AbstractModelView<M> mev = constructModelEditView(path, record,formAction);
+    protected HtmlView createBlankView(Path path , M record, String formAction){
+		HtmlView mev = constructModelEditView(path, record,formAction);
 		for (String field : reflector.getFields()){
 			if (reflector.isHouseKeepingField(field)){
-		        mev.getIncludedFields().remove(field);
+				if (mev instanceof AbstractModelView){
+					((AbstractModelView<M>)mev).getIncludedFields().remove(field);
+				}
 			}
 		}
     	return mev;
@@ -614,7 +617,7 @@ public class ModelController<M extends Model> extends Controller {
 
 		@Override
 		public View error(M m) {
-			AbstractModelView<M> errorView = null;
+			HtmlView errorView = null;
 			if (m.getRawRecord().isNewRecord()){
     			errorView = createBlankView(getPath().createRelativePath("blank"),m,"save");
     		}else {
