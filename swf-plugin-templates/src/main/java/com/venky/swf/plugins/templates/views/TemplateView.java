@@ -11,10 +11,16 @@ public class TemplateView extends HtmlView {
     String templateName = null;
     JSONObject data = null;
 
+    public TemplateView(_IPath path, String templateName){
+        this(path,templateName,null);
+    }
     public TemplateView(_IPath path, String templateName, JSONObject data) {
         super(path);
         this.templateName = templateName;
         this.data = data;
+        if (this.data == null){
+            this.data = new JSONObject();
+        }
     }
 
     @Override

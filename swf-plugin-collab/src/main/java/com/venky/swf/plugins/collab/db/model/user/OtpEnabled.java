@@ -11,7 +11,7 @@ import com.venky.swf.routing.Config;
 public interface OtpEnabled  {
 
 
-    @HIDDEN
+    //@HIDDEN
     public String getLastOtp();
     public void setLastOtp(String lastOtp);
 
