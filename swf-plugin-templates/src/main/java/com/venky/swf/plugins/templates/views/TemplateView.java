@@ -5,21 +5,23 @@ import com.venky.swf.plugins.templates.util.templates.TemplateEngine;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
-import org.json.simple.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TemplateView extends HtmlView {
     String templateName = null;
-    JSONObject data = null;
+    Map<String,Object> data = null;
 
     public TemplateView(_IPath path, String templateName){
         this(path,templateName,null);
     }
-    public TemplateView(_IPath path, String templateName, JSONObject data) {
+    public TemplateView(_IPath path, String templateName, Map<String,Object> data) {
         super(path);
         this.templateName = templateName;
         this.data = data;
         if (this.data == null){
-            this.data = new JSONObject();
+            this.data = new HashMap<>();
         }
     }
 
