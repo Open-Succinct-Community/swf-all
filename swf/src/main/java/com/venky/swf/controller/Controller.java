@@ -523,7 +523,10 @@ public class Controller {
 			}else if (reflector.isHouseKeepingField(field)){
 				//if (!field.equals("ID") || numUniqueKeys > 0){
 				if (!field.equals("ID")){
-					fieldIterator.remove();
+					if ((!Config.instance().getBooleanProperty("swf.listview.housekeeping.show",false) && reflector.isHouseKeepingField(field)) ||
+							!reflector.isFieldVisible(field)) {
+						fieldIterator.remove();
+					}
 				}
 			}
 		}
