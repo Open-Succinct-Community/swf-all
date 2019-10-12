@@ -29,7 +29,7 @@ public class BeforeValidateUser extends BeforeModelValidateExtension<User>{
 				model.setLongName(name);
 			}
 			if (model.getRawRecord().isNewRecord()){
-ec				List<User> userList = new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"lower(NAME)", Operator.EQ, model.getName().toLowerCase())).execute();
+				List<User> userList = new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"lower(NAME)", Operator.EQ, model.getName().toLowerCase())).execute();
 				if (!userList.isEmpty()){
 					if (name.indexOf('@') > 0){
 						throw new RuntimeException("Email already registered!");
