@@ -1,10 +1,12 @@
 package com.venky.swf.plugins.templates.util.templates;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.SeekableByteArrayOutputStream;
 import com.venky.core.string.Inflector;
 import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.json.JSONModelWriter;
@@ -51,24 +53,30 @@ import java.util.Set;
 import java.util.logging.Level;
 
 public class TemplateEngine {
-    private static TemplateEngine instance = null;
+
+
+    private static Cache<String,TemplateEngine>  instance = new Cache<String, TemplateEngine>() {
+        @Override
+        protected TemplateEngine getValue(String directory) {
+            return new TemplateEngine(directory);
+        }
+    };
     public static TemplateEngine getInstance(){
-        if (instance != null){
-            return  instance;
-        }
-        synchronized (TemplateEngine.class){
-            if (instance != null){
-                return  instance;
-            }
-            instance = new TemplateEngine();
-        }
-        return instance;
+        return getInstance(Config.instance().getProperty("swf.ftl.dir"));
+    }
+    public static TemplateEngine getInstance(String directory){
+        return instance.get(directory);
     }
     Configuration cfg = null;
-    public TemplateEngine(){
+    private TemplateEngine(String directory){
         cfg = new Configuration(Configuration.VERSION_2_3_28);
         try {
-            cfg.setDirectoryForTemplateLoading(new File(Config.instance().getProperty("swf.ftl.dir")));
+            if (!ObjectUtil.isVoid(directory)){
+                File dir = new File(directory);
+                cfg.setDirectoryForTemplateLoading(dir);
+            }else{
+                cfg.setClassForTemplateLoading(TemplateEngine.class, "/templates");
+            }
         }catch (Exception ex){
             cfg.setClassForTemplateLoading(TemplateEngine.class, "/templates");
         }

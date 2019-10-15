@@ -19,6 +19,7 @@ import javax.servlet.http.HttpSession;
 
 import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
+import com.venky.extension.Extension;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
@@ -255,54 +256,63 @@ public class Path implements _IPath{
         p.setResponse(getResponse());
         return p;
     }
-    public Path(String target) {
-        this.target = target;
-
-        StringTokenizer stok = new StringTokenizer(target, "/");
-        StringBuilder resourcePath = new StringBuilder();
+    public List<String> parsePathElements(String target){
         boolean isResource = false;
-        while (stok.hasMoreTokens()) {
-            String token = stok.nextToken();
-            if (pathelements.isEmpty() ){
+        List<String> pathComponents = new ArrayList<>();
+        StringTokenizer pathTokenizer = new StringTokenizer(target, "/");
+        StringBuilder resourcePath = new StringBuilder();
+        while (pathTokenizer.hasMoreTokens()) {
+            String token = pathTokenizer.nextToken();
+            if (pathComponents.isEmpty()) {
                 if (token.equals("resources")) {
                     isResource = true;
                 }
             }
-            if((token.contains(".") && !stok.hasMoreElements())){
+            if ((token.contains(".") && !pathTokenizer.hasMoreElements())) {
                 isResource = true;
-                if (resourcePath.length() == 0){
-                    pathelements.forEach(pe->resourcePath.append("/").append(pe));
+                if (resourcePath.length() == 0) {
+                    pathComponents.forEach(pe -> resourcePath.append("/").append(pe));
                 }
             }
-            if (isResource && !token.equals("resources")){
+            if (isResource && !token.equals("resources")) {
                 resourcePath.append("/").append(token);
             }
-            pathelements.add(token);
+            pathComponents.add(token);
         }
-        
-        if (isResource){
-            if (!ObjectUtil.isVoid(resourcePath.toString())){
+
+        if (isResource) {
+            if (!ObjectUtil.isVoid(resourcePath.toString())) {
                 try {
                     URL resource = getClass().getResource(resourcePath.toString());
-                    if (resource == null){
+                    if (resource == null) {
                         isResource = false;
                     }
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     isResource = false;
                 }
-            }else {
+            } else {
                 isResource = false;
             }
-            if (isResource){
-                pathelements.clear();
-                pathelements.add("resources");
-                pathelements.add(resourcePath.toString());
+            if (isResource) {
+                pathComponents.clear();
+                pathComponents.add("resources");
+                pathComponents.add(resourcePath.toString());
             }
         }
-        
-        
-        
-        
+        checkPathOverrides(pathComponents);
+        return pathComponents;
+    }
+
+    private void checkPathOverrides(List<String> pathComponents) {
+        Registry.instance().callExtensions("swf.before.routing", pathComponents);
+    }
+
+
+    public Path(String target) {
+        this.target = target;
+        pathelements = parsePathElements(target);
+        boolean isResource = pathelements.isEmpty()? false : pathelements.get(0).equals("resources");
+
         int pathElementSize = pathelements.size();
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
             String token = pathelements.get(i);
@@ -353,7 +363,7 @@ public class Path implements _IPath{
         if (pathElementSize == 0){
             pathelements.add("index");
         }
-        loadControllerClassName(isResource);
+        loadControllerClassName();
     }
 
     public boolean isAppAuthenticated() {
@@ -442,7 +452,7 @@ public class Path implements _IPath{
     }
     
     
-    private void loadControllerClassName(boolean isResource){
+    private void loadControllerClassName(){
         if (controllerClassName != null){
             return;
         }
