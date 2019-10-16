@@ -71,11 +71,14 @@ public class TemplateEngine {
     private TemplateEngine(String directory){
         cfg = new Configuration(Configuration.VERSION_2_3_28);
         try {
-            if (!ObjectUtil.isVoid(directory)){
-                File dir = new File(directory);
+            File dir = null;
+            if (!ObjectUtil.isVoid(directory)) {
+                dir = new File(directory);
+            }
+            if (dir != null && dir.exists() && dir.isDirectory()){
                 cfg.setDirectoryForTemplateLoading(dir);
             }else{
-                cfg.setClassForTemplateLoading(TemplateEngine.class, "/templates");
+                cfg.setClassForTemplateLoading(TemplateEngine.class, directory);
             }
         }catch (Exception ex){
             cfg.setClassForTemplateLoading(TemplateEngine.class, "/templates");
