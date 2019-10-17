@@ -637,12 +637,12 @@ public class Path implements _IPath{
             return false;
         }
 
+        IntegrationAdaptor<User,?> adaptor = null;
+        if (getProtocol() != MimeType.TEXT_HTML) {
+            adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
+        }
+        autoInvalidate = adaptor != null;
         if (user == null){
-            IntegrationAdaptor<User,?> adaptor = null;
-            if (getProtocol() != MimeType.TEXT_HTML) {
-                adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
-            }
-
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
                 String username = null;
                 String password = null;
@@ -673,7 +673,6 @@ public class Path implements _IPath{
                         Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
                         username = input.get(0).getName();
                         password = input.get(0).getPassword();
-                        autoInvalidate = true;
                     }
                 }
                 if (!ObjectUtil.isVoid(username)){
@@ -1253,5 +1252,18 @@ public class Path implements _IPath{
     
     public boolean isForwardedRequest(){
         return !ObjectUtil.isVoid(getRequest().getAttribute("javax.servlet.forward.request_uri"));
+    }
+
+    public String getHeader(String key){
+        String value = getRequest().getHeader("X-"+key);
+
+        if (ObjectUtil.isVoid(value)){
+            value = getRequest().getHeader(key);
+        }
+
+        if (ObjectUtil.isVoid(value)){
+            value = getRequest().getParameter(key);
+        }
+        return value;
     }
 }
