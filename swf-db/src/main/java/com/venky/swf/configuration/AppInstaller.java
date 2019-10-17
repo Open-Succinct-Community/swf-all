@@ -32,9 +32,7 @@ public class AppInstaller implements Installer {
 			List<User> users = new Select().from(User.class).
 					where(where).execute();
 			for (User user : users) {
-				String encryptedPassword = user.getEncryptedPassword(user.getPassword());
-				user.setPassword(encryptedPassword);
-				user.setPasswordEncrypted(true);
+				user.setChangePassword(user.getPassword());
 				user.save();
 			}
 		}

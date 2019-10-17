@@ -60,6 +60,8 @@ public class UserImpl extends ModelImpl<User>{
 	public void setChangePassword(String password){
 		if (!ObjectUtil.isVoid(password)){
 			getProxy().setPassword(password);
+			getProxy().setPasswordEncrypted(false);
+			getProxy().setUpdatedAt(new Timestamp(System.currentTimeMillis()));
 		}
 	}
 	public String getEncryptedPassword(String unencyptedPassword){
