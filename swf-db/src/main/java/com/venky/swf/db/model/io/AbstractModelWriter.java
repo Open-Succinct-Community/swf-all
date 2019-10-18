@@ -168,8 +168,10 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	}
 	private <R extends  Model> boolean containsChild(Class<R> childModelClass, Collection<Class<? extends  Model>> considerChilden){
 		for (Class<? extends Model> possibleChildClass : ModelReflector.instance(childModelClass).getModelClasses()){
-			if (considerChilden.contains(possibleChildClass)){
-				return true;
+			if (possibleChildClass.getSimpleName().equals(childModelClass.getSimpleName())) {
+				if (considerChilden.contains(possibleChildClass)){
+					return true;
+				}
 			}
 		}
 		return false;
