@@ -211,7 +211,7 @@ public class Router extends AbstractHandler {
 				response.addHeader("Access-Control-Allow-Origin" , origins );
 				response.addHeader ("Access-Control-Allow-Credentials" ,"true" );
 				response.addHeader ("Access-Control-Allow-Methods" ,"GET, POST, PUT, DELETE, OPTIONS");
-				response.addHeader ("Access-Control-Allow-Headers" ,"Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,Range,ApiKey");
+				response.addHeader ("Access-Control-Allow-Headers" ,"Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,Range,ApiKey,withCredentials");
 
 				if (p.getRequest().getMethod().equalsIgnoreCase("OPTIONS")){
 					response.addHeader ("Content-Type", "text/plain charset=UTF-8");
