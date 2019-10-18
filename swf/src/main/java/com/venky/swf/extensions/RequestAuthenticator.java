@@ -6,6 +6,8 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.User;
+import com.venky.swf.integration.api.Call;
+import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
 
 import java.math.BigDecimal;
@@ -58,7 +60,7 @@ public class RequestAuthenticator implements Extension {
         }
 
         if (ObjectUtil.isVoid(value)){
-            value = path.getRequest().getParameter(key);
+            value = path.getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString()) ? path.getRequest().getParameter(key) : null ;
         }
         return value;
     }
