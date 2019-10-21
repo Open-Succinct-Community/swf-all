@@ -62,10 +62,10 @@ public class TemplateEngine {
         }
     };
     public static TemplateEngine getInstance(){
-        return getInstance(Config.instance().getProperty("swf.ftl.dir"));
+        return getInstance(null);
     }
     public static TemplateEngine getInstance(String directory){
-        return instance.get(directory);
+        return instance.get(directory == null? Config.instance().getProperty("swf.ftl.dir") : directory);
     }
     Configuration cfg = null;
     private TemplateEngine(String directory){
