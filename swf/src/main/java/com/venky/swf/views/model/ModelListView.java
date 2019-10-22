@@ -147,14 +147,14 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         	if (getPath().canAccessControllerAction("importxls") && getPath().canAccessControllerAction("save")){
         		HotLink importxls = new HotLink();
         		importxls.setUrl(getPath().controllerPath()+"/importxls");
-        		importxls.addControl(new Glyphicon("glyphicon-cloud-upload","Upload XLS data"));
+        		importxls.addControl(new Glyphicon("glyphicon-upload","Upload XLS data"));
     			links.add(importxls);
         	}
         	
         	if (getPath().canAccessControllerAction("exportxls")){
         		HotLink exportxls = new HotLink();
         		exportxls.setUrl(getPath().controllerPath()+"/exportxls");
-        		exportxls.addControl(new Glyphicon("glyphicon-cloud-download","Download data as xls"));
+        		exportxls.addControl(new Glyphicon("glyphicon-download","Download data as xls"));
     			links.add(exportxls);
         	}
     	}
