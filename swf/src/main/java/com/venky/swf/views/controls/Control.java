@@ -230,14 +230,14 @@ public class Control extends Properties implements _IControl{
 
     public void setVisible(final boolean visible){
     	if (visible){
-    		removeClass("hidden");
+    		removeClass("d-none");
     	}else {
-    		addClass("hidden");
+    		addClass("d-none");
     	}
     }
 
     public boolean isVisible(){ 
-        return !classes.contains("hidden");
+        return !classes.contains("d-none");
     }
     
     @SuppressWarnings("unchecked")
