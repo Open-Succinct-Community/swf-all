@@ -713,14 +713,20 @@ public class Path implements _IPath{
         if (ObjectUtil.isVoid(apiprotocol)){
             return MimeType.TEXT_HTML;
         }
-        MimeType protocol = MimeType.TEXT_HTML;
         for (MimeType mt : MimeType.values()){
-            if (mt.toString().equals(apiprotocol)){
-                protocol = mt; 
-                break;
+            if (ObjectUtil.equals(mt.toString(),apiprotocol)){
+                return mt;
+            }else if (apiprotocol.indexOf(';') > 0){
+                StringTokenizer tokenizer = new StringTokenizer(apiprotocol,";");
+                while (tokenizer.hasMoreTokens()){
+                    String tapiprotocol = tokenizer.nextToken();
+                    if (ObjectUtil.equals(tapiprotocol,mt.toString())){
+                        return mt;
+                    }
+                }
             }
         }
-        return protocol;
+        return MimeType.TEXT_HTML;
     }
     
     //Can be cast to any user model class as the proxy implements all the user classes.
