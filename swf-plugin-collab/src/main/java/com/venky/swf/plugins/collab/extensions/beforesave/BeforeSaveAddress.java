@@ -39,7 +39,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
     }
 	@Override
 	public void beforeSave(M oAddress) {
-		if (!isAddressChanged(oAddress)) {
+		if (!isAddressChanged(oAddress) && !oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())) {
 			return;
 		}
 
