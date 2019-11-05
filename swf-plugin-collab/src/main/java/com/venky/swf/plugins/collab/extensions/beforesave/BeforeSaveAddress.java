@@ -120,8 +120,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
         public void setLatLng(boolean persistAfterSetting){
             List<GeoCoder> coders = new ArrayList<GeoCoder>();
             coders.add(new GeoCoder("google"));
-            coders.add(new GeoCoder("openstreetmap"));
             coders.add(new GeoCoder("here"));
+            coders.add(new GeoCoder("openstreetmap"));
             Map<String,String> params = new HashMap<>();
             params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
             params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
