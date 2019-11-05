@@ -360,19 +360,19 @@ public class UserImpl extends ModelImpl<User>{
 	}
 
 	BigDecimal lat = null;
-	public BigDecimal getLat(){
+	public BigDecimal getCurrentLat(){
 		return lat;
 	}
 
 	BigDecimal lng = null;
-	public BigDecimal getLng(){
+	public BigDecimal getCurrentLng(){
 		return lng;
 	}
 
-	public void setLat(BigDecimal lat){
+	public void setCurrentLat(BigDecimal lat){
 		this.lat = lat;
 	}
-	public void setLng(BigDecimal lng){
+	public void setCurrentLng(BigDecimal lng){
 		this.lng = lng;
 	}
 }
