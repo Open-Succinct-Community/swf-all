@@ -213,7 +213,7 @@ public class Path implements _IPath{
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() throws IOException {
         if (inputStream == null){
-            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream()));
+            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false));
         }
         return inputStream;
     }

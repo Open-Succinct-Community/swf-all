@@ -639,6 +639,9 @@ public class ModelInvocationHandler implements InvocationHandler {
 					if (childReflector.getRealModelClass() == null){
 						continue;
 					}
+					if (childReflector.isFieldVirtual(referenceField)){
+						continue;
+					}
 					@SuppressWarnings("unchecked")
 					List<Model> children = (List<Model>)childrenGetter.invoke(getProxy());
 					for (Model child : children){
