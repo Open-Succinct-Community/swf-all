@@ -374,7 +374,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View show(M record){
     	View view = null ;
 		if (integrationAdaptor != null){
-			view = integrationAdaptor.createResponse(getPath(),record,null,getIgnoredParentModels(), getIncludedModelFields());
+			view = integrationAdaptor.createResponse(getPath(),record,getIncludedFields() ==null?null : Arrays.asList(getIncludedFields()),getIgnoredParentModels(), getIncludedModelFields());
 		}else {
 			view = dashboard(createModelShowView(record));
 		}
