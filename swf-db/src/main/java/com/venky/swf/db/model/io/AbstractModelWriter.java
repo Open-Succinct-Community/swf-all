@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.log.TimerUtils;
@@ -235,10 +236,15 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		parentFieldsToAdd.add("ID");
 
 		if (templateFields != null){
+			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();
 			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
 				if (templateFields.containsKey(clazz)) {
-					parentFieldsToAdd.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
+					parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
 				}
+			}
+			if (!parentFieldsToAddBasedOnTemplate.isEmpty()){
+				parentFieldsToAdd.clear();
+				parentFieldsToAdd.addAll(parentFieldsToAddBasedOnTemplate);
 			}
         }
         List<Class<? extends Model>> childModels = referredModelReflector.getChildModels();
