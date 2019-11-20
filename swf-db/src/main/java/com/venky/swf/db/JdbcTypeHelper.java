@@ -177,6 +177,12 @@ public abstract class JdbcTypeHelper {
         public boolean isNumeric(){
         	return JdbcTypeHelper.isNumeric(javaClass);
         }
+        public boolean isDate(){
+            return JdbcTypeHelper.isDate(jdbcType);
+        }
+        public boolean isTimestamp(){
+            return JdbcTypeHelper.isTimestamp(jdbcType);
+        }
 
         public Class<?> getJavaClass(){
         	return javaClass;
@@ -212,11 +218,21 @@ public abstract class JdbcTypeHelper {
     	}
     	return false;
     }
+    private static int[] DATETYPES = new int[] { Types.DATE };
+    private static int[] TIMESTAMP_TYPES = new int[]  { Types.TIMESTAMP };
+
+    public static boolean isDate(int jdbcType) {
+        return Arrays.binarySearch(DATETYPES,jdbcType)>= 0;
+    }
+    public static boolean isTimestamp(int jdbcType) {
+        return Arrays.binarySearch(TIMESTAMP_TYPES,jdbcType)>= 0;
+    }
+
     public static boolean isCLOB(int jdbcType) {
-    	return Arrays.binarySearch(CLOBTYPES,jdbcType)> 0;
+    	return Arrays.binarySearch(CLOBTYPES,jdbcType)>= 0;
 	}
 	public static boolean isBLOB(int jdbcType) {
-    	return Arrays.binarySearch(BLOBTYPES,jdbcType)> 0;
+    	return Arrays.binarySearch(BLOBTYPES,jdbcType)>= 0;
 	}
 	public static boolean isLOB(int jdbcType){
     	return isCLOB(jdbcType) || isBLOB(jdbcType);

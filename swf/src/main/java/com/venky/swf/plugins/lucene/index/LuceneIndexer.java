@@ -146,17 +146,23 @@ public class LuceneIndexer {
 						doc.add(new TextField(fieldName,sanitize(converter.toString(value)),Field.Store.NO));
 					}else{
 						Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
-						String sValue = converter.toString(value);
-						if (ref.isNumeric() && referredModelClass != null){
-							ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
-							Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
-							if (referred != null){ 
-								doc.add(new TextField(fieldName.substring(0,fieldName.length()-"_ID".length()),
-										sanitize(StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField()))),
-										Field.Store.YES));
+						String sValue = converter.toStringISO(value);
+						if (ref.isNumeric() ){
+							if (referredModelClass != null){
+								ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
+								Model referred = Database.getTable(referredModelClass).get(((Number)converter.valueOf(value)).intValue());
+								if (referred != null){
+									doc.add(new TextField(fieldName.substring(0,fieldName.length()-"_ID".length()),
+											sanitize(StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField()))),
+											Field.Store.YES));
+								}
 							}
+							doc.add(new TextField(fieldName,sValue,Field.Store.YES));
+						}else if (ref.isDate() || ref.isTimestamp()) {
+							doc.add(new TextField(fieldName, sanitizeTs(sValue), Field.Store.YES));
+						} else {
+							doc.add(new TextField(fieldName, sanitize(sValue), Field.Store.YES));
 						}
-						doc.add(new TextField(fieldName,sanitize(sValue), Field.Store.YES));
 					}
 				}
 			}else {
@@ -175,7 +181,11 @@ public class LuceneIndexer {
 		}
 		return doc;
 	}
-	
+
+	private String sanitizeTs(String value){
+		return value.replaceAll("[- :]","");
+	}
+
 	@SuppressWarnings("unchecked")
 	public List<Record> getDocuments(String luceneOperation){
 		Cache<String,List<Record>> documentsByTable = (Cache<String,List<Record>>)Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
