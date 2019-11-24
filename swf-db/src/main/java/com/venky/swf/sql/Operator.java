@@ -44,6 +44,14 @@ public enum Operator {
 		public boolean isMultiValued(){
 			return true;
 		}
+	},
+	NOT_IN(){
+		public String toString(){
+			return "not in";
+		}
+		public boolean isMultiValued(){
+			return true;
+		}
 	};
 
 	public boolean isMultiValued(){
