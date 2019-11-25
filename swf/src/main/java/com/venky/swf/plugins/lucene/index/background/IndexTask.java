@@ -9,6 +9,7 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -41,6 +42,7 @@ public class IndexTask implements Task{
 	
 	}
 	private IndexWriter getIndexWriter() throws CorruptIndexException, LockObtainFailedException, IOException{
+		DatabaseDirectory.getIndexDirectory(directory,true);
 		IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
 		config.setCommitOnClose(true);
 		config.setMergeScheduler(new SerialMergeScheduler());

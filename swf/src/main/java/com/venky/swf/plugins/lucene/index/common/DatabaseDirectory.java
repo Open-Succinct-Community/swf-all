@@ -36,8 +36,11 @@ public class DatabaseDirectory extends BaseDirectory {
 		this("MODEL");
 	}
 	public static IndexDirectory getIndexDirectory(String tableName) throws  FileNotFoundException{
+		return getIndexDirectory(tableName,false);
+	}
+	public static IndexDirectory getIndexDirectory(String tableName,boolean aggressivelyLock) throws  FileNotFoundException{
 		ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
-		List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute(IndexDirectory.class);
+		List<IndexDirectory> dirs = new Select(true).from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute(IndexDirectory.class);
 		if (dirs.size() == 1){
 			return dirs.get(0);
 		}
