@@ -66,7 +66,7 @@ public interface Company extends Model{
 	public String getName();
 	public void setName(String name);
 
-
+	@Index
 	public String getDomainName();
 	public void setDomainName(String domainName);
 

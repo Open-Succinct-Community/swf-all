@@ -103,24 +103,25 @@ public class LuceneIndexer {
 	}
 	private String sanitize(String value){
 		if (value == null){
-			return value;
+			return null;
 		}
 		StringBuilder sanitized = new StringBuilder();
+		boolean isAlphaNumericOnly = true;
 		for (int i = 0 ; i < value.length() ; i ++){
 			char c = value.charAt(i);
-			if (c >= '0' && c <= '9' ){
+			if ((c >= '0' && c <= '9' ) ||
+					(c >= 'a' && c <= 'z') ||
+				(c >= 'A' && c <= 'Z') ||(c == ' ')) {
 				sanitized.append(c);
-			}else if (c >= 'a' && c <= 'z'){
-				sanitized.append(c);
-			}else if (c >= 'A' && c <= 'Z') {
-				sanitized.append(c);
-			}else {
-				if (sanitized.length() > 0){
-					if (sanitized.charAt(sanitized.length()-1) != ' '){
-						sanitized.append(' ');
-					}
+			}else if (sanitized.length() > 0){
+				isAlphaNumericOnly = false;
+				if (sanitized.charAt(sanitized.length()-1) != ' '){
+					sanitized.append(' ');
 				}
 			}
+		}
+		if (!isAlphaNumericOnly){
+			sanitized.append(' ').append(value); //To allow exact match queries with special characters also.
 		}
 		return sanitized.toString();
 	}
