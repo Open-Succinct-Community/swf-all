@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
+import com.venky.core.date.DateUtils;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
@@ -73,7 +74,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
         userPhone.setValidated(false);
 
         if (!ObjectUtil.isVoid(userPhone.getLastOtp())) {
-            if (ObjectUtil.equals(userPhone.getLastOtp(), otp)) {
+            if (ObjectUtil.equals(userPhone.getLastOtp(), otp)){
                 userPhone.setValidated(true);
                 userPhone.setLastOtp(null);
             }

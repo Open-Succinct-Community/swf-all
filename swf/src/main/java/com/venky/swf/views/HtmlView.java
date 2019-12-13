@@ -143,7 +143,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Css("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
 
         head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/popper.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/umd/popper.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/bootstrap/dist/js/bootstrap.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.widgets.min.js"));
