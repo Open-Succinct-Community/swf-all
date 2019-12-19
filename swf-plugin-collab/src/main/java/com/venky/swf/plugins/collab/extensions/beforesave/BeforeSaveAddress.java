@@ -130,6 +130,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             Map<String, String> params = new HashMap<>();
             params.put("here.app_id", Config.instance().getProperty("geocoder.here.app_id"));
             params.put("here.app_code", Config.instance().getProperty("geocoder.here.app_code"));
+            params.put("here.app_key", Config.instance().getProperty("geocoder.here.app_key"));
             params.put("google.api_key", Config.instance().getProperty("geocoder.google.api_key"));
             BigDecimal lat = null;
             BigDecimal lng = null;
