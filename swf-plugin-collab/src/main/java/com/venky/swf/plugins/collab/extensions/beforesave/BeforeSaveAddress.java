@@ -22,61 +22,65 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSaveExtension<M>{
+public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSaveExtension<M> {
 
+    protected String[] getAddressFields() {
+        return Address.getAddressFields();
+    }
 
-	protected String[] getAddressFields(){
-		return Address.getAddressFields();
-	}
-    protected boolean isAddressVoid(M oAddress){
+    protected boolean isAddressVoid(M oAddress) {
         return Address.isAddressVoid(oAddress);
     }
-	protected boolean isAddressChanged(M oAddress){
-		return Address.isAddressChanged(oAddress);
-	}
-	protected boolean isOkToSetLocationAsync(){
-	    return true;
+
+    protected boolean isAddressChanged(M oAddress) {
+        return Address.isAddressChanged(oAddress);
     }
-	@Override
-	public void beforeSave(M oAddress) {
-		if (!isAddressChanged(oAddress) && !oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())) {
-			return;
-		}
 
+    protected boolean isOkToSetLocationAsync() {
+        return true;
+    }
 
-		if (oAddress.getCityId() != null){
-			oAddress.setStateId(oAddress.getCity().getStateId());
-		}
-		if (oAddress.getStateId() != null){
-			oAddress.setCountryId(oAddress.getState().getCountryId());
-		}
-		if (!oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())){
-			if (oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG") ){
-				//Set by user or LocationSetterTask
-				return;
-			}
-		}
-        if (!isAddressVoid(oAddress)){
+    @Override
+    public void beforeSave(M oAddress) {
+        if (!isAddressChanged(oAddress) && !oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())) {
+            return;
+        }
+
+        if (oAddress.getCityId() != null) {
+            oAddress.setStateId(oAddress.getCity().getStateId());
+        }
+        if (oAddress.getStateId() != null) {
+            oAddress.setCountryId(oAddress.getState().getCountryId());
+        }
+        if (!oAddress.getReflector().isVoid(oAddress.getLat()) && !oAddress.getReflector().isVoid(oAddress.getLng())) {
+            if (oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) {
+                //Set by user or LocationSetterTask
+                return;
+            }
+        }
+        if (!isAddressVoid(oAddress)) {
             LocationSetterTask<M> setterTask = new LocationSetterTask<M>(oAddress);
-            if (isOkToSetLocationAsync()){
-                TaskManager.instance().executeAsync(setterTask,false);
-            }else{
+            if (isOkToSetLocationAsync()) {
+                TaskManager.instance().executeAsync(setterTask, false);
+            } else {
                 setterTask.setLatLng(false);
             }
         }
-	}
+    }
 
-	public static class LocationSetterTask<M extends Address & Model> implements Task {
-	    M oAddress = null;
-        public LocationSetterTask(M address){
+    public static class LocationSetterTask<M extends Address & Model> implements Task {
+
+        M oAddress = null;
+
+        public LocationSetterTask(M address) {
             this.oAddress = address;
         }
 
-        private Set<String> getAddressQueries(M oAddress){
-            SequenceMap<String,String> priorityFields = new SequenceMap<>();
+        private Set<String> getAddressQueries(M oAddress) {
+            SequenceMap<String, String> priorityFields = new SequenceMap<>();
             for (String f : Address.getAddressFields()) {
-                if (!oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress,f))){
-                    priorityFields.put(f, StringUtil.valueOf(oAddress.getReflector().get(oAddress,f)));
+                if (!oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress, f))) {
+                    priorityFields.put(f, StringUtil.valueOf(oAddress.getReflector().get(oAddress, f)));
                 }
             }
 
@@ -89,54 +93,55 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                 priorityFields.remove("STATE_ID");
                 priorityFields.remove("COUNTRY_ID");
             }
-            if (priorityFields.containsKey("PIN_CODE_ID")){
+            if (priorityFields.containsKey("PIN_CODE_ID")) {
                 defaultQueryString.append(" ").append(oAddress.getPinCode().getPinCode());
                 priorityFields.remove("PIN_CODE_ID");
             }
 
             SequenceSet<String> addressQueries = new SequenceSet<>();
 
-            for (int i = priorityFields.size() -1 ; i >=0 ; i -- ){
+            for (int i = priorityFields.size() - 1; i >= 0; i--) {
                 StringBuilder addressQuery = new StringBuilder();
-                for (int j = 0 ; j <= i ; j ++) {
+                for (int j = 0; j <= i; j++) {
                     addressQuery.append(priorityFields.getValueAt(j)).append(" ");
                 }
                 addressQuery.append(defaultQueryString.toString());
                 addressQueries.add(addressQuery.toString());
             }
-            for (int i = priorityFields.size() -2 ; i >=0 ; i -- ){
+            for (int i = priorityFields.size() - 2; i >= 0; i--) {
                 StringBuilder addressQuery = new StringBuilder();
-                for (int j = 0 ; j <= i ; j ++) {
+                for (int j = 0; j <= i; j++) {
                     addressQuery.insert(0, " ");
-                    addressQuery.insert(0, priorityFields.getValueAt(priorityFields.size()-1 - j));
+                    addressQuery.insert(0, priorityFields.getValueAt(priorityFields.size() - 1 - j));
                 }
                 addressQuery.append(defaultQueryString.toString());
                 addressQueries.add(addressQuery.toString());
             }
+            addressQueries.add(defaultQueryString.toString());
 
             return addressQueries;
         }
 
-        public void setLatLng(boolean persistAfterSetting){
+        public void setLatLng(boolean persistAfterSetting) {
             List<GeoCoder> coders = new ArrayList<GeoCoder>();
             coders.add(new GeoCoder("google"));
             coders.add(new GeoCoder("here"));
             coders.add(new GeoCoder("openstreetmap"));
-            Map<String,String> params = new HashMap<>();
-            params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
-            params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
-            params.put("google.api_key",Config.instance().getProperty("geocoder.google.api_key"));
+            Map<String, String> params = new HashMap<>();
+            params.put("here.app_id", Config.instance().getProperty("geocoder.here.app_id"));
+            params.put("here.app_code", Config.instance().getProperty("geocoder.here.app_code"));
+            params.put("google.api_key", Config.instance().getProperty("geocoder.google.api_key"));
             BigDecimal lat = null;
             BigDecimal lng = null;
 
-            for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng)) ; ){
+            for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng));) {
                 GeoCoder coder = i.next();
-                for (String address: getAddressQueries(oAddress)){
-                    GeoLocation location = coder.getLocation(address,params);
-                    if (location != null){
+                for (String address : getAddressQueries(oAddress)) {
+                    GeoLocation location = coder.getLocation(address, params);
+                    if (location != null) {
                         lat = location.getLat();
                         lng = location.getLng();
-                        break ;
+                        break;
                     }
                 }
             }
@@ -148,6 +153,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                 }
             }
         }
+
         @Override
         public void execute() {
             setLatLng(true);
