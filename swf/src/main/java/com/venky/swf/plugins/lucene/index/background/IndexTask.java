@@ -3,11 +3,6 @@ package com.venky.swf.plugins.lucene.index.background;
 import java.io.IOException;
 import java.util.List;
 
-import com.venky.cache.Cache;
-import com.venky.cache.UnboundedCache;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -15,12 +10,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LiveIndexWriterConfig;
-import org.apache.lucene.index.MergeScheduler;
 import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.LockObtainFailedException;
-import org.apache.lucene.util.Version;
 
 import com.venky.swf.plugins.background.core.Task;
 
@@ -30,7 +22,7 @@ public class IndexTask implements Task{
 	 */
 	private static final long serialVersionUID = -5049941893423693143L;
 	private String directory;
-	private List<Record> documents;
+	private List<Document> documents;
 	private Operation operation;
 	public static enum Operation { 
 		ADD,
@@ -53,8 +45,7 @@ public class IndexTask implements Task{
 	public void execute() {
 		try {
 			IndexWriter w = getIndexWriter();
-			for (Record record: getDocuments()){
-				Document document = LuceneIndexer.instance(Database.getTable(getDirectory()).getModelClass()).getDocument(record);
+			for (Document document: getDocuments()){
 				switch(getOperation()){
 					case ADD:
 						w.addDocument(document);
@@ -84,11 +75,11 @@ public class IndexTask implements Task{
 		this.directory = directory;
 	}
 
-	public List<Record> getDocuments() {
+	public List<Document> getDocuments() {
 		return documents;
 	}
 
-	public void setDocuments(List<Record> documents) {
+	public void setDocuments(List<Document> documents) {
 		this.documents = documents;
 	}
 	public Operation getOperation() {

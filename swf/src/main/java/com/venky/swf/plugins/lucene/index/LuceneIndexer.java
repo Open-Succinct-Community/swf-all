@@ -230,8 +230,8 @@ public class LuceneIndexer {
 	public List<Long> findIds(Query q, int numHits){
 		final List<Long> ids = new ArrayList<>();
 		fire(q ,numHits,new ResultCollector() {
-			public void found(Document d) {
-				ids.add(Long.valueOf(d.getField("ID").stringValue()));
+			public boolean found(Document d) {
+                            return ids.add(Long.valueOf(d.getField("ID").stringValue()));
 			}
 		});
 		return ids;
