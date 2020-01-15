@@ -195,7 +195,10 @@ public class Path implements _IPath{
             return null;
         }
         Number id = (Number)getSession().getAttribute("user.id");
-        return id.longValue();
+        if (id != null){
+            return id.longValue();
+        }
+        return null;
     }
 
     public HttpSession getSession() {
@@ -693,9 +696,6 @@ public class Path implements _IPath{
         }
         
         boolean loggedOn= isUserLoggedOn();
-        if (!loggedOn){
-            addErrorMessage("Login Failed");
-        }
         return loggedOn;
     }
     public boolean redirectOnException(){
@@ -770,21 +770,22 @@ public class Path implements _IPath{
             Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive()); 
             try {
                 boolean securedAction = getControllerReflector().isSecuredActionMethod(m) ;
-                if (securedAction){
-                    if (!isRequestAuthenticated()){
-                        User guest = getGuestUser();
-                        if (guest != null){
-                            createUserSession(guest, false);
-                        }
-                        
-                        if(!isRequestAuthenticated()) {
-                            if (getProtocol() == MimeType.TEXT_HTML){
-                                return new RedirectorView(this,"","login");
-                            }else {
-                                throw new AccessDeniedException ("Request not authenticated");
-                            }
+                if (!isRequestAuthenticated() && securedAction){
+                    User guest = getGuestUser();
+                    if (guest != null){
+                        createUserSession(guest, false);
+                    }
+
+                    if(!isRequestAuthenticated()) {
+                        if (getProtocol() == MimeType.TEXT_HTML){
+                            addErrorMessage("Login Failed");
+                            return new RedirectorView(this,"","login");
+                        }else {
+                            throw new AccessDeniedException ("Request not authenticated");
                         }
                     }
+                }
+                if (securedAction){
                     ensureControllerActionAccess();
                 }
                 Controller controller = createController();

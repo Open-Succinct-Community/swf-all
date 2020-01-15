@@ -68,12 +68,21 @@ public class IntegrationAdaptor<M extends Model,T> {
 	}
 	
 	public List<M> readRequest(Path path){
-		try {
-			InputStream is = path.getInputStream();
-			return reader.read(is);
-		}catch(IOException ex){
-			throw new RuntimeException(ex);
-		}
+            InputStream is = null;
+            try {
+                    is = path.getInputStream();
+                    return reader.read(is);
+            }catch(IOException ex){
+                    throw new RuntimeException(ex);
+            }finally {
+                if (is != null){
+                    try {
+                        is.close();
+                    }catch(IOException ex){
+                        throw new RuntimeException(ex);
+                    }
+                }
+            }
 	}
 	
 	public View createResponse(Path path, List<M> models){

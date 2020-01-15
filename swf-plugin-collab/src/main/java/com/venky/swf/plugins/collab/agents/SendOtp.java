@@ -14,6 +14,6 @@ public class SendOtp implements Task {
 
     @Override
     public void execute() {
-        otpEnabled.sendOtp();
+        otpEnabled.resendOtp();
     }
 }

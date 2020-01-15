@@ -16,6 +16,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
+import com.venky.reflection.MethodSignatureCache;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -40,6 +41,7 @@ import com.venky.swf.sql.parser.SQLExpressionParser;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.logging.Level;
 
 /**
  *
@@ -398,7 +400,12 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
 	
 	private Class<?> getMethodImplClass(Method m){
+            try{
 		return methodImplClassCache.get(getReflector().getModelClass()).get(m);
+            }catch(NullPointerException ex){
+                Config.instance().getLogger(getClass().getName()).log(Level.SEVERE, "Method" + m.getName() + ", ModelClass:"+ modelClass);
+                throw ex;
+            }
 	}
 	
 	private static Cache<Class<? extends Model>,Cache<Method,Class<?>>> methodImplClassCache = new Cache<Class<? extends Model>, Cache<Method,Class<?>>>() {
