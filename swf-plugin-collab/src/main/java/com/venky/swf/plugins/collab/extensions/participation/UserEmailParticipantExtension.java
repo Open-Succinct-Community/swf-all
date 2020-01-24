@@ -26,7 +26,8 @@ public class UserEmailParticipantExtension extends ParticipantExtension<UserEmai
 					ret.add(partiallyFilledModel.getUserId());
 				}
 			}else if (!user.getRawRecord().getAsProxy(User.class).isStaff()){
-				ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class, user));
+				ret  = new SequenceSet<>();
+                                ret.add(user.getId());
 			}
 		}
 		return ret;
