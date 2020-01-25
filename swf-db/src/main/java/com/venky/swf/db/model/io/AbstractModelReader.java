@@ -22,8 +22,11 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 	public MimeType getMimeType(){
 		return FormatHelper.getMimeType(getFormatClass());
 	}
-	
-	public M read(T source) {
+	public M read(T source){
+            return read(source,true);
+        }
+        public M read(T source,boolean ensureAccessibleByLoggedInUser){
+
 		M m = createInstance();
 		FormatHelper<T> helper = FormatHelper.instance(source);
 		set(m,helper);
@@ -36,7 +39,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			if (refElement != null){ 
 				Class<T> formatClass = getFormatClass();
 				ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>)ModelIOFactory.getReader(referredModelClass,formatClass);
-				Model referredModel = reader.read(refElement);
+				Model referredModel = reader.read(refElement,false);
 				if (referredModel != null){
 					if (referredModel.getRawRecord().isNewRecord()) {
 						throw new RuntimeException( "Oops! Please select the correct "  + referredModelClass.getSimpleName() );
@@ -48,7 +51,7 @@ public abstract class AbstractModelReader<M extends Model,T> extends ModelIO<M> 
 			}
 		}
 		
-		M m1 = Database.getTable(getBeanClass()).getRefreshed(m);
+		M m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
 		set(m1,helper);
 		return m1;
 	}
