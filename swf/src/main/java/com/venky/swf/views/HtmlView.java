@@ -31,6 +31,9 @@ import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.layout.Paragraph;
+import java.io.InputStreamReader;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 /**
  *
@@ -176,20 +179,34 @@ public abstract class HtmlView extends View{
         Registry.instance().callExtensions("after.create.head",getPath(),head); // Global.
     }
     public void addProgressiveWebAppLinks(Head head){
-        URL r = getClass().getResource("/web_manifest/manifest.json");
+        URL r = getClass().getResource("/manifest.json");
+        String path = "";
+        if (r == null){
+            r = getClass().getResource("/web_manifest/manifest.json");
+            path = "/web_manifest";
+        }
+        
         if (r == null){
             return;
         }
-
-        Link link  = new HLink("/resources/web_manifest/manifest.json");
+        String start_url = "/";
+        try { 
+            JSONObject manifest = (JSONObject)JSONValue.parse(new InputStreamReader(r.openStream()));
+            start_url = (String)manifest.get("start_url");
+        }catch(Exception ex){
+            //
+        }
+        
+        
+        Link link  = new HLink(String.format("%s/manifest.json",path));
         link.setProperty("rel","manifest");
         head.addControl(link);
 
-        link  = new HLink("/resources/web_manifest/manifest.png"); //192x192
+        link  = new HLink(String.format("%s/manifest.png",path)); //192x192
         link.setProperty("rel","icon");
         head.addControl(link);
 
-        link  = new HLink("/resources/web_manifest/manifest.png");
+        link  = new HLink(String.format("%s/manifest.png",path));
         link.setProperty("rel","apple-touch-icon");
         head.addControl(link);
 
@@ -202,7 +219,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Meta("application-name" , applicationName));
         head.addControl(new Meta("apple-mobile-web-app-title" , applicationName));
 
-        head.addControl(new Meta("msapplication-starturl","/"));
+        head.addControl(new Meta("msapplication-starturl",start_url));
         head.addControl(new Meta("viewport","width=device-width, initial-scale=1, shrink-to-fit=no"));
         //head.addControl(new Meta( "Service-Worker-Allowed" , "yes"));
 
