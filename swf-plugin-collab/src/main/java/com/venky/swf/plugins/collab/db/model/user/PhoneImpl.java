@@ -31,13 +31,14 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
         T userPhone = getProxy();
 
         String key = Config.instance().getProperty("swf.msg91.auth.key");
+        String senderId = Config.instance().getProperty("swf.msg91.sender.id");
         String phoneNumber = userPhone.getPhoneNumber();
 
         if (userPhone.getReflector().isVoid(userPhone.getLastOtp()) || generateFresh){
             userPhone.setLastOtp(OtpEnabled.generateOTP());
         }
 
-        if (!ObjectUtil.isVoid(key)) {
+        if (!ObjectUtil.isVoid(key) && !ObjectUtil.isVoid(senderId)) {
             JSONObject params = new JSONObject();
             params.put("mobile", phoneNumber);
             params.put("authkey", key);
@@ -46,7 +47,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
             if (generateFresh) {
                 url = "https://control.msg91.com/api/sendotp.php";
                 params.put("otp_expiry", Config.instance().getIntProperty("swf.msg91.otp.expiry", 10)); //10 minutes
-                params.put("sender", "YRVWS");
+                params.put("sender", senderId);
                 params.put("otp",userPhone.getLastOtp());
                 params.put("otp_length", userPhone.getLastOtp().length());
             } else {
