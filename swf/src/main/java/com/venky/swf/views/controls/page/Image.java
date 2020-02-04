@@ -31,6 +31,10 @@ public class Image extends Control{
 			urlProperty = "data";
 		}
 		setProperty(urlProperty, imageUrl);
+		int index = imageUrl.lastIndexOf(".");
+		if (index > 0){
+			setText(imageUrl.substring(0,index));
+		}
 	}
 
 	protected boolean useMinimizedTagSyntax(){

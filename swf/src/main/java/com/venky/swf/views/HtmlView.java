@@ -32,6 +32,8 @@ import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.layout.Paragraph;
 import java.io.InputStreamReader;
+
+import com.venky.swf.views.controls.page.layout.Title;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -73,6 +75,12 @@ public abstract class HtmlView extends View{
     @Override
     public String toString(){
         Html html = new Html();
+        String applicationName = Config.instance().getProperty("swf.application.name");
+        if (!ObjectUtil.isVoid(applicationName)){
+            Title title = new Title();
+            title.setText(applicationName);
+            html.addControl(title);
+        }
         SWFLogger cat = Config.instance().getLogger(getClass().getName());
         Timer htmlCreation = cat.startTimer("html creation.");
         try {
@@ -145,7 +153,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Css("/resources/scripts/node_modules/tablesorter/dist/css/theme.bootstrap.min.css"));
         head.addControl(new Css("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
 
-        head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js",false));
         head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/umd/popper.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/bootstrap/dist/js/bootstrap.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.min.js"));
@@ -190,9 +198,11 @@ public abstract class HtmlView extends View{
             return;
         }
         String start_url = "/";
+        String theme_color = "#000000";
         try { 
             JSONObject manifest = (JSONObject)JSONValue.parse(new InputStreamReader(r.openStream()));
-            start_url = (String)manifest.get("start_url");
+            start_url = (String)manifest.getOrDefault("start_url",start_url);
+            theme_color = (String)manifest.getOrDefault("theme_color",theme_color)  ;
         }catch(Exception ex){
             //
         }
@@ -213,7 +223,7 @@ public abstract class HtmlView extends View{
 
         head.addControl(new Meta("mobile-web-app-capable" , "yes"));
         head.addControl(new Meta("apple-mobile-web-app-capable" , "yes"));
-
+        head.addControl(new Meta( "theme-color",theme_color));
         String applicationName = Config.instance().getProperty("swf.application.name", "Application");
 
         head.addControl(new Meta("application-name" , applicationName));

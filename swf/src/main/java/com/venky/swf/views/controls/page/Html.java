@@ -18,5 +18,6 @@ public class Html extends Control{
 
 	public Html(){
         super("html");
+        setProperty("lang","en");
     }
 }
