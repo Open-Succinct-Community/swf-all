@@ -17,6 +17,7 @@ public class Glyphicon extends Span{
 		bs4Map.put("glyphicon-duplicate","fa-clone");
 		bs4Map.put("glyphicon-floppy-disk","fa-save");
 		bs4Map.put("glyphicon-remove","fa-ban");
+                bs4Map.put("glyphicon-refresh","fa-redo");
 
 	}
 	public String getFAIcon(String glyphicon){
