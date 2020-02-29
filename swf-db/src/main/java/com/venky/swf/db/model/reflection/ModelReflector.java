@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.sql.Timestamp;
@@ -1525,7 +1526,7 @@ public class ModelReflector<M extends Model> {
 
     private class ChildrenGetterMatcher implements MethodMatcher{
         public boolean matches(Method method){
-            return (getChildModelClass(method) != null);
+            return (getChildModelClass(method) != null && !Modifier.isStatic(method.getModifiers()));
         }
     }
 
