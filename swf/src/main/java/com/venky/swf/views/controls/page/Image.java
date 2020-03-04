@@ -31,10 +31,18 @@ public class Image extends Control{
 			urlProperty = "data";
 		}
 		setProperty(urlProperty, imageUrl);
+		/*
+		Light house changes creates mess with images if done in generic way.
 		int index = imageUrl.lastIndexOf(".");
 		if (index > 0){
-			setText(imageUrl.substring(0,index));
-		}
+			imageUrl = imageUrl.substring(0,index);
+			index = imageUrl.lastIndexOf('/');
+			if (index > 0){
+				imageUrl = imageUrl.substring(index+1);
+			}
+			setText(imageUrl);
+		}*/
+
 	}
 
 	protected boolean useMinimizedTagSyntax(){

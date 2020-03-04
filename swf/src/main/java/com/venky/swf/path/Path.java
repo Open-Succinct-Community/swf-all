@@ -1038,6 +1038,9 @@ public class Path implements _IPath{
                             String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
                             reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
                             referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
+                            if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
+                                referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));
+                            }
                         }
                     }else {
                         String referredModelIdColumnName = join.value();
@@ -1048,6 +1051,9 @@ public class Path implements _IPath{
                             SQLExpressionParser parser = new SQLExpressionParser(modelClass);
                             Expression expression = parser.parse(join.additional_join());
                             referredModelWhere.add(expression);
+                        }
+                        if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
+                            referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));
                         }
                     }
                 }

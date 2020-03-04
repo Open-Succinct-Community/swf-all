@@ -85,7 +85,7 @@ public class ModelReflector<M extends Model> {
     	return ref;
     }
     
-	private Cache<String, SequenceSet<String>> extensionPointsCache = new Cache<String, SequenceSet<String>>() {
+	private Cache<String, SequenceSet<String>> extensionPointsCache = new Cache<String, SequenceSet<String>>(0,0) {
 
 		/**
 		 * 
@@ -466,7 +466,7 @@ public class ModelReflector<M extends Model> {
     	if (uniqueKeys == null){
     		synchronized (this) {
     			if (uniqueKeys == null){
-    				Cache<String, UniqueKey<M>> uniqueKeys = new Cache<String, UniqueKey<M>>() {
+    				Cache<String, UniqueKey<M>> uniqueKeys = new Cache<String, UniqueKey<M>>(0,0) {
 	    				private static final long serialVersionUID = 1892299842617679145L;
 	
 	    				@Override
@@ -850,7 +850,7 @@ public class ModelReflector<M extends Model> {
     
     
     
-    private Cache<Method,String> fieldNameCache = new Cache<Method, String>() {
+    private Cache<Method,String> fieldNameCache = new Cache<Method, String>(0,0) {
 		/**
 		 * 
 		 */
@@ -1178,7 +1178,7 @@ public class ModelReflector<M extends Model> {
      
 
      
-     private Cache<Class<? extends Annotation>,Annotation> classAnnotationCache = new Cache<Class<? extends Annotation>, Annotation>(){
+     private Cache<Class<? extends Annotation>,Annotation> classAnnotationCache = new Cache<Class<? extends Annotation>, Annotation>(0,0){
 		/**
 		 * 
 		 */
@@ -1196,7 +1196,7 @@ public class ModelReflector<M extends Model> {
 		return (A)classAnnotationCache.get(annotationClass);
      }
      
-     private Cache<Method,Cache<Class<? extends Annotation>,Annotation>> methodAnnotationCache = new Cache<Method, Cache<Class<? extends Annotation>,Annotation>>(){
+     private Cache<Method,Cache<Class<? extends Annotation>,Annotation>> methodAnnotationCache = new Cache<Method, Cache<Class<? extends Annotation>,Annotation>>(Cache.MAX_ENTRIES_UNLIMITED,0){
 		/**
 		 * 
 		 */
@@ -1206,7 +1206,7 @@ public class ModelReflector<M extends Model> {
 		protected Cache<Class<? extends Annotation>, Annotation> getValue(final Method k) {
 			Timer timer = cat.startTimer();
 			try {
-				return new Cache<Class<? extends Annotation>, Annotation>() {
+				return new Cache<Class<? extends Annotation>, Annotation>(0,0) {
 					/**
 					 * 
 					 */
@@ -1539,7 +1539,7 @@ public class ModelReflector<M extends Model> {
         return orderBy;
     }
     
-    private Cache<String,String> participatingRole = new Cache<String, String>() {
+    private Cache<String,String> participatingRole = new Cache<String, String>(0,0) {
 
 		/**
 		 * 

@@ -129,7 +129,7 @@ public class Table<M extends Model> {
         return modelNameTableNameCache.get(modelClassSimpleName);
     }
 
-    private static Cache<Class<? extends Model>, String> modelClassTableNameCache = new Cache<Class<? extends Model>, String>() {
+    private static Cache<Class<? extends Model>, String> modelClassTableNameCache = new Cache<Class<? extends Model>, String>(0,0) {
         private static final long serialVersionUID = 468418078793388786L;
 
         @Override
@@ -145,7 +145,7 @@ public class Table<M extends Model> {
 
     };
 
-    private static Cache<String, String> modelNameTableNameCache = new Cache<String, String>() {
+    private static Cache<String, String> modelNameTableNameCache = new Cache<String, String>(0,0) {
         private static final long serialVersionUID = 468418078793388786L;
 
         @Override

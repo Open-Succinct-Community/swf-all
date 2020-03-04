@@ -1,10 +1,13 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 
 import com.venky.swf.plugins.collab.db.model.config.Role;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -42,4 +45,29 @@ public class UserImpl extends ModelImpl<User> {
     }
 
 
+    public List<Long> getCompanyIds(){
+        List<Long> ret = new SequenceSet<>();
+        User u = getProxy();
+        if (u.getCompanyId() != null){
+            ret.add(u.getCompanyId());
+            ret.addAll(u.getCompany().getCustomers().stream().map(r->r.getCustomerId()).collect(Collectors.toList()));
+            ret.addAll(u.getCompany().getVendors().stream().map(r->r.getVendorId()).collect(Collectors.toList()));
+            ret.addAll(u.getCompany().getCreatedCompanies().stream().map(c->c.getId()).collect(Collectors.toList()));
+        }
+        for (com.venky.swf.db.model.UserEmail userEmail : u.getUserEmails()){
+            com.venky.swf.plugins.collab.db.model.user.UserEmail ue = userEmail.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.UserEmail.class);
+            if (ue.isValidated()){
+                Long companyId = ue.getCompanyId();
+                if (!getReflector().isVoid(companyId )){
+                    ret.add(companyId);
+                }
+            }
+        }
+        return ret;
+    }
+
+    public List<Company> getCompanies(){
+        ModelReflector<Company> companyModelReflector = ModelReflector.instance(Company.class);
+        return new Select().from(Company.class).where(new Expression(companyModelReflector.getPool(),"ID",Operator.IN,getCompanyIds())).execute();
+    }
 }

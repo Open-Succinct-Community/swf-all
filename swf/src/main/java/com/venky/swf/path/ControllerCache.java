@@ -22,6 +22,9 @@ public class ControllerCache extends Cache<String,String>{
 			}
     	});
     }
+    protected ControllerCache(){
+		super(0,0);
+	}
 	/**
 	 * 
 	 */
