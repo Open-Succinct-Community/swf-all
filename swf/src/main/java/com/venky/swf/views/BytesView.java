@@ -50,7 +50,8 @@ public class BytesView extends View{
         	}
         }
         response.setStatus(httpStatusCode);
-        response.setContentLength(bytes.length);
+        //response.setContentLength(bytes.length);
         response.getOutputStream().write(bytes);
+        response.getOutputStream().flush();
     }
 }
