@@ -21,6 +21,7 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.pkg.JarIntrospector;
 import com.venky.extension.Registry;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
@@ -214,10 +215,12 @@ public abstract class HtmlView extends View{
 
         link  = new HLink(String.format("%s/manifest.png",path)); //192x192
         link.setProperty("rel","icon");
+        link.setProperty("type", MimeType.IMAGE_PNG);
         head.addControl(link);
 
         link  = new HLink(String.format("%s/manifest.png",path));
         link.setProperty("rel","apple-touch-icon");
+        link.setProperty("type", MimeType.IMAGE_PNG);
         head.addControl(link);
 
 

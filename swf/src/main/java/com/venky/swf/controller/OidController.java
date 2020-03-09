@@ -130,7 +130,6 @@ public class OidController extends Controller{
 					return extractEmail(oAuthResponse);
 		        }else {
 		        	String accessToken = oAuthResponse.getAccessToken();
-			        Long expiresIn = oAuthResponse.getExpiresIn();
 
 			    	OAuthClientRequest bearerClientRequest = null;
 					OAuthBearerClientRequest oAuthBearerClientRequest = new OAuthBearerClientRequest(resourceUrl)

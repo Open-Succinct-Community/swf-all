@@ -251,7 +251,7 @@ public class Controller {
             //
         }
 
-        p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24 * 365 * 15));
+        //p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24 * 365 * 15));
         return new BytesView(getPath(), baos.toByteArray(), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
 
