@@ -19,6 +19,7 @@ import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -177,6 +178,7 @@ public class LuceneIndexer {
 		}
 		if (addedFields){
 			doc.add(new TextField("ID",StringUtil.valueOf(r.getId()), Field.Store.YES));
+			doc.add(new LongPoint("_ID",r.getId()));
 		}else {
 			doc = null;
 		}
