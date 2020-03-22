@@ -15,6 +15,8 @@ import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.plugins.lucene.index.background.IndexTask;
+import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -72,6 +74,14 @@ public class AppInstaller implements Installer{
                     e.printStackTrace();
                     break;
                 }
+            }
+            if (records.isEmpty()){
+                //Initialize emtpy index.
+                IndexTask task = new IndexTask();
+                task.setDirectory(currentTable.getTableName());
+                task.setDocuments(new ArrayList<>());
+                task.setOperation(Operation.ADD);
+                TaskManager.instance().executeAsync(task,false);
             }
         }
     }
