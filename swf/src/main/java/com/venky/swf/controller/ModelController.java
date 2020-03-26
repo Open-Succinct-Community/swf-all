@@ -335,11 +335,13 @@ public class ModelController<M extends Model> extends Controller {
         }
         return children;
     }
-
     protected View list(List<M> records, boolean isCompleteList) {
+        return list(records,isCompleteList,integrationAdaptor);
+    }
+    protected <T> View list(List<M> records, boolean isCompleteList , IntegrationAdaptor<M,T> overrideIntegrationAdaptor) {
         View v = null;
-        if (integrationAdaptor != null) {
-            v = integrationAdaptor.createResponse(getPath(), records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()), getIgnoredParentModels(), getIncludedModelFields());
+        if (overrideIntegrationAdaptor != null) {
+            v = overrideIntegrationAdaptor.createResponse(getPath(), records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()), getIgnoredParentModels(), getIncludedModelFields());
         } else {
             View lv = constructModelListView(records, isCompleteList);
             if (lv instanceof HtmlView) {
