@@ -68,6 +68,6 @@ public class UserImpl extends ModelImpl<User> {
 
     public List<Company> getCompanies(){
         ModelReflector<Company> companyModelReflector = ModelReflector.instance(Company.class);
-        return new Select().from(Company.class).where(new Expression(companyModelReflector.getPool(),"ID",Operator.IN,getCompanyIds())).execute();
+        return new Select().from(Company.class).where(new Expression(companyModelReflector.getPool(),"ID",Operator.IN,getCompanyIds().toArray())).execute();
     }
 }
