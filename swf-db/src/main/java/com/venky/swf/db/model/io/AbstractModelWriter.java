@@ -237,9 +237,14 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 		if (templateFields != null){
 			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();
-			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
-				if (templateFields.containsKey(clazz)) {
-					parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
+			Set<String> parentSimpleNamesAlreadyConsidered = new HashSet<>();
+			parentsAlreadyConsidered.forEach(p->parentSimpleNamesAlreadyConsidered.add(p.getSimpleName()));
+			if (!parentSimpleNamesAlreadyConsidered.contains(referredModelClass.getSimpleName())){
+				//Prevent recurrsion for recursive models.
+				for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
+					if (templateFields.containsKey(clazz)) {
+						parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
+					}
 				}
 			}
 			if (!parentFieldsToAddBasedOnTemplate.isEmpty()){
