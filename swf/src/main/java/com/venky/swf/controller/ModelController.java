@@ -973,7 +973,7 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
 
-    private <T> View saveModelsFromRequest() {
+    protected  <T> View saveModelsFromRequest() {
         List<M> models = persistModelsFromRequest();
         return integrationAdaptor.createResponse(getPath(), models, null, getIgnoredParentModels(), getIncludedModelFields());
     }
