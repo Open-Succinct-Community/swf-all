@@ -441,17 +441,17 @@ public class Controller {
 
     protected <M extends Model> void save(M record, Class<M> modelClass) {
         if (record.getRawRecord().isNewRecord()) {
-            record.setCreatorUserId(getSessionUser().getId());
+            record.setCreatorUserId(getPath().getSessionUserId());
             record.setCreatedAt(null);
         }
         if (record.isDirty()) {
-            record.setUpdaterUserId(getSessionUser().getId());
+            record.setUpdaterUserId(getPath().getSessionUserId());
             record.setUpdatedAt(null);
         }
         record.save(); //Allow extensions to fill defaults etc.
 
-        if (!record.isAccessibleBy(getSessionUser())
-                || !getPath().getModelAccessPath(modelClass).canAccessControllerAction("save", String.valueOf(record.getId()))) {
+        if (getSessionUser() != null && (!record.isAccessibleBy(getSessionUser())
+                || !getPath().getModelAccessPath(modelClass).canAccessControllerAction("save", String.valueOf(record.getId())))) {
             Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
             throw new AccessDeniedException();
         }
