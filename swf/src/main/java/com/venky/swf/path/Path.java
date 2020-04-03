@@ -21,6 +21,7 @@ import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
 import com.venky.extension.Extension;
 import com.venky.swf.db.model.application.Application;
+import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.commons.fileupload.FileItem;
@@ -195,7 +196,10 @@ public class Path implements _IPath{
             return null;
         }
         Number id = (Number)getSession().getAttribute("user.id");
-        return id.longValue();
+        if (id != null){
+            return id.longValue();
+        }
+        return null;
     }
 
     public HttpSession getSession() {
@@ -382,7 +386,7 @@ public class Path implements _IPath{
             if (values.length == 2){
                 String appId = values[0];
                 String plainPass = values[1];
-                Application app = Application.find(appId);
+                Application app = ApplicationUtil.find(appId);
                 if (ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
                     return true;
                 }
@@ -693,9 +697,6 @@ public class Path implements _IPath{
         }
         
         boolean loggedOn= isUserLoggedOn();
-        if (!loggedOn){
-            addErrorMessage("Login Failed");
-        }
         return loggedOn;
     }
     public boolean redirectOnException(){
@@ -770,21 +771,22 @@ public class Path implements _IPath{
             Timer timer = cat.startTimer(null,Config.instance().isTimerAdditive()); 
             try {
                 boolean securedAction = getControllerReflector().isSecuredActionMethod(m) ;
-                if (securedAction){
-                    if (!isRequestAuthenticated()){
-                        User guest = getGuestUser();
-                        if (guest != null){
-                            createUserSession(guest, false);
-                        }
-                        
-                        if(!isRequestAuthenticated()) {
-                            if (getProtocol() == MimeType.TEXT_HTML){
-                                return new RedirectorView(this,"","login");
-                            }else {
-                                throw new AccessDeniedException ("Request not authenticated");
-                            }
+                if (!isRequestAuthenticated() && securedAction){
+                    User guest = getGuestUser();
+                    if (guest != null){
+                        createUserSession(guest, false);
+                    }
+
+                    if(!isRequestAuthenticated()) {
+                        if (getProtocol() == MimeType.TEXT_HTML){
+                            addErrorMessage("Login Failed");
+                            return new RedirectorView(this,"","login");
+                        }else {
+                            throw new AccessDeniedException ("Request not authenticated");
                         }
                     }
+                }
+                if (securedAction){
                     ensureControllerActionAccess();
                 }
                 Controller controller = createController();
@@ -1037,6 +1039,9 @@ public class Path implements _IPath{
                             String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
                             reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
                             referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
+                            if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
+                                referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));
+                            }
                         }
                     }else {
                         String referredModelIdColumnName = join.value();
@@ -1047,6 +1052,9 @@ public class Path implements _IPath{
                             SQLExpressionParser parser = new SQLExpressionParser(modelClass);
                             Expression expression = parser.parse(join.additional_join());
                             referredModelWhere.add(expression);
+                        }
+                        if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
+                            referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));
                         }
                     }
                 }
