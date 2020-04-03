@@ -606,7 +606,7 @@ public abstract class JdbcTypeHelper {
 		}
 
     }
-    private static Cache<Class<?>,JdbcTypeHelper> _instance = new Cache<Class<?>, JdbcTypeHelper>() {
+    private static Cache<Class<?>,JdbcTypeHelper> _instance = new Cache<Class<?>, JdbcTypeHelper>(0,0) {
 		
 		/**
 		 * 

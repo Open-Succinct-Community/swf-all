@@ -15,7 +15,7 @@ public interface Phone extends OtpEnabled{
 
     public static String sanitizePhoneNumber(String phoneNumber){
         if (ObjectUtil.isVoid(phoneNumber)) {
-            return  "";
+            return  null;
         }
 
         StringBuilder ret = new StringBuilder();

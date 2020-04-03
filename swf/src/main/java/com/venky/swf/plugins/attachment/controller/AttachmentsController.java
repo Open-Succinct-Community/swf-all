@@ -21,7 +21,7 @@ public class AttachmentsController extends ModelController<Attachment>{
 	public View view(String contentFileName){
 		List<Attachment> attachements = new Select().from(Attachment.class).where(new Expression(getReflector().getPool(),"ATTACHMENT_CONTENT_NAME",Operator.EQ,contentFileName)).execute();
 		if (attachements.size() == 1){
-	        getPath().getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
+	        //getPath().getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
 			return super.view(attachements.get(0).getId());
 		}
 		throw new AccessDeniedException();

@@ -4,6 +4,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.user.User;
+import com.venky.swf.plugins.collab.db.model.user.UserEmail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,12 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 				ret = Arrays.asList(u.getCompanyId());
 			}else {
 				ret = new ArrayList<>();
+				for (com.venky.swf.db.model.UserEmail ue : u.getUserEmails()){
+					UserEmail userEmail = ue.getRawRecord().getAsProxy(UserEmail.class);
+					if (userEmail.isValidated()){
+						ret.add(userEmail.getCompanyId());
+					}
+				}
 			}
 		}else if ("CUSTOMER_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
@@ -44,9 +51,9 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		}else if ("CREATOR_COMPANY_ID".equalsIgnoreCase(fieldName)){
 			if (u.getCompanyId() != null){
 				return Arrays.asList(u.getCompanyId());
-			}else if (!partial.getReflector().isVoid(partial.getId()) && partial.getCreatorCompanyId() == null){
+			}/*else if (!partial.getReflector().isVoid(partial.getId()) && partial.getCreatorCompanyId() == null){
 				return Arrays.asList(partial.getId());
-			}else {
+			}*/else {
 				ret = new ArrayList<>();
 				ret.add(null);
 			}

@@ -114,7 +114,7 @@ public interface Company extends Model{
 	public Company getCreatorCompany();
 
 	@HIDDEN
-    @CONNECTED_VIA("CREATOR_COMPANY_ID")
+	@CONNECTED_VIA("CREATOR_COMPANY_ID")
 	public List<Company> getCreatedCompanies();
 
 }

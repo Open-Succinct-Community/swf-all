@@ -8,6 +8,7 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.plugins.collab.db.model.CompanyNonSpecific;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 
 import java.util.List;
 
@@ -29,4 +30,11 @@ public interface User extends com.venky.swf.plugins.templates.db.model.User, Add
 
 	public List<UserFacility> getUserFacilities();
 	public List<UserPhone> getUserPhones();
+
+
+	@IS_VIRTUAL
+	public List<Long> getCompanyIds();
+
+	@IS_VIRTUAL
+	public List<Company> getCompanies();
 }

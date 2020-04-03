@@ -23,11 +23,11 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
         T otpEnabledModel = Database.getTable(getModelClass()).get(id);
         _sendOtp(otpEnabledModel,otpField);
         if (getIntegrationAdaptor() == null){
-            getPath().addInfoMessage("Otp Sent to your " + StringUtil.camelize(otpField) + " :" +
+            getPath().addInfoMessage("Otp Sent to "  +
                     getReflector().get(otpEnabledModel,otpField));
             return back();
         }else {
-            return getIntegrationAdaptor().createStatusResponse(getPath(), null, "Otp Sent to your " + StringUtil.camelize(otpField) + " :" +
+            return getIntegrationAdaptor().createStatusResponse(getPath(), null, "Otp Sent to " +
                     getReflector().get(otpEnabledModel, otpField));
         }
 

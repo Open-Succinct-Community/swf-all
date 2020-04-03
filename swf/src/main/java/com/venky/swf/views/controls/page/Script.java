@@ -19,10 +19,16 @@ public class Script extends Control{
         this(null);
     }
     public Script(String source){
+	    this(source,false);
+    }
+    public Script(String source, boolean defer){
         super("script");
         if (source != null){
             setProperty("type", "text/javascript");
             setProperty("src", source);
+            if (defer) {
+                setProperty("defer", "defer");
+            }
         }
     }
 }

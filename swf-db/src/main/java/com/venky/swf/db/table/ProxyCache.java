@@ -13,6 +13,7 @@ public class ProxyCache extends Cache<Class<? extends Model>,Model> {
         //For Serialization.
     }
     public ProxyCache(Record record){
+        super(0,0);
         this.record = record;
     }
     @Override

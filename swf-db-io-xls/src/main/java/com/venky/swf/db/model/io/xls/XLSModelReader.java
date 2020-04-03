@@ -63,7 +63,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
         Map<String,Integer> headingIndexMap = headingIndexMap(sheet);
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
-        	M m = read(row,headingIndexMap);
+        	M m = read(row,headingIndexMap,true);
     		records.add(m);
         }
         return records;
@@ -139,14 +139,19 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	
 	@Override
 	public M read(Row source) {
-    	Map<String,Integer> headingIndexMap = headingIndexMap(source.getSheet());
-		return read(source , headingIndexMap);
+		return read(source,true);
+	}
+	@Override
+	public M read(Row source, boolean ensureAccessibleByLoggedInUser) {
+		Map<String,Integer> headingIndexMap = headingIndexMap(source.getSheet());
+		return read(source , headingIndexMap, ensureAccessibleByLoggedInUser);
 	}
 
-	private M read(Row source,Map<String, Integer> headingIndexMap){
+
+	private M read(Row source,Map<String, Integer> headingIndexMap, boolean ensureAccessibleByLoggedInUser){
 		M m = createInstance();
 		copyRowValuesToBean(m, source, headingIndexMap);
-		return Database.getTable(getBeanClass()).getRefreshed(m);
+		return Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
 	}
 
 

@@ -21,6 +21,7 @@ import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
 import com.venky.extension.Extension;
 import com.venky.swf.db.model.application.Application;
+import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import org.apache.commons.fileupload.FileItem;
@@ -385,7 +386,7 @@ public class Path implements _IPath{
             if (values.length == 2){
                 String appId = values[0];
                 String plainPass = values[1];
-                Application app = Application.find(appId);
+                Application app = ApplicationUtil.find(appId);
                 if (ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
                     return true;
                 }

@@ -255,7 +255,7 @@ public class Config {
     	return installers;
     }
     
-    private Cache<String,List<String>> propertyValueList = new Cache<String, List<String>>() {
+    private Cache<String,List<String>> propertyValueList = new Cache<String, List<String>>(0,0) {
 		private static final long serialVersionUID = 4415548468945425620L;
 
 		@Override

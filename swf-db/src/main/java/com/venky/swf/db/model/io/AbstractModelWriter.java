@@ -238,7 +238,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		if (templateFields != null){
 			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();
 			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
-				if (templateFields.containsKey(clazz)) {
+				if (templateFields.get(clazz) != null) {
+					//Never add partne class with null template.
 					parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
 				}
 			}

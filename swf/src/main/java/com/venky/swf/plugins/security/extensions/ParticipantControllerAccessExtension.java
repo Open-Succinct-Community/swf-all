@@ -248,6 +248,9 @@ public class ParticipantControllerAccessExtension implements Extension{
 	private PermissionCache permissionCache = new PermissionCache();
 	
 	private class PermissionCache extends Cache<String,Cache<String,Boolean>> {
+		public PermissionCache(){
+			super(0,0);
+		}
 		
 		private static final long serialVersionUID = 8076958083615092776L;
 
@@ -267,7 +270,7 @@ public class ParticipantControllerAccessExtension implements Extension{
 		}
 		@Override
 		protected Cache<String, Boolean> getValue(String k) {
-			return new Cache<String, Boolean>() {
+			return new Cache<String, Boolean>(0,0) {
 				private static final long serialVersionUID = -6669779570540556969L;
 
 				@Override

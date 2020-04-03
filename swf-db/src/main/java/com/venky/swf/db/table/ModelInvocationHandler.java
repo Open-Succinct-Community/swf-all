@@ -16,6 +16,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
+import com.venky.reflection.MethodSignatureCache;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -40,6 +41,7 @@ import com.venky.swf.sql.parser.SQLExpressionParser;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.logging.Level;
 
 /**
  *
@@ -398,10 +400,15 @@ public class ModelInvocationHandler implements InvocationHandler {
 	}
 	
 	private Class<?> getMethodImplClass(Method m){
+            try{
 		return methodImplClassCache.get(getReflector().getModelClass()).get(m);
+            }catch(NullPointerException ex){
+                Config.instance().getLogger(getClass().getName()).log(Level.SEVERE, "Method" + m.getName() + ", ModelClass:"+ modelClass);
+                throw ex;
+            }
 	}
 	
-	private static Cache<Class<? extends Model>,Cache<Method,Class<?>>> methodImplClassCache = new Cache<Class<? extends Model>, Cache<Method,Class<?>>>() {
+	private static Cache<Class<? extends Model>,Cache<Method,Class<?>>> methodImplClassCache = new Cache<Class<? extends Model>, Cache<Method,Class<?>>>(0,0) {
 
 		/**
 		 * 
@@ -411,7 +418,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 		@Override
 		protected Cache<Method, Class<?>> getValue(final Class<? extends Model> modelClass) {
 			
-			return new Cache<Method, Class<?>>() {
+			return new Cache<Method, Class<?>>(0,0) {
 
 				/**
 				 * 
@@ -439,7 +446,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 			};
 		}
 	}; 
-	private static Cache<Class<? extends Model>,List<Class<?>>> modelImplClassesCache = new Cache<Class<? extends Model>, List<Class<?>>>() {
+	private static Cache<Class<? extends Model>,List<Class<?>>> modelImplClassesCache = new Cache<Class<? extends Model>, List<Class<?>>>(0,0) {
 		/**
 		 * 
 		 */
@@ -495,7 +502,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     public void init(){
     	
     }
-    private static final Cache<String,List<FieldValidator<? extends Annotation>>> _fieldValidators = new Cache<String, List<FieldValidator<? extends Annotation>>>() {
+    private static final Cache<String,List<FieldValidator<? extends Annotation>>> _fieldValidators = new Cache<String, List<FieldValidator<? extends Annotation>>>(0,0) {
         /**
 		 * 
 		 */
