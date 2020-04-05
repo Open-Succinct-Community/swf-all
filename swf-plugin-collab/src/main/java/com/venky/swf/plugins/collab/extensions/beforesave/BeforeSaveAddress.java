@@ -137,6 +137,9 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
             for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng));) {
                 GeoCoder coder = i.next();
+                if (!coder.isEnabled(params)){
+                    continue;
+                }
                 for (String address : getAddressQueries(oAddress)) {
                     GeoLocation location = coder.getLocation(address, params);
                     if (location != null) {
