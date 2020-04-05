@@ -127,6 +127,17 @@ public class XML extends FormatHelper<XMLElement>{
 	}
 
 	@Override
+	public void setAttribute(String name, XMLElement element) {
+		if (element != null && ObjectUtil.equals(element.getTagName(),name)){
+			if (element.getOwnerDocument() == root.getOwnerDocument()){
+				root.appendChild(element.cloneElement(true));
+			}else {
+				root.appendChild(element);
+			}
+		}
+	}
+
+	@Override
 	public void removeElementAttribute(String name){
 		root.removeChild(root.getChildElement(name));
 	}

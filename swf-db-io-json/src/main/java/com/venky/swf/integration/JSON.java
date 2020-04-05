@@ -115,7 +115,14 @@ public class JSON extends FormatHelper<JSONObject>{
 		JSONObject attr = (JSONObject)root.get(name);
 		return attr;
 	}
-	
+
+	@Override
+	public void setAttribute(String name, JSONObject element) {
+		if (element != null){
+			root.put(name,element);
+		}
+	}
+
 	public String toString(){
 		StringWriter w =  new StringWriter();
 		JSONFormatter formatter  = new JSONFormatter();
