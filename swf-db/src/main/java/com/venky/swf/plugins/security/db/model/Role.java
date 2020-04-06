@@ -2,6 +2,7 @@ package com.venky.swf.plugins.security.db.model;
 
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
@@ -22,6 +23,8 @@ public interface Role extends Model{
 	public String getName();
 	public void setName(String name);
 
+	@HIDDEN
+	public List<UserRole> getUserRoles();
 
 	static Role getRole(String name) {
 		List<Role> roles = new Select().from(Role.class).where(new Expression(ModelReflector.instance(Role.class).getPool(),"NAME", Operator.EQ, name)).execute(1);
