@@ -38,7 +38,7 @@ public class CompanyImpl extends ModelImpl<Company>{
 
 		ModelReflector<UserRole> userRoleModelReflector = ModelReflector.instance(UserRole.class);
 		List<UserRole> staffUsers = new Select().from(UserRole.class).where(
-				new Expression(userRoleModelReflector.getPool(),"ROLE_ID",Operator.EQ, DataSecurityFilter.getIds(staffRoles))
+				new Expression(userRoleModelReflector.getPool(),"ROLE_ID",Operator.EQ, DataSecurityFilter.getIds(staffRoles).toArray())
 		).execute();
 
 		Set<Long> userIds = staffUsers.stream().map(su->su.getUserId()).collect(Collectors.toSet());
