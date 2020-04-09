@@ -65,8 +65,12 @@ public class UserFacilityParticipantExtension extends ParticipantExtension<UserF
 					SequenceSet<Long> subscribableUserIds = DataSecurityFilter.getIds(f.getCompany().getUsers());
 					subscribableUserIds.removeAll(subscribedUserIds);
 					ret.addAll(subscribableUserIds);
-				}else { 
-					ret = DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(User.class, user));
+				}else {
+					if (user.getRawRecord().getAsProxy(com.venky.swf.plugins.collab.db.model.user.User.class).isStaff()){
+						return null;
+					}else {
+						ret.add(user.getId());
+					}
 				}
 			}
 		}
