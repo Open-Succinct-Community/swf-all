@@ -49,7 +49,7 @@ public class CompanyImpl extends ModelImpl<Company>{
 		ModelReflector<User> ref = ModelReflector.instance(User.class);
 		Expression where = new Expression(ref.getPool(),Conjunction.AND);
 		where.add(new Expression(ref.getPool(), "COMPANY_ID", Operator.EQ, company.getId()));
-		where.add(new Expression(ref.getPool(),"USER_ID",Operator.IN,userIds.toArray()));
+		where.add(new Expression(ref.getPool(),"ID",Operator.IN,userIds.toArray()));
 
 
 		Select select = new Select("ID").from(User.class).where(where);
