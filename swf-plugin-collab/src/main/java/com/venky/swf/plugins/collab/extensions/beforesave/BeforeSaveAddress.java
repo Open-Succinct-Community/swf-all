@@ -71,9 +71,19 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
     public static class LocationSetterTask<M extends Address & Model> implements Task {
 
         M oAddress = null;
-
-        public LocationSetterTask(M address) {
+        Map<String, String> params = new HashMap<>();
+        public LocationSetterTask(M address){
+            this(address,null);
+        }
+        public LocationSetterTask(M address, Map<String,String> input) {
             this.oAddress = address;
+            params.put("here.app_id", Config.instance().getProperty("geocoder.here.app_id"));
+            params.put("here.app_code", Config.instance().getProperty("geocoder.here.app_code"));
+            params.put("here.app_key", Config.instance().getProperty("geocoder.here.app_key"));
+            params.put("google.api_key", Config.instance().getProperty("geocoder.google.api_key"));
+            if (input !=null){
+                params.putAll(input);
+            }
         }
 
         private Set<String> getAddressQueries(M oAddress) {
@@ -127,11 +137,6 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             coders.add(new GeoCoder("google"));
             coders.add(new GeoCoder("here"));
             coders.add(new GeoCoder("openstreetmap"));
-            Map<String, String> params = new HashMap<>();
-            params.put("here.app_id", Config.instance().getProperty("geocoder.here.app_id"));
-            params.put("here.app_code", Config.instance().getProperty("geocoder.here.app_code"));
-            params.put("here.app_key", Config.instance().getProperty("geocoder.here.app_key"));
-            params.put("google.api_key", Config.instance().getProperty("geocoder.google.api_key"));
             BigDecimal lat = null;
             BigDecimal lng = null;
 
