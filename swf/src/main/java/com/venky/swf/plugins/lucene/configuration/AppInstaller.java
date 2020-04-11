@@ -42,6 +42,9 @@ public class AppInstaller implements Installer{
 			if (currentTable.getReflector() == null){
 				continue;
 			}
+			if (currentTable.getReflector().isVirtual()){
+			    continue;
+            }
 			LuceneIndexer indexer = LuceneIndexer.instance(currentTable.getReflector());
 			if (indexer.hasIndexedFields()){
 				tasks.add(new Mkdir(currentTable.getTableName()));
