@@ -17,6 +17,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.date.DateUtils;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.extension.Registry;
@@ -144,19 +145,45 @@ public class UserImpl extends ModelImpl<User>{
 	}; 
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public <R extends Model> Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<R> modelClass){
-		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName());
+		return getParticipationOptions(modelClass,Database.getTable(modelClass).newRecord());
+	}
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<? extends Model> modelClass, Model model) {
+		if (model != null && model.isDirty()){
+			//Cannot cache!! possibly from autocomplete. may be the dirtyness is requi
+			return _getParticipationOptions(modelClass,model);
+		}
+
+		long id = (model == null  || model.getRawRecord().isNewRecord()) ? 0L : model.getId();
+
+
+		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName() + "." + id);
+
+
 		Set<String> tables = new HashSet<String>(relatedTables.get(modelClass));
 		tables.retainAll(Database.getInstance().getCurrentTransaction().getTablesChanged());
-		Cache<Class<? extends Model>,Cache<String,Map<String,List<Long>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
+
+		Cache<Class<? extends Model>,Cache<Long,Cache<String,Map<String,List<Long>>>>> baseParticipationOptions = Database.getInstance().getCurrentTransaction().getAttribute(this.getClass().getName() + ".getParticipationOptions" );
 		if (baseParticipationOptions == null){
-			baseParticipationOptions = new Cache<Class<? extends Model>, Cache<String,Map<String,List<Long>>>>() {
+			baseParticipationOptions = new Cache<Class<? extends Model>, Cache<Long,Cache<String,Map<String,List<Long>>>>>() {
+				@Override
+				protected Cache<Long, Cache<String, Map<String, List<Long>>>> getValue(Class<? extends Model> aModelClass) {
+					return new Cache<Long, Cache<String, Map<String, List<Long>>>>() {
+						@Override
+						protected Cache<String, Map<String, List<Long>>> getValue(Long modelId) {
+							Model aModel = null;
+							if (ObjectUtil.equals(0L,modelId)){
+								aModel = Database.getTable(aModelClass).newRecord();
+							}else {
+								aModel = Database.getTable(aModelClass).get(modelId);
+							}
+							return _getParticipationOptions(aModelClass,aModel);
+						}
+					};
+				}
+
 				private static final long serialVersionUID = -5570691940356510299L;
 
-				@Override
-				protected Cache<String, Map<String, List<Long>>> getValue(
-						Class<? extends Model> k) {
-					return getParticipationOptions(k,Database.getTable(k).newRecord());
-				}
 			};
 			Database.getInstance().getCurrentTransaction().setAttribute(this.getClass().getName() + ".getParticipationOptions" ,baseParticipationOptions);
 		}
@@ -165,13 +192,14 @@ public class UserImpl extends ModelImpl<User>{
 			baseParticipationOptions.remove(modelClass);
 		}
 		timer.stop();
-		return baseParticipationOptions.get(modelClass);
+		return baseParticipationOptions.get(modelClass).get(id);
 	}
-	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Cache<String,Map<String,List<Long>>> getParticipationOptions(Class<? extends Model> modelClass, Model model){
-		Timer timer = cat.startTimer("getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
+	public Cache<String,Map<String,List<Long>>> _getParticipationOptions(Class<? extends Model> modelClass, Model model){
+        Timer timer = cat.startTimer("_getting participating Options for " + modelClass.getSimpleName() +"/" + (model != null ? model.getId() : "" ));
 		try {
+
+
 			Cache<String,Map<String, List<Long>>> mapParticipatingGroupOptions = new Cache<String, Map<String,List<Long>>>(){
 
 				/**
