@@ -12,9 +12,11 @@ import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page._IMenu;
+import com.venky.swf.views.controls.page.buttons.Button;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.Nav;
+import com.venky.swf.views.controls.page.layout.Span;
 
 /**
  *
@@ -60,8 +62,21 @@ public class DashboardView extends HtmlView{
                 Nav nav = new Nav();
                 nav.addClass("navbar navbar-expand-lg navbar-light bg-light");
 
+
                 Div container = new Div();
                 container.addClass("collapse navbar-collapse");
+
+                Button button = new Button("button");
+                button.addClass("navbar-toggler");
+                button.setProperty("data-toggle","collapse");
+                button.setProperty("data-target","#"+container.getId());
+
+                Span span = new Span();
+                span.addClass("navbar-toggler-icon");
+                button.addControl(span);
+
+
+                nav.addControl(button);
                 nav.addControl(container);
 
                 container.addControl(menu);

@@ -17,7 +17,10 @@ public class Button extends Control {
 	private static final long serialVersionUID = 7093207099887224426L;
 
 	public Button(){
-        super("input");
+        this("input");
+    }
+    public Button(String tag){
+        super(tag);
         setProperty("type", "button");
     }
 }

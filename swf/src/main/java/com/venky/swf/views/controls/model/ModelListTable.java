@@ -27,10 +27,9 @@ import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls.model.ModelAwareness.OrderBy;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.Table.*;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.Table;
-import com.venky.swf.views.controls.page.layout.Table.Column;
-import com.venky.swf.views.controls.page.layout.Table.Row;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.model.FieldUIMetaProvider;
@@ -128,8 +127,10 @@ public class ModelListTable<M extends Model> extends Div{
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     protected void setWidths(Row header,int numActions){
     	Timer timer = cat.startTimer("Setting widths");
-    	try { 
-    		_setWidths(header, numActions);
+    	try {
+    		if (Table.class.isAssignableFrom(table.getClass())){
+				_setWidths(header, numActions);
+			}
     	}finally {
     		timer.stop();
     	}
