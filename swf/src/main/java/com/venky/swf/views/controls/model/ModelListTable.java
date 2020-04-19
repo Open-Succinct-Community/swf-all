@@ -13,6 +13,7 @@ import java.util.Map;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -203,6 +204,7 @@ public class ModelListTable<M extends Model> extends Div{
         for (int actionIndex = 0 ; actionIndex < singleRecordActions.size() ; actionIndex ++ ){
         	Method m = singleRecordActions.get(actionIndex);
         	Column actionLinkCell = row.createColumn();
+        	actionLinkCell.setProperty("data-title",StringUtil.camelize(m.getName()));
         	Link singleRecordActionLink = modelAwareness.createSingleRecordActionLink(m, record);
         	if (singleRecordActionLink != null){
         		actionLinkCell.addControl(singleRecordActionLink);
@@ -303,6 +305,7 @@ public class ModelListTable<M extends Model> extends Div{
     			control.setVisible(false);
     		}
             column.addControl(control);
+            column.setProperty("data-title", StringUtil.camelize(fieldName));
 
         }    	
 		

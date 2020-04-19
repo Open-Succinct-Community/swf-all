@@ -4,7 +4,6 @@
  */
 package com.venky.swf.controller;
 
-import com.venky.core.date.DateUtils;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
@@ -52,6 +51,8 @@ import org.json.simple.JSONObject;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -234,7 +235,21 @@ public class Controller {
             return new BytesView(p, "Access Denied!".getBytes());
         }
 
-        InputStream is = getClass().getResourceAsStream(name);
+        InputStream is = null ;
+        File dir = new File("./src/main/resources");
+        if (dir.isDirectory() ){
+            File resource = new File(dir + "/" + name);
+            if (resource.exists() && resource.isFile()){
+                try {
+                    is = new FileInputStream(new File(dir + "/" + name));
+                }catch (Exception ex){
+                    is = null;
+                }
+            }
+        }
+        if (is == null) {
+            is = getClass().getResourceAsStream(name);
+        }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
