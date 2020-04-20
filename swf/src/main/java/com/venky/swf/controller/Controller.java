@@ -526,8 +526,10 @@ public class Controller {
             }
         }
     }
-
     protected <M extends Model> void exportxls(Class<M> modelClass, Workbook wb) {
+        exportxls(modelClass,wb,null);
+    }
+    protected <M extends Model> void exportxls(Class<M> modelClass, Workbook wb, List<M> records) {
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         List<String> fieldsIncluded = reflector.getFields();
         Iterator<String> fieldIterator = fieldsIncluded.iterator();
@@ -549,11 +551,14 @@ public class Controller {
                 }
             }
         }
-        exportxls(modelClass, wb, fieldsIncluded);
+        exportxls(modelClass, wb, fieldsIncluded,records);
     }
 
-    protected <M extends Model> void exportxls(Class<M> modelClass, Workbook wb, List<String> fieldsIncluded) {
-        List<M> list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass, new DefaultModelFilter<M>(modelClass));
+    protected <M extends Model> void exportxls(Class<M> modelClass, Workbook wb, List<String> fieldsIncluded , List<M> records) {
+        List<M> list = records ;
+        if (list == null){
+            list = new Select().from(modelClass).where(getPath().getWhereClause(modelClass)).execute(modelClass, new DefaultModelFilter<M>(modelClass));
+        }
         getXLSModelWriter(modelClass).write(list, wb, fieldsIncluded, new HashSet<>(), new HashMap<>());
     }
 

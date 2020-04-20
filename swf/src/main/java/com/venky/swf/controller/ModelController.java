@@ -110,6 +110,9 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View exportxls() {
+        return exportxls(null);
+    }
+    protected View exportxls(List<M> records){
         ensureUI();
         Workbook wb = new XSSFWorkbook();
         super.exportxls(getModelClass(), wb);
@@ -343,7 +346,12 @@ public class ModelController<M extends Model> extends Controller {
         if (overrideIntegrationAdaptor != null) {
             v = overrideIntegrationAdaptor.createResponse(getPath(), records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()), getIgnoredParentModels(), getIncludedModelFields());
         } else {
-            View lv = constructModelListView(records, isCompleteList);
+            View lv = null;
+            if (ObjectUtil.equals("Y",getPath().getFormFields().get("exportxls"))){
+                lv = exportxls(records);
+            }else {
+                lv = constructModelListView(records, isCompleteList);
+            }
             if (lv instanceof HtmlView) {
                 v = dashboard((HtmlView) lv);
             } else {
