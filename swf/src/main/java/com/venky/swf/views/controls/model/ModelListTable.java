@@ -205,6 +205,7 @@ public class ModelListTable<M extends Model> extends Div{
         	Method m = singleRecordActions.get(actionIndex);
         	Column actionLinkCell = row.createColumn();
         	actionLinkCell.setProperty("data-title",StringUtil.camelize(m.getName()));
+        	actionLinkCell.addClass("action-holder");
         	Link singleRecordActionLink = modelAwareness.createSingleRecordActionLink(m, record);
         	if (singleRecordActionLink != null){
         		actionLinkCell.addControl(singleRecordActionLink);
