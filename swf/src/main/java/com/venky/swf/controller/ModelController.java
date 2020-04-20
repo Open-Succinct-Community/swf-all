@@ -115,7 +115,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View exportxls(List<M> records){
         ensureUI();
         Workbook wb = new XSSFWorkbook();
-        super.exportxls(getModelClass(), wb);
+        super.exportxls(getModelClass(), wb,records);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             wb.write(os);
