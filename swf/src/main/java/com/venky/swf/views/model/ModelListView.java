@@ -116,9 +116,11 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 
 		
 		Row contentRow = new Row();
+		contentRow.addClass("form-group");
 		searchForm.addControl(contentRow);
 
 		col = contentRow.createColumn(0, 6);
+		col.addClass("col-9");
 		TextBox search = new TextBox();
 		search.setName("q");
 		search.setValue(path.getFormFields().get("q"));
@@ -127,6 +129,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		col.addControl(search);
 		
 		col = contentRow.createColumn(0, 2);
+		col.addClass("col-3");
 		col.addControl(new Submit("Search"));
 
 		
