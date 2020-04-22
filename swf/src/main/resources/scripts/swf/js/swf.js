@@ -104,8 +104,15 @@ $(function(){
                     }
                   },
                   matcher:function(item){
-                        return ~item.toLowerCase().indexOf(this.query.toLowerCase()) || ~item.toLowerCase().indexOf(this.query.toLowerCase().replace("%","")) 
-                                || ~item.toLowerCase().indexOf(this.query.toLowerCase().replace("*","")) 
+                        let firstword = this.query;
+                        let words = this.query.split(" "); 
+                        if (words.length > 0 ){
+                            firstword = words[0] ; 
+                        }
+                        firstword = firstword.toLowerCase();
+                        i = item.toLowerCase();
+                        return ~i.indexOf(firstword) || ~i.indexOf(firstword.replace("%","")) 
+                                || ~i.indexOf(firstword.replace("*","")) 
                   },
                   ajax : { 
                       url: autocompleteurl ,//+ request.term ,
