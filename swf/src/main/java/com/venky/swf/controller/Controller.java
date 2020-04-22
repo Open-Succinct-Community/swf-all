@@ -65,6 +65,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -286,7 +287,18 @@ public class Controller {
             if (reflector.getIndexedColumns().contains(columnName)) {
                 LuceneIndexer indexer = LuceneIndexer.instance(reflector);
                 StringBuilder qry = new StringBuilder();
-                qry.append("( ").append(columnName).append(":").append(QueryParser.escape(value)).append("* )");
+                qry.append("( ");
+                StringTokenizer tok = new StringTokenizer(QueryParser.escape(value));
+                while (tok.hasMoreElements()){
+                    qry.append(columnName).append(":");
+                    qry.append(tok.nextElement());
+                    qry.append("*");
+                    if (tok.hasMoreElements()){
+                        qry.append(" AND ");
+                    }
+                }
+
+                qry.append(")");
                 Query q = indexer.constructQuery(qry.toString());
                 List<Long> topRecords = indexer.findIds(q, maxRecordsToGet);
                 int numRecordRetrieved = topRecords.size();
