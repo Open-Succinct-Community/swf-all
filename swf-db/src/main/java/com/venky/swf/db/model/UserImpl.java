@@ -3,6 +3,7 @@ package com.venky.swf.db.model;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -316,7 +317,7 @@ public class UserImpl extends ModelImpl<User>{
 			
 			while (fieldNameIterator.hasNext()){
 				String key = fieldNameIterator.next();
-				List<Long> values = participatingOptions.get(key);
+				List<Long> values = new ArrayList<>(participatingOptions.get(key));
 				
 				ColumnDescriptor cd = ref.getColumnDescriptor(key);
 		    	if (cd.isVirtual()){
