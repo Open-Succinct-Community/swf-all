@@ -252,7 +252,7 @@ public class ModelController<M extends Model> extends Controller {
         List<M> records = null;
         Select.ResultFilter<M> filter = getFilter();
         if (!reflector.isVirtual()) {
-            Select q = new Select().from(modelClass);
+            Select q = new Select(getColumnsToList()).from(modelClass);
             records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords, filter);
         } else {
             records = getChildrenFromParent();
@@ -269,6 +269,23 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         return list(records, maxRecords == 0 || records.size() < maxRecords);
+    }
+
+    private String[] getColumnsToList() {
+        String[] includedFields = getIncludedFields();
+        if (includedFields == null){
+            ModelReflector<M> reflector = getReflector();
+            List<String> fields = reflector.getFields();
+            Iterator<String> fi = fields.iterator();
+            while (fi.hasNext()){
+                String f = fi.next();
+                if (!reflector.isFieldVisible(f)) {
+                    fi.remove();
+                }
+            }
+            return fields.toArray(new String[]{});
+        }
+        return includedFields;
     }
 
     protected Select.ResultFilter<M> getFilter() {
