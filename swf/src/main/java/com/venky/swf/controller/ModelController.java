@@ -279,7 +279,7 @@ public class ModelController<M extends Model> extends Controller {
             Iterator<String> fi = fields.iterator();
             while (fi.hasNext()){
                 String f = fi.next();
-                if (!reflector.isFieldVisible(f)) {
+                if (!reflector.isFieldVisible(f) || reflector.isFieldVirtual(f)) {
                     fi.remove();
                 }
             }
