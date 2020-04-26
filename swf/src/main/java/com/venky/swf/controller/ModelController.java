@@ -29,6 +29,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.RecordNotFoundException;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
@@ -274,21 +275,11 @@ public class ModelController<M extends Model> extends Controller {
     private String[] getColumnsToList() {
         List<String> columns = new ArrayList<>();
         ModelReflector<M> reflector = getReflector();
-
-        String[] includedFields = getIncludedFields();
-        if (includedFields == null){
-            List<String> fields = reflector.getFields();
-            Iterator<String> fi = fields.iterator();
-            while (fi.hasNext()){
-                String f = fi.next();
-                if (!reflector.isFieldVisible(f) || reflector.isFieldVirtual(f)) {
-                    fi.remove();
-                }
+        for (String field : reflector.getRealFields()){
+            if (!InputStream.class.isAssignableFrom(reflector.getFieldGetter(field).getReturnType())){
+                ColumnDescriptor cd = reflector.getColumnDescriptor(field);
+                columns.add(cd.getName());
             }
-            includedFields = fields.toArray(new String[]{});
-        }
-        for (String field : includedFields){
-            columns.add(reflector.getColumnDescriptor(field).getName());
         }
         return columns.toArray(new String[]{});
     }
