@@ -272,9 +272,11 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     private String[] getColumnsToList() {
+        List<String> columns = new ArrayList<>();
+        ModelReflector<M> reflector = getReflector();
+
         String[] includedFields = getIncludedFields();
         if (includedFields == null){
-            ModelReflector<M> reflector = getReflector();
             List<String> fields = reflector.getFields();
             Iterator<String> fi = fields.iterator();
             while (fi.hasNext()){
@@ -283,9 +285,12 @@ public class ModelController<M extends Model> extends Controller {
                     fi.remove();
                 }
             }
-            return fields.toArray(new String[]{});
+            includedFields = fields.toArray(new String[]{});
         }
-        return includedFields;
+        for (String field : includedFields){
+            columns.add(reflector.getColumnDescriptor(field).getName());
+        }
+        return columns.toArray(new String[]{});
     }
 
     protected Select.ResultFilter<M> getFilter() {
