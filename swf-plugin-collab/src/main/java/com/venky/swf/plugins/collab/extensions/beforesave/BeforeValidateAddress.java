@@ -13,7 +13,7 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
 
     @Override
     public void beforeValidate(M model) {
-        ModelReflector<User> reflector = model.getReflector();
+        ModelReflector<M> reflector = model.getReflector();
         for (String field : new String[]{"PHONE_NUMBER", "ALTERNATE_PHONE_NUMBER"}){
             if (!reflector.getFields().contains(field)){
                 continue;
