@@ -17,7 +17,7 @@ public interface TemplateLoader {
     public String getTemplateDirectory();
 
     @RequireLogin(false)
-    default View html(String path){
+    default TemplateView html(String path){
         return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html");
     }
 
