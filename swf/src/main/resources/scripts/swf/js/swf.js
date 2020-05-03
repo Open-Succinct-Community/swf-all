@@ -4,17 +4,17 @@ function setConfirmUnload(on) {
 }
 
 function unloadMessage(e) {
-     return ' If you navigate away from this page without' +           
+     return ' If you navigate away from this page without' +
         ' first saving your data, the changes will be' +
         ' lost.';
 }
 
-$(function(){ 
+$(function(){
   $(':input:not([name="q"])').bind("change", function() {
       setConfirmUnload(true);
   });
   $('form').submit(function(){
-      setConfirmUnload(false); 
+      setConfirmUnload(false);
       return true;
   });
 });
@@ -28,8 +28,8 @@ $(function(){
 
         var bIsNameIndexed = false;
 
-        var nameParts=name.split("["); 
-        var modelName = ""; 
+        var nameParts=name.split("[");
+        var modelName = "";
         var rowIndex = "" ;
 
         if (nameParts.length == 2){
@@ -42,24 +42,24 @@ $(function(){
         var values = (function(){
                 var v = {} ;
 
-                var $inputs = null; 
+                var $inputs = null;
                 if ( !bIsNameIndexed ) {
                   $inputs = $(':input[name$="ID"]');
-                }else { 
+                }else {
                   $inputs = $(':input[name^="'                 + modelName + '[' + rowIndex + ']."][name$="ID"]')
                 }
 
 
-                $inputs.each(function() { 
-                  if (this.name == name || 
+                $inputs.each(function() {
+                  if (this.name == name ||
                       this.name.indexOf("_AUTO_COMPLETE_") < 0 ){
 
-                    var cname = this.name; 
+                    var cname = this.name;
 
                     if (bIsNameIndexed) {
-                      cname = this.name.split(".")[1]; 
+                      cname = this.name.split(".")[1];
                     }
-                    
+
                     v[cname] = $(this).val();
                   }
                 });
@@ -68,7 +68,7 @@ $(function(){
         }) ;
 
         $(this).focusout(function(){
-            if ( $(this).val().length == 0 ) { 
+            if ( $(this).val().length == 0 ) {
               target=$(':input[name="' + hidden_field_name + '"]');
               hidden_value=target.attr("value");
               if (hidden_value) {
@@ -77,24 +77,24 @@ $(function(){
               }
             }
         });
-        
+
         $(this).typeahead({
                 onSelect: function(item){
-                    // Input has text and value instead of name and id!! 
-                    //$(this).attr("value",item.text); 
+                    // Input has text and value instead of name and id!!
+                    //$(this).attr("value",item.text);
                     $('input[name="' + hidden_field_name + '"]').attr("value",item.value);
                     setConfirmUnload(true)
                     if (onAutoCompleteSelectUrl){
                             $.ajax({
-                              url : onAutoCompleteSelectUrl, 
-                              dataType: "json", 
-                              data: values(), 
+                              url : onAutoCompleteSelectUrl,
+                              dataType: "json",
+                              data: values(),
                               success: function(jsonresponse){
                                 for (var i in jsonresponse){
                                     if ( bIsNameIndexed ) {
-                                      $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]); 
+                                      $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]);
                                     }else {
-                                      $(':input[name="' + i +  '"]').attr("value",jsonresponse[i]); 
+                                      $(':input[name="' + i +  '"]').attr("value",jsonresponse[i]);
                                     }
                                     setConfirmUnload(true)
                                 }
@@ -105,28 +105,28 @@ $(function(){
                   },
                   matcher:function(item){
                         let firstword = this.query;
-                        let words = this.query.split(" "); 
+                        let words = this.query.split(" ");
                         if (words.length > 0 ){
-                            firstword = words[0] ; 
+                            firstword = words[0] ;
                         }
                         firstword = firstword.toLowerCase();
                         i = item.toLowerCase();
-                        return ~i.indexOf(firstword) || ~i.indexOf(firstword.replace("%","")) 
-                                || ~i.indexOf(firstword.replace("*","")) 
+                        return ~i.indexOf(firstword) || ~i.indexOf(firstword.replace("%",""))
+                                || ~i.indexOf(firstword.replace("*",""))
                   },
-                  ajax : { 
+                  ajax : {
                       url: autocompleteurl ,//+ request.term ,
                       method: "get",
                       triggerLength : 1,
                       loadingClass: "loading-circle",
-                      preDispatch : function(query){ 
+                      preDispatch : function(query){
                             if (query == "*" || query == "%" ) {
-                              field = $(':input[name="'+name+'"]'); 
+                              field = $(':input[name="'+name+'"]');
                               field.val("");
                             }
                             return  values();
                           },
-                      preProcess :  function(json){ 
+                      preProcess :  function(json){
                                       return json.entries;
                                     }
                   }
@@ -140,10 +140,10 @@ $(function() {
   $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
 
 
-  $("a[name='_SUBMIT_NO_MORE']").click(function (){ 
+  $("a[name='_SUBMIT_NO_MORE']").click(function (){
                             $(":submit[name='_SUBMIT_NO_MORE']").trigger('click');
                         });
-  $("a[name='_SUBMIT_MORE']").click(function (){ 
+  $("a[name='_SUBMIT_MORE']").click(function (){
                             $(":submit[name='_SUBMIT_MORE']").trigger('click');
                         });
 });
@@ -203,8 +203,8 @@ $(function(){
 
             if (!column){
                     $(this)
-                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller'] , 
-                                    widgetOptions: { 
+                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller'] ,
+                                    widgetOptions: {
                                           zebra : [ "odd", "even" ] ,
                                           scroller_rowHighlight : 'hover',
                                           scroller_height : 300
@@ -214,8 +214,8 @@ $(function(){
                              });
             } else {
                     $(this)
-                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller' ] , 
-                                    widgetOptions: { 
+                      .tablesorter({ theme: 'bootstrap', widthFixed: false , dateFormat: 'uk', widgets: ['zebra','uitheme',  'scroller' ] ,
+                                    widgetOptions: {
                                           zebra : [ "odd", "even" ] ,
                                           scroller_rowHighlight : 'hover',
                                           scroller_height : 300
@@ -246,3 +246,68 @@ $(document).ready(function () {
         }
     });
 });
+
+function api() {
+    var _url ;
+    var _parameter;
+    var _headers ;
+
+    return {
+        url : function(url){
+            if (arguments.length == 0){
+                return _url;
+            }
+            _url = encodeURIComponent(url);
+            return this;
+        },
+        parameters : function(p){
+            if (!_parameter){
+                _parameter = {};
+            }
+            if (arguments.length == 0){
+                return _parameter;
+            }
+            if (p.constructor == new FormData().constructor){
+                var object = {};
+                p.forEach(function(value, key){
+                    object[key] = value;
+                });
+                _parameter = object;
+            }else {
+                _parameter = p;
+            }
+            return this;
+        },
+        headers : function(additional_headers){
+            if (!_headers){
+                _headers = {} ;
+            }
+            if (arguments.length > 0){
+                _headers = { ..._headers, ...additional_headers } ;
+                return this;
+            }
+            return _headers;
+        },
+        http : function(){
+            return axios.create({
+                baseURL : "/",
+                timeout : 30000 ,
+                auth : { username : "web"  , password : "venky12" },
+                headers : { 'Content-Type': 'application/json' , 'Cache-Control': 'no-cache' },
+                withCredentials: false,
+            });
+        },
+        get : function(){
+            let self = this;
+            return self.http().get(self.url(),{ data :{} , "headers": self.headers() }).then(function(response){
+                return response.data;
+            });
+        },
+        post : function(){
+            let self = this;
+            return self.http().post(self.url(),  _parameter  , { "headers" :  self.headers() } ).then(function(response){
+                return response.data;
+            });
+        }
+    }
+}
