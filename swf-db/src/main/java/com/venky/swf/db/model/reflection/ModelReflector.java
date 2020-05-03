@@ -8,6 +8,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -1239,6 +1241,7 @@ public class ModelReflector<M extends Model> {
  		Timer timer = cat.startTimer();
  		try {
 	         Class<?> possibleChildClass = null;
+
 	         if (!getClassForests().contains(method.getDeclaringClass())){
 	         	return null;
 	         }
@@ -1246,7 +1249,12 @@ public class ModelReflector<M extends Model> {
 	             Class<?> retType = method.getReturnType();
 	             if (List.class.isAssignableFrom(retType)){
 	                 ParameterizedType parameterizedType = (ParameterizedType)method.getGenericReturnType();
-	                 possibleChildClass = (Class<?>)parameterizedType.getActualTypeArguments()[0];
+					 Type type = parameterizedType.getActualTypeArguments()[0];
+					 if (type instanceof Class){
+					 	possibleChildClass = (Class<?>)type;
+					 }else if (type instanceof TypeVariable){
+						 possibleChildClass = (Class<?>)(((TypeVariable<?>)type).getBounds()[0]);
+					 }
 	             }
 	             if (possibleChildClass != null && Model.class.isAssignableFrom(possibleChildClass)){
 	                 // Validate That child has a parentReferenceId. 
