@@ -7,6 +7,8 @@ import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.templates.util.templates.TemplateEngine;
 import com.venky.swf.plugins.templates.views.TemplateView;
 import com.venky.swf.views.BytesView;
+import com.venky.swf.views.DashboardView;
+import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
 
 import java.util.HashMap;
@@ -17,9 +19,11 @@ public interface TemplateLoader {
     public String getTemplateDirectory();
 
     @RequireLogin(false)
-    default TemplateView html(String path){
-        return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html");
+    default HtmlView html(String path){
+        return dashboard(new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html"));
     }
+
+    DashboardView dashboard(HtmlView aContainedView);
 
     @RequireLogin(false)
     default View js(String jsName){

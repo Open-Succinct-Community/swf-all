@@ -215,7 +215,7 @@ public class Controller {
         return Controller.dashboard(getPath());
     }
 
-    protected DashboardView dashboard(HtmlView aContainedView) {
+    public DashboardView dashboard(HtmlView aContainedView) {
         return Controller.dashboard(getPath(), aContainedView);
     }
 
