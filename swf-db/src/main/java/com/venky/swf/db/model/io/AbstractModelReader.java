@@ -28,8 +28,10 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
     public M read(T source) {
         return read(source, true);
     }
-
     public M read(T source, boolean ensureAccessibleByLoggedInUser) {
+        return read(source,ensureAccessibleByLoggedInUser,true);
+    }
+    public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateObject) {
 
         M m = createInstance();
         FormatHelper<T> helper = FormatHelper.instance(source);
@@ -52,7 +54,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                 if (!FormatHelper.instance(refElement).getAttributes().isEmpty()) {
                     Class<T> formatClass = getFormatClass();
                     ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>) ModelIOFactory.getReader(referredModelClass, formatClass);
-                    Model referredModel = reader.read(refElement, false);
+                    Model referredModel = reader.read(refElement, false,false);
                     if (referredModel != null) {
                         if (referredModel.getRawRecord().isNewRecord()) {
                             throw new RuntimeException("Oops! Please select the correct " + referredModelClass.getSimpleName());
