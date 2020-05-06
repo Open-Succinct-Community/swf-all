@@ -31,14 +31,16 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
     public M read(T source, boolean ensureAccessibleByLoggedInUser) {
         return read(source,ensureAccessibleByLoggedInUser,true);
     }
-    public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateObject) {
+    public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement) {
 
         M m = createInstance();
         FormatHelper<T> helper = FormatHelper.instance(source);
         load(m,helper);
 
         M m1 = Database.getTable(getBeanClass()).getRefreshed(m, ensureAccessibleByLoggedInUser);
-        load(m1, helper);
+        if (updateAttibutesFromElement){
+            load(m1, helper);
+        }
 
         return m1;
     }
