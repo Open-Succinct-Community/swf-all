@@ -63,7 +63,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
         Map<String,Integer> headingIndexMap = headingIndexMap(sheet);
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
-        	M m = read(row,headingIndexMap,true);
+        	M m = read(row,headingIndexMap,true,true);
     		records.add(m);
         }
         return records;
@@ -143,15 +143,26 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	@Override
 	public M read(Row source, boolean ensureAccessibleByLoggedInUser) {
+		return read(source,ensureAccessibleByLoggedInUser,true);
+	}
+
+	@Override
+	public M read(Row source, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement) {
 		Map<String,Integer> headingIndexMap = headingIndexMap(source.getSheet());
-		return read(source , headingIndexMap, ensureAccessibleByLoggedInUser);
+		return read(source , headingIndexMap, ensureAccessibleByLoggedInUser,updateAttibutesFromElement);
 	}
 
 
-	private M read(Row source,Map<String, Integer> headingIndexMap, boolean ensureAccessibleByLoggedInUser){
+	private M read(Row source,Map<String, Integer> headingIndexMap, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement){
 		M m = createInstance();
 		copyRowValuesToBean(m, source, headingIndexMap);
-		return Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
+		if (updateAttibutesFromElement){
+			M m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
+			copyRowValuesToBean(m1,source,headingIndexMap);
+			return m1;
+		}else{
+			return Database.getTable(getBeanClass()).find(m,ensureAccessibleByLoggedInUser);
+		}
 	}
 
 
