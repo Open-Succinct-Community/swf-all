@@ -659,8 +659,20 @@ public class Table<M extends Model> {
         return getRefreshed(partiallyFilledModel,true);
     }
     public M getRefreshed(M partiallyFilledModel,boolean ensureAccessibleByLoggedInUser) {
-        User loggedInUser = Database.getInstance().getCurrentUser();
+        M fullModel = find(partiallyFilledModel,ensureAccessibleByLoggedInUser);
 
+        if (fullModel == null) {
+            fullModel = partiallyFilledModel;
+        } else {
+            Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
+            Record rawFullRecord = fullModel.getRawRecord();
+            for (String field : rawPartiallyFilledRecord.getDirtyFields()) {
+                rawFullRecord.put(field, partiallyFilledModel.getRawRecord().get(field));
+            }
+        }
+        return fullModel;
+    }
+    public M find(M partiallyFilledModel,boolean ensureAccessibleByLoggedInUser){
         M fullModel = null;
         if (partiallyFilledModel.getId() > 0) {
             fullModel = Database.getTable(getModelClass()).get(partiallyFilledModel.getId());
@@ -673,17 +685,11 @@ public class Table<M extends Model> {
                 }
             }
         }
+        if (fullModel != null){
+            User loggedInUser = Database.getInstance().getCurrentUser();
 
-        if (fullModel == null) {
-            fullModel = partiallyFilledModel;
-        } else {
             if (loggedInUser != null && ensureAccessibleByLoggedInUser && !fullModel.isAccessibleBy(loggedInUser)) {
                 throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by " + getReflector().get(fullModel, getReflector().getDescriptionField()) + " cannot be  modified.");
-            }
-            Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
-            Record rawFullRecord = fullModel.getRawRecord();
-            for (String field : rawPartiallyFilledRecord.getDirtyFields()) {
-                rawFullRecord.put(field, partiallyFilledModel.getRawRecord().get(field));
             }
         }
         return fullModel;

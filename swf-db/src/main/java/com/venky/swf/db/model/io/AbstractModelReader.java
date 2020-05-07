@@ -37,9 +37,15 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
         FormatHelper<T> helper = FormatHelper.instance(source);
         load(m,helper);
 
-        M m1 = Database.getTable(getBeanClass()).getRefreshed(m, ensureAccessibleByLoggedInUser);
+        M m1 = null ;
         if (updateAttibutesFromElement){
+            m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
             load(m1, helper);
+            //Since we were loading on a new instance,
+            // it is possible that some fields are not getting marked as dirty which need to be getting marked as dirty and null.
+            // Hence this second load is required.
+        }else {
+            m1 =  Database.getTable(getBeanClass()).find(m,ensureAccessibleByLoggedInUser);
         }
 
         return m1;
