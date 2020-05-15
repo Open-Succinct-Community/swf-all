@@ -38,7 +38,7 @@ public class FluidContainer extends Div{
 		public Column createColumn(int offset, int width){
 			Column c = new Column();
 			if (offset >= 0) {
-				c.addClass("offset-" + offset);
+				c.addClass("offset-sm-" + offset);
 			}
 			if (width >=0 ) {
 				c.addClass("col-sm-" + width);

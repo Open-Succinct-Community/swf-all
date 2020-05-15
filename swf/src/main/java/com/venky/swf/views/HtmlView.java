@@ -35,6 +35,7 @@ import com.venky.swf.views.controls.page.layout.Paragraph;
 import java.io.InputStreamReader;
 
 import com.venky.swf.views.controls.page.layout.Title;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -64,6 +65,60 @@ public abstract class HtmlView extends View{
     	return links;
     }
 
+    static JSONObject manifestJson = null;
+    protected JSONObject getManifestJson(){
+        if (manifestJson == null){
+            URL r = getClass().getResource("/manifest.json");
+            String path = "";
+            if (r == null){
+                r = getClass().getResource("/web_manifest/manifest.json");
+                path = "/web_manifest";
+            }
+
+            if (r != null){
+                try {
+                    manifestJson = (JSONObject) JSONValue.parse(new InputStreamReader(r.openStream()));
+                    manifestJson.put("resource_path",path);
+                } catch (IOException e) {
+                    manifestJson = new JSONObject();
+                }
+            }
+        }
+        return manifestJson;
+    }
+    public Image getLogo(){
+        JSONObject manifest = getManifestJson();
+        if (manifest.get("resource_path") == null){
+            return null;
+        }
+        String path = (String)manifest.get("resource_path");
+        JSONArray icons = (JSONArray)manifest.get("icons");
+        String icon_url = null;
+        if (!icons.isEmpty()){
+            icon_url = (String)((JSONObject)icons.get(0)).getOrDefault("src", null);
+        }
+        if (icon_url == null){
+            icon_url = String.format("%s/manifest.png",path);
+            if (getClass().getResource(icon_url) == null){
+                icon_url = null;
+            }
+        }
+
+        Image image = null;
+        if (!ObjectUtil.isVoid(icon_url)){
+            image = new Image(icon_url);
+        }
+        return image;
+    }
+    public String getApplicationName(){
+        JSONObject manifest = getManifestJson();
+        String defaultApplicationName = Config.instance().getProperty("swf.application.name", "My Application");
+
+        if (manifest.get("resource_path") == null){
+            return defaultApplicationName;
+        }
+        return (String)manifest.getOrDefault("name",defaultApplicationName);
+    }
     @Override
     public void write(int httpStatusCode) throws IOException{
         HttpServletResponse response = getPath().getResponse();

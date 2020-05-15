@@ -101,7 +101,12 @@
     .model-list-table td.action-holder:before{
       display:none;
     }
+    body{
+      padding-top:46px;
 }
-.linked-image.btn img { 
-    width:50px;
+    .navbar-light{
+      position: fixed;
+    width: 100%;
+    z-index: 1;
+    top: 0;
 }

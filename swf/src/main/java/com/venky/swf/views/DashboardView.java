@@ -11,12 +11,15 @@ import com.venky.swf.path.Path;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.HotLink;
+import com.venky.swf.views.controls.page.Image;
+import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page._IMenu;
 import com.venky.swf.views.controls.page.buttons.Button;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.Nav;
 import com.venky.swf.views.controls.page.layout.Span;
+import com.venky.swf.views.controls.page.text.Label;
 
 /**
  *
@@ -65,6 +68,12 @@ public class DashboardView extends HtmlView{
 
                 Div container = new Div();
                 container.addClass("collapse navbar-collapse");
+
+                Link logo_bar = new Link("#");
+                logo_bar.addClass("navbar-brand");
+                Image logo = getLogo() ;
+                logo_bar.addControl(logo != null ? logo : new Label(getApplicationName()));
+
 
                 Button button = new Button("button");
                 button.addClass("navbar-toggler");
