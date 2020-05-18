@@ -66,6 +66,9 @@ p#msg {
   padding: 5px 0;
   margin-top: 10px;
 }
+.tabs .select.form-control {
+  display: none;
+}
 
 @media (max-width: 640px) {
   .model-list-table tr {
@@ -171,7 +174,8 @@ p#msg {
     width: 100%;
     padding: 10px 0;
   }
-  .select.form-control{
+  .tabs .select.form-control {
+    display: block;
     margin: 0 15px;
     width: calc(100% - 30px);
   }
