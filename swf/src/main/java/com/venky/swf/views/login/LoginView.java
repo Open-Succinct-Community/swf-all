@@ -53,17 +53,18 @@ public class LoginView extends HtmlView{
 
 	}
 
-	public void addProgressiveWebAppLinks(Column column,String _redirect_to){
+	public void addProgressiveWebAppLinks(Column column) {
 		String application_name = getApplicationName();
 		Image image = getLogo();
-		if (image != null){
+		if (image != null) {
 			column.addControl(image);
-		}else {
+		} else {
 			Label appLabel = new Label(application_name);
 			column.addControl(appLabel);
 			appLabel.addClass("application-title");
 		}
-
+	}
+	public void addExternalLoginLinks(Column column,String _redirect_to){
 		if (!ObjectUtil.isVoid(Config.instance().getClientId("GOOGLE"))){
 			column.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
 		}
@@ -85,9 +86,12 @@ public class LoginView extends HtmlView{
     	
     	Column applicationDescPannel = loginPanel.createRow().createColumn(4,4);
     	applicationDescPannel.addClass("text-center");
-    	
+		addProgressiveWebAppLinks(applicationDescPannel);
 
-		addProgressiveWebAppLinks(applicationDescPannel,_redirect_to);
+		Column extLinks = loginPanel.createRow().createColumn(4,4);
+		extLinks.addClass("text-center");
+
+		addExternalLoginLinks(extLinks,_redirect_to);
 
         Form form = new Form();
         form.setAction(getPath().controllerPath(),"login");
