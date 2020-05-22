@@ -174,7 +174,7 @@ p#msg {
     width: 100%;
     padding: 10px 0;
   }
-  .tabs .select.form-control {
+  .tabs > .select.form-control {
     display: block;
     margin: 0 15px;
     width: calc(100% - 30px);
