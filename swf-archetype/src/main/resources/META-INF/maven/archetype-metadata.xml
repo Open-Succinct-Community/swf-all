@@ -27,6 +27,17 @@
       <includes>
         <include>**/*</include>
       </includes>
+      <excludes>
+        <exclude>**/*.png</exclude>
+        <exclude>**/*.ico</exclude>
+      </excludes>
+    </fileSet>
+    <fileSet filtered="false" encoding="UTF-8">
+      <directory>src/main/resources</directory>
+      <includes>
+        <include>**/*.png</include>
+        <include>**/*.ico</include>
+      </includes>
     </fileSet>
     <fileSet encoding="UTF-8">
       <directory>.settings</directory>

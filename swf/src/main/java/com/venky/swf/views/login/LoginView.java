@@ -6,18 +6,14 @@ package com.venky.swf.views.login;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
-import com.venky.swf.views.controls.page.HLink;
-import com.venky.swf.views.controls.page.Head;
 import com.venky.swf.views.controls.page.Image;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.LinkedImage;
-import com.venky.swf.views.controls.page.Meta;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
@@ -31,26 +27,19 @@ import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-
-import java.io.InputStreamReader;
-import java.net.URL;
 
 /**
  *
  * @author venky
  */
 public class LoginView extends HtmlView{
-	private boolean requiresRegistration;
-	private boolean registrationInProgress;
+	private boolean allowRegistration;
+	private boolean newRegistration;
 
-    public LoginView(Path path,boolean requiresRegistration, boolean registrationInProgress){
+    public LoginView(Path path, boolean allowRegistration, boolean newRegistration){
         super(path);
-        this.registrationInProgress = registrationInProgress;
-		this.requiresRegistration = requiresRegistration || registrationInProgress;
-
+        this.newRegistration = newRegistration;
+		this.allowRegistration = allowRegistration || newRegistration;
 	}
 
 	public void addProgressiveWebAppLinks(Column column) {
@@ -84,21 +73,23 @@ public class LoginView extends HtmlView{
     	loginPanel.addClass("application-pannel");
     	b.addControl(loginPanel);
     	
-    	Column applicationDescPannel = loginPanel.createRow().createColumn(4,4);
+    	Column applicationDescPannel = loginPanel.createRow().createColumn(3,6);
     	applicationDescPannel.addClass("text-center");
 		addProgressiveWebAppLinks(applicationDescPannel);
 
-		Column extLinks = loginPanel.createRow().createColumn(4,4);
+		Column extLinks = loginPanel.createRow().createColumn(3,6);
 		extLinks.addClass("text-center");
 
 		addExternalLoginLinks(extLinks,_redirect_to);
+
+		Column formHolder = loginPanel.createRow().createColumn(3,6);
 
         Form form = new Form();
         form.setAction(getPath().controllerPath(),"login");
         form.setMethod(Form.SubmitMethod.POST);
         
-        loginPanel.addControl(form);
-        loginPanel.addControl(getStatus());
+        formHolder.addControl(form);
+        formHolder.addControl(getStatus());
 
         FormGroup fg = new FormGroup();
     	fg.createTextBox("User", "name",false);
@@ -108,7 +99,7 @@ public class LoginView extends HtmlView{
     	fg.createTextBox("Password", "password",true);
     	form.addControl(fg);
 
-    	if (requiresRegistration){
+    	if (newRegistration){
 			fg = new FormGroup();
 			fg.createTextBox("Reenter Password", "password2",true);
 			form.addControl(fg);
@@ -124,13 +115,25 @@ public class LoginView extends HtmlView{
         }
 
         fg = new FormGroup();
-        if (!requiresRegistration){
-			Submit btn = fg.createSubmit("Login",5,2);
-			btn.setName("_LOGIN");
+		Submit btn = null;
+        if (allowRegistration){
+        	Submit register = null;
+        	if (newRegistration){
+				register = fg.createSubmit("Register", 0,6);
+				btn = fg.createSubmit("I'm an Existing User",0,6);
+				btn.removeClass("btn-primary");
+				btn.addClass("btn-link");
+			}else {
+				btn = fg.createSubmit("Login",0,6);
+				register = fg.createSubmit("I'm a new user", 0,6);
+				register.removeClass("btn-primary");
+				register.addClass("btn-link");
+			}
+			register.setName("_REGISTER");
 		}else {
-			Submit link = fg.createSubmit("Register",5,2);
-			link.setName("_REGISTER");
+			btn = fg.createSubmit("Login",3,6);
 		}
+		btn.setName("_LOGIN");
 
 		form.addControl(fg);
         
@@ -156,10 +159,10 @@ public class LoginView extends HtmlView{
     		Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
     		lbl.addClass("col-form-label");
-    		lbl.addClass("offset-3 col-sm-1");
+    		lbl.addClass("col-sm-4");
     		
     		Div div = new Div();
-    		div.addClass("col-sm-4");
+    		div.addClass("col-sm-8");
     		div.addControl(box);
     		
     		addControl(lbl);
@@ -198,10 +201,11 @@ public class LoginView extends HtmlView{
 
     	public Submit createSubmit(String label, int offset, int width){
     		Div div = new Div();
-    		div.addClass("offset-"+offset+ " col-sm-"+width);
+    		div.addClass("offset-"+offset+ " col-sm-"+width );
     		addControl(div);
     		
     		Submit submit = new Submit(label);
+    		submit.addClass("w-100");
     		div.addControl(submit);
     		return submit;
     	}

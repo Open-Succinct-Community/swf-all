@@ -11,7 +11,7 @@ public class UserPhonesController extends OtpEnabledController<UserPhone> {
     }
 
 
-    @SingleRecordAction(icon = "glyphicon-question-sign")
+    @SingleRecordAction(icon = "fa-envelope")
     public View sendOtp(long id){
         return super.sendOtp(id,"PHONE_NUMBER");
     }
