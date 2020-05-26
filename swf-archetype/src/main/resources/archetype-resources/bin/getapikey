@@ -12,7 +12,7 @@ then
     password=root
 else
     user=$1
-    password=$1
+    password=$2
 fi
 if [ "${baseurl}" = "" ]
 then

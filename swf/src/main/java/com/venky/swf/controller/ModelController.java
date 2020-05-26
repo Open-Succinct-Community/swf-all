@@ -625,7 +625,7 @@ public class ModelController<M extends Model> extends Controller {
         return new ForwardedView(getPath(), action);
     }
 
-    public static interface Action<M> {
+    public interface Action<M> {
 
         public View noAction(M m);
 

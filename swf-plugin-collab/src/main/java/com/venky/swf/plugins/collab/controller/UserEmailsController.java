@@ -12,11 +12,12 @@ public class UserEmailsController extends OtpEnabledController<UserEmail> {
         super(path);
     }
 
-    @SingleRecordAction(icon = "glyphicon-question-sign")
+    @SingleRecordAction(icon = "fa-envelope")
     public View sendOtp(long id){
         return super.sendOtp(id,"EMAIL");
     }
 
+    @SingleRecordAction(icon = "fa-user-check")
     public View validateOtp(long id) throws Exception {
         return super.validateOtp(id,"EMAIL");
     }

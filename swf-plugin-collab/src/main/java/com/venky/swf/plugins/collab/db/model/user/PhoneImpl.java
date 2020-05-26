@@ -83,4 +83,15 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
 
         save();
     }
+    public void validateOtp(){
+        validateOtp(getProxy().getOtp());
+    }
+
+    private String otp = null;
+    public String getOtp(){
+        return this.otp;
+    }
+    public void setOtp(String otp){
+        this.otp = otp;
+    }
 }

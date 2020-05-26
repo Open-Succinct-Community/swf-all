@@ -1,18 +1,28 @@
 package com.venky.swf.plugins.collab.controller;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.collab.agents.SendOtp;
 import com.venky.swf.plugins.collab.db.model.user.OtpEnabled;
+import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls._IControl;
+import com.venky.swf.views.controls.page.HotLink;
+import com.venky.swf.views.model.AbstractModelView;
+import com.venky.swf.views.model.ModelEditView;
+import com.venky.swf.views.model.ModelShowView;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends ModelController<T> {
     public OtpEnabledController(Path path) {
@@ -32,10 +42,52 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
         }
 
     }
-    public <F> View validateOtp(long id, String otpField) throws  Exception{
+    public View validateOtp(long id, String otpField) throws  Exception{
         T otpEnabledModel = Database.getTable(getModelClass()).get(id);
-        _validateOtp(otpEnabledModel,otpField);
-        return getIntegrationAdaptor().createResponse(getPath(),otpEnabledModel, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()));
+        if (getPath().getRequest().getMethod().equalsIgnoreCase("GET")){
+            return dashboard(new ModelEditView<T>(getPath(),new String[]{"ID","PHONE_NUMBER","OTP"},otpEnabledModel,"validateOtp"){
+                @Override
+                public SequenceSet<HotLink> getTabLinks() {
+                    return new SequenceSet<>();
+                }
+            });
+        }else {
+            _validateOtp(otpEnabledModel,otpField);
+            return getIntegrationAdaptor().createResponse(getPath(),otpEnabledModel, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()));
+        }
+    }
+    public View validateOtp(){
+        IntegrationAdaptor<T,?> integrationAdaptor = getIntegrationAdaptor();
+        if (integrationAdaptor == null){
+            return performPostAction(new Action<T>() {
+                @Override
+                public View noAction(T t) {
+                    return noActionView(t);
+                }
+
+                @Override
+                public void act(T t) {
+                    t.validateOtp();
+                }
+
+                @Override
+                public <C extends Model> void actOnChild(T parent, Class<C> childModelClass, Model c) {
+
+                }
+
+                @Override
+                public View error(T t) {
+                    HtmlView errorView =  new ModelEditView<T>(getPath(),new String[]{"OTP"},t,"validateOtp");
+                    return errorView;
+                }
+            });
+        }else {
+            List<T> otpEnabledModels = integrationAdaptor.readRequest(getPath());
+            for (T otpEnabledModel: otpEnabledModels){
+                otpEnabledModel.validateOtp();
+            }
+            return integrationAdaptor.createResponse(getPath(),otpEnabledModels);
+        }
     }
 
     protected void _sendOtp(long id, String otpField){
@@ -57,6 +109,8 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
             throw new RuntimeException( "Could not send otp to " + StringUtil.camelize(otpField));
         }
         HttpServletRequest request = getPath().getRequest();
+
+
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Only POST Supported");
         }
@@ -69,4 +123,5 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
 
         otpEnabledModel.validateOtp(otp);
     }
+
 }
