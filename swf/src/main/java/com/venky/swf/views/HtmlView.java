@@ -205,7 +205,7 @@ public abstract class HtmlView extends View{
 
     protected void _createHead(Head head){
         head.addControl(new Css("/resources/scripts/node_modules/bootstrap/dist/css/bootstrap.min.css"));
-        head.addControl(new Css("/resources/images/fontawesome/css/all.min.css"));
+        head.addControl(new Css("/resources/scripts/node_modules/@fortawesome/fontawesome-free/css/all.min.css"));
         head.addControl(new Css("/resources/scripts/node_modules/tablesorter/dist/css/theme.bootstrap.min.css"));
         head.addControl(new Css("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
 

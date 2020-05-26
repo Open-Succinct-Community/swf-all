@@ -42,4 +42,17 @@ public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.u
         }
         email.save();
     }
+
+    public void validateOtp(){
+        validateOtp(getProxy().getOtp());
+    }
+
+    private String otp = null;
+    public String getOtp(){
+        return this.otp;
+    }
+    public void setOtp(String otp){
+        this.otp = otp;
+    }
+
 }

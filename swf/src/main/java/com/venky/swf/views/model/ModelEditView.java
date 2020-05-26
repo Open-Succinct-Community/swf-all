@@ -198,7 +198,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
 	        column = table.addControl(sbm,false,0,1);
 	        column.addClass("text-left");
         }else {
-            String label = "Save";
+            String label = "Done";
             if (getFormAction().equals("back")){
             	label = "Close";
             }

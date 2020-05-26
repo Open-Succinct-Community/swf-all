@@ -11,11 +11,12 @@ public class UserPhonesController extends OtpEnabledController<UserPhone> {
     }
 
 
-    @SingleRecordAction(icon = "glyphicon-question-sign")
+    @SingleRecordAction(icon = "fa-envelope")
     public View sendOtp(long id){
         return super.sendOtp(id,"PHONE_NUMBER");
     }
 
+    @SingleRecordAction(icon = "fa-user-check")
     public View validateOtp(long id) throws Exception {
         return super.validateOtp(id,"PHONE_NUMBER");
     }
