@@ -4,7 +4,7 @@ self.addEventListener('fetch', function(event){
     event.respondWith(
         caches.match(event.request).then(function (response) {
             let cacheable = event.request.method.toUpperCase() === 'GET' &&
-                (  /^(.*)\.(jpg|jpeg|png|gif|ico|ttf|eot|svg|woff|woff2|css|js)$/.test(event.request.url) )  
+                (  /^(.*node_modules.*)\.(jpg|jpeg|png|gif|ico|ttf|eot|svg|woff|woff2|css|js)$/.test(event.request.url) )  
             if (response !== undefined){
                 return response;
             }else if (cacheable){
