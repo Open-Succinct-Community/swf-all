@@ -5,6 +5,7 @@ import com.venky.geo.GeoLocation;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.validations.RegEx;
@@ -20,6 +21,7 @@ import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 @CONFIGURATION
 public interface Facility extends CompanySpecific, Address , Model{
 	@UNIQUE_KEY
+	@Index
 	public String getName();
 	public void setName(String name);
 	
