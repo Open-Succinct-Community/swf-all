@@ -16,7 +16,9 @@ import java.util.HashMap;
 public interface TemplateLoader {
 
     public Path getPath();
-    public String getTemplateDirectory();
+    default String getTemplateDirectory() {
+        return null;
+    }
 
     @RequireLogin(false)
     default HtmlView html(String path){

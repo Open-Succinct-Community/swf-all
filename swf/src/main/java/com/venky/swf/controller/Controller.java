@@ -322,8 +322,15 @@ public class Controller {
                 i.remove();
             } else if (reflector.isFieldVirtual(fieldName)) {
                 String fieldValue = reflector.get(m, fieldName);
-                if (!ObjectUtil.isVoid(value) && !fieldValue.toLowerCase().contains(value.toLowerCase())) {
-                    i.remove();
+                if (!ObjectUtil.isVoid(value) ) {
+                    StringTokenizer tokenizer = new StringTokenizer(value);
+                    boolean pass = true;
+                    while (tokenizer.hasMoreElements()){
+                        pass = pass && fieldValue.toLowerCase().contains(tokenizer.nextToken().toLowerCase());
+                    }
+                    if (!pass) {
+                        i.remove();
+                    }
                 }
             }
         }

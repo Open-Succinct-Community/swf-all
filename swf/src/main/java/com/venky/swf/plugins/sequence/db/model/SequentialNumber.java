@@ -12,7 +12,6 @@ import com.venky.swf.sql.Select;
 
 import java.util.List;
 
-@MENU("Configuration")
 public interface SequentialNumber extends Model {
 
     @UNIQUE_KEY

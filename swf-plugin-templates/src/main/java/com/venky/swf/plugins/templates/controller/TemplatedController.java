@@ -16,9 +16,4 @@ public class TemplatedController extends Controller implements TemplateLoader {
         super(path);
     }
 
-
-    @Override
-    public String getTemplateDirectory() {
-        return null; //Default
-    }
 }
