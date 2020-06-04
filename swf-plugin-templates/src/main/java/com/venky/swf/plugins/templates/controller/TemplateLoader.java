@@ -6,23 +6,37 @@ import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.templates.util.templates.TemplateEngine;
 import com.venky.swf.plugins.templates.views.TemplateView;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public interface TemplateLoader {
 
     public Path getPath();
     default String getTemplateDirectory() {
-        return null;
+        return Config.instance().getProperty("swf.ftl.dir");
     }
 
     @RequireLogin(false)
     default HtmlView html(String path){
-        return dashboard(new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html"));
+        return html(path,true);
+    }
+    @RequireLogin(false)
+    default HtmlView html(String path, boolean includeMenu){
+        return html(path,includeMenu,null);
+    }
+    @RequireLogin(false)
+    default HtmlView html(String path, boolean includeMenu, Map<String,Object> data){
+        if (includeMenu){
+            return dashboard(new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data));
+        }else {
+            return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data);
+        }
     }
 
     DashboardView dashboard(HtmlView aContainedView);
