@@ -92,7 +92,7 @@ public class LoginView extends HtmlView{
         formHolder.addControl(getStatus());
 
         FormGroup fg = new FormGroup();
-    	fg.createTextBox("User", "name",false);
+    	fg.createTextBox(Config.instance().getProperty("Login.Name.Literal","User"), "name",false);
     	form.addControl(fg);
 
         fg = new FormGroup();

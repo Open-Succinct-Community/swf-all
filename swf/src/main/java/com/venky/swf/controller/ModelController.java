@@ -596,7 +596,7 @@ public class ModelController<M extends Model> extends Controller {
         return getSuccessView();
     }
 
-    private void destroy(M record) {
+    protected void destroy(M record) {
         if (record != null) {
             if (record.isAccessibleBy(getSessionUser(), modelClass)) {
                 record.destroy();

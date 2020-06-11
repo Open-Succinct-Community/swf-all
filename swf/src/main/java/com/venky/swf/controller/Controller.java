@@ -114,7 +114,13 @@ public class Controller {
             }
         } else if (getPath().getSession() != null) {
             if (getSessionUser() == null) {
-                return createLoginView();
+                StringBuilder msg = new StringBuilder();
+                getPath().getErrorMessages().forEach(m -> msg.append(m));
+                if (msg.length() > 0){
+                    return createLoginView(StatusType.ERROR,msg.toString());
+                }else {
+                    return createLoginView();
+                }
             } else {
                 if (getPath().getProtocol() == MimeType.TEXT_HTML){
                     return new RedirectorView(getPath(), loginSuccessful(), "");

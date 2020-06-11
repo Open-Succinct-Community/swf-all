@@ -20,6 +20,7 @@ import javax.servlet.http.HttpSession;
 import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
 import com.venky.extension.Extension;
+import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.integration.FormatHelper;
@@ -652,21 +653,36 @@ public class Path implements _IPath{
                 String password = null;
                 if (adaptor == null){
                     Map<String,Object> map = getFormFields();
-                    username = String.valueOf(map.get("name"));
-                    password = String.valueOf(map.get("password"));
-                    String password2 = String.valueOf(map.get("password2"));
-                    if (map.containsKey("_REGISTER")){
-                        if (ObjectUtil.equals(password,password2)){
+                    username = StringUtil.valueOf(map.get("name"));
+                    password = StringUtil.valueOf(map.get("password"));
+                    String password2 = StringUtil.valueOf(map.get("password2"));
+                    if (map.containsKey("_REGISTER") && !ObjectUtil.isVoid(username)){
+                        if (ObjectUtil.isVoid(password) || ObjectUtil.isVoid(password2)){
+                            createUserSession(null,true);
+                            addErrorMessage("Password cannot be blank");
+                            return  false;
+                        }else if (ObjectUtil.equals(password,password2)){
                             user = getUser("name",username);
                             if (user != null){
+                                createUserSession(null  ,true);
                                 addErrorMessage("Username "+ username + " is already registered");
                                 return  false;
                             }
                             user = Database.getTable(User.class).newRecord();
                             user.setName(username);
                             user.setPassword(password);
-                            user.save();
+                            Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+                            try {
+                                user.save();
+                                txn.commit();
+                            }catch (Exception ex){
+                                txn.rollback(ex);
+                                createUserSession(null,true);
+                                addErrorMessage(ex.getMessage());
+                                return false;
+                            }
                         }else {
+                            createUserSession(null,true);
                             addErrorMessage("Passwords entered do not match");
                             return false;
                         }
@@ -686,8 +702,8 @@ public class Path implements _IPath{
                     if (user != null && user.authenticate(password)){
                         createUserSession(user,autoInvalidate);
                     }else {
-                        addErrorMessage("Login Failed");
                         createUserSession(null,true);
+                        addErrorMessage("Login Failed");
                         Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
                     }
                 }
@@ -1236,7 +1252,7 @@ public class Path implements _IPath{
         }
     }
     public List<String> getMessages(StatusType type){
-        SequenceSet<String> ret = new SequenceSet<String>(); 
+        SequenceSet<String> ret = new SequenceSet<String>();
         if (getSession() == null){
             return ret;
         }
@@ -1248,7 +1264,7 @@ public class Path implements _IPath{
             existing.clear();
         }
         return ret;
-        
+
     }
     @Override
     public void addErrorMessage(String msg) {
@@ -1257,7 +1273,7 @@ public class Path implements _IPath{
     @Override
     public void addInfoMessage(String msg) {
         addMessage(StatusType.INFO, msg);
-        
+
     }
     @Override
     public List<String> getErrorMessages() {
