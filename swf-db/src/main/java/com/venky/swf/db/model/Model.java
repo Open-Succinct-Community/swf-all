@@ -77,7 +77,9 @@ public interface Model extends _Identifiable {
 	@HOUSEKEEPING
 	public Timestamp getCreatedAt();
 	public void setCreatedAt(Timestamp createdAt);
-    	
+
+
+	public void preValidate();
 	/**
 	 * Calls {@link #save(boolean)} with true.
 	 */
