@@ -690,6 +690,7 @@ public class Path implements _IPath{
                 }else {
                     FormatHelper<T> helper = null ;
                     try {
+                        getInputStream().close();
                         helper = FormatHelper.instance(this.getProtocol(),getInputStream());
                         if (helper.getElementAttribute("User") != null){
                             List<User> input = adaptor.readRequest(this);
