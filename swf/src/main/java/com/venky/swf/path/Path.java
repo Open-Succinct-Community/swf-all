@@ -624,7 +624,7 @@ public class Path implements _IPath{
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
 
-    public boolean isRequestAuthenticated(){
+    public <T> boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
             return true;
         }
@@ -688,11 +688,14 @@ public class Path implements _IPath{
                         }
                     }
                 }else {
-                    List<User> input = adaptor.readRequest(this);
-                    if (input.size() == 1){
-                        Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
-                        username = input.get(0).getName();
-                        password = input.get(0).getPassword();
+                    FormatHelper<T> helper = FormatHelper.instance(this.getProtocol(),getInputStream());
+                    if (helper.getElementAttribute("User") != null){
+                        List<User> input = adaptor.readRequest(this);
+                        if (input.size() == 1){
+                            Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
+                            username = input.get(0).getName();
+                            password = input.get(0).getPassword();
+                        }
                     }
                 }
                 if (!ObjectUtil.isVoid(username)){
