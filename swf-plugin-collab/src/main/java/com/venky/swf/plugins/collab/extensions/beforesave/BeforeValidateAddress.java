@@ -51,5 +51,11 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
                 throw new RuntimeException("Email is invalid!");
             }
         }
+        if (model.getCityId() != null) {
+            model.setStateId(model.getCity().getStateId());
+        }
+        if (model.getStateId() != null) {
+            model.setCountryId(model.getState().getCountryId());
+        }
     }
 }
