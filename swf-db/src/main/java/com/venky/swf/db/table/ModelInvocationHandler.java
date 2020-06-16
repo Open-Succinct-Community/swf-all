@@ -590,7 +590,10 @@ public class ModelInvocationHandler implements InvocationHandler {
     		Registry.instance().callExtensions(extnPoint, getProxy());
     	}
     }
-    
+
+    public void preValidate(){
+    	beforeValidate();
+	}
     
     protected void beforeValidate(){
     	defaultFields();
