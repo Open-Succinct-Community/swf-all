@@ -89,6 +89,7 @@ public interface Model extends _Identifiable {
      * @param performValidations may be passed as false to bypass validations.
      */
     public void save(boolean performValidations);
+	public void save(boolean performValidations,boolean dryRun);
     public void destroy();
     public void init();
     public boolean isAccessibleBy(User user);

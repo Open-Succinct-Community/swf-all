@@ -479,7 +479,10 @@ public class ModelInvocationHandler implements InvocationHandler {
 	public void save() {
 		save(true);
 	}
-    public void save(boolean validate) {
+	public void save(boolean validate) {
+		save(validate,false);
+	}
+    public void save(boolean validate,boolean dryRun) {
         if (!isDirty()) {
             return;
         }
@@ -489,15 +492,20 @@ public class ModelInvocationHandler implements InvocationHandler {
         beforeSave();
         if (record.isNewRecord()) {
         	callExtensions("before.create");
-            create();
-        	callExtensions("after.create");
+        	if (!dryRun){
+				create();
+				callExtensions("after.create");
+			}
         } else {
         	callExtensions("before.update");
-            update();
-            callExtensions("after.update");
+			if (!dryRun){
+				update();
+				callExtensions("after.update");
+			}
         }
-        afterSave();
-
+		if (!dryRun) {
+			afterSave();
+		}
     }
     public void init(){
     	
