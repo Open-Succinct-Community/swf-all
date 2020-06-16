@@ -688,14 +688,19 @@ public class Path implements _IPath{
                         }
                     }
                 }else {
-                    FormatHelper<T> helper = FormatHelper.instance(this.getProtocol(),getInputStream());
-                    if (helper.getElementAttribute("User") != null){
-                        List<User> input = adaptor.readRequest(this);
-                        if (input.size() == 1){
-                            Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
-                            username = input.get(0).getName();
-                            password = input.get(0).getPassword();
+                    FormatHelper<T> helper = null ;
+                    try {
+                        helper = FormatHelper.instance(this.getProtocol(),getInputStream());
+                        if (helper.getElementAttribute("User") != null){
+                            List<User> input = adaptor.readRequest(this);
+                            if (input.size() == 1){
+                                Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
+                                username = input.get(0).getName();
+                                password = input.get(0).getPassword();
+                            }
                         }
+                    }catch (Exception ex){
+                        throw new RuntimeException(ex);
                     }
                 }
                 if (!ObjectUtil.isVoid(username)){
