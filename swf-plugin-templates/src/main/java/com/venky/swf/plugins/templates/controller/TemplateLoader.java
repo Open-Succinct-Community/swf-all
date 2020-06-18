@@ -38,6 +38,10 @@ public interface TemplateLoader {
             return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data);
         }
     }
+    @RequireLogin(false)
+    default HtmlView htmlFragment(String path, Map<String,Object> data){
+        return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data,true);
+    }
 
     DashboardView dashboard(HtmlView aContainedView);
 
