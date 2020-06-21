@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.templates.controller;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
@@ -20,6 +21,16 @@ public interface TemplateLoader {
     public Path getPath();
     default String getTemplateDirectory() {
         return Config.instance().getProperty("swf.ftl.dir");
+    }
+
+    default String getTemplateDirectory(String subdirectory){
+        StringBuilder dir = new StringBuilder();
+        String templateDirectory  = Config.instance().getProperty("swf.ftl.dir");
+        if (!ObjectUtil.isVoid(templateDirectory)){
+            dir.append(templateDirectory);
+        }
+        dir.append("/").append(subdirectory);
+        return dir.toString();
     }
 
     @RequireLogin(false)

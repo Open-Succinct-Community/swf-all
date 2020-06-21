@@ -40,11 +40,11 @@ public class TemplateView extends HtmlView {
     }
 
     @Override
-    protected void _createHead(Head head) {
-        if (fragment) {
-            return;
+    public String toString() {
+        if (!fragment) {
+            return super.toString();
         }
-        super._createHead(head);
+        return TemplateEngine.getInstance(templateDir).publish(templateName,data);
     }
 
     @Override
