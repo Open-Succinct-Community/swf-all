@@ -55,4 +55,6 @@ public interface _IPath {
 
     boolean redirectOnException();
 
+    public static final String USER_LOGIN_SUCCESS_EXTENSION = "user.login.success";
+
 }
