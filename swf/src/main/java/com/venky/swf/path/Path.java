@@ -628,7 +628,7 @@ public class Path implements _IPath{
         if (user != null){
             session.setAttribute("user", user);
             session.setAttribute("user.id",user.getId());
-            Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,user);
+            Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
         }
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
