@@ -999,7 +999,7 @@ public class ModelController<M extends Model> extends Controller {
         return integrationAdaptor.createResponse(getPath(), models, null, getIgnoredParentModels(), getIncludedModelFields());
     }
 
-    protected <T> List<M> persistModelsFromRequest() {
+    protected <T> List<M>   persistModelsFromRequest() {
         List<M> models = integrationAdaptor.readRequest(getPath());
         for (M m : models) {
             try {

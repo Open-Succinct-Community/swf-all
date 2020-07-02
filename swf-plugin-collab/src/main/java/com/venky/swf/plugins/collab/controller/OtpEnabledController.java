@@ -8,17 +8,13 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
-import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.collab.agents.SendOtp;
 import com.venky.swf.plugins.collab.db.model.user.OtpEnabled;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.HotLink;
-import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
-import com.venky.swf.views.model.ModelShowView;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -53,8 +49,11 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
             });
         }else {
             _validateOtp(otpEnabledModel,otpField);
-            return getIntegrationAdaptor().createResponse(getPath(),otpEnabledModel, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()));
+            return otpValidationComplete(otpEnabledModel);
         }
+    }
+    public View otpValidationComplete(T otpEnabledModel){
+        return getIntegrationAdaptor().createResponse(getPath(),otpEnabledModel, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()));
     }
     public View validateOtp(){
         IntegrationAdaptor<T,?> integrationAdaptor = getIntegrationAdaptor();
