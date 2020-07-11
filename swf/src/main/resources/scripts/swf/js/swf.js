@@ -279,9 +279,11 @@ function api() {
             return this;
         },
         headers : function(additional_headers){
+            defaultOptions = { 'Content-Type': 'application/json' , 'Cache-Control': 'no-cache' };
             if (!_headers){
                 _headers = {} ;
             }
+            _headers = { ..._headers ,  ...defaultOptions}
             if (arguments.length > 0){
                 _headers = { ..._headers, ...additional_headers } ;
                 return this;

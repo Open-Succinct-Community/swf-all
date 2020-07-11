@@ -117,7 +117,11 @@ public class Controller {
                 StringBuilder msg = new StringBuilder();
                 getPath().getErrorMessages().forEach(m -> msg.append(m));
                 if (msg.length() > 0){
-                    return createLoginView(StatusType.ERROR,msg.toString());
+                    if (getPath().getProtocol() == MimeType.TEXT_HTML){
+                        return createLoginView(StatusType.ERROR,msg.toString());
+                    }else {
+                        throw new AccessDeniedException(msg.toString());
+                    }
                 }else {
                     return createLoginView();
                 }
