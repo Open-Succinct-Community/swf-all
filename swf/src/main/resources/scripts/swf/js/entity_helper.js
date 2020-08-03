@@ -19,19 +19,21 @@ class Entity{
 
 }
 class Autocomplete {
-    constructor(apiBaseName,target){
+    constructor(apiBaseName,target,triggerLength){
         this.apiBaseName = apiBaseName;
         this.jqElement = jQuery(target);
+        this.triggerLength = triggerLength || 3;
     }
 
     search(descriptionColumn){
         let field = descriptionColumn;
         let self = this;
         let element = this.jqElement;
+
         return new Promise(function(resolve,reject){
             let element = self.jqElement;
             let ajaxurl = "/"+self.apiBaseName+"/search";
-            if (element.val().length > 3 ) {
+            if (element.val().length > self.triggerLength ) {
                 let url = ajaxurl ;
                 let val = element.val().replace(/[^a-zA-Z0-9 ]/g, " ")
                 if (field){

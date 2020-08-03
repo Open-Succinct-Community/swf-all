@@ -2,6 +2,8 @@ package com.venky.swf.plugins.templates.controller;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
@@ -35,7 +37,8 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default HtmlView html(String path){
-        return html(path,true);
+        return html(path,
+                Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getPath().getFormFields().getOrDefault("includeMenu","N")));
     }
     @RequireLogin(false)
     default HtmlView html(String path, boolean includeMenu){
