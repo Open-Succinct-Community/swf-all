@@ -19,6 +19,7 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
@@ -61,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -617,6 +619,17 @@ public class Path implements _IPath{
                 Database.getInstance().open(sessionUser);
             }
             currentUser = Database.getInstance().getCurrentUser();
+        }
+        if (currentUser != null){
+            String lat = getHeader( "Lat");
+            String lng = getHeader( "Lng");
+            TypeConverter<BigDecimal> tc = currentUser.getReflector().getJdbcTypeHelper().getTypeRef(BigDecimal.class).getTypeConverter();
+            if (!ObjectUtil.isVoid(lat)){
+                currentUser.setCurrentLat(tc.valueOf(lat));
+            }
+            if (!ObjectUtil.isVoid(lng)) {
+                currentUser.setCurrentLng(tc.valueOf(lng));
+            }
         }
         
         return currentUser != null ; 
