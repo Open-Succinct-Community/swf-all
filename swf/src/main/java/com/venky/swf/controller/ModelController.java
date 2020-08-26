@@ -249,7 +249,7 @@ public class ModelController<M extends Model> extends Controller {
         return list(Select.MAX_RECORDS_ALL_RECORDS);
     }
 
-    private View list(int maxRecords) {
+    protected View list(int maxRecords) {
         List<M> records = null;
         Select.ResultFilter<M> filter = getFilter();
         if (!reflector.isVirtual()) {
