@@ -47,7 +47,7 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
         loadPostalOffice();
         if (postalOffice != null){
             if (postalOffice.getCityId() == null){
-                for (String name : new String[]{postalOffice.getTaluk(),postalOffice.getRegionName(), postalOffice.getDistrict()}){
+                for (String name : new String[]{postalOffice.getTaluk(), postalOffice.getDistrict() }){
                     if (!ObjectUtil.isVoid(name)){
                         List<City> cities = new Select().from(City.class).where(
                                 new Expression(ModelReflector.instance(City.class).getPool(),"NAME", Operator.EQ, name))
