@@ -57,6 +57,8 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
                         }
                     }
                 }
+            }else {
+                return postalOffice.getCityId();
             }
         }
         return null;
