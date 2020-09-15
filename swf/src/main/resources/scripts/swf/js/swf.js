@@ -283,9 +283,9 @@ function api() {
             if (!_headers){
                 _headers = {} ;
             }
-            _headers = { ..._headers ,  ...defaultOptions}
+            _headers = Object.assign({},_headers,defaultOptions); //{ ..._headers ,  ...defaultOptions}
             if (arguments.length > 0){
-                _headers = { ..._headers, ...additional_headers } ;
+                _headers = Object.assign({}, _headers, additional_headers); //{ ..._headers, ...additional_headers } ;
                 return this;
             }
             return _headers;

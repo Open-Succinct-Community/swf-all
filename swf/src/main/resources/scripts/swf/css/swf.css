@@ -167,7 +167,7 @@ p#msg {
     right: 42px;
   }
   .nav-tabs {
-    display: none;
+    /* display: none; */
   }
   .tab-pane .hotlinks {
     position: static;

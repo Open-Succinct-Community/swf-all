@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
@@ -29,4 +31,17 @@ public interface PinCode extends Model {
         }
         return null;
     }
+
+    @IS_NULLABLE
+    @IS_VIRTUAL
+    public Long getStateId();
+    public void setStateId(Long id);
+    public State getState();
+
+    @IS_NULLABLE
+    @IS_VIRTUAL
+    public Long getCityId();
+    public void setCityId(Long id);
+    public City getCity();
+
 }
