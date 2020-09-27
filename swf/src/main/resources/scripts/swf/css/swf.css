@@ -143,7 +143,7 @@ p#msg {
   .navbar-collapse.show,
   .navbar-collapse.collapsing {
     position: absolute;
-    width: 100%;
+    width: 60%;
     background: white;
     left: 0;
     top: 47px;

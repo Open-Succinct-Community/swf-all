@@ -25,21 +25,26 @@ class Autocomplete {
         this.triggerLength = triggerLength || 3;
     }
 
-    search(descriptionColumn){
+    search(descriptionColumn,additional_query){
         let field = descriptionColumn;
         let self = this;
         let element = this.jqElement;
+        let aq = additional_query ? additional_query + " ": "" ;
 
         return new Promise(function(resolve,reject){
             let element = self.jqElement;
             let ajaxurl = "/"+self.apiBaseName+"/search";
-            if (element.val().length > self.triggerLength ) {
+            if (element.val().length >= self.triggerLength ) {
                 let url = ajaxurl ;
                 let val = element.val().replace(/[^a-zA-Z0-9 ]/g, " ")
                 if (field){
-                    url = url + "/" + field +":" + val + "*";
+                    if (val.trim().length > 0 ){
+                        url = url + "/" + aq + " AND " + field +":" + val + "*";
+                    }else {
+                        url = url + "/" + aq
+                    }
                 }else {
-                    url = url + "/" + val;
+                    url = url + "/" + aq + val;
                 }
                 api().url(url).get().then(function(response){
                     if (resolve){
