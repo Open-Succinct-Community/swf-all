@@ -64,7 +64,7 @@ public class PostgresqlHelper extends JdbcTypeHelper{
 	}
     @Override
     public String getAutoIncrementInstruction() {
-            return (" SERIAL ");
+            return (" BIGSERIAL ");
     }
     
     @Override

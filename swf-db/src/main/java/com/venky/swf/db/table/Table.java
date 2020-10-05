@@ -4,6 +4,7 @@
  */
 package com.venky.swf.db.table;
 
+import java.sql.Types;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -631,6 +632,14 @@ public class Table<M extends Model> {
                                 buff.append("'").append(def).append("'");
                             }
                         } else {
+                            if (ref.isNumeric()){
+                                try {
+                                    String def2 = ref.getTypeConverter().toString(ref.getTypeConverter().valueOf(def));
+                                    def = def2;
+                                }catch (NumberFormatException ex){
+                                    //
+                                }
+                            }
                             buff.append(def);
                         }
                     }

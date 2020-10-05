@@ -621,13 +621,16 @@ public abstract class JdbcTypeHelper {
                 return new MySqlHelper();
             }else if (driverClass.getName().startsWith("org.postgresql")) {
             	return new PostgresqlHelper();
-            }else if (driverClass.getName().startsWith("org.sqlite")){ 
+            }else if (driverClass.getName().startsWith("org.sqlite")){
             	return new SQLiteHelper();
             }else if (driverClass.getName().startsWith("org.sqldroid")) {
             	return new SQLDroidHelper();
             }else if (driverClass.getName().startsWith("org.h2")) {
             	return new H2Helper();
+            }else if (driverClass.getName().equals("com.venky.swf.db.drivers.CockroachDBDummyDriver")) {
+                return new CockroachDBHelper();
             }
+
             return null;
 		}
 	};

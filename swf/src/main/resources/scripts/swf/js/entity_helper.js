@@ -39,7 +39,7 @@ class Autocomplete {
                 let val = element.val().replace(/[^a-zA-Z0-9 ]/g, " ")
                 if (field){
                     if (val.trim().length > 0 ){
-                        url = url + "/" + aq + " AND " + field +":" + val + "*";
+                        url = url + "/" + aq + ( aq.length > 0 ? " AND "  : "" ) + field +":" + val + "*";
                     }else {
                         url = url + "/" + aq
                     }
