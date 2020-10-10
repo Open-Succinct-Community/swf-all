@@ -299,9 +299,10 @@ function api() {
                 withCredentials: false,
             });
         },
-        get : function(){
+        get : function(qryJson){
             let self = this;
-            return self.http().get(self.url(),{ data :{} , "headers": self.headers() }).then(function(response){
+            let params = qryJson ? qryJson : {} ;
+            return self.http().get(self.url(),{ data : params, "headers": self.headers() }).then(function(response){
                 return response.data;
             });
         },
