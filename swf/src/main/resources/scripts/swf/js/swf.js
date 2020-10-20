@@ -280,6 +280,13 @@ function api() {
         },
         headers : function(additional_headers){
             defaultOptions = { 'Content-Type': 'application/json' , 'Cache-Control': 'no-cache' };
+            if (typeof Lockr !== "undefined"){
+                let location = Lockr.get("Location");
+                if (location && location.latitude && location.longitude){
+                    defaultOptions.Lat = location.latitude;
+                    defaultOptions.Lng = location.longitude;
+                }
+            }
             if (!_headers){
                 _headers = {} ;
             }
@@ -313,4 +320,38 @@ function api() {
             });
         }
     }
+}
+
+function loadLocation(){
+    return new Promise(function(resolve,reject){
+        navigator.geolocation.getCurrentPosition(function( position ){
+            let location = {};
+            location.accuracy = position.coords.accuracy;
+            location.altitude = position.coords.altitude;
+            location.altitudeAccuracy = position.coords.altitudeAccuracy;
+            location.heading = position.coords.heading;
+            location.latitude = position.coords.latitude;
+            location.longitude = position.coords.longitude;
+            location.speed = position.coords.speed;
+            Lockr.set("Location", location);
+            resolve();
+        }, function (error) {
+            Lockr.set("Location", {});
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    console.error("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.error("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    console.error("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.error("An unknown error occurred.");
+                    break;
+            }
+            resolve();
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+    });
 }

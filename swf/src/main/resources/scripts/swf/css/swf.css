@@ -163,8 +163,8 @@ p#msg {
     position: fixed;
     z-index: 5;
     top: 10px;
-    width: 50%;
-    right: 42px;
+    width: 80% !important;
+    right: 5px;
   }
   .nav-tabs {
     /* display: none; */
@@ -180,3 +180,9 @@ p#msg {
     width: calc(100% - 30px);
   }
 }
+.input-group{
+    z-index: 0;
+}
+
+
+

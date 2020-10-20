@@ -217,7 +217,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/node_modules/bootstrap-ajax-typeahead/bootstrap-typeahead.js"));
         head.addControl(new Script("/resources/scripts/node_modules/moment/min/moment-with-locales.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"));
-        
+        head.addControl(new Script("/resources/scripts/node_modules/lockr/lockr.min.js"));
         
         
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
