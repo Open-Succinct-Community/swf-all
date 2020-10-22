@@ -197,7 +197,7 @@ public class ModelController<M extends Model> extends Controller {
                 Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
-                List<M> records = sel.execute(getModelClass(), maxRecords, new DefaultModelFilter<M>(getModelClass()));
+                List<M> records = sel.execute(getModelClass(), maxRecords, getFilter());
                 return list(records, maxRecords == 0 || records.size() < maxRecords);
             } else {
                 return list(new ArrayList<M>(), true);
