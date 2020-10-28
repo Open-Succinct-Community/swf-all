@@ -352,6 +352,6 @@ function loadLocation(){
                     break;
             }
             resolve();
-        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 1 });
     });
 }

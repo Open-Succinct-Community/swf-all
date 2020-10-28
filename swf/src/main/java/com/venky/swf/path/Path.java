@@ -186,23 +186,12 @@ public class Path implements _IPath{
             return null;
         }
         
-        _Identifiable user = null; 
-        try {
-            user =  (_Identifiable)session.getAttribute("user");
-            return (User)user;
-        }catch (ClassCastException ex){
-            user = null;
-            session.removeAttribute("user");
-            Number id = (Number)session.getAttribute("user.id");
-            if (id != null){
-                Table<User> USER = Database.getTable(User.class);
-                if (USER != null){
-                    user = USER.get(id.longValue());
-                    getSession().setAttribute("user", user);
-                }
-            }
-            return (User)user;
+        Table<User> USER = Database.getTable(User.class);
+        Number id = getSessionUserId();
+        if (id != null){
+            return USER.get(id.longValue());
         }
+        return null;
     }
     public Long getSessionUserId(){
         if (getSession() == null){
@@ -639,7 +628,6 @@ public class Path implements _IPath{
         invalidateSession();
         HttpSession session = getRequest().getSession(true);
         if (user != null){
-            session.setAttribute("user", user);
             session.setAttribute("user.id",user.getId());
             Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
         }

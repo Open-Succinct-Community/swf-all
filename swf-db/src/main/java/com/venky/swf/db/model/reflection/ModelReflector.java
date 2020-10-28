@@ -431,6 +431,21 @@ public class ModelReflector<M extends Model> {
 			timer.stop();
 		}
     }
+
+	public List<String> getVisibleFields(){
+    	return getVisibleFields(null);
+	}
+    public List<String> getVisibleFields(List<String> additionalFields){
+		List<String> fields = getFields();
+		Set<String> additionalFieldSet = new HashSet<>(additionalFields == null ? new ArrayList<>() : additionalFields);
+		for (Iterator<String> i = fields.iterator(); i.hasNext(); ){
+			String f = i.next();
+			if (isFieldHidden(f) && !additionalFieldSet.contains(f)){
+				i.remove();
+			}
+		}
+		return fields;
+	}
     
     private SequenceSet<String> indexedColumns = null;
     public List<String> getIndexedColumns(){
