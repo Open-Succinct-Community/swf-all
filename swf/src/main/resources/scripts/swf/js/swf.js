@@ -268,11 +268,12 @@ function api() {
                 return _parameter;
             }
             if (p.constructor == new FormData().constructor){
+                /*
                 var object = {};
                 p.forEach(function(value, key){
                     object[key] = value;
-                });
-                _parameter = object;
+                });*/
+                _parameter = p;
             }else {
                 _parameter = p;
             }
@@ -309,7 +310,7 @@ function api() {
         get : function(qryJson){
             let self = this;
             let params = qryJson ? qryJson : {} ;
-            return self.http().get(self.url(),{ data : params, "headers": self.headers() }).then(function(response){
+            return self.http().get(self.url(),{ params : params, "headers": self.headers() }).then(function(response){
                 return response.data;
             });
         },

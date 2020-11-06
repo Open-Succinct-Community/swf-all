@@ -743,7 +743,14 @@ public class Path implements _IPath{
     public MimeType getProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)) {
-        	apiprotocol = getRequest().getHeader("content-type");
+            apiprotocol = getRequest().getHeader("content-type");
+        }
+        return Path.getProtocol(apiprotocol);
+    }
+    public MimeType getReturnProtocol(){
+        String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
+        if (ObjectUtil.isVoid(apiprotocol)){
+            apiprotocol = getRequest().getHeader("accept");
         }
         return Path.getProtocol(apiprotocol);
     }
@@ -754,18 +761,22 @@ public class Path implements _IPath{
         for (MimeType mt : MimeType.values()){
             if (ObjectUtil.equals(mt.toString(),apiprotocol)){
                 return mt;
-            }else if (apiprotocol.indexOf(';') > 0){
-                StringTokenizer tokenizer = new StringTokenizer(apiprotocol,";");
-                while (tokenizer.hasMoreTokens()){
-                    String tapiprotocol = tokenizer.nextToken();
-                    if (ObjectUtil.equals(tapiprotocol,mt.toString())){
-                        return mt;
+            }else {
+                for (String delimiter : new String[]{",",";"}){
+                    StringTokenizer tokenizer = new StringTokenizer(apiprotocol,delimiter);
+                    while (tokenizer.hasMoreTokens()){
+                        String tapiprotocol = tokenizer.nextToken();
+                        if (ObjectUtil.equals(tapiprotocol,mt.toString())){
+                            return mt;
+                        }
                     }
                 }
+
             }
         }
         return MimeType.TEXT_HTML;
     }
+
     
     //Can be cast to any user model class as the proxy implements all the user classes.
     public User getUser(String fieldName, String fieldValue){

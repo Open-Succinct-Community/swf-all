@@ -91,6 +91,7 @@ public class ModelController<M extends Model> extends Controller {
     private ModelReflector<M> reflector;
     private boolean indexedModel = false;
     private IntegrationAdaptor<M, ?> integrationAdaptor = null;
+    private IntegrationAdaptor<M, ?> returnIntegrationAdaptor = null ;
 
     public ModelController(Path path) {
         super(path);
@@ -100,11 +101,22 @@ public class ModelController<M extends Model> extends Controller {
         if (path.getProtocol() != MimeType.TEXT_HTML) {
             integrationAdaptor = IntegrationAdaptor.instance(modelClass, FormatHelper.getFormatClass(path.getProtocol()));
         }
+        if (path.getReturnProtocol() != MimeType.TEXT_HTML) {
+            returnIntegrationAdaptor = IntegrationAdaptor.instance(modelClass, FormatHelper.getFormatClass(path.getReturnProtocol()));
+        }
+        if (returnIntegrationAdaptor == null){
+            returnIntegrationAdaptor = integrationAdaptor;
+        }
     }
 
     public IntegrationAdaptor<M, ?> getIntegrationAdaptor() {
         return this.integrationAdaptor;
     }
+
+    public IntegrationAdaptor<M, ?> getReturnIntegrationAdaptor() {
+        return this.returnIntegrationAdaptor;
+    }
+
 
     protected ModelReflector<M> getReflector() {
         return reflector;
@@ -352,12 +364,13 @@ public class ModelController<M extends Model> extends Controller {
         return children;
     }
     protected View list(List<M> records, boolean isCompleteList) {
-        return list(records,isCompleteList,integrationAdaptor);
+        return list(records,isCompleteList,getReturnIntegrationAdaptor());
     }
     protected <T> View list(List<M> records, boolean isCompleteList , IntegrationAdaptor<M,T> overrideIntegrationAdaptor) {
         View v = null;
         if (overrideIntegrationAdaptor != null) {
-            v = overrideIntegrationAdaptor.createResponse(getPath(), records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()), getIgnoredParentModels(), getIncludedModelFields());
+            v = overrideIntegrationAdaptor.createResponse(getPath(), records, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),
+                    getIgnoredParentModels(), getConsideredChildModels(), getIncludedModelFields());
         } else {
             View lv = null;
             if (ObjectUtil.equals("Y",getPath().getFormFields().get("exportxls"))){
@@ -404,12 +417,35 @@ public class ModelController<M extends Model> extends Controller {
 
     protected View show(M record) {
         View view = null;
-        if (integrationAdaptor != null) {
-            view = integrationAdaptor.createResponse(getPath(), record, getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()), getIgnoredParentModels(), getIncludedModelFields());
+        if (returnIntegrationAdaptor != null) {
+            view = returnIntegrationAdaptor.createResponse(getPath(), record, true,
+                    getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),
+                    getIgnoredParentModels(), getConsideredChildModels(), getIncludedModelFields());
         } else {
             view = dashboard(createModelShowView(record));
         }
         return view;
+    }
+
+    protected Map<Class<? extends Model>,List<Class <? extends Model>>> getConsideredChildModels() {
+        Map<Class<? extends Model>,List<Class <? extends Model>>> map = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
+
+            @Override
+            protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
+                return new SequenceSet<>();
+            }
+        };
+        //bc.
+        List<Class<? extends Model>> childModels = getReflector().getChildModels();
+        Set<String> childModelNames = new HashSet<>();
+        childModels.forEach(m->childModelNames.add(m.getSimpleName()));
+        getIncludedModelFields().keySet().forEach(modelClass->{
+            if (childModelNames.contains(modelClass.getSimpleName())){
+                //A First level child included in templates.
+                map.get(getModelClass()).add(modelClass);
+            }
+        });
+        return map;
     }
 
     protected Set<Class<? extends Model>> getIgnoredParentModels() {
@@ -549,8 +585,8 @@ public class ModelController<M extends Model> extends Controller {
         getPath().fillDefaultsForReferenceFields(record, getModelClass());
         record.setCreatorUserId(getSessionUser().getId());
         record.setUpdaterUserId(getSessionUser().getId());
-        if (integrationAdaptor != null) {
-            return integrationAdaptor.createResponse(getPath(), record);
+        if (returnIntegrationAdaptor != null) {
+            return returnIntegrationAdaptor.createResponse(getPath(), record);
         } else {
             return dashboard(createBlankView(record, "save"));
         }
@@ -608,8 +644,8 @@ public class ModelController<M extends Model> extends Controller {
 
     protected View getSuccessView() {
         View ret = null;
-        if (integrationAdaptor != null) {
-            ret = integrationAdaptor.createStatusResponse(getPath(), null);
+        if (returnIntegrationAdaptor != null) {
+            ret = returnIntegrationAdaptor.createStatusResponse(getPath(), null);
         } else {
             ret = back();
         }
@@ -709,7 +745,7 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         Iterator<String> e = formFields.keySet().iterator();
-        String buttonName = null;
+        String buttonName = "_SUBMIT_NO_MORE";
         String digest = null;
         MultiException dataValidationExceptions = new MultiException("Invalid input: ");
         boolean hasUserModifiedData = false;
@@ -847,8 +883,10 @@ public class ModelController<M extends Model> extends Controller {
 
     protected View defaultActionView(M record) {
         View v = null;
-        if (integrationAdaptor != null) {
-            v = integrationAdaptor.createResponse(getPath(), record, null, getIgnoredParentModels(), getIncludedModelFields());
+        if (returnIntegrationAdaptor != null) {
+            v = returnIntegrationAdaptor.createResponse(getPath(), record, true,
+                    getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),
+                    getIgnoredParentModels(), getConsideredChildModels(), getIncludedModelFields());
         } else {
             v = back();
         }
@@ -996,7 +1034,9 @@ public class ModelController<M extends Model> extends Controller {
 
     protected  <T> View saveModelsFromRequest() {
         List<M> models = persistModelsFromRequest();
-        return integrationAdaptor.createResponse(getPath(), models, null, getIgnoredParentModels(), getIncludedModelFields());
+        return returnIntegrationAdaptor.createResponse(getPath(), models,
+                getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),
+                getIgnoredParentModels(), getConsideredChildModels(), getIncludedModelFields());
     }
 
     protected <T> List<M>   persistModelsFromRequest() {
@@ -1176,6 +1216,11 @@ public class ModelController<M extends Model> extends Controller {
             throw new RuntimeException("Api only supports POST method");
         }
         IntegrationAdaptor<M, ?> integrationAdaptor = getIntegrationAdaptor();
+        IntegrationAdaptor<M, ?> returnIntegrationAdaptor = getReturnIntegrationAdaptor();
+        if (returnIntegrationAdaptor == null){
+            returnIntegrationAdaptor = integrationAdaptor;
+        }
+
         if (integrationAdaptor != null) {
             List<M> models = integrationAdaptor.readRequest(getPath());
             for (Iterator<M> i = models.iterator(); i.hasNext();) {
@@ -1184,7 +1229,8 @@ public class ModelController<M extends Model> extends Controller {
                     i.remove();
                 }
             }
-            return integrationAdaptor.createResponse(getPath(), models, null, getIgnoredParentModels(), getIncludedModelFields());
+            return returnIntegrationAdaptor.createResponse(getPath(), models, null,
+                    getIgnoredParentModels(), getConsideredChildModels(),getIncludedModelFields());
         }
         throw new AccessDeniedException("Cannot call this api from ui");
 
@@ -1198,7 +1244,7 @@ public class ModelController<M extends Model> extends Controller {
         if (integrationAdaptor != null) {
             List<M> models = persistModelsFromRequest();
             Config.instance().getLogger(getReflector().getModelClass().getName()).log(Level.INFO, "Persisted {0} records.", models.size());
-            return integrationAdaptor.createStatusResponse(getPath(), null);
+            return getReturnIntegrationAdaptor().createStatusResponse(getPath(), null);
         }
         throw new AccessDeniedException("Cannot call this api from ui");
 

@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.util.List;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
@@ -27,8 +29,14 @@ public interface Attachment extends Model{
 		}
 	}
 
+	@HIDDEN
 	public InputStream getAttachment();
 	public void setAttachment(InputStream attachment);
+
+	@IS_VIRTUAL
+	public String getAttachmentUrl();
+	public void setAttachmentUrl(String url);
+
 
 	@PROTECTION(Kind.NON_EDITABLE)
 	@UNIQUE_KEY

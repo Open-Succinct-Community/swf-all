@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceMap;
 import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -178,6 +179,7 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write (record,into,fields,parentsAlreadyConsidered, templateFields,null);
 	}
 
+
 	public void alignTop(CellStyle style){
 		style.setAlignment(HorizontalAlignment.LEFT);
 		style.setVerticalAlignment(VerticalAlignment.TOP);
@@ -233,8 +235,38 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 			alignTop(stringStyle);
 		}
 	}
-	
-	private void write(M m, Row r, List<String> fields, Set<Class<?extends  Model>> ignoreParents, Map<Class<? extends Model>, List<String>> childfields,StyleHelper helper) {
+	@Override
+	public void writeSimplified(M record, Row into, List<String> fields, Set<String> parentsAlreadyConsidered, Map<String, List<String>> childrenToBeConsidered, Map<String, List<String>> templateFields) {
+		writeSimplified(record,into,fields,parentsAlreadyConsidered, templateFields,(StyleHelper)null);
+	}
+
+	private void write(M m, Row r, List<String> fields, Set<Class<?extends  Model>> parentsAlreadyConsidered,
+					   Map<Class<? extends Model>, List<String>> templateFields,StyleHelper helper) {
+		Set<String> simplifiedParentsConsidered = new HashSet<>();
+		parentsAlreadyConsidered.forEach(c->simplifiedParentsConsidered.add(c.getSimpleName()));
+
+		Map<String,List<String>> simplifiedConsiderChildren = new Cache<String, List<String>>() {
+			@Override
+			protected List<String> getValue(String s) {
+				return new SequenceSet<>();
+			}
+		};
+		Map<String,List<String>> simplifiedTemplateFields = new Cache<String, List<String>>() {
+			@Override
+			protected List<String> getValue(String s) {
+				return new SequenceSet<>();
+			}
+		};
+
+		templateFields.forEach((c,fl)->{
+			for (String f: fl){
+				simplifiedTemplateFields.get(c.getSimpleName()).add(f);
+			}
+		});
+		writeSimplified(m,r,fields,simplifiedParentsConsidered,simplifiedTemplateFields,helper);
+	}
+	private void writeSimplified(M m, Row r, List<String> fields, Set<String> ignoreParents,
+					   Map<String, List<String>> childfields,StyleHelper helper) {
 		if (helper == null){
 			helper = new StyleHelper(r.getSheet().getWorkbook());
 		}
