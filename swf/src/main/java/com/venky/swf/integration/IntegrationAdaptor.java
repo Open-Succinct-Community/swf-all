@@ -133,43 +133,10 @@ public class IntegrationAdaptor<M extends Model,T> {
 							   Map<Class<? extends Model>,List<String>> templateFields) {
 
 
-		final Map<Class<? extends Model>,List<Class <? extends Model>>> childrenToBeConsidered = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
-
-			@Override
-			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
-				return new SequenceSet<>();
-			}
-		};
-
-		Set<String> templateModelNames = new HashSet<>(templateFields.keySet().stream().map(tm->tm.getSimpleName()).collect(Collectors.toSet()));
-
-		if (!templateModelNames.contains(modelReflector.getModelClass().getSimpleName())){
-			templateFields.put(modelReflector.getModelClass(),includeFields==null? modelReflector.getVisibleFields(Arrays.asList("ID")) : includeFields);
-			templateModelNames.add(modelReflector.getModelClass().getSimpleName());
-		}
-
-		Stack<Class<? extends Model>> models = new Stack<>();
-		models.push(modelReflector.getModelClass());
-
-		Set<String> modelNamesProcessed = new HashSet<>();
-		while (!models.isEmpty()){
-			Class<? extends Model> aChildModel = models.pop();
-			if (modelNamesProcessed.add(aChildModel.getSimpleName())){
-				if (templateModelNames.contains(aChildModel.getSimpleName())){
-					List<Class<? extends Model>> grandChildren = ModelReflector.instance(aChildModel).getChildModels();
-					grandChildren.forEach(aGrandChild->{
-						if (templateModelNames.contains(aGrandChild.getSimpleName())){
-							//A First level child included in templates.
-							childrenToBeConsidered.get(aChildModel).add(aGrandChild);
-						}
-					});
-					models.addAll(grandChildren);
-				}
-			}
-		}
 
 
-		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,childrenToBeConsidered,templateFields);
+
+		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,modelReflector.getChildrenToBeConsidered(templateFields),templateFields);
 	}
 	public View createResponse(Path path, M m, boolean rootElementRequiresName,
 							   List<String> includeFields,

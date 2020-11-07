@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseList;
@@ -440,6 +441,44 @@ public class ModelReflector<M extends Model> {
 		Set<String> additionalFieldSet = new HashSet<>(additionalFields == null ? new ArrayList<>() : additionalFields);
 		fields.removeIf(f->isFieldHidden(f) && !additionalFieldSet.contains(f));
 		return fields;
+	}
+
+	public Map<Class<? extends Model>,List<Class <? extends Model>>> getChildrenToBeConsidered(Map<Class<?extends Model>, List<String>> templateFields){
+		final Map<Class<? extends Model>,List<Class <? extends Model>>> childrenToBeConsidered = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
+
+			@Override
+			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
+				return new SequenceSet<>();
+			}
+		};
+
+		Set<String> templateModelNames = new HashSet<>(templateFields.keySet().stream().map(tm->tm.getSimpleName()).collect(Collectors.toSet()));
+
+		if (!templateModelNames.contains(getModelClass().getSimpleName())){
+			templateModelNames.add(getModelClass().getSimpleName());
+		}
+
+		Stack<Class<? extends Model>> models = new Stack<>();
+		models.push(getModelClass());
+
+		Set<String> modelNamesProcessed = new HashSet<>();
+		while (!models.isEmpty()){
+			Class<? extends Model> aChildModel = models.pop();
+			if (modelNamesProcessed.add(aChildModel.getSimpleName())){
+				if (templateModelNames.contains(aChildModel.getSimpleName())){
+					List<Class<? extends Model>> grandChildren = ModelReflector.instance(aChildModel).getChildModels();
+					grandChildren.forEach(aGrandChild->{
+						if (templateModelNames.contains(aGrandChild.getSimpleName())){
+							//A First level child included in templates.
+							childrenToBeConsidered.get(aChildModel).add(aGrandChild);
+						}
+					});
+					models.addAll(grandChildren);
+				}
+			}
+		}
+
+		return childrenToBeConsidered;
 	}
     
     private SequenceSet<String> indexedColumns = null;

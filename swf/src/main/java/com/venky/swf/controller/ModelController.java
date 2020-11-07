@@ -428,24 +428,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected Map<Class<? extends Model>,List<Class <? extends Model>>> getConsideredChildModels() {
-        Map<Class<? extends Model>,List<Class <? extends Model>>> map = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
-
-            @Override
-            protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
-                return new SequenceSet<>();
-            }
-        };
-        //bc.
-        List<Class<? extends Model>> childModels = getReflector().getChildModels();
-        Set<String> childModelNames = new HashSet<>();
-        childModels.forEach(m->childModelNames.add(m.getSimpleName()));
-        getIncludedModelFields().keySet().forEach(modelClass->{
-            if (childModelNames.contains(modelClass.getSimpleName())){
-                //A First level child included in templates.
-                map.get(getModelClass()).add(modelClass);
-            }
-        });
-        return map;
+        return getReflector().getChildrenToBeConsidered(getIncludedModelFields());
     }
 
     protected Set<Class<? extends Model>> getIgnoredParentModels() {
