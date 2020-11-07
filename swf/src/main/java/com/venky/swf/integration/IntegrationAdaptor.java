@@ -141,7 +141,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 
 		List<Class<? extends Model>> childModels = modelReflector.getChildModels();
 		Set<String> childModelNames = new HashSet<>();
-		childModels.forEach(m->childModelNames.add(m.getSimpleName()));
+		childModels.forEach(cm->childModelNames.add(cm.getSimpleName()));
 
 		templateFields.keySet().forEach(modelClass->{
 			if (childModelNames.contains(modelClass.getSimpleName())){
