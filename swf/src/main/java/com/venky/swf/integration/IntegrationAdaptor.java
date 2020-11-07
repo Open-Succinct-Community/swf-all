@@ -14,6 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceSet;
@@ -131,7 +133,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 							   Map<Class<? extends Model>,List<String>> templateFields) {
 
 
-		final Map<Class<? extends Model>,List<Class <? extends Model>>> map = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
+		final Map<Class<? extends Model>,List<Class <? extends Model>>> childrenToBeConsidered = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
 
 			@Override
 			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
@@ -139,18 +141,35 @@ public class IntegrationAdaptor<M extends Model,T> {
 			}
 		};
 
-		List<Class<? extends Model>> childModels = modelReflector.getChildModels();
-		Set<String> childModelNames = new HashSet<>();
-		childModels.forEach(cm->childModelNames.add(cm.getSimpleName()));
+		Set<String> templateModelNames = new HashSet<>(templateFields.keySet().stream().map(tm->tm.getSimpleName()).collect(Collectors.toSet()));
 
-		templateFields.keySet().forEach(modelClass->{
-			if (childModelNames.contains(modelClass.getSimpleName())){
-				//A First level child included in templates.
-				map.get(modelReflector.getModelClass()).add(modelClass);
+		if (!templateModelNames.contains(modelReflector.getModelClass().getSimpleName())){
+			templateFields.put(modelReflector.getModelClass(),includeFields);
+			templateModelNames.add(modelReflector.getModelClass().getSimpleName());
+		}
+
+		Stack<Class<? extends Model>> models = new Stack<>();
+		models.push(modelReflector.getModelClass());
+
+		Set<String> modelNamesProcessed = new HashSet<>();
+		while (!models.isEmpty()){
+			Class<? extends Model> aChildModel = models.pop();
+			if (modelNamesProcessed.add(aChildModel.getSimpleName())){
+				if (templateModelNames.contains(aChildModel.getSimpleName())){
+					List<Class<? extends Model>> grandChildren = ModelReflector.instance(aChildModel).getChildModels();
+					grandChildren.forEach(aGrandChild->{
+						if (templateModelNames.contains(aGrandChild.getSimpleName())){
+							//A First level child included in templates.
+							childrenToBeConsidered.get(aChildModel).add(aGrandChild);
+						}
+					});
+					models.addAll(grandChildren);
+				}
 			}
-		});
+		}
 
-		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,map,templateFields);
+
+		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,childrenToBeConsidered,templateFields);
 	}
 	public View createResponse(Path path, M m, boolean rootElementRequiresName,
 							   List<String> includeFields,
