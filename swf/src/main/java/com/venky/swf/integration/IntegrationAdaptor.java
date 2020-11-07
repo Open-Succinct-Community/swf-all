@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerUtils;
@@ -128,14 +129,28 @@ public class IntegrationAdaptor<M extends Model,T> {
 							   List<String> includeFields,
 							   Set<Class<? extends Model>> ignoreParents,
 							   Map<Class<? extends Model>,List<String>> templateFields) {
-		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,
-				new Cache<Class<? extends Model>, List<Class<? extends Model>>>(0,0) {
-					@Override
-					protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
-						return new ArrayList<>();
-					}
-				},
-				templateFields);
+
+
+		final Map<Class<? extends Model>,List<Class <? extends Model>>> map = new Cache<Class<? extends Model>,List<Class <? extends Model>>>(0,0){
+
+			@Override
+			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
+				return new SequenceSet<>();
+			}
+		};
+
+		List<Class<? extends Model>> childModels = modelReflector.getChildModels();
+		Set<String> childModelNames = new HashSet<>();
+		childModels.forEach(m->childModelNames.add(m.getSimpleName()));
+
+		templateFields.keySet().forEach(modelClass->{
+			if (childModelNames.contains(modelClass.getSimpleName())){
+				//A First level child included in templates.
+				map.get(modelReflector.getModelClass()).add(modelClass);
+			}
+		});
+
+		return createResponse(path, m, rootElementRequiresName, includeFields, ignoreParents,map,templateFields);
 	}
 	public View createResponse(Path path, M m, boolean rootElementRequiresName,
 							   List<String> includeFields,
