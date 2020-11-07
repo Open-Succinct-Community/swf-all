@@ -144,7 +144,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 		Set<String> templateModelNames = new HashSet<>(templateFields.keySet().stream().map(tm->tm.getSimpleName()).collect(Collectors.toSet()));
 
 		if (!templateModelNames.contains(modelReflector.getModelClass().getSimpleName())){
-			templateFields.put(modelReflector.getModelClass(),includeFields==null? modelReflector.getVisibleFields(new ArrayList<>("ID")) : includeFields);
+			templateFields.put(modelReflector.getModelClass(),includeFields==null? modelReflector.getVisibleFields(Arrays.asList("ID")) : includeFields);
 			templateModelNames.add(modelReflector.getModelClass().getSimpleName());
 		}
 
