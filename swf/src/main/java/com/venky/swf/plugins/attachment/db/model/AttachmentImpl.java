@@ -16,4 +16,8 @@ public class AttachmentImpl extends ModelImpl<Attachment> {
             return "/attachments/view/" + getProxy().getId();
         }
     }
+
+    public void setAttachmentUrl(String url){
+        
+    }
 }
