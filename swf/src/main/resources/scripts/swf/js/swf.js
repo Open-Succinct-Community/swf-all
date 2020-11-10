@@ -310,7 +310,7 @@ function api() {
         get : function(qryJson){
             let self = this;
             let params = qryJson ? qryJson : {} ;
-            return self.http().get(self.url(),{ params : params, "headers": self.headers() }).then(function(response){
+            return self.http().get(self.url(),{ data : {} , params : params, "headers": self.headers() }).then(function(response){
                 return response.data;
             });
         },
