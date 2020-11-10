@@ -29,11 +29,11 @@ public interface Attachment extends Model{
 		}
 	}
 
-	@HIDDEN
 	public InputStream getAttachment();
 	public void setAttachment(InputStream attachment);
 
 	@IS_VIRTUAL
+	@PROTECTION(Kind.NON_EDITABLE)
 	public String getAttachmentUrl();
 	public void setAttachmentUrl(String url);
 
