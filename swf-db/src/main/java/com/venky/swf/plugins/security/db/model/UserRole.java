@@ -8,7 +8,6 @@ import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 
-@CONFIGURATION
 @MENU("Admin")
 public interface UserRole extends Model {
 	@PARTICIPANT
