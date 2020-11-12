@@ -337,7 +337,9 @@ function loadLocation(){
             Lockr.set("Location", location);
             resolve();
         }, function (error) {
-            Lockr.set("Location", {});
+            if (!Lockr.get("Location")){
+                Lockr.set("Location", {});
+            }
             switch (error.code) {
                 case error.PERMISSION_DENIED:
                     console.error("User denied the request for Geolocation.");

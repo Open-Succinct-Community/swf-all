@@ -168,21 +168,26 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public int getMaxListRecords() {
-        return MAX_LIST_RECORDS;
+        Map<String, Object> formData = getFormFields();
+        int maxRecords = MAX_LIST_RECORDS;
+        if (!formData.isEmpty()) {
+            Object mr = formData.get("maxRecords");
+            if (!ObjectUtil.isVoid(mr)) {
+                maxRecords = Integer.parseInt(StringUtil.valueOf(mr));
+            }
+        }
+
+        return maxRecords;
     }
 
     public View search() {
-        Map<String, Object> formData = new HashMap<String, Object>();
+        Map<String, Object> formData = new HashMap<>();
         formData.putAll(getFormFields());
         String q = "";
         int maxRecords = getMaxListRecords();
         if (!formData.isEmpty()) {
             rewriteQuery(formData);
             q = StringUtil.valueOf(formData.get("q"));
-            Object mr = formData.get("maxRecords");
-            if (!ObjectUtil.isVoid(mr)) {
-                maxRecords = Integer.parseInt(StringUtil.valueOf(mr));
-            }
         }
         return search(q, maxRecords);
     }
@@ -208,7 +213,7 @@ public class ModelController<M extends Model> extends Controller {
             if (!ids.isEmpty()) {
                 Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
-                        .add(getPath().getWhereClause())).orderBy(getReflector().getOrderBy());
+                        .add(getWhereClause())).orderBy(getReflector().getOrderBy());
                 List<M> records = sel.execute(getModelClass(), maxRecords, getFilter());
                 return list(records, maxRecords == 0 || records.size() < maxRecords);
             } else {
@@ -266,10 +271,10 @@ public class ModelController<M extends Model> extends Controller {
         Select.ResultFilter<M> filter = getFilter();
         if (!reflector.isVirtual()) {
             Select q = new Select(getColumnsToList()).from(modelClass);
-            records = q.where(getPath().getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords, filter);
+            records = q.where(getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass, maxRecords, filter);
         } else {
             records = getChildrenFromParent();
-            Expression where = getPath().getWhereClause();
+            Expression where = getWhereClause();
             Iterator<M> i = records.iterator();
             while (i.hasNext()) {
                 M record = i.next();
@@ -282,6 +287,12 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         return list(records, maxRecords == 0 || records.size() < maxRecords);
+    }
+
+    protected Expression getWhereClause(){
+        Expression expression = new Expression(getReflector().getPool(),Conjunction.AND);
+        expression.add(getPath().getWhereClause());
+        return expression;
     }
 
     private String[] getColumnsToList() {
@@ -593,7 +604,7 @@ public class ModelController<M extends Model> extends Controller {
 
     public View truncate() {
         Select q = new Select().from(modelClass);
-        List<M> records = q.where(getPath().getWhereClause()).execute(modelClass, new Select.AccessibilityFilter<M>());
+        List<M> records = q.where(getWhereClause()).execute(modelClass, new Select.AccessibilityFilter<M>());
         for (M record : records) {
             if (getPath().canAccessControllerAction("destroy", String.valueOf(record.getId()))) {
                 record.destroy();
