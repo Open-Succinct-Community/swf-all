@@ -169,6 +169,7 @@ public class MailerTask implements Task{
 					attachment.save();
 				}
 				mailAttachment.setAttachmentId(attachment.getId());
+				mailAttachment = Database.getTable(MailAttachment.class).getRefreshed(mailAttachment);
 				mailAttachment.save();
 			}
 		}

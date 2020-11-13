@@ -46,10 +46,15 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
             String url = null;
             if (generateFresh) {
                 url = "https://control.msg91.com/api/sendotp.php";
+                String templateId = Config.instance().getProperty("swf.msg91.otp.template.id");
                 params.put("otp_expiry", Config.instance().getIntProperty("swf.msg91.otp.expiry", 10)); //10 minutes
                 params.put("sender", senderId);
                 params.put("otp",userPhone.getLastOtp());
                 params.put("otp_length", userPhone.getLastOtp().length());
+
+                if (!ObjectUtil.isVoid(templateId)){
+                    params.put("template_id", templateId);
+                }
             } else {
                 url = "https://control.msg91.com/api/retryotp.php";
             }
