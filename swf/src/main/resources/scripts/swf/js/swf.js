@@ -268,11 +268,12 @@ function api() {
                 return _parameter;
             }
             if (p.constructor == new FormData().constructor){
+                /*
                 var object = {};
                 p.forEach(function(value, key){
                     object[key] = value;
-                });
-                _parameter = object;
+                });*/
+                _parameter = p;
             }else {
                 _parameter = p;
             }
@@ -309,7 +310,7 @@ function api() {
         get : function(qryJson){
             let self = this;
             let params = qryJson ? qryJson : {} ;
-            return self.http().get(self.url(),{ data : params, "headers": self.headers() }).then(function(response){
+            return self.http().get(self.url(),{ data : {} , params : params, "headers": self.headers() }).then(function(response){
                 return response.data;
             });
         },
@@ -336,7 +337,9 @@ function loadLocation(){
             Lockr.set("Location", location);
             resolve();
         }, function (error) {
-            Lockr.set("Location", {});
+            if (!Lockr.get("Location")){
+                Lockr.set("Location", {});
+            }
             switch (error.code) {
                 case error.PERMISSION_DENIED:
                     console.error("User denied the request for Geolocation.");

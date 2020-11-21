@@ -1,7 +1,12 @@
 package com.venky.swf.plugins.attachment.db.model;
 
+import java.io.InputStream;
+import java.util.List;
+
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.model.EXPORTABLE;

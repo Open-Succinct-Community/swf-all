@@ -74,4 +74,21 @@ public class BoundingBox {
         List<T> objects = select.execute(modelClass,limit);
         return objects;
     }
+
+    public <T extends GeoLocation & Model> Expression getWhereClause(Class<T> modelClass){
+        ModelReflector<T> ref = ModelReflector.instance(modelClass) ;
+
+
+        Expression where = new Expression(ref.getPool(),Conjunction.AND);
+        String LAT = ref.getColumnDescriptor("LAT").getName();
+        String LNG = ref.getColumnDescriptor("LNG").getName();
+
+
+        where.add(new Expression(ref.getPool(),LAT, Operator.GE, min.getLat()));
+        where.add(new Expression(ref.getPool(),LAT, Operator.LT, max.getLat()));
+        where.add(new Expression(ref.getPool(),LNG, Operator.GE, min.getLng()));
+        where.add(new Expression(ref.getPool(),LNG, Operator.LT, max.getLng()));
+
+        return where;
+    }
 }

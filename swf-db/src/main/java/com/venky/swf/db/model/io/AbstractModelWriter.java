@@ -1,5 +1,17 @@
 package com.venky.swf.db.model.io;
 
+import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerUtils;
+import com.venky.core.string.StringUtil;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,27 +19,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.venky.cache.Cache;
-import com.venky.core.collections.SequenceSet;
-import com.venky.core.log.SWFLogger;
-import com.venky.core.log.TimerStatistics.Timer;
-import com.venky.core.log.TimerUtils;
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.integration.FormatHelper;
-import com.venky.swf.routing.Config;
 
 public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> implements ModelWriter<M, T>{
 
@@ -49,21 +47,14 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	private static <R extends Model> List<String> getFields(ModelReflector<R> reflector, List<String> includeFields) {
 		List<String> fields = includeFields;
 		if (fields == null){
-			fields = reflector.getFields();
-			Iterator<String> fi = fields.iterator();
-			while (fi.hasNext()){
-				String field = fi.next();
-				if (reflector.isFieldHidden(field) && !"ID".equalsIgnoreCase(field)){
-					fi.remove();
-				}
-			}
+			fields = reflector.getVisibleFields(Arrays.asList("ID"));
 		}
 		return fields;
 	}
 	
 
 	public void write(List<M> records, OutputStream os,List<String> fields) throws IOException {
-		Map<Class<? extends Model> , List<String>> mapFields = new HashMap<Class<? extends Model>, List<String>>();
+		Map<Class<? extends Model> , List<String>> mapFields = new HashMap<>();
 		Set<Class<? extends Model>> parentsWritten = new HashSet<>();
 		write (records,os,fields,parentsWritten,mapFields);
 	}
@@ -85,13 +76,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	public void write(M record,T into, List<String> fields){
 		write(record,into,fields,new HashSet<>(), new HashMap<>());
 	}
-	private boolean isParentIgnored(Class<? extends Model> parent, Set<Class<? extends Model>> ignoredParents) {
-		for (Class<? extends Model> ignoredParent : ignoredParents) {
-			if (ObjectUtil.equals(ignoredParent.getSimpleName(),parent.getSimpleName())) {
-				return true;
-			}
-		}
-		return false;
+	private boolean isParentIgnored(Class<? extends Model> parent, Set<String> ignoredParents) {
+		return ignoredParents.contains(parent.getSimpleName());
 	}
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public Map<Class<? extends Model> , List<Class<? extends Model>>> getChildrenToConsider(){
@@ -112,8 +98,44 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		write(record,into,fields,parentsAlreadyConsidered,getChildrenToConsider(),templateFields);
 	}
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
-					  Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChilden,
+					  Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChildren,
 					  Map<Class<? extends Model>, List<String>> templateFields) {
+
+		Set<String> simplifiedParentsConsidered = new HashSet<>();
+		parentsAlreadyConsidered.forEach(c->simplifiedParentsConsidered.add(c.getSimpleName()));
+
+		Map<String,List<String>> simplifiedConsiderChildren = new Cache<String, List<String>>() {
+			@Override
+			protected List<String> getValue(String s) {
+				return new SequenceSet<>();
+			}
+		};
+		considerChildren.forEach((m,l)->{
+			for (Class<? extends Model> child: l){
+				simplifiedConsiderChildren.get(m.getSimpleName()).add(child.getSimpleName());
+			}
+		});
+		Map<String,List<String>> simplifiedTemplateFields = new Cache<String, List<String>>() {
+			@Override
+			protected List<String> getValue(String s) {
+				return new SequenceSet<>();
+			}
+		};
+
+		templateFields.forEach((m,fl)->{
+			for (String f: fl){
+				simplifiedTemplateFields.get(m.getSimpleName()).add(f);
+			}
+		});
+		writeSimplified(record,into,fields,simplifiedParentsConsidered,simplifiedConsiderChildren,simplifiedTemplateFields);
+
+	}
+	public void writeSimplified(M record,T into, List<String> fields,
+					  Set<String> parentsAlreadyConsidered ,
+					  Map<String, List<String>> considerChildren,
+					  Map<String, List<String>> templateFields) {
+
+
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
 		for (String field: getFields(fields)){
@@ -129,11 +151,11 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				if (!isParentIgnored(aParent,parentsAlreadyConsidered) || fields != null) {
 					String refElementName = referredModelGetter.getName().substring("get".length());
 					T refElement = formatHelper.createElementAttribute(refElementName);
-					parentsAlreadyConsidered.add(aParent);
+					parentsAlreadyConsidered.add(aParent.getSimpleName());
 					try {
-						write(aParent, ((Number) value).intValue(), refElement, parentsAlreadyConsidered, considerChilden,templateFields);
+						write(aParent, ((Number) value).intValue(), refElement, parentsAlreadyConsidered, considerChildren,templateFields);
 					}finally {
-						parentsAlreadyConsidered.remove(aParent);
+						parentsAlreadyConsidered.remove(aParent.getSimpleName());
 					}
 				}
 			}else {
@@ -154,35 +176,28 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 		TimerUtils.time(cat,"Writing all Children Objects",()->{
 			if (!templateFields.isEmpty()){
-				parentsAlreadyConsidered.add(ref.getModelClass());
+				parentsAlreadyConsidered.add(ref.getModelClass().getSimpleName());
 				try {
 					List<Method> childGetters = ref.getChildGetters();
 					for (Method childGetter : childGetters) {
-						write(formatHelper,record,childGetter,parentsAlreadyConsidered,considerChilden,templateFields);
+						write(formatHelper,record,childGetter,parentsAlreadyConsidered,considerChildren,templateFields);
 					}
 				}finally {
-					parentsAlreadyConsidered.remove(ref.getModelClass());
+					parentsAlreadyConsidered.remove(ref.getModelClass().getSimpleName());
 				}
 			}
 			return  true;
 		});
 	}
-	private <R extends  Model> boolean containsChild(Class<R> childModelClass, Collection<Class<? extends  Model>> considerChilden){
-		for (Class<? extends Model> possibleChildClass : ModelReflector.instance(childModelClass).getModelClasses()){
-			if (possibleChildClass.getSimpleName().equals(childModelClass.getSimpleName())) {
-				if (considerChilden.contains(possibleChildClass)){
-					return true;
-				}
-			}
-		}
-		return false;
+	private <R extends  Model> boolean containsChild(Class<R> childModelClass, Collection<String> considerChildren){
+		return considerChildren != null && considerChildren.contains(childModelClass.getSimpleName());
 	}
-	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<Class<? extends Model>> parentsWritten ,
-										 Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChilden,
-										 Map<Class<? extends Model>, List<String>> templateFields){
+	private <R extends Model> void write(FormatHelper<T> formatHelper, M record, Method childGetter, Set<String> parentsWritten ,
+										 Map<String, List<String>> considerChildren,
+										 Map<String, List<String>> templateFields){
 		@SuppressWarnings("unchecked")
 		Class<R> childModelClass = (Class<R>) getReflector().getChildModelClass(childGetter);
-		if (!containsChild(childModelClass,considerChilden.get(getBeanClass()))){
+		if (!containsChild(childModelClass,considerChildren.get(getBeanClass().getSimpleName()))){
 			return;
 		}
 
@@ -195,29 +210,28 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			@SuppressWarnings("unchecked")
 			List<R> children = (List<R>)childGetter.invoke(record);
 			List<String> fields = new ArrayList<>();
-			for (Class<? extends Model> possibleChildClass : ModelReflector.instance(childModelClass).getModelClasses()) {
-				List<String> f = templateFields.get(possibleChildClass);
-				if (f != null) {
-					fields.addAll(f);
-				}
+			List<String> f = templateFields.get(childModelClass.getSimpleName());
+			if (f != null) {
+				fields.addAll(f);
 			}
 			if (fields.isEmpty()){
 				fields = null;
 			}
+			Map<String,List<String>> newConsiderChilden = new HashMap<>(considerChildren);
+			newConsiderChilden.remove(getBeanClass().getSimpleName()); //Don't print children of parent via children. !! Duplication.
 			for (R child : children) {
 				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
-				childWriter.write(child, childElement, fields, parentsWritten, templateFields);
+				childWriter.writeSimplified(child, childElement, fields, parentsWritten, newConsiderChilden, templateFields);
 			}
-
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}
 		
 	}
 	
-	private <R extends Model> void write(Class<R> referredModelClass, long id, T referredModelElement,  Set<Class<? extends Model>> parentsAlreadyConsidered,
-										 Map<Class<? extends Model>,List<Class<? extends Model>>> considerChildren,
-										 Map<Class<? extends Model>, List<String>> templateFields){
+	private <R extends Model> void write(Class<R> referredModelClass, long id, T referredModelElement,  Set<String> parentsAlreadyConsidered,
+										 Map<String, List<String>> considerChildren,
+										 Map<String, List<String>> templateFields){
 		Class<T> formatClass = getFormatClass();
 		ModelWriter<R,T> writer = ModelIOFactory.getWriter(referredModelClass,formatClass);
 		R referredModel = Database.getTable(referredModelClass).get(id);
@@ -227,37 +241,39 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		ModelReflector<R> referredModelReflector = ModelReflector.instance(referredModelClass);
 
 		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
-		for (Iterator<String> fi = parentFieldsToAdd.iterator(); fi.hasNext();){
-			String f = fi.next();
-			if (referredModelReflector.isFieldHidden(f)){
-				fi.remove();
-			}
-		}
+		parentFieldsToAdd.removeIf(referredModelReflector::isFieldHidden);
 		parentFieldsToAdd.add("ID");
 
 		if (templateFields != null){
 			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();
-			for (Class<? extends  Model> clazz : referredModelReflector.getModelClasses()){
-				if (templateFields.get(clazz) != null) {
-					//Never add partne class with null template.
-					parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(clazz)));
-				}
+			if (templateFields.get(referredModelClass.getSimpleName()) != null) {
+				//Never add parent class with null template.
+				parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(referredModelClass.getSimpleName())));
 			}
 			if (!parentFieldsToAddBasedOnTemplate.isEmpty()){
 				parentFieldsToAdd.clear();
 				parentFieldsToAdd.addAll(parentFieldsToAddBasedOnTemplate);
 			}
         }
-        List<Class<? extends Model>> childModels = referredModelReflector.getChildModels();
-		Map<Class<? extends  Model>, List<String>> newTemplateFields = null;
+		//* Which parent's children to include */
+        List<String> newChildModelsToConsider = new SequenceSet<>();
+		if (considerChildren != null){
+			newChildModelsToConsider = considerChildren.getOrDefault(referredModelClass.getSimpleName(),newChildModelsToConsider);
+		}
+
+		List<Class<? extends Model>> childModels = referredModelReflector.getChildModels();
+		Map<String, List<String>> newTemplateFields = null;
 		if (templateFields != null){
 			newTemplateFields = new HashMap<>(templateFields);
 			for (Class<? extends  Model> childModelClass : childModels){
-				newTemplateFields.remove(childModelClass);
+				boolean keepChildModelClassInTemplate = newChildModelsToConsider.contains(childModelClass.getSimpleName());
+				if (!keepChildModelClassInTemplate){
+					newTemplateFields.remove(childModelClass.getSimpleName());
+				}
 			}
 		}
 
-		writer.write(referredModel , referredModelElement, parentFieldsToAdd, parentsAlreadyConsidered, considerChildren, newTemplateFields);
+		writer.writeSimplified(referredModel , referredModelElement, parentFieldsToAdd, parentsAlreadyConsidered, considerChildren, newTemplateFields);
 	}
 	
 }
