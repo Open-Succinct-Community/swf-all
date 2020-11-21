@@ -104,26 +104,6 @@ public class TemplateEngine {
         cfg.setSharedVariable("to_words",new ToWords());
 
     }
-    static {
-        initializeAndroid();
-    }
-    private static void initializeAndroid(){
-        try {
-            String file = Config.instance().getProperty("push.service.account.json");
-            String url = Config.instance().getProperty("push.service.database.url");
-            if (ObjectUtil.isVoid(file)){
-                return;
-            }
-
-            InputStream is = TemplateEngine.class.getResourceAsStream(file);
-            FirebaseOptions options = FirebaseOptions.builder().setCredentials(GoogleCredentials.fromStream(is)).setDatabaseUrl(url).build();
-            FirebaseApp.initializeApp(options);
-
-        }catch (Exception ex){
-
-        }
-
-    }
     public String publish(String templateName, Map<String,Object> root) {
         StringWriter writer = new StringWriter();
         Config.instance().getLogger(getClass().getName()).info("Data for " + templateName +":" + root.toString());
@@ -416,12 +396,37 @@ public class TemplateEngine {
             }
 
         }
+        boolean fbinitialized = false;
+        private void initializeAndroid(){
+            if (fbinitialized){
+                return;
+            }
+            try {
+                String file = Config.instance().getProperty("push.service.account.json");
+                String url = Config.instance().getProperty("push.service.database.url");
+                if (ObjectUtil.isVoid(file)){
+                    return;
+                }
+
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.getApplicationDefault())
+                        .setDatabaseUrl(url).build();
+
+                FirebaseApp.initializeApp(options);
+                fbinitialized = true;
+            }catch (Exception ex){
+                throw new RuntimeException(ex);
+            }
+
+        }
 
         private void pushAndroid(Device device){
+            initializeAndroid();
             String token = device.getDeviceId();
             Builder messageBuilder = Message.builder();
-            for (Object key: payload.keySet()){
-                messageBuilder.putData(key.toString(),payload.get(key).toString());
+            JSONObject notification = (JSONObject)payload.get("notification");
+            for (Object key: notification.keySet()){
+                messageBuilder.putData(key.toString(),notification.get(key).toString());
             }
             messageBuilder.setToken(token);
             Message message = messageBuilder.build();
