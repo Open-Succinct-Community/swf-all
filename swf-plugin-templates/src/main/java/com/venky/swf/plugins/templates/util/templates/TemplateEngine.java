@@ -1,5 +1,12 @@
 package com.venky.swf.plugins.templates.util.templates;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.Message.Builder;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
@@ -37,6 +44,7 @@ import org.w3c.tidy.Tidy;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.security.KeyFactory;
@@ -94,6 +102,26 @@ public class TemplateEngine {
         cfg.setArithmeticEngine(engine);
         cfg.setCacheStorage(new NullCacheStorage()); //
         cfg.setSharedVariable("to_words",new ToWords());
+
+    }
+    static {
+        initializeAndroid();
+    }
+    private static void initializeAndroid(){
+        try {
+            String file = Config.instance().getProperty("push.service.account.json");
+            String url = Config.instance().getProperty("push.service.database.url");
+            if (ObjectUtil.isVoid(file)){
+                return;
+            }
+
+            InputStream is = TemplateEngine.class.getResourceAsStream(file);
+            FirebaseOptions options = FirebaseOptions.builder().setCredentials(GoogleCredentials.fromStream(is)).setDatabaseUrl(url).build();
+            FirebaseApp.initializeApp(options);
+
+        }catch (Exception ex){
+
+        }
 
     }
     public String publish(String templateName, Map<String,Object> root) {
@@ -350,11 +378,11 @@ public class TemplateEngine {
             this.payload = payload;
         }
 
-        @Override
-        public void execute() {
-            Device device = Database.getTable(Device.class).get(ModelReflector.instance(Device.class).getJdbcTypeHelper().
-                        getTypeRef(Long.class).getTypeConverter().valueOf(payload.get("to")));
+        private boolean isWebPush(Device device){
+            return (device.getDeviceId().startsWith("{"));
+        }
 
+        private void pushWeb(Device device){
             JSONObject subscriptionJson = (JSONObject)(JSONValue.parse(device.getDeviceId()));
             JSONObject keys = (JSONObject)subscriptionJson.get("keys");
 
@@ -386,6 +414,37 @@ public class TemplateEngine {
                 ex.add(e);
                 throw ex;
             }
+
+        }
+
+        private void pushAndroid(Device device){
+            String token = device.getDeviceId();
+            Builder messageBuilder = Message.builder();
+            for (Object key: payload.keySet()){
+                messageBuilder.putData(key.toString(),payload.get(key).toString());
+            }
+            messageBuilder.setToken(token);
+            Message message = messageBuilder.build();
+            String response = null;
+            try {
+                response = FirebaseMessaging.getInstance().send(message);
+                Config.instance().getLogger(getClass().getName()).info("Successfully sent message: "  + response);
+            } catch (FirebaseMessagingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void execute() {
+            Device device = Database.getTable(Device.class).get(ModelReflector.instance(Device.class).getJdbcTypeHelper().
+                        getTypeRef(Long.class).getTypeConverter().valueOf(payload.get("to")));
+
+            if (isWebPush(device)){
+                pushWeb(device);
+            }else {
+                pushAndroid(device);
+            }
+
 
         }
     }
