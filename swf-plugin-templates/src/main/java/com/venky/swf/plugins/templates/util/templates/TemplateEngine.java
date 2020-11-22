@@ -1,12 +1,14 @@
 package com.venky.swf.plugins.templates.util.templates;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Message.Builder;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
@@ -348,6 +350,29 @@ public class TemplateEngine {
             TaskManager.instance().executeAsync(new PushNotifier(payload));
         }
     }
+    static boolean fbinitialized = false;
+    private synchronized static void initializeAndroid(){
+        if (fbinitialized){
+            return;
+        }
+        try {
+            String file = Config.instance().getProperty("push.service.account.json");
+            String url = Config.instance().getProperty("push.service.database.url");
+            if (ObjectUtil.isVoid(file)){
+                return;
+            }
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setDatabaseUrl(url).build();
+
+            FirebaseApp.initializeApp(options);
+            fbinitialized = true;
+        }catch (Exception ex){
+            throw new RuntimeException(ex);
+        }
+
+    }
 
     public static class PushNotifier implements Task {
         JSONObject payload;
@@ -396,37 +421,20 @@ public class TemplateEngine {
             }
 
         }
-        boolean fbinitialized = false;
-        private void initializeAndroid(){
-            if (fbinitialized){
-                return;
-            }
-            try {
-                String file = Config.instance().getProperty("push.service.account.json");
-                String url = Config.instance().getProperty("push.service.database.url");
-                if (ObjectUtil.isVoid(file)){
-                    return;
-                }
-
-                FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.getApplicationDefault())
-                        .setDatabaseUrl(url).build();
-
-                FirebaseApp.initializeApp(options);
-                fbinitialized = true;
-            }catch (Exception ex){
-                throw new RuntimeException(ex);
-            }
-
-        }
 
         private void pushAndroid(Device device){
             initializeAndroid();
             String token = device.getDeviceId();
             Builder messageBuilder = Message.builder();
+
             JSONObject notification = (JSONObject)payload.get("notification");
-            for (Object key: notification.keySet()){
-                messageBuilder.putData(key.toString(),notification.get(key).toString());
+            JSONObject data = notification == null ? null : (JSONObject)notification.remove("data");
+            for (JSONObject object: new JSONObject[]{ notification , data }){
+                if (object != null) {
+                    for (Object key : object.keySet()) {
+                        messageBuilder.putData(key.toString(), object.get(key).toString());
+                    }
+                }
             }
             messageBuilder.setToken(token);
             Message message = messageBuilder.build();
@@ -435,7 +443,9 @@ public class TemplateEngine {
                 response = FirebaseMessaging.getInstance().send(message);
                 Config.instance().getLogger(getClass().getName()).info("Successfully sent message: "  + response);
             } catch (FirebaseMessagingException e) {
-                throw new RuntimeException(e);
+                if (e.getErrorCode().equals(ErrorCode.NOT_FOUND)){
+                    device.destroy();// Not subscribed any more.
+                }
             }
         }
 
@@ -443,6 +453,9 @@ public class TemplateEngine {
         public void execute() {
             Device device = Database.getTable(Device.class).get(ModelReflector.instance(Device.class).getJdbcTypeHelper().
                         getTypeRef(Long.class).getTypeConverter().valueOf(payload.get("to")));
+            if (device == null){
+                return;
+            }
 
             if (isWebPush(device)){
                 pushWeb(device);
