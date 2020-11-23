@@ -129,6 +129,7 @@ public class IndexManager {
         Bucket bucket = searcherReferenceCount.get(searcher);
         bucket.decrement();
         if (bucket.intValue() <= 0) {
+            searcherReferenceCount.remove(searcher);
             IndexSearcher currentSearcher = getIndexSearcher(tableName);
             if (currentSearcher != searcher) {
                 try {
