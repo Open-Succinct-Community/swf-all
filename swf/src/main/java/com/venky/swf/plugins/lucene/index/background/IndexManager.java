@@ -2,7 +2,9 @@ package com.venky.swf.plugins.lucene.index.background;
 
 import com.venky.cache.Cache;
 import com.venky.core.util.Bucket;
+import com.venky.core.util.ChangeListener;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
@@ -19,8 +21,10 @@ import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class IndexManager {
@@ -108,34 +112,37 @@ public class IndexManager {
         TaskManager.instance().executeAsync(tasks, false);
     }
 
-    private Cache<IndexSearcher, Bucket> searcherReferenceCount = new Cache<IndexSearcher, Bucket>() {
-        /**
-         *
-         */
-        private static final long serialVersionUID = -3704220332108717190L;
-
-        @Override
-        protected Bucket getValue(IndexSearcher k) {
-            return new Bucket();
-        }
-    };
+    private Map<IndexSearcher, Bucket> searcherReferenceCount = new HashMap<>();
 
     private void incRef(IndexSearcher searcher) {
-        Bucket bucket = searcherReferenceCount.get(searcher);
-        bucket.increment();
+        synchronized (searcherReferenceCount){
+            Bucket bucket = searcherReferenceCount.get(searcher);
+            if (bucket == null){
+                bucket = new Bucket();
+                searcherReferenceCount.put(searcher,bucket);
+            }
+            bucket.increment();
+        }
     }
 
     private void decRef(String tableName, IndexSearcher searcher) {
-        Bucket bucket = searcherReferenceCount.get(searcher);
-        bucket.decrement();
-        if (bucket.intValue() <= 0) {
-            searcherReferenceCount.remove(searcher);
-            IndexSearcher currentSearcher = getIndexSearcher(tableName);
-            if (currentSearcher != searcher) {
-                try {
-                    searcher.getIndexReader().close();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+        synchronized ( searcherReferenceCount) {
+            Bucket bucket = searcherReferenceCount.get(searcher);
+            if (bucket == null){
+                //Never Should come here.
+                bucket = new Bucket();
+                searcherReferenceCount.put(searcher,bucket);
+            }
+            bucket.decrement();
+            if (bucket.intValue() <= 0) {
+                searcherReferenceCount.remove(searcher);
+                IndexSearcher currentSearcher = getIndexSearcher(tableName);
+                if (currentSearcher != searcher) {
+                    try {
+                        searcher.getIndexReader().close();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             }
         }
