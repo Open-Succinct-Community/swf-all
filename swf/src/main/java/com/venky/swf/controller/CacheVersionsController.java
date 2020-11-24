@@ -9,6 +9,7 @@ import com.venky.swf.sql.Select;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -36,7 +37,7 @@ public class CacheVersionsController extends ModelController<CacheVersion> {
         if (getReturnIntegrationAdaptor() == null){
             return back();
         }else {
-            return getReturnIntegrationAdaptor().createResponse(getPath(),version);
+            return getReturnIntegrationAdaptor().createResponse(getPath(),version, Arrays.asList("VERSION_NUMBER","UPDATED_AT"));
         }
     }
 
