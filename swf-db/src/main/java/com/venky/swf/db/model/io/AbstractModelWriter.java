@@ -123,7 +123,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		};
 
 		templateFields.forEach((m,fl)->{
-			for (String f: fl){
+			for (String f: fl != null ? fl : ModelReflector.instance(m).getVisibleFields(Arrays.asList("ID"))){
 				simplifiedTemplateFields.get(m.getSimpleName()).add(f);
 			}
 		});
