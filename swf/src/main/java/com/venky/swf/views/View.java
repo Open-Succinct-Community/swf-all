@@ -26,6 +26,10 @@ public abstract class View implements _IView{
     	return false;
     }
 
+    public void setPath(_IPath path){
+        this.path = path;
+    }
+
     public void write() throws IOException {
         write(HttpServletResponse.SC_OK);
     }

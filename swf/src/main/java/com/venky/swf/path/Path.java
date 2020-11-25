@@ -752,6 +752,9 @@ public class Path implements _IPath{
         if (ObjectUtil.isVoid(apiprotocol)){
             apiprotocol = getRequest().getHeader("accept");
         }
+        if (ObjectUtil.isVoid(apiprotocol)){
+            return getProtocol();
+        }
         return Path.getProtocol(apiprotocol);
     }
     public static MimeType getProtocol(String apiprotocol){
@@ -839,15 +842,21 @@ public class Path implements _IPath{
                 }
                 Controller controller = createController();
                 try {
-                    if (m.getParameterTypes().length == 0 && parameter() == null){
-                        return (View)m.invoke(controller);
+                    View result = controller.getCachedResult();
+                    if (result != null){
+                        result.setPath(this);
+                        return result;
+                    }else if (m.getParameterTypes().length == 0 && parameter() == null){
+                        result = (View)m.invoke(controller);
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == String.class && parameter() != null){
-                        return (View)m.invoke(controller, parameter());
+                        result = (View)m.invoke(controller, parameter());
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == int.class && parameter() != null){
-                        return (View)m.invoke(controller, Integer.valueOf(parameter()));
+                        result = (View)m.invoke(controller, Integer.valueOf(parameter()));
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class && parameter() != null){
-                        return (View)m.invoke(controller, Long.valueOf(parameter()));
+                        result = (View)m.invoke(controller, Long.valueOf(parameter()));
                     }
+                    controller.setCachedResult(result);
+                    return result;
                 }catch(Exception e){
                     e.printStackTrace();
                     if (ex == null){

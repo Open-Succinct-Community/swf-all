@@ -7,7 +7,10 @@ package com.venky.swf.controller;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Extension;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
@@ -615,4 +618,27 @@ public class Controller {
         };
     }
 
+    public enum CacheOperation{
+        SET,
+        GET,
+        CLEAR,
+    }
+    public static final String GET_CACHED_RESULT_EXTENSION = "get.cached.result";
+    public View getCachedResult(){
+        ObjectHolder<View> holder = new ObjectHolder<>(null);
+        Registry.instance().callExtensions(GET_CACHED_RESULT_EXTENSION,CacheOperation.GET,getPath(),holder);
+        return holder.get();
+    }
+
+    public static final String SET_CACHED_RESULT_EXTENSION = "set.cached.result";
+    public void setCachedResult(View view){
+        ObjectHolder<View> holder = new ObjectHolder<>(view);
+        Registry.instance().callExtensions(SET_CACHED_RESULT_EXTENSION,CacheOperation.SET,getPath(),holder);
+    }
+
+    public static final String CLEAR_CACHED_RESULT_EXTENSION = "clear.cached.result";
+    public View clearCachedResult(){
+        Registry.instance().callExtensions(CLEAR_CACHED_RESULT_EXTENSION,CacheOperation.CLEAR,getPath());
+        return new BytesView(getPath(),"OK".getBytes());
+    }
 }

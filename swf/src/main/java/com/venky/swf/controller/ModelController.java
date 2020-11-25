@@ -180,6 +180,7 @@ public class ModelController<M extends Model> extends Controller {
         return maxRecords;
     }
 
+
     public View search() {
         Map<String, Object> formData = new HashMap<>();
         formData.putAll(getFormFields());
