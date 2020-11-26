@@ -47,7 +47,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	private static <R extends Model> List<String> getFields(ModelReflector<R> reflector, List<String> includeFields) {
 		List<String> fields = includeFields;
 		if (fields == null){
-			fields = reflector.getVisibleFields(Arrays.asList("ID"));
+			fields = reflector.getVisibleFields();
 		}
 		return fields;
 	}
@@ -123,7 +123,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		};
 
 		templateFields.forEach((m,fl)->{
-			for (String f: fl != null ? fl : ModelReflector.instance(m).getVisibleFields(Arrays.asList("ID"))){
+			for (String f: fl != null ? fl : ModelReflector.instance(m).getVisibleFields()){
 				simplifiedTemplateFields.get(m.getSimpleName()).add(f);
 			}
 		});
