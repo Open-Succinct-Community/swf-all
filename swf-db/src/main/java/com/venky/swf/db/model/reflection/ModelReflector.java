@@ -434,7 +434,7 @@ public class ModelReflector<M extends Model> {
     }
 
 	public List<String> getVisibleFields(){
-    	return getVisibleFields(Arrays.asList("ID","LOCK_ID"));
+    	return getVisibleFields(Arrays.asList("ID","LOCK_ID","CREATED_AT" ,"UPDATED_AT"));
 	}
     public List<String> getVisibleFields(List<String> additionalFields){
 		List<String> fields = getFields();
