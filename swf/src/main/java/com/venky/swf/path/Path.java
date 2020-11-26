@@ -761,7 +761,7 @@ public class Path implements _IPath{
         if (ObjectUtil.isVoid(apiprotocol)){
             return MimeType.TEXT_HTML;
         }
-        for (MimeType mt : MimeType.values()){
+        for (MimeType mt : new MimeType[]{MimeType.APPLICATION_JSON,MimeType.APPLICATION_JSON}){
             if (ObjectUtil.equals(mt.toString(),apiprotocol)){
                 return mt;
             }else {
