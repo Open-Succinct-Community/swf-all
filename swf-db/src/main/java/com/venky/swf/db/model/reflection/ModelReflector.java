@@ -434,12 +434,12 @@ public class ModelReflector<M extends Model> {
     }
 
 	public List<String> getVisibleFields(){
-    	return getVisibleFields(null);
+    	return getVisibleFields(Arrays.asList("ID","LOCK_ID"));
 	}
     public List<String> getVisibleFields(List<String> additionalFields){
 		List<String> fields = getFields();
 		Set<String> additionalFieldSet = new HashSet<>(additionalFields == null ? new ArrayList<>() : additionalFields);
-		fields.removeIf(f->isFieldHidden(f) && !additionalFieldSet.contains(f));
+		fields.removeIf( f->(isFieldHidden(f) || isHouseKeepingField(f))&& !additionalFieldSet.contains(f));
 		return fields;
 	}
 
