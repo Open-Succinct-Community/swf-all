@@ -104,9 +104,6 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);
 			for (Class<? extends Model> childModelClass : ref.getChildModels()){
-				if (!modelClassesInTemplate.contains(childModelClass.getSimpleName())) {
-					continue;
-				}
 				considerChildren.get(aModelClass).add(childModelClass);
 				modelClasses.push(childModelClass);
 			}
