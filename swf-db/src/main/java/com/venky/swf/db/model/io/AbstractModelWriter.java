@@ -19,13 +19,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> implements ModelWriter<M, T>{
 
@@ -60,7 +60,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	}
 	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<?extends Model>> parentsAlreadyConsidered,
 					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
-		write(records,os,fields,parentsAlreadyConsidered,getChildrenToConsider(),templateFields);
+		write(records,os,fields,parentsAlreadyConsidered,getChildrenToConsider(templateFields),templateFields);
 	}
 
 	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
@@ -80,22 +80,43 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		return ignoredParents.contains(parent.getSimpleName());
 	}
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
-	public Map<Class<? extends Model> , List<Class<? extends Model>>> getChildrenToConsider(){
+	public Map<Class<? extends Model> , List<Class<? extends Model>>> getChildrenToConsider(Map<Class<? extends Model>, List<String>> templateFields){
 		Map<Class<? extends Model>,List<Class<? extends Model>>> considerChildren = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
 			@Override
 			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
 				return new ArrayList<>();
 			}
 		};
-		for (Class<? extends Model> childModelClass : getReflector().getChildModels()){
-			considerChildren.get(getBeanClass()).add(childModelClass);
+
+		Set<String> modelClassesInTemplate = new HashSet<>();
+		if (templateFields != null){
+			for (Class<? extends Model> aClass : templateFields.keySet()) {
+				modelClassesInTemplate.add(aClass.getSimpleName());
+			}
+		}
+
+		Stack<Class<? extends Model>> modelClasses = new Stack<>();
+		modelClasses.push(getBeanClass());
+		while (!modelClasses.isEmpty()){
+			Class<? extends Model> aModelClass = modelClasses.pop();
+			if (considerChildren.containsKey(aModelClass)){
+				continue;
+			}
+			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);
+			for (Class<? extends Model> childModelClass : ref.getChildModels()){
+				if (!modelClassesInTemplate.contains(childModelClass.getSimpleName())) {
+					continue;
+				}
+				considerChildren.get(aModelClass).add(childModelClass);
+				modelClasses.push(childModelClass);
+			}
 		}
 		return  considerChildren;
 
 	}
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered , Map<Class<? extends Model>,List<String>> templateFields) {
 		//Consider first level children.
-		write(record,into,fields,parentsAlreadyConsidered,getChildrenToConsider(),templateFields);
+		write(record,into,fields,parentsAlreadyConsidered,getChildrenToConsider(templateFields),templateFields);
 	}
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
 					  Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChildren,
