@@ -89,6 +89,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		};
 
 		Set<String> modelClassesInTemplate = new HashSet<>();
+		modelClassesInTemplate.add(getBeanClass().getSimpleName());
 		if (templateFields != null){
 			for (Class<? extends Model> aClass : templateFields.keySet()) {
 				modelClassesInTemplate.add(aClass.getSimpleName());
@@ -104,8 +105,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);
 			for (Class<? extends Model> childModelClass : ref.getChildModels()){
-				considerChildren.get(aModelClass).add(childModelClass);
 				if (modelClassesInTemplate.contains(childModelClass.getSimpleName())){
+					considerChildren.get(aModelClass).add(childModelClass);
 					modelClasses.push(childModelClass);
 				}
 			}
