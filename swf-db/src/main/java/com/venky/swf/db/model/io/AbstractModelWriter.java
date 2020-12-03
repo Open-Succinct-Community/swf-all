@@ -88,8 +88,6 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			}
 		};
 
-		Set<String> excludeModelsFromExploringChildren = new HashSet<>();
-		excludeModelsFromExploringChildren.add("User");
 
 		Set<String> modelClassesInTemplate = new HashSet<>();
 		modelClassesInTemplate.add(getBeanClass().getSimpleName());
@@ -103,7 +101,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		modelClasses.push(getBeanClass());
 		while (!modelClasses.isEmpty()){
 			Class<? extends Model> aModelClass = modelClasses.pop();
-			if (considerChildren.containsKey(aModelClass) || excludeModelsFromExploringChildren.contains(aModelClass.getSimpleName())){
+			if (considerChildren.containsKey(aModelClass)){
 				continue;
 			}
 			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);

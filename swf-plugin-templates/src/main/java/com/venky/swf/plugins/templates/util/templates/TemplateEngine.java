@@ -219,7 +219,7 @@ public class TemplateEngine {
         }
         return root;
     }
-    private JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap){
+    public JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap){
         JSONObject into = new JSONObject();
         JSONModelWriter<Model> modelJSONModelWriter = new JSONModelWriter<>(entity.getReflector().getModelClass());
         modelJSONModelWriter.write(entity,into,entityFieldMap == null ? null : entityFieldMap.get(entity.getReflector().getModelClass()), new HashSet<>(),
