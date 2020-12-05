@@ -384,16 +384,18 @@ public class TemplateEngine {
         }
 
         private boolean isWebPush(Device device){
-            return (device.getDeviceId().startsWith("{"));
+            return device.getSubscriptionJson().containsKey("endpoint");
         }
 
         private void pushWeb(Device device){
-            JSONObject subscriptionJson = (JSONObject)(JSONValue.parse(device.getDeviceId()));
-            JSONObject keys = (JSONObject)subscriptionJson.get("keys");
+            JSONObject subscriptionJson = device.getSubscriptionJson();
 
             Subscription subscription = new Subscription();
-            subscription.setAuth(keys.get("auth").toString());
-            subscription.setKey(keys.get("p256dh").toString());
+            {
+                JSONObject keys = (JSONObject) subscriptionJson.get("keys");
+                subscription.setAuth(keys.get("auth").toString());
+                subscription.setKey(keys.get("p256dh").toString());
+            }
             subscription.setEndpoint(subscriptionJson.get("endpoint").toString());
 
 
@@ -424,7 +426,8 @@ public class TemplateEngine {
 
         private void pushAndroid(Device device){
             initializeAndroid();
-            String token = device.getDeviceId();
+            JSONObject subscriptionJson = device.getSubscriptionJson();
+            String token  = (String)subscriptionJson.get("token");
             Builder messageBuilder = Message.builder();
 
             JSONObject notification = (JSONObject)payload.get("notification");
