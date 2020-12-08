@@ -21,7 +21,7 @@ public interface Device extends Model {
     public User getUser();
 
     @UNIQUE_KEY
-    @COLUMN_SIZE(512)
+    @COLUMN_SIZE(2048)
     public String getDeviceId();
     public void setDeviceId(String id);
 
