@@ -659,7 +659,7 @@ public class Path implements _IPath{
         if (getProtocol() != MimeType.TEXT_HTML) {
             adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
         }
-        autoInvalidate = adaptor != null || !ObjectUtil.isVoid(getHeader("ApiKey"));
+        autoInvalidate = ( adaptor != null && !Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getHeader("KeepAlive")) ) || !ObjectUtil.isVoid(getHeader("ApiKey"));
         if (user == null){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
                 String username = null;
