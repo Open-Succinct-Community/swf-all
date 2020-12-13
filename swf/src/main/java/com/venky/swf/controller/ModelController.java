@@ -792,7 +792,7 @@ public class ModelController<M extends Model> extends Controller {
                         return clone(record.getId());
                     } else if (buttonName.equals("_SUBMIT_NO_MORE") && getPath().canAccessControllerAction("show", String.valueOf(record.getId())) && !record.getReflector().getChildModels(false, true).isEmpty()) {
                         //May want to add children
-                        return new RedirectorView(getPath(), "show/" + record.getId());
+                        return new ForwardedView(getPath(), "show/" + record.getId());
                     }
                 }
             } catch (RuntimeException ex) {

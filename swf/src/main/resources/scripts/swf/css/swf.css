@@ -65,6 +65,7 @@ p#msg {
   color: white !important;
   padding: 5px 0;
   margin-top: 10px;
+  z-index:10;
 }
 .tabs > .select.form-control {
   display: none;

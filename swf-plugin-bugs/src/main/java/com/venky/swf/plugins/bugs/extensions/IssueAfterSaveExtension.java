@@ -32,6 +32,7 @@ public class IssueAfterSaveExtension extends AfterModelSaveExtension<Issue>{
 				note.setAttachment(model.getAttachment());
 				note.setAttachmentContentName(model.getAttachmentContentName());
 				note.setAttachmentContentType(model.getAttachmentContentType());
+				note.setAttachmentContentSize(model.getAttachmentContentSize());
 				persistNote = true;
 			}
 		} catch (IOException e) {

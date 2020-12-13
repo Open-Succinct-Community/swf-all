@@ -3,8 +3,13 @@ package com.venky.swf.plugins.bugs.controller;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.bugs.db.model.Issue;
+import com.venky.swf.plugins.bugs.db.model.Note;
+import com.venky.swf.plugins.templates.controller.TemplateLoader;
+import com.venky.swf.plugins.templates.controller.TemplatedModelController;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
@@ -13,8 +18,9 @@ import com.venky.swf.views.model.ModelListView;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
-public class IssuesController extends ModelController<Issue>{
+public class IssuesController extends TemplatedModelController<Issue> {
 
 	public IssuesController(Path path) {
 		super(path);
@@ -35,12 +41,18 @@ public class IssuesController extends ModelController<Issue>{
 
 		return bv;
 	}
-	
+
 	@SingleRecordAction(tooltip="Yank")
 	public View yank(long id){
 		Issue issue = Database.getTable(Issue.class).get(id);
 		issue.yank();
 		return afterPersistDBView(issue);
 	}
-	
+
+	@Override
+	protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
+		Map<Class<? extends Model>, List<String>> map =  super.getIncludedModelFields();
+		map.put(Note.class, ModelReflector.instance(Note.class).getVisibleFields(Arrays.asList("ID","LOCK_ID","CREATED_AT" ,"UPDATED_AT","CREATOR_USER_ID")));
+		return map;
+	}
 }

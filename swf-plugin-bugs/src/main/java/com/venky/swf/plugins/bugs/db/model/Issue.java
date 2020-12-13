@@ -69,7 +69,7 @@ public interface Issue extends Model , CompanySpecific {
 	
 	@IS_NULLABLE
 	@CLONING_PROTECT
-	@PARTICIPANT
+	@PARTICIPANT(redundant = true)
 	public Long getAssignedToId();
 	public void setAssignedToId(Long id);
 	public User getAssignedTo();
@@ -86,6 +86,7 @@ public interface Issue extends Model , CompanySpecific {
 
 	
 	@IS_VIRTUAL
+	@HIDDEN
 	public InputStream getAttachment();
 	public void setAttachment(InputStream content);
 	
@@ -98,7 +99,12 @@ public interface Issue extends Model , CompanySpecific {
 	@IS_VIRTUAL
 	public String getAttachmentContentType();
 	public void setAttachmentContentType(String contentType);
-	
+
+	@HIDDEN
+	@IS_VIRTUAL
+	public int getAttachmentContentSize();
+	public void setAttachmentContentSize(int size);
+
 	public void yank();
 	
 	

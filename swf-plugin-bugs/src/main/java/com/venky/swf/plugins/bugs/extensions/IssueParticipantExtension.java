@@ -4,6 +4,7 @@ import com.venky.swf.plugins.collab.db.model.user.User ;
 import com.venky.swf.plugins.bugs.db.model.Issue;
 import com.venky.swf.plugins.collab.extensions.participation.CompanySpecificParticipantExtension;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,11 +19,12 @@ public class IssueParticipantExtension extends CompanySpecificParticipantExtensi
         if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
             return super.getAllowedFieldValues(user,partiallyFilledModel,fieldName);
         }else if ("ASSIGNED_TO_ID".equalsIgnoreCase(fieldName)){
-            if (!u.isStaff()){
-                return null;
-            }else {
-                return u.getCompany().getStaffUserIds();
+            List<Long> ids = new ArrayList<>();
+            if (u.isStaff()){
+                ids.addAll(u.getCompany().getStaffUserIds());
+                ids.add(null);
             }
+            return ids;
         }
 
         return null;

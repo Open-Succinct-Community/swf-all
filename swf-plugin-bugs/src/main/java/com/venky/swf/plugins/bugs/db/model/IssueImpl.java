@@ -55,4 +55,12 @@ public class IssueImpl extends ModelImpl<Issue>{
 	public void setAttachmentContentType(String contentType){
 		this.contentType = contentType;
 	}
+
+	private int contentSize = 0;
+	public int getAttachmentContentSize(){
+		return this.contentSize;
+	}
+	public void setAttachmentContentSize(int size){
+		this.contentSize = size;
+	}
 }
