@@ -37,7 +37,10 @@ public class MailUtil {
         private String toUserName, toEmailId, subject, text ;
         public MailTask(String toUserName, String toEmailId,
                         String subject, String text){
-
+            this.toUserName = toUserName;
+            this.toEmailId = toEmailId;
+            this.subject = subject;
+            this.text = text;
         }
         public MailTask(){
 

@@ -306,7 +306,7 @@ public class ModelListTable<M extends Model> extends Div{
     			control.setVisible(false);
     		}
             column.addControl(control);
-            column.setProperty("data-title", StringUtil.camelize(fieldName));
+            column.setProperty("data-title", modelAwareness.getFieldLiteral(fieldName));
 
         }    	
 		
