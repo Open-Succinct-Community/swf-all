@@ -52,7 +52,7 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -521,7 +521,7 @@ public class Path implements _IPath{
                     ModelReflector<? extends Model> bmr = ModelReflector.instance(twobackPath.getModelClass());
                     for (Class<? extends Model> childModel : bmr.getChildModels(true, true)){
                         if (ModelReflector.instance(childModel).reflects(backPath.getModelClass())){
-                            url = twobackPath.getTarget() + "?_select_tab="+ StringEscapeUtils.escapeHtml4(new ModelAwareness(backPath, null).getLiteral(backPath.getModelClass().getSimpleName()));
+                            url = twobackPath.getTarget() + "?_select_tab="+ new ModelAwareness(backPath, null).getLiteral(backPath.getModelClass().getSimpleName());
                             break;
                         }
                     }

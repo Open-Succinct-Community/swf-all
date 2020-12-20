@@ -4,18 +4,17 @@
  */
 package com.venky.swf.views.controls;
 
+import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.collections.SequenceSet;
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+import org.owasp.encoder.Encode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import com.venky.core.collections.LowerCaseStringCache;
-import com.venky.core.collections.SequenceSet;
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
 
 /**
  *
@@ -95,8 +94,13 @@ public class Control extends Properties implements _IControl{
     	}
     	finalizeClassAttribute();
     }
-    public void setProperty(String name, Object value) {
-    	super.setProperty(name, StringUtil.valueOf(value));
+    
+    public void setProperty(String name , Object value){
+        this.setProperty(name,StringUtil.valueOf(value));
+    }
+    @Override
+    public Object setProperty(String name, String value) {
+    	return super.setProperty(name, Encode.forHtmlAttribute(value));
     }
     private String tag = null;
     private _IControl parent = null;
@@ -186,7 +190,7 @@ public class Control extends Properties implements _IControl{
     }
 
     public void setText(String value) {
-        this.text = value;
+        this.text = Encode.forHtmlContent(value);
     }
     
     public String getName(){ 
@@ -197,11 +201,13 @@ public class Control extends Properties implements _IControl{
         setProperty("name", name);
     }
 
+    String value;
     public void setValue(final Object value){
-        setProperty("value", StringEscapeUtils.escapeHtml4(StringUtil.valueOf(value)));
+        this.value = StringUtil.valueOf(value);
+        setProperty("value", this.value);
     }
     public String getUnescapedValue(){
-    	return StringEscapeUtils.unescapeHtml4(getValue());
+    	return value;
     }
     public String getValue(){
         return getProperty("value");

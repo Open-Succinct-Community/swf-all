@@ -323,7 +323,7 @@ function api() {
     }
 }
 
-function loadLocation(){
+function loadLocation(enableHighAccuracy){
     return new Promise(function(resolve,reject){
         navigator.geolocation.getCurrentPosition(function( position ){
             let location = {};
@@ -355,6 +355,6 @@ function loadLocation(){
                     break;
             }
             resolve();
-        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 1 });
+        }, { enableHighAccuracy: enableHighAccuracy, timeout: 10000, maximumAge: 1 });
     });
 }

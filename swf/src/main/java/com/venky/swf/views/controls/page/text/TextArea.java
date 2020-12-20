@@ -1,7 +1,5 @@
 package com.venky.swf.views.controls.page.text;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.util.WordWrapUtil;
@@ -16,7 +14,7 @@ public class TextArea extends Control implements _IAutoCompleteControl{
 	
 	@Override
 	public void setText(String value) {
-		super.setText(StringEscapeUtils.escapeHtml4(StringUtil.valueOf(value)));
+		super.setText(value);
 		fixRows();
 	}
 	public void fixRows(){

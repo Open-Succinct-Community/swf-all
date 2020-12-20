@@ -16,7 +16,6 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;

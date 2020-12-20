@@ -24,7 +24,7 @@ public class Form extends Control{
     public void setAction(String actionUrl){
         setProperty("action", actionUrl);
     }
-    
+
     public void setMethod(SubmitMethod method){
         setProperty("method", method == SubmitMethod.GET ? "GET" : "POST");
     }

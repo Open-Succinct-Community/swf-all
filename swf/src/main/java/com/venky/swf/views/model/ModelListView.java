@@ -4,18 +4,12 @@
  */
 package com.venky.swf.views.model;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import com.venky.swf.routing.Config;
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.path._IPath;
+import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.model.ModelListTable;
@@ -34,6 +28,10 @@ import com.venky.swf.views.controls.page.layout.Span;
 import com.venky.swf.views.controls.page.layout.headings.H;
 import com.venky.swf.views.controls.page.text.TextBox;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  *
  * @author venky
@@ -51,7 +49,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
 		
 		ModelReflector<M> reflector = getModelAwareness().getReflector();
         if (includeFields == null){
-        	Iterator<String> fi = getIncludedFields().iterator(); 
+        	Iterator<String> fi = getIncludedFields().iterator();
         	while (fi.hasNext()){
         		String field = fi.next();
         		if ((!Config.instance().getBooleanProperty("swf.listview.housekeeping.show",false) && reflector.isHouseKeepingField(field)) ||
@@ -70,7 +68,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	headingPanel.setTitle(getModelAwareness().getLiteral(getModelAwareness().getReflector().getModelClass().getSimpleName()));
     	
     	if (!isCompleteList){
-        	List<H> hunted = new ArrayList<H>();
+        	List<H> hunted = new ArrayList<>();
         	Control.hunt(headingPanel, H.class, hunted);
 
         	Span alertIcon = new Span();
@@ -110,7 +108,7 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
     	Column col = row.createColumn(0, 12);
     	
     	Form searchForm = new Form();
-		searchForm.setAction(StringEscapeUtils.escapeHtml4(path.controllerPath()),"search");
+		searchForm.setAction(path.controllerPath(),"search");
 		searchForm.setMethod(SubmitMethod.GET);
 		col.addControl(searchForm);
 

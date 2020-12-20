@@ -26,7 +26,6 @@ import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
 import com.venky.swf.views.controls.page.text.TextBox;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  *
@@ -67,7 +66,7 @@ public class LoginView extends HtmlView{
     @Override
     protected void createBody(_IControl b) {
 
-    	String _redirect_to = StringEscapeUtils.escapeHtml4(StringUtil.valueOf(getPath().getFormFields().get("_redirect_to")));
+    	String _redirect_to = StringUtil.valueOf(getPath().getFormFields().get("_redirect_to"));
 
     	FluidContainer loginPanel = new FluidContainer();
     	loginPanel.addClass("application-pannel");

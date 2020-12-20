@@ -4,23 +4,14 @@
  */
 package com.venky.swf.views.model;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.logging.Level;
-
-import com.venky.swf.db.annotations.column.IS_VIRTUAL;
-import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
@@ -35,16 +26,21 @@ import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
+import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Row;
-import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidTable;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
-import com.venky.swf.views.controls.page.layout.Span;
 import com.venky.swf.views.controls.page.layout.Tabs;
 import com.venky.swf.views.controls.page.text.FileTextBox;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.TextBox;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Level;
 
 /**
  *
@@ -111,7 +107,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	multiTab.addSection(table,getDetailTabName(),StringUtil.equals(getDetailTabName(), selectedTab));
     	
     	addHotLinks(table, 0, getTabLinks(), new SequenceSet<HotLink>());
-    	String action = StringEscapeUtils.escapeHtml4(getPath().controllerPath());
+    	String action = getPath().controllerPath();
     	Config.instance().getLogger(getClass().getName()).fine("action:" + action);
     	
         form.setAction(action, getFormAction());

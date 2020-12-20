@@ -5,39 +5,43 @@
 package com.venky.swf.views;
 
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
-import com.venky.core.collections.UpperCaseStringCache;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
-import com.venky.core.util.pkg.JarIntrospector;
 import com.venky.extension.Registry;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.*;
+import com.venky.swf.views.controls.page.Body;
+import com.venky.swf.views.controls.page.Css;
+import com.venky.swf.views.controls.page.HLink;
+import com.venky.swf.views.controls.page.Head;
+import com.venky.swf.views.controls.page.HotLink;
+import com.venky.swf.views.controls.page.Html;
+import com.venky.swf.views.controls.page.Image;
+import com.venky.swf.views.controls.page.Link;
+import com.venky.swf.views.controls.page.Meta;
+import com.venky.swf.views.controls.page.Script;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
 import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.layout.Paragraph;
-import java.io.InputStreamReader;
-
 import com.venky.swf.views.controls.page.layout.Title;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -270,12 +274,12 @@ public abstract class HtmlView extends View{
 
         link  = new HLink(String.format("%s/manifest.png",path)); //192x192
         link.setProperty("rel","icon");
-        link.setProperty("type", MimeType.IMAGE_PNG);
+        link.setProperty("type", MimeType.IMAGE_PNG.toString());
         head.addControl(link);
 
         link  = new HLink(String.format("%s/manifest.png",path));
         link.setProperty("rel","apple-touch-icon");
-        link.setProperty("type", MimeType.IMAGE_PNG);
+        link.setProperty("type", MimeType.IMAGE_PNG.toString());
         head.addControl(link);
 
 
