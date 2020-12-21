@@ -33,6 +33,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.pm.DataSecurityFilter;
@@ -833,7 +834,7 @@ public class Path implements _IPath{
                             addErrorMessage("Login Failed");
                             return new RedirectorView(this,"","login");
                         }else {
-                            throw new AccessDeniedException ("Request not authenticated");
+                            throw new UserNotAuthenticatedException();
                         }
                     }
                 }

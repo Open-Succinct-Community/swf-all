@@ -13,6 +13,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.SWFHttpResponse;
 import com.venky.swf.exceptions.AccessDeniedException;
+import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
@@ -36,6 +37,8 @@ public class ExceptionView extends View{
     public void write() throws IOException{
         int httpStatus = HttpServletResponse.SC_BAD_REQUEST;
         if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof AccessDeniedException ) {
+            httpStatus = HttpServletResponse.SC_FORBIDDEN;
+        }else if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof UserNotAuthenticatedException){
             httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
         }
         write(httpStatus);
