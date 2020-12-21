@@ -15,7 +15,7 @@ public class LinkedImage extends Link{
 			addControl(new Image(imageSource));	// Link for svg does not work with object tag
 		}else {
 			XMLDocument svg = XMLDocument.getDocumentFor(getClass().getResourceAsStream(imageSource.substring("/resources".length())));
-			setText(svg.toString());
+			setText(svg.toString(),false);
 		}
 		addClass("btn");
 	}

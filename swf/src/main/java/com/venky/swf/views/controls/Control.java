@@ -188,9 +188,15 @@ public class Control extends Properties implements _IControl{
     public String getText() {
         return text;
     }
-
     public void setText(String value) {
-        this.text = Encode.forHtmlContent(value);
+        this.setText(value,true);
+    }
+    public void setText(String value,boolean escapeHtml) {
+        if (escapeHtml){
+            this.text = Encode.forHtmlContent(value);
+        }else{
+            this.text = value;
+        }
     }
     
     public String getName(){ 
