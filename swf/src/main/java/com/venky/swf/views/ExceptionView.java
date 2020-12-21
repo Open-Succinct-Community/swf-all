@@ -38,7 +38,7 @@ public class ExceptionView extends View{
         int httpStatus = HttpServletResponse.SC_BAD_REQUEST;
         if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof AccessDeniedException ) {
             httpStatus = HttpServletResponse.SC_FORBIDDEN;
-        }else if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof UserNotAuthenticatedException){
+        }else if (ExceptionUtil.getEmbeddedException(th,UserNotAuthenticatedException.class) instanceof UserNotAuthenticatedException){
             httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
         }
         write(httpStatus);

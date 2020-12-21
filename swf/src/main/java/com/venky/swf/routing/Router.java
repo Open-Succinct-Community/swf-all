@@ -56,7 +56,7 @@ public class Router extends AbstractHandler {
     private void callShutdownExtensions(){
     	Registry.instance().callExtensions("com.venky.swf.routing.Router.shutdown");
     }
-    private void shutDown(){
+    public void shutDown(){
     	callShutdownExtensions();
     }
 	public void setLoader(ClassLoader loader) {

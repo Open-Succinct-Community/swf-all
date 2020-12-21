@@ -55,18 +55,13 @@ public class BoundingBox {
      * @return
      */
     public <T extends GeoLocation & Model> List<T> find(Class<T> modelClass, int limit){
-        ModelReflector<T> ref = ModelReflector.instance(modelClass) ;
-
-
-        Expression where = new Expression(ref.getPool(),Conjunction.AND);
-        String LAT = ref.getColumnDescriptor("LAT").getName();
-        String LNG = ref.getColumnDescriptor("LNG").getName();
-
-
-        where.add(new Expression(ref.getPool(),LAT, Operator.GE, min.getLat()));
-        where.add(new Expression(ref.getPool(),LAT, Operator.LT, max.getLat()));
-        where.add(new Expression(ref.getPool(),LNG, Operator.GE, min.getLng()));
-        where.add(new Expression(ref.getPool(),LNG, Operator.LT, max.getLng()));
+        return find(modelClass,limit,null);
+    }
+    public <T extends GeoLocation & Model> List<T> find(Class<T> modelClass, int limit, Expression additionalWhereClause) {
+        Expression where = getWhereClause(modelClass);
+        if (additionalWhereClause != null) {
+            where.add(additionalWhereClause);
+        }
 
         Select select = new Select().from(modelClass).where(where);
         select.add(" ORDER BY ABS(LAT - "+this.closeTo.getLat() + ") , ABS(LNG - "+this.closeTo.getLng() + ")");
