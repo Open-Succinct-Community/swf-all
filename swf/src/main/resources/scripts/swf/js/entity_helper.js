@@ -36,9 +36,10 @@ class Autocomplete {
             let ajaxurl = "/"+self.apiBaseName+"/search";
             if (element.val().length >= self.triggerLength ) {
                 let url = ajaxurl ;
-                let val = element.val().replace(/[^a-zA-Z0-9 ]/g, " ")
+                let val = element.val().replace(/[^a-zA-Z0-9 ]/g, " ").trim();
+
                 if (field){
-                    if (val.trim().length > 0 ){
+                    if (val.length > 0 ){
                         url = url + "/" + aq + ( aq.length > 0 ? " AND "  : "" ) + field +":" + val + "*";
                     }else {
                         url = url + "/" + aq
