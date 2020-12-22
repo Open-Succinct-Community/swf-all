@@ -53,7 +53,7 @@ public class ExceptionView extends View{
         	w.write(th.getMessage());
         }
         final Path p = (Path) getPath();
-    	if (p.getProtocol() == MimeType.TEXT_HTML){
+    	if (p.getReturnProtocol() == MimeType.TEXT_HTML){
     		new HtmlView(p) {
 				@Override
 				protected void createBody(_IControl b) {
@@ -63,7 +63,7 @@ public class ExceptionView extends View{
 				}
 			}.write(httpStatus);
     	}else {
-    		IntegrationAdaptor<SWFHttpResponse, ?> responseAdaptor = IntegrationAdaptor.instance(SWFHttpResponse.class, FormatHelper.getFormatClass(p.getProtocol()));
+    		IntegrationAdaptor<SWFHttpResponse, ?> responseAdaptor = IntegrationAdaptor.instance(SWFHttpResponse.class, FormatHelper.getFormatClass(p.getReturnProtocol()));
     		responseAdaptor.createStatusResponse((Path) getPath(), th).write(httpStatus);
     	}
 		

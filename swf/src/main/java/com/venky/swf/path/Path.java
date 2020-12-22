@@ -738,7 +738,7 @@ public class Path implements _IPath{
         return loggedOn;
     }
     public boolean redirectOnException(){
-        return getProtocol().equals(MimeType.TEXT_HTML);
+        return getReturnProtocol().equals(MimeType.TEXT_HTML);
     }
     
     public MimeType getProtocol(){
@@ -752,6 +752,9 @@ public class Path implements _IPath{
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)){
             apiprotocol = getRequest().getHeader("accept");
+            if (ObjectUtil.equals("*/*",apiprotocol)){
+                apiprotocol = "";
+            }
         }
         if (ObjectUtil.isVoid(apiprotocol)){
             return getProtocol();
