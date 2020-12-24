@@ -157,9 +157,12 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             if (lat != null && lng != null) {
                 oAddress.setLat(lat);
                 oAddress.setLng(lng);
-                if ((oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) && persistAfterSetting) {
-                    oAddress.save();
-                }
+            }else if (oAddress.getCityId() != null){
+                oAddress.setLat(oAddress.getCity().getLat());
+                oAddress.setLng(oAddress.getCity().getLng());
+            }
+            if ((oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) && persistAfterSetting) {
+                oAddress.save();
             }
         }
 
