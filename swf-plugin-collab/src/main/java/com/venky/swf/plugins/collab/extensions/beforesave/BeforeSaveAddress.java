@@ -140,7 +140,6 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             BigDecimal lat = null;
             BigDecimal lng = null;
 
-            /*
             for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng));) {
                 GeoCoder coder = i.next();
                 if (!coder.isEnabled(params)){
@@ -155,8 +154,6 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     }
                 }
             }
-            P1. Production issue. Geo Location bombs.
-            */
             if (lat != null && lng != null) {
                 oAddress.setLat(lat);
                 oAddress.setLng(lng);
