@@ -274,7 +274,7 @@ public class Controller {
                     baos.write(buffer, 0, read);
                 }
             } else {
-                return new BytesView(p, "No such resource!".getBytes());
+                throw new AccessDeniedException("No such resource!");
             }
         } catch (IOException ex) {
             //
