@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path._IPath;
+import com.venky.swf.routing.Config;
 
 /**
  *
@@ -51,7 +52,10 @@ public class RedirectorView extends View{
     public void write(int httpStatusCode) throws IOException {
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/plain");
-        response.sendRedirect(redirectUrl);
+        if (!redirectUrl.startsWith("/")){
+            redirectUrl = "/" + redirectUrl;
+        }
+        response.sendRedirect(Config.instance().getServerBaseUrl() + redirectUrl);
     }
 
     @Override
