@@ -804,9 +804,14 @@ public class ModelController<M extends Model> extends Controller {
                         message = th.toString();
                     }
                     Database.getInstance().getCurrentTransaction().rollback(th);
-                    getPath().addMessage(StatusType.ERROR, message);
-                    View eView = action.error(record);
+                    View eView = null;
+                    if (getReturnIntegrationAdaptor() != null){
+                        throw ex;
+                    }else {
+                        eView = action.error(record);
+                    }
                     if (eView instanceof HtmlView) {
+                        getPath().addMessage(StatusType.ERROR, message);
                         return dashboard((HtmlView) eView);
                     } else {
                         return eView;
