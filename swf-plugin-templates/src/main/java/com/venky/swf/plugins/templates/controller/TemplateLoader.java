@@ -35,16 +35,15 @@ public interface TemplateLoader {
         return dir.toString();
     }
 
-    @RequireLogin(false)
     default HtmlView html(String path){
         return html(path,
                 Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getPath().getFormFields().getOrDefault("includeMenu","N")));
     }
-    @RequireLogin(false)
+
     default HtmlView html(String path, boolean includeMenu){
         return html(path,includeMenu,null);
     }
-    @RequireLogin(false)
+
     default HtmlView html(String path, boolean includeMenu, Map<String,Object> data){
         if (includeMenu){
             return dashboard(new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data));
@@ -52,7 +51,7 @@ public interface TemplateLoader {
             return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data);
         }
     }
-    @RequireLogin(false)
+
     default HtmlView htmlFragment(String path, Map<String,Object> data){
         return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data,true);
     }
@@ -63,6 +62,7 @@ public interface TemplateLoader {
     default View js(String jsName){
         return load("js"+"/" +jsName, "text/javascript");
     }
+
     @RequireLogin(false)
     default View css(String cssName){
         return load("css"+"/" +cssName, "text/css");
@@ -73,7 +73,7 @@ public interface TemplateLoader {
         return load("fragment/"+fragment+".html","text/plain");
     }
 
-    @RequireLogin
+    @RequireLogin(false)
     default View images (String imageName){
         return load("images/"+imageName, MimeType.APPLICATION_OCTET_STREAM.toString());
     }
