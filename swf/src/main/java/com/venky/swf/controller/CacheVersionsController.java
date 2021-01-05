@@ -47,7 +47,7 @@ public class CacheVersionsController extends ModelController<CacheVersion> {
         CacheVersion version = getLastVersion();
         version.getVersionNumber().increment();
         version.save();
-        Registry.instance().callExtensions(Controller.CLEAR_CACHED_RESULT_EXTENSION,getPath(),new ObjectHolder<>(null));
+        Registry.instance().callExtensions(Controller.CLEAR_CACHED_RESULT_EXTENSION, CacheOperation.CLEAR,getPath(),new ObjectHolder<>(null));
         if (getReturnIntegrationAdaptor() == null){
             return back();
         }else {
