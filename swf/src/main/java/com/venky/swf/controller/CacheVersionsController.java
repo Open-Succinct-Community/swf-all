@@ -1,6 +1,8 @@
 package com.venky.swf.controller;
 
 import com.venky.core.util.Bucket;
+import com.venky.core.util.ObjectHolder;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.cache.CacheVersion;
@@ -45,6 +47,7 @@ public class CacheVersionsController extends ModelController<CacheVersion> {
         CacheVersion version = getLastVersion();
         version.getVersionNumber().increment();
         version.save();
+        Registry.instance().callExtensions(Controller.CLEAR_CACHED_RESULT_EXTENSION,getPath(),new ObjectHolder<>(null));
         if (getReturnIntegrationAdaptor() == null){
             return back();
         }else {
