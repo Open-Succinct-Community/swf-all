@@ -36,6 +36,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
 
         if (userPhone.getReflector().isVoid(userPhone.getLastOtp()) || generateFresh){
             userPhone.setLastOtp(OtpEnabled.generateOTP());
+            generateFresh = true;
         }
 
         if (!ObjectUtil.isVoid(key) && !ObjectUtil.isVoid(senderId)) {
@@ -45,7 +46,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
 
             String url = null;
             if (generateFresh) {
-                url = "https://control.msg91.com/api/sendotp.php";
+                url = "https://api.msg91.com/api/v5/otp";
                 String templateId = Config.instance().getProperty("swf.msg91.otp.template.id");
                 params.put("otp_expiry", Config.instance().getIntProperty("swf.msg91.otp.expiry", 10)); //10 minutes
                 params.put("sender", senderId);
@@ -56,7 +57,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
                     params.put("template_id", templateId);
                 }
             } else {
-                url = "https://control.msg91.com/api/retryotp.php";
+                url = "https://api.msg91.com/api/v5/otp/retry";
             }
 
 
