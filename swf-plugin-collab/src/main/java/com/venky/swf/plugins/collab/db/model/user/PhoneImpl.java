@@ -58,6 +58,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
                 }
             } else {
                 url = "https://api.msg91.com/api/v5/otp/retry";
+                params.put("retrytype","text");
             }
 
 
