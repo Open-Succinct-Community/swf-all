@@ -858,6 +858,8 @@ public class Path implements _IPath{
                         result = (View)m.invoke(controller, Integer.valueOf(parameter()));
                     }else if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0] == long.class && parameter() != null){
                         result = (View)m.invoke(controller, Long.valueOf(parameter()));
+                    }else {
+                        continue;
                     }
                     controller.setCachedResult(result);
                     return result;
