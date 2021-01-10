@@ -4,6 +4,7 @@ import com.venky.swf.db.extensions.BeforeModelValidateExtension;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
+import com.venky.swf.plugins.collab.db.model.user.Phone;
 import com.venky.swf.plugins.collab.db.model.user.User;
 
 import java.util.regex.Pattern;
@@ -18,25 +19,8 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
             if (!reflector.getFields().contains(field)){
                 continue;
             }
-            String phoneNumber = reflector.get(model,field);
-
-            if (!reflector.isVoid(phoneNumber) && model.getRawRecord().isFieldDirty(field)){
-                int length = phoneNumber.length();
-                if (length == 10){
-                    phoneNumber = ("+91"+phoneNumber);
-                }else if (length == 12){
-                    phoneNumber = ("+"+phoneNumber);
-                }
-                if (phoneNumber.length() != 13){
-                    throw new RuntimeException("Phone number invalid e.g. +911234567890");
-                }
-                Pattern pattern = Pattern.compile("\\+[0-9]+");
-                if (pattern.matcher(phoneNumber).matches()){
-                    reflector.set(model,field,phoneNumber);
-                }else {
-                    throw new RuntimeException("Phone number invalid e.g. +911234567890");
-                }
-            }
+            String phoneNumber = Phone.sanitizePhoneNumber(reflector.get(model,field));
+            reflector.set(model,field,phoneNumber);
         }
 
         String email = model.getEmail();
