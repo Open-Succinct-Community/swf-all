@@ -18,7 +18,6 @@ import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.user.UserFacility;
 
 
-@CONFIGURATION
 public interface Facility extends CompanySpecific, Address , Model{
 	@UNIQUE_KEY
 	@Index
