@@ -6,6 +6,7 @@ import java.util.List;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
@@ -53,4 +54,7 @@ public interface Attachment extends Model{
 	public int getAttachmentContentSize();
 	public void setAttachmentContentSize(int size);
 
+	@Index
+	public String getTags();
+	public void setTags(String tags);
 }
