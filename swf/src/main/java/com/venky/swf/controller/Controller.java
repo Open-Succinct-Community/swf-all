@@ -142,19 +142,14 @@ public class Controller {
 
     protected String loginSuccessful() {
         String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
-        return loginSuccessful(redirectedTo);
+        return loginSuccessful(redirectedTo == null ? "" : redirectedTo);
     }
 
     protected String loginSuccessful(String redirectedTo) {
         if (ObjectUtil.isVoid(redirectedTo)) {
             redirectedTo = "/dashboard";
-        } else {
-            if (getFormFields().containsKey("_REGISTER")) {
-                redirectedTo = redirectedTo + "/users/edit/" + getSessionUser().getId();
-            }
         }
         return redirectedTo;
-
     }
 
     protected View authenticate() {

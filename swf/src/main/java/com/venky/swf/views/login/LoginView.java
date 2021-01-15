@@ -73,7 +73,9 @@ public class LoginView extends HtmlView{
     	b.addControl(loginPanel);
     	
     	Column applicationDescPannel = loginPanel.createRow().createColumn(3,6);
-    	applicationDescPannel.addClass("text-center");
+    	applicationDescPannel.addClass("text-center offset-3 col-6");
+		applicationDescPannel.addClass("text-center offset-lg-5 col-lg-2");
+
 		addProgressiveWebAppLinks(applicationDescPannel);
 
 		Column extLinks = loginPanel.createRow().createColumn(3,6);

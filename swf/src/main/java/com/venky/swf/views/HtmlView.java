@@ -111,6 +111,7 @@ public abstract class HtmlView extends View{
         Image image = null;
         if (!ObjectUtil.isVoid(icon_url)){
             image = new Image(icon_url);
+            image.addClass("w-100");
         }
         return image;
     }
