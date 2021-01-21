@@ -126,7 +126,11 @@ public class Controller {
                         throw new AccessDeniedException(msg.toString());
                     }
                 }else {
-                    return createLoginView();
+                    if (getPath().getProtocol() == MimeType.TEXT_HTML){
+                        return createLoginView();
+                    }else {
+                        return authenticate();
+                    }
                 }
             } else {
                 if (getPath().getProtocol() == MimeType.TEXT_HTML){
