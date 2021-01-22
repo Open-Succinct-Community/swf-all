@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.templates.controller;
 
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
@@ -15,6 +16,9 @@ import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
 
+import javax.activation.MimetypesFileTypeMap;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +55,9 @@ public interface TemplateLoader {
             return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data);
         }
     }
-
+    default HtmlView htmlFragment(String path){
+        return htmlFragment(path,null);
+    }
     default HtmlView htmlFragment(String path, Map<String,Object> data){
         return new TemplateView(getPath(),getTemplateDirectory() ,"/html/"+path+".html",data,true);
     }
@@ -75,12 +81,25 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View images (String imageName){
-        return load("images/"+imageName, MimeType.APPLICATION_OCTET_STREAM.toString());
+        return load("images/"+imageName, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(imageName),true);
     }
 
 
     default View load(String s,String contentType) {
-        return new BytesView(getPath(), TemplateEngine.getInstance(getTemplateDirectory()).publish("/"+s, new HashMap<>()).getBytes(),contentType);
+        return load(s,contentType,false);
     }
+    default View load(String s,String contentType,boolean raw) {
+        try {
+            if (raw){
+                FileInputStream inputStream = new FileInputStream(new File(getTemplateDirectory(),s));
+                return new BytesView(getPath(), StringUtil.readBytes(inputStream),contentType);
+            }else{
+                return new BytesView(getPath(), TemplateEngine.getInstance(getTemplateDirectory()).publish("/"+s, new HashMap<>()).getBytes(),contentType);
+            }
+        }catch (Exception ex){
+            throw new RuntimeException(ex);
+        }
+    }
+
 
 }

@@ -48,9 +48,13 @@ public class TemplateView extends HtmlView {
     }
 
     @Override
+    protected void _createBody(_IControl body, boolean includeStatusMessage) {
+        super._createBody(body, false);
+    }
+
+    @Override
     protected void createBody(_IControl b) {
         b.addControl( new Dummy(TemplateEngine.getInstance(templateDir).publish(templateName,data)));
-
     }
 
     @Override
