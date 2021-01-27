@@ -26,7 +26,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
     }
 
     public View sendOtp(long id, String otpField){
-        T otpEnabledModel = Database.getTable(getModelClass()).get(id);
+        T otpEnabledModel = Database.getTable(getModelClass()).lock(id);
         _sendOtp(otpEnabledModel,otpField);
         if (getIntegrationAdaptor() == null){
             getPath().addInfoMessage("Otp Sent to "  +
@@ -39,7 +39,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
 
     }
     public View validateOtp(long id, String otpField) throws  Exception{
-        T otpEnabledModel = Database.getTable(getModelClass()).get(id);
+        T otpEnabledModel = Database.getTable(getModelClass()).lock(id);
         if (getPath().getRequest().getMethod().equalsIgnoreCase("GET")){
             return dashboard(new ModelEditView<T>(getPath(),new String[]{"ID","PHONE_NUMBER","OTP"},otpEnabledModel,"validateOtp"){
                 @Override

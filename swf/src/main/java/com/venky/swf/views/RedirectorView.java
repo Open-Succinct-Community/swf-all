@@ -52,10 +52,10 @@ public class RedirectorView extends View{
     public void write(int httpStatusCode) throws IOException {
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/plain");
-        if (!redirectUrl.startsWith("/")){
+        if (!redirectUrl.startsWith("/") && !redirectUrl.startsWith("http")){
             redirectUrl = "/" + redirectUrl;
         }
-        response.sendRedirect(Config.instance().getServerBaseUrl() + redirectUrl);
+        response.sendRedirect(redirectUrl);
     }
 
     @Override
