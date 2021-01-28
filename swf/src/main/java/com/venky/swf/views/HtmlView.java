@@ -124,6 +124,15 @@ public abstract class HtmlView extends View{
         }
         return (String)manifest.getOrDefault("name",defaultApplicationName);
     }
+    public String getApplicationDescription(){
+        JSONObject manifest = getManifestJson();
+        String defaultApplicationName = Config.instance().getProperty("swf.application.description", getApplicationName());
+
+        if (manifest.get("resource_path") == null){
+            return defaultApplicationName;
+        }
+        return (String)manifest.getOrDefault("description",defaultApplicationName);
+    }
     @Override
     public void write(int httpStatusCode) throws IOException{
         HttpServletResponse response = getPath().getResponse();
@@ -287,13 +296,21 @@ public abstract class HtmlView extends View{
         head.addControl(new Meta("mobile-web-app-capable" , "yes"));
         head.addControl(new Meta("apple-mobile-web-app-capable" , "yes"));
         head.addControl(new Meta( "theme-color",theme_color));
-        String applicationName = Config.instance().getProperty("swf.application.name", "Application");
+        String applicationName = getApplicationName();
+        String applicationDescription = getApplicationDescription();
 
         head.addControl(new Meta("application-name" , applicationName));
         head.addControl(new Meta("apple-mobile-web-app-title" , applicationName));
 
         head.addControl(new Meta("msapplication-starturl",start_url));
         head.addControl(new Meta("viewport","width=device-width, initial-scale=1, shrink-to-fit=no"));
+        head.addControl(new Meta("og:title",applicationName));
+        head.addControl(new Meta("og:description",applicationDescription));
+        Image logo = getLogo();
+        if (logo != null && logo.getProperty("src") != null){
+            head.addControl(new Meta("og:image",logo.getProperty("src")));
+        }
+        head.addControl(new Meta("og.url",Config.instance().getServerBaseUrl()));
         //head.addControl(new Meta( "Service-Worker-Allowed" , "yes"));
 
 
