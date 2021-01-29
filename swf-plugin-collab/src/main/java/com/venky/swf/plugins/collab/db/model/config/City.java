@@ -21,12 +21,12 @@ import com.venky.swf.sql.Select;
 @ORDER_BY("NAME")
 public interface City extends Model , GeoLocation {
 	@Index
-	@UNIQUE_KEY
+	@UNIQUE_KEY("K1,K2")
 	public String getName();
 	public void setName(String name);
 	
 	@Index
-	@UNIQUE_KEY
+	@UNIQUE_KEY("K1,K2")
 	@IS_NULLABLE(false)
 	public Long getStateId();
 	public void setStateId(Long id);
@@ -34,6 +34,7 @@ public interface City extends Model , GeoLocation {
 
 
 	@Index
+	@UNIQUE_KEY(value = "K2" , allowMultipleRecordsWithNull = false)
 	public String getRegionName();
 	public void setRegionName(String region);
 	
