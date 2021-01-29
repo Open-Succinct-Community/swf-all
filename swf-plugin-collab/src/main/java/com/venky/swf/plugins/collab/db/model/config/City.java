@@ -31,6 +31,11 @@ public interface City extends Model , GeoLocation {
 	public Long getStateId();
 	public void setStateId(Long id);
 	public State getState();
+
+
+	@Index
+	public String getRegionName();
+	public void setRegionName(String region);
 	
 	public static City findByCountryAndStateAndName(String  countryName , String stateName,String cityName) { 
 		return findByStateAndName(State.findByCountryAndName(countryName, stateName).getId(), cityName);
