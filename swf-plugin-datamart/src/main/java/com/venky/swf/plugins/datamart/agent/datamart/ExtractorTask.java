@@ -120,7 +120,7 @@ public abstract class ExtractorTask<M extends Model> extends AgentSeederTask{
 
 			Object value = valueOf(fields[i],values.get(i));
 			if (value != null){
-				part.add(new Expression(ref.getPool(),gtF, Operator.GT, getReflector().getFieldGetter(gtF).getReturnType().cast(value)));
+				part.add(new Expression(ref.getPool(),gtF, Operator.GT, getReflector().getJdbcTypeHelper().getTypeRef(getReflector().getFieldGetter(gtF).getReturnType()).getTypeConverter().valueOf(value)));
 			}else {
 				part.add(new Expression(ref.getPool(),gtF, Operator.NE));
 			}
