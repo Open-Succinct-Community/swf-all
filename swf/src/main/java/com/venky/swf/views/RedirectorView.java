@@ -55,6 +55,9 @@ public class RedirectorView extends View{
         if (!redirectUrl.startsWith("/") && !redirectUrl.startsWith("http")){
             redirectUrl = "/" + redirectUrl;
         }
+        if (redirectUrl.startsWith("/")){
+            redirectUrl= Config.instance().getServerBaseUrl() + redirectUrl;
+        }
         response.sendRedirect(redirectUrl);
     }
 
