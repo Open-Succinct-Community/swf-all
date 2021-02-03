@@ -1,34 +1,32 @@
 package com.venky.swf.plugins.mail.core;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.mail.Message.RecipientType;
-
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.io.StringReader;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.UserEmail;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.attachment.db.model.Attachment;
+import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.plugins.mail.db.model.Mail;
 import com.venky.swf.plugins.mail.db.model.MailAttachment;
+import com.venky.swf.plugins.mail.db.model.User;
 import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import org.codemonkey.simplejavamail.Email;
 
-import com.venky.core.io.StringReader;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.model.UserEmail;
-import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.mail.db.model.Mail;
-import com.venky.swf.plugins.mail.db.model.User;
-import com.venky.swf.routing.Config;
+import javax.mail.Message.RecipientType;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MailerTask implements Task{
 
@@ -97,12 +95,12 @@ public class MailerTask implements Task{
 			return;
 		}
 
-		List<User> cc = this.cc == null ? new ArrayList<>() : new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"ID", Operator.IN,this.cc)).execute();
-		List<User> bcc = this.bcc == null ? new ArrayList<>() : new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"ID", Operator.IN,this. bcc)).execute();
+		List<User> cc = this.cc == null ? new ArrayList<>() : new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"ID", Operator.IN,this.cc.toArray())).execute();
+		List<User> bcc = this.bcc == null ? new ArrayList<>() : new Select().from(User.class).where(new Expression(ModelReflector.instance(User.class).getPool(),"ID", Operator.IN,this. bcc.toArray())).execute();
 
 		Map<RecipientType,List<User>> map = new HashMap<>();
 
-		map.put(RecipientType.TO,Arrays.asList(to));
+		map.put(RecipientType.TO, Collections.singletonList(to));
 		map.put(RecipientType.CC,cc);
 		map.put(RecipientType.BCC,bcc);
 
