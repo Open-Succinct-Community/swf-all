@@ -464,7 +464,7 @@ public class ModelController<M extends Model> extends Controller {
         return view(id, null);
     }
 
-    private boolean isViewableInLine(String mimeType) {
+    protected boolean isViewableInLine(String mimeType) {
         if (mimeType == null) {
             return false;
         }
@@ -480,16 +480,24 @@ public class ModelController<M extends Model> extends Controller {
         return false;
     }
 
-    private View view(long id, Boolean asAttachment) {
-        M record = Database.getTable(modelClass).get(id);
-        if (getSessionUser() == null || record.isAccessibleBy(getSessionUser(), modelClass)) {
+    /**
+     *
+     * @param record Any db object. Need not be of type M
+     * @param asAttachment
+     * @param <T>
+     * @return
+     */
+    protected <T extends Model> View  view(T record,Boolean asAttachment){
+        ModelReflector<T> ref = record.getReflector();
+
+        if (getSessionUser() == null || record.isAccessibleBy(getSessionUser(), ref.getModelClass())) {
             try {
-                for (Method getter : reflector.getFieldGetters()) {
+                for (Method getter : ref.getFieldGetters()) {
                     if (InputStream.class.isAssignableFrom(getter.getReturnType())) {
-                        String fieldName = reflector.getFieldName(getter);
-                        String fileName = reflector.getContentName(record, fieldName);
-                        String mimeType = reflector.getContentType(record, fieldName);
-                        if (reflector.getDefaultContentType().equals(mimeType) && fileName != null) {
+                        String fieldName = ref.getFieldName(getter);
+                        String fileName = ref.getContentName(record, fieldName);
+                        String mimeType = ref.getContentType(record, fieldName);
+                        if (ref.getDefaultContentType().equals(mimeType) && fileName != null) {
                             mimeType = MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName);
                         }
 
@@ -515,6 +523,11 @@ public class ModelController<M extends Model> extends Controller {
             throw new AccessDeniedException();
         }
         return getSuccessView();
+    }
+
+    private View view(long id, Boolean asAttachment) {
+        M record = Database.getTable(modelClass).get(id);
+        return view(record,asAttachment);
     }
 
     @SingleRecordAction(icon = "glyphicon-edit")
