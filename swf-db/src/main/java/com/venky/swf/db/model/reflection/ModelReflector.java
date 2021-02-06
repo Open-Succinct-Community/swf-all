@@ -33,6 +33,7 @@ import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.DATA_TYPE;
 import com.venky.swf.db.annotations.column.DECIMAL_DIGITS;
+import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_AUTOINCREMENT;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
@@ -766,7 +767,27 @@ public class ModelReflector<M extends Model> {
         return  isAnnotationPresent(getter,PASSWORD.class);
     }
 
-    public boolean isFieldProtected(String fieldName){
+    public boolean isFieldEncrypted(String fieldName){
+		Method getter = getFieldGetter(fieldName);
+		return  isAnnotationPresent(getter, ENCRYPTED.class);
+	}
+
+	List<String> encryptedFields = null;
+	public List<String> getEncryptedFields(){
+		if (encryptedFields == null){
+			synchronized (this) {
+				if (this.encryptedFields == null){
+					this.encryptedFields = getFields(new EncryptedFieldMatcher());
+				}
+			}
+		}
+		List<String> ret = new SequenceSet<>();
+		ret.addAll(encryptedFields);
+		return ret;
+	}
+
+
+	public boolean isFieldProtected(String fieldName){
     	return (getFieldProtection(fieldName) != Kind.EDITABLE);
     }
 
@@ -1105,6 +1126,7 @@ public class ModelReflector<M extends Model> {
 	    	        	if (map.get(IS_AUTOINCREMENT.class) == null){ map.put(IS_AUTOINCREMENT.class,ref.getAnnotation(getter,IS_AUTOINCREMENT.class)); }
 	    	        	if (map.get(IS_VIRTUAL.class) == null){ map.put(IS_VIRTUAL.class,ref.getAnnotation(getter,IS_VIRTUAL.class)); }
 	    	        	if (map.get(COLUMN_DEF.class) == null){ map.put(COLUMN_DEF.class,ref.getAnnotation(getter,COLUMN_DEF.class)); }
+						if (map.get(ENCRYPTED.class) == null){ map.put(ENCRYPTED.class,ref.getAnnotation(getter,ENCRYPTED.class)); }
 	    	        }
 	    			annotationMap.put(signature, map);
 	    		}
@@ -1180,7 +1202,7 @@ public class ModelReflector<M extends Model> {
 		        IS_AUTOINCREMENT isAutoIncrement = (IS_AUTOINCREMENT)map.get(IS_AUTOINCREMENT.class);
 		        IS_VIRTUAL isVirtual = (IS_VIRTUAL)map.get(IS_VIRTUAL.class);
 		        COLUMN_DEF colDef = (COLUMN_DEF)map.get(COLUMN_DEF.class);
-		        
+		        ENCRYPTED encrypted = (ENCRYPTED)map.get(ENCRYPTED.class);
 		        ColumnDescriptor cd = new ColumnDescriptor(getPool());
 		        cd.setName(columnName);
 		        JdbcTypeHelper helper = Database.getJdbcTypeHelper(getPool());
@@ -1192,6 +1214,8 @@ public class ModelReflector<M extends Model> {
 		        cd.setScale(digits == null ? typeRef.getScale() : digits.value());
 		        cd.setAutoIncrement(isAutoIncrement == null? false : true);
 		        cd.setVirtual(isVirtual == null ? false : isVirtual.value());
+				cd.setEncrypted(encrypted == null ? false: encrypted.value());
+
 		        if (colDef != null && colDef.value() != StandardDefault.NONE){
 		    		cd.setColumnDefault(toDefaultKW(typeRef,colDef));
 		        }
@@ -1442,6 +1466,12 @@ public class ModelReflector<M extends Model> {
             return cd.isVirtual();
         }
     }
+
+    private class EncryptedFieldMatcher implements FieldMatcher{
+		public boolean matches(ColumnDescriptor cd) {
+			return cd.isEncrypted();
+		}
+	}
     
     //Method Matcher
     private final MethodMatcher getterMatcher = new GetterMatcher();

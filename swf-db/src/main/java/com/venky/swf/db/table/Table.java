@@ -584,6 +584,14 @@ public class Table<M extends Model> {
             return virtual;
         }
 
+        private boolean encrypted = false;
+        public boolean isEncrypted(){
+            return encrypted;
+        }
+        public void setEncrypted(boolean encrypted){
+            this.encrypted = encrypted;
+        }
+
         public void setVirtual(boolean virtual) {
             this.virtual = virtual;
         }
