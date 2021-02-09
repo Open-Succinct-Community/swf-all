@@ -14,6 +14,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
@@ -36,6 +37,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
+import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -614,11 +616,10 @@ public class Path implements _IPath{
             String lat = getHeader( "Lat");
             String lng = getHeader( "Lng");
             TypeConverter<BigDecimal> tc = currentUser.getReflector().getJdbcTypeHelper().getTypeRef(BigDecimal.class).getTypeConverter();
-            if (!ObjectUtil.isVoid(lat)){
+            if (!currentUser.getReflector().isVoid(tc.valueOf(lat)) && !currentUser.getReflector().isVoid(tc.valueOf(lng))){
                 currentUser.setCurrentLat(tc.valueOf(lat));
-            }
-            if (!ObjectUtil.isVoid(lng)) {
                 currentUser.setCurrentLng(tc.valueOf(lng));
+                Registry.instance().callExtensions(USER_LOCATION_UPDATED_EXTENSION,this,currentUser);
             }
         }
         

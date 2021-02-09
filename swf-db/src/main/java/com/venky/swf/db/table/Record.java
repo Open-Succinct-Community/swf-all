@@ -15,6 +15,7 @@ import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.util.SharedKeys;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -146,19 +147,24 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         	int type = meta.getColumnType(i);
         	if (JdbcTypeHelper.isLOB(type)){
 				columnValue = Database.getJdbcTypeHelper(getPool()).getTypeRef(type).getTypeConverter().valueOf(columnValue);
-        	}else if (columnValue != null && reflector != null && type != Types.VARCHAR){ //SQLParser has similar code.
+        	}else if (columnValue != null && reflector != null ){ //SQLParser has similar code.
         		List<TypeRef<?>> refs = Database.getJdbcTypeHelper(getPool()).getTypeRefs(type);
         		TypeRef<?> ref = null;
+				String fieldName = reflector.getFieldName(columnName);
+
         		if (refs.size() == 1){
         			ref = refs.get(0);
         		}else  {
-        			String fieldName = reflector.getFieldName(columnName);
         			if (fieldName == null) {
         				continue;
         			}
         			ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());
         		}
-        		columnValue = ref.getTypeConverter().valueOf(columnValue);
+        		if (type != Types.VARCHAR){
+					columnValue = ref.getTypeConverter().valueOf(columnValue);
+				}else if (!reflector.getEncryptedFields().isEmpty() && reflector.isFieldEncrypted(fieldName)){
+					columnValue = SharedKeys.getInstance().decrypt(ref.getTypeConverter().toString(columnValue));
+				}
         	}
             put(columnName,columnValue);
         }

@@ -355,6 +355,6 @@ function loadLocation(enableHighAccuracy){
                     break;
             }
             resolve();
-        }, { enableHighAccuracy: enableHighAccuracy, timeout: 10000, maximumAge: 1 });
+        }, { enableHighAccuracy: enableHighAccuracy, timeout: 2000, maximumAge: 5 * 60 * 1000 }); // five minutes.
     });
 }

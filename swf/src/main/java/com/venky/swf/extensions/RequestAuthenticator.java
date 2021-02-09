@@ -42,11 +42,10 @@ public class RequestAuthenticator implements Extension {
             }
             if (user != null){
                 TypeConverter<BigDecimal> tc = user.getReflector().getJdbcTypeHelper().getTypeRef(BigDecimal.class).getTypeConverter();
-                if (!ObjectUtil.isVoid(lat)){
+                if (!user.getReflector().isVoid(tc.valueOf(lat)) && !user.getReflector().isVoid(tc.valueOf(lng))){
                     user.setCurrentLat(tc.valueOf(lat));
-                }
-                if (!ObjectUtil.isVoid(lng)){
                     user.setCurrentLng(tc.valueOf(lng));
+                    Registry.instance().callExtensions(Path.USER_LOCATION_UPDATED_EXTENSION,user);
                 }
             }
         }
