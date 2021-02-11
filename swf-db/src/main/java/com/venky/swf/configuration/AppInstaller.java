@@ -55,15 +55,15 @@ public class AppInstaller implements Installer {
 		ModelReflector<User> ref = ModelReflector.instance(User.class);
 		String nameColumn = ref.getColumnDescriptor("name").getName();
 		
-		
-		List<User> users = q.where(new Expression(ref.getPool(),nameColumn,Operator.EQ,new BindVariable(ref.getPool(),"root"))).execute(User.class);
+		//This Encryption is the symmetic encryption using sharedkeys
+		List<User> users = q.where(new Expression(ref.getPool(),nameColumn,Operator.EQ,new BindVariable(ref.getPool(),"root"))).execute(User.class,false);
 		
 		if (users.isEmpty()){
 			User u = USER.newRecord();
 			u.setName("root");
 			u.setLongName("Application Adminstrator");
 			u.setPassword("root");
-			u.setPasswordEncrypted(false);
+			u.setPasswordEncrypted(false); // This is hashed password.
 			u.save();
 			if (u.getId() != 1){
 				new Update(ref).set("ID", new BindVariable(ref.getPool(),1L)).where(new Expression(ref.getPool(),"ID",Operator.EQ,u.getId())).executeUpdate();

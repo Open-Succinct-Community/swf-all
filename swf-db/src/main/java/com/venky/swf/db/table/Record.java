@@ -83,6 +83,14 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     	}
     	return ret ;
     }
+
+	/**
+	 * Use with caution!! Triggers update of field even if not changed.
+	 * @param fieldName
+	 */
+	public void markDirty(String fieldName){
+		dirtyFields.put(fieldName,get(fieldName)); // Trigger re-update of this field. Even if no-change.
+	}
     protected void markDirty(String fieldName, Object oldValue, Object newValue){
     	if (isFieldDirty(fieldName)){//if already dirty..
     		Object oldestValue = dirtyFields.get(fieldName);
@@ -137,7 +145,10 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
     public void load(ResultSet rs) throws SQLException{
     	load(rs,null);
     }
-    public void load(ResultSet rs,ModelReflector<? extends Model> reflector) throws SQLException{
+	public void load(ResultSet rs,ModelReflector<? extends Model> reflector) throws SQLException{
+    	load(rs,reflector,true);
+	}
+    public void load(ResultSet rs,ModelReflector<? extends Model> reflector,boolean returnDecrypted) throws SQLException{
         ResultSetMetaData meta = rs.getMetaData(); 
         for (int i = 1 ; i <= meta.getColumnCount() ; i ++ ){
         	Object columnValue = rs.getObject(i);
@@ -162,7 +173,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         		}
         		if (type != Types.VARCHAR){
 					columnValue = ref.getTypeConverter().valueOf(columnValue);
-				}else if (!reflector.getEncryptedFields().isEmpty() && reflector.isFieldEncrypted(fieldName)){
+				}else if (!reflector.getEncryptedFields().isEmpty() && reflector.isFieldEncrypted(fieldName) && returnDecrypted){
 					columnValue = SharedKeys.getInstance().decrypt(ref.getTypeConverter().toString(columnValue));
 				}
         	}

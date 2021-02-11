@@ -219,7 +219,11 @@ public class Select extends SqlStatement{
 	public <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,ResultFilter<M> filter){
 		return execute(modelInterface,maxRecords,lock,filter);
 	}
-	
+	public <M extends Model> List<M> execute(Class<M> modelClass, boolean returnDecrypted){
+		return execute(modelClass,MAX_RECORDS_ALL_RECORDS,lock,null,returnDecrypted);
+	}
+
+
 	protected boolean isCacheable(ModelReflector<? extends Model> ref){
 		return (columnNames == null || columnNames.length == 0) && (ref.getRealModelClass() != null) ;
 	}
@@ -233,8 +237,10 @@ public class Select extends SqlStatement{
 		}
 		return new String[]{columnName,orderByType};
 	}
-	
 	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter<M> filter) {
+		return execute(modelInterface,maxRecords,locked,filter,true);
+	}
+	protected <M extends Model> List<M> execute(Class<M> modelInterface,int maxRecords,boolean locked,ResultFilter<M> filter, boolean returnDecrypted) {
 		final String[] orderByPassed = this.orderBy;
 		
 		boolean sortResults = true; 
@@ -276,7 +282,7 @@ public class Select extends SqlStatement{
 		                ResultSet rs = st.getResultSet();
 		                while (rs.next() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || ret.size() < maxRecords + 1)){
 		                    Record r = new Record(getPool());
-		                    r.load(rs,ref);
+		                    r.load(rs,ref,returnDecrypted);
 		                    r.setLocked(locked);
 
 		                    if (isCacheable(ref)){

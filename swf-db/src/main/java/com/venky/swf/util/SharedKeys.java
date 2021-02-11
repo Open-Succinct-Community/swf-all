@@ -124,6 +124,9 @@ public class SharedKeys {
     }
     public String   encrypt(String decrypted){
         try {
+            if (decrypted == null){
+                return null;
+            }
             Cipher cipher= getEncryptCipher();
             byte[] encrypted = cipher.doFinal(decrypted.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encrypted);
@@ -133,6 +136,9 @@ public class SharedKeys {
     }
     public String decrypt(String encrypted){
         try {
+            if (encrypted == null){
+                return null;
+            }
             Cipher cipher = getDecryptCipher();
             byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encrypted.getBytes(StandardCharsets.UTF_8)));
             return new String(decrypted);

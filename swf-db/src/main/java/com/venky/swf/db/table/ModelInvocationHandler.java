@@ -37,6 +37,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.*;
 import com.venky.swf.sql.parser.SQLExpressionParser;
+import com.venky.swf.util.SharedKeys;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -703,6 +704,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
 
     private void update() {
+		encrypt();
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
@@ -735,6 +737,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         if (q.executeUpdate() <= 0){
         	throw new RecordNotFoundException();
         }
+		decrypt();
         proxy.setLockId(newLockId);
         record.startTracking();
         if (!getReflector().isAnnotationPresent(CONFIGURATION.class)){
@@ -742,11 +745,37 @@ public class ModelInvocationHandler implements InvocationHandler {
         	//Do only for transaction tables as config cache would need to be reset to false after commit. This is just to avoid that unwanted loop over config records cached.
         }
 
+
 		Database.getInstance().getCache(getReflector()).registerUpdate((Model)getProxy());
 		Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
     }
+    private void encrypt(){
+		List<String> encryptedFields = getReflector().getEncryptedFields();
+		if (encryptedFields.isEmpty()){
+			return;
+		}
+		for (String f: encryptedFields){
+			String value = getReflector().get(proxy,f);
+			if (getRawRecord().isFieldDirty(f) && !getReflector().isVoid(value)){
+				getReflector().set(proxy,f, SharedKeys.getInstance().encrypt(value));
+			}
+		}
+	}
+	private void decrypt(){
+		List<String> encryptedFields = getReflector().getEncryptedFields();
+		if (encryptedFields.isEmpty()){
+			return;
+		}
+		for (String f: encryptedFields){
+			String value = getReflector().get(proxy,f);
+			if (getRawRecord().isFieldDirty(f) && !getReflector().isVoid(value)) {
+				getReflector().set(proxy, f, SharedKeys.getInstance().decrypt(value));
+			}
+		}
+	}
 
     private void create() {
+    	encrypt();
     	proxy.setLockId(0);
 		//Table<? extends Model> table = Database.getTable(getReflector().getTableName());
         Insert insertSQL = new Insert(getReflector());
@@ -789,12 +818,13 @@ public class ModelInvocationHandler implements InvocationHandler {
             }
         }
 
+		decrypt();
         record.setNewRecord(false);
         record.startTracking();
         if (!getReflector().isAnnotationPresent(CONFIGURATION.class)){
         	record.setLocked(true);
         }
-        
+
     	Database.getInstance().getCache(getReflector()).registerInsert((Model)getProxy());
     	Database.getInstance().getCurrentTransaction().registerTableDataChanged(getReflector().getTableName());
 	}
