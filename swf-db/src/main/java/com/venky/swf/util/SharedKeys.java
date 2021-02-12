@@ -43,7 +43,7 @@ public class SharedKeys {
                 new KeyStore.PasswordProtection(keyPassword.toCharArray());
 
         KeyStore keyStore = null;
-        keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore = KeyStore.getInstance("jceks");
         if (keyStoreFile.exists()){
             FileInputStream is = null;
             try  {
