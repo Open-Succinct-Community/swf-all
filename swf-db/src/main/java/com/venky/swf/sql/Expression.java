@@ -18,13 +18,16 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
 
+import javax.xml.crypto.Data;
+
 
 public class Expression {
 	String columnName = null;
 	List<BindVariable> values = null ;
 	Operator op = null;
-	public static final int CHUNK_SIZE = 30; 
-	
+	public static final int CHUNK_SIZE = 30;
+
+
 	public static Expression createExpression(String pool,String columnName, Operator op, Object... values){
 		List<List<Object>> chunks = getValueChunks(Arrays.asList(values));
 		Expression e = new Expression(pool,Conjunction.OR);
@@ -383,6 +386,28 @@ public class Expression {
 		}
 		return false;
 	}
+	public <M extends Model> void encryptBindValuesIfRequired(ModelReflector<M> reflector){
+		if (reflector.getEncryptedFields().isEmpty()){
+			return;
+		}
+		if (conjunction == null){
+			String fieldName = reflector.getFieldName(columnName);
+			if (!ObjectUtil.isVoid(fieldName) && reflector.isFieldEncrypted(fieldName)){
+				if (values != null && !values.isEmpty()){
+					for (int i = 0 ; i < values.size() ; i++){
+						values.get(i).encrypt();
+					}
+				}
+			}
+		}else if (!connected.isEmpty()){
+			Iterator<Expression> i = connected.iterator();
+			while(i.hasNext()){
+				Expression expression = i.next();
+				expression.encryptBindValuesIfRequired(reflector);
+			}
+		}
+	}
+
 
 	public <M extends Model> String toLucene(Class<M> modelClass) {
 		StringBuilder builder = new StringBuilder();

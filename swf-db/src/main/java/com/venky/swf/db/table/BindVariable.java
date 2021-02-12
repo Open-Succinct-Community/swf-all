@@ -11,6 +11,7 @@ import com.venky.core.io.StringReader;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.util.SharedKeys;
 
 /**
  *
@@ -18,7 +19,7 @@ import com.venky.swf.db.JdbcTypeHelper.TypeRef;
  */
 public class BindVariable {
     private final TypeRef<?> ref;
-    private final Object value;
+    private Object value;
     public BindVariable(String pool, Object value){
         this(pool,value,Database.getJdbcTypeHelper(pool).getTypeRef(value.getClass()));
     }
@@ -75,5 +76,11 @@ public class BindVariable {
     	}
     	return (ByteArrayInputStream)ref.getTypeConverter().valueOf(value);
     }
+
+    public void encrypt(){
+    	if (value != null && value instanceof String){
+			value = SharedKeys.getInstance().encrypt((String)value);
+		}
+	}
 
 }

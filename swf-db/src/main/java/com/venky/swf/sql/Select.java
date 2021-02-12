@@ -377,6 +377,10 @@ public class Select extends SqlStatement{
 	private Expression whereExpression ;
 	public Select where(Expression expression){
 		this.whereExpression = expression;
+		if (this.whereExpression != null && tableNames != null && tableNames.length == 1){
+			ModelReflector<? extends Model> ref = ModelReflector.instance(Table.modelClass(tableNames[0],getPool()));
+			this.whereExpression.encryptBindValuesIfRequired(ref);
+		}
 		return this;
 	}
 	
