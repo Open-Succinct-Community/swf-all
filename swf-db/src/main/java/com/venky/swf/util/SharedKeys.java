@@ -19,6 +19,7 @@ public class SharedKeys {
     private SharedKeys(){
         try {
             ensureKeyStore();
+            setEnableEncryption(true);
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
@@ -93,6 +94,16 @@ public class SharedKeys {
         return instance;
     }
 
+    private ThreadLocal<Boolean> enableEncryption = new ThreadLocal<>();
+    public void setEnableEncryption(boolean enableEncryption){
+        this.enableEncryption.set(enableEncryption);
+    }
+
+    public boolean isEncryptionEnabled(){
+        return this.enableEncryption.get();
+    }
+
+
     ThreadLocal<Cipher> cipherEncryptHolder =  new ThreadLocal<>();
     ThreadLocal<Cipher> cipherDecryptHolder =  new ThreadLocal<>();
 
@@ -122,10 +133,11 @@ public class SharedKeys {
         }
         return cipher;
     }
+
     public String   encrypt(String decrypted){
         try {
-            if (decrypted == null){
-                return null;
+            if (decrypted == null || !isEncryptionEnabled()){
+                return decrypted;
             }
             Cipher cipher= getEncryptCipher();
             byte[] encrypted = cipher.doFinal(decrypted.getBytes(StandardCharsets.UTF_8));
@@ -136,8 +148,8 @@ public class SharedKeys {
     }
     public String decrypt(String encrypted){
         try {
-            if (encrypted == null){
-                return null;
+            if (encrypted == null || !isEncryptionEnabled()){
+                return encrypted;
             }
             Cipher cipher = getDecryptCipher();
             byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encrypted.getBytes(StandardCharsets.UTF_8)));

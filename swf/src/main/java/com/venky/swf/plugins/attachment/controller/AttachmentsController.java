@@ -3,7 +3,9 @@ package com.venky.swf.plugins.attachment.controller;
 import java.util.List;
 
 import com.venky.core.date.DateUtils;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.ModelController;
+import com.venky.swf.db.Database;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.attachment.db.model.Attachment;
@@ -27,4 +29,18 @@ public class AttachmentsController extends ModelController<Attachment>{
 		throw new AccessDeniedException();
 	}
 
+	@Override
+	public View save() {
+		if (getIntegrationAdaptor() == null){
+			String id = (String)getPath().getFormFields().get("ID");
+			if (!ObjectUtil.isVoid(id)){
+				Attachment attachment = Database.getTable(getModelClass()).get(Long.valueOf(id));
+				if (attachment != null){
+					attachment.destroy();
+					getPath().getFormFields().remove("ID");
+				}
+			}
+		}
+		return super.save();
+	}
 }
