@@ -1254,7 +1254,7 @@ public class Path implements _IPath{
                     List<Long> idoptions = null ;
     
                     PARTICIPANT participant = reflector.getAnnotation(referredModelIdGetter, PARTICIPANT.class);
-                    if (participant != null && participant.defaultable()){
+                    if (participant != null && participant.defaultable() && getSessionUser() != null){
                         idoptions = getSessionUser().getParticipationOptions(modelClass,record).get(participant.value()).get(referredModelIdFieldName);
                     }
                             

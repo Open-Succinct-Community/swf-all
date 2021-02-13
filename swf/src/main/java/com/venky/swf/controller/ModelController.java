@@ -591,8 +591,10 @@ public class ModelController<M extends Model> extends Controller {
     protected View blank(M record) {
         record.defaultFields();
         getPath().fillDefaultsForReferenceFields(record, getModelClass());
-        record.setCreatorUserId(getSessionUser().getId());
-        record.setUpdaterUserId(getSessionUser().getId());
+        if (getSessionUser() != null){
+            record.setCreatorUserId(getSessionUser().getId());
+            record.setUpdaterUserId(getSessionUser().getId());
+        }
         if (returnIntegrationAdaptor != null) {
             return returnIntegrationAdaptor.createResponse(getPath(), record);
         } else {
