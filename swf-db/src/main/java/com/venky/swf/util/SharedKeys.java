@@ -19,7 +19,6 @@ public class SharedKeys {
     private SharedKeys(){
         try {
             ensureKeyStore();
-            setEnableEncryption(true);
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
@@ -100,6 +99,9 @@ public class SharedKeys {
     }
 
     public boolean isEncryptionEnabled(){
+        if (enableEncryption.get() == null){
+            enableEncryption.set(Config.instance().getBooleanProperty("swf.encryption.support",true));
+        }
         return this.enableEncryption.get();
     }
 
