@@ -317,16 +317,18 @@ public class UserImpl extends ModelImpl<User>{
 			
 			while (fieldNameIterator.hasNext()){
 				String key = fieldNameIterator.next();
-				List<Long> values = new ArrayList<>(participatingOptions.get(key));
-				
+				List<Long> values = participatingOptions.get(key);
+
 				ColumnDescriptor cd = ref.getColumnDescriptor(key);
 		    	if (cd.isVirtual()){
 		    		continue;
 		    	}
 				PARTICIPANT participant = ref.getAnnotation(ref.getFieldGetter(key),PARTICIPANT.class);
-		    	if (participant.redundant()){
+		    	if (participant.redundant() || values == null){
 		    		continue;
 				}
+
+		    	values = new ArrayList<>(values);
 
 		    	Expression dsw = optionalWhere.get(participantRoleGroup);
 				

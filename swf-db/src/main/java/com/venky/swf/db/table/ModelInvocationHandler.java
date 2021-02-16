@@ -312,7 +312,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     				PARTICIPANT participant = reflector.getAnnotation(reflector.getFieldGetter(referencedModelIdFieldName), PARTICIPANT.class);
     				
-    				if (participant.redundant() || pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
+    				if (participant.redundant() || pOptions.get(referencedModelIdFieldName) == null || pOptions.get(referencedModelIdFieldName).contains(referenceValue)){
 						participatingRolesInCurrentGroup.add(reflector.getParticipatingRole(referencedModelIdFieldName));
     				}
     			}

@@ -70,11 +70,15 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 				allowedValues.add(null);
 			}
 			List<Long> existing = participatingOptions.get(fieldName);
-			if (existing == null){
+			if (existing == null && !participatingOptions.containsKey(fieldName)){
 				existing = new SequenceSet<Long>();
 				participatingOptions.put(fieldName, existing);
 			}
-			existing.addAll(allowedValues);
+			if (existing != null) {
+				existing.addAll(allowedValues);
+			}
+		}else {
+			participatingOptions.put(fieldName, null);
 		}
 	}
 
