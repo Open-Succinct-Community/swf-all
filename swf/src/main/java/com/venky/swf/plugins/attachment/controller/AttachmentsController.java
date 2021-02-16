@@ -22,12 +22,23 @@ public class AttachmentsController extends ModelController<Attachment>{
 	}
 
 
+	@RequireLogin(false)
 	public View view(String contentFileName){
-		List<Attachment> attachements = new Select().from(Attachment.class).where(new Expression(getReflector().getPool(),"ATTACHMENT_CONTENT_NAME",Operator.EQ,contentFileName)).execute();
-		if (attachements.size() == 1){
-	        //getPath().getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24*365*15));
-			return super.view(attachements.get(0).getId());
+		Attachment attachment = null;
+		if (contentFileName.matches("^[0-9]+\\.[^\\.]+$")){
+			String[] parts = contentFileName.split("\\.");
+			attachment = Database.getTable(Attachment.class).get(Long.valueOf(parts[0]));
 		}
+		if (attachment == null){
+			List<Attachment> attachments = new Select().from(Attachment.class).where(new Expression(getReflector().getPool(),"ATTACHMENT_CONTENT_NAME",Operator.EQ,contentFileName)).execute();
+			if (attachments.size() == 1){
+				attachment = attachments.get(0);
+			}
+		}
+		if (attachment != null) {
+			return view(attachment,null);
+		}
+
 		throw new AccessDeniedException();
 	}
 

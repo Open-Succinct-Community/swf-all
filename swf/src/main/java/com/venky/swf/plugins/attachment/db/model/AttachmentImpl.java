@@ -10,12 +10,22 @@ public class AttachmentImpl extends ModelImpl<Attachment> {
         super();
     }
     public String getAttachmentUrl(){
-        if (getProxy().getRawRecord().isNewRecord()){
+        Attachment attachment = getProxy();
+        if (attachment.getRawRecord().isNewRecord()){
             return null;
         }else {
-            return "/attachments/view/" + getProxy().getId();
+            StringBuilder url = new StringBuilder("/attachments/view/" + getProxy().getId());
+            String name = attachment.getAttachmentContentName();
+            int dotIndex = name.lastIndexOf('.');
+            if ( dotIndex > 0) {
+                url.append(".").append(name.substring(dotIndex+1));
+            }
+            return url.toString();
         }
     }
+
+
+
 
     public void setAttachmentUrl(String url){
         
