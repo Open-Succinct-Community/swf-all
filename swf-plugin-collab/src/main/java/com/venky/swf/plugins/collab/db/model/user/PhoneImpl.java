@@ -41,7 +41,7 @@ public class PhoneImpl<T extends Model & Phone> extends ModelImpl<T> {
 
         if (!ObjectUtil.isVoid(key) && !ObjectUtil.isVoid(senderId)) {
             JSONObject params = new JSONObject();
-            params.put("mobile", phoneNumber);
+            params.put("mobile", phoneNumber.substring(1)); //Don't send + Sign according to the support team !!
             params.put("authkey", key);
 
             String url = null;
