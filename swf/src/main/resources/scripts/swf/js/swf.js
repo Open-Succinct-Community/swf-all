@@ -257,7 +257,7 @@ function api() {
             if (arguments.length == 0){
                 return _url;
             }
-            _url = encodeURIComponent(url);
+            _url = url.replaceAll(" ","%20");
             return this;
         },
         parameters : function(p){
