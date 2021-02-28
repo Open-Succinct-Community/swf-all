@@ -92,7 +92,7 @@ public interface TemplateLoader {
         try {
             if (raw){
                 FileInputStream inputStream = new FileInputStream(new File(getTemplateDirectory(),s));
-                return new BytesView(getPath(), StringUtil.readBytes(inputStream),contentType);
+                return new BytesView(getPath(), StringUtil.readBytes(inputStream),contentType,"content-disposition", "attachment; filename=" + s);
             }else{
                 return new BytesView(getPath(), TemplateEngine.getInstance(getTemplateDirectory()).publish("/"+s, new HashMap<>()).getBytes(),contentType);
             }
