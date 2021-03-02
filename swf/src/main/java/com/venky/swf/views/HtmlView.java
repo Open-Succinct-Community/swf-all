@@ -144,6 +144,9 @@ public abstract class HtmlView extends View{
     
     @Override
     public String toString(){
+        return getRoot().toString();
+    }
+    public Html getRoot(){
         Html html = new Html();
         String applicationName = Config.instance().getProperty("swf.application.name");
         if (!ObjectUtil.isVoid(applicationName)){
@@ -154,16 +157,16 @@ public abstract class HtmlView extends View{
         SWFLogger cat = Config.instance().getLogger(getClass().getName());
         Timer htmlCreation = cat.startTimer("html creation.");
         try {
-        	createHtml(html);
+            createHtml(html);
         }finally {
-        	htmlCreation.stop();
+            htmlCreation.stop();
         }
 
         Timer htmlToString = cat.startTimer("html rendering.");
         try {
-        	return html.toString();
+            return html;
         }finally {
-        	htmlToString.stop();
+            htmlToString.stop();
         }
     }
 

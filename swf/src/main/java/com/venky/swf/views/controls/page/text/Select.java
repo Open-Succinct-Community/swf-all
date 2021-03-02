@@ -44,6 +44,7 @@ public class Select extends OptionCreator<Option>{
     			Option o = (Option)control;
     			if (ObjectUtil.equals(o.getValue(),value)){
         			o.setProperty("selected", "selected");
+					super.setValue(value);
     			}else {
     				o.remove("selected");
     			}

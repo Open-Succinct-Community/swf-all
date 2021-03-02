@@ -17,12 +17,14 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.DashboardView;
+import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.model.ModelAwareness;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Form.SubmitMethod;
 import com.venky.swf.views.controls.page.HotLink;
+import com.venky.swf.views.controls.page.IFrame;
 import com.venky.swf.views.controls.page.Link;
 import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
@@ -271,8 +273,14 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
     	HotLink childBack = new HotLink(childPath.controllerPath() + "/back");
     	excludeLinks.add(childBack);
 
-    	DashboardView view =  (DashboardView)childPath.invoke();
-    	view.createBody(tab,true,false,excludeLinks);
+		HtmlView view = (HtmlView)(childPath.invoke());
+		if (view instanceof DashboardView){
+			((DashboardView) view).createBody(tab,true,false,excludeLinks);
+		}else {
+			IFrame frame = new IFrame("src",childPath.getTarget());
+			frame.addClass("vh-100");
+			tab.addControl(frame);
+		}
     }
     private SequenceSet<HotLink> links = null;
     
