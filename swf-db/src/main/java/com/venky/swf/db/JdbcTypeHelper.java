@@ -468,6 +468,7 @@ public abstract class JdbcTypeHelper {
     	}
     	public TimeConverter(String format,TimeZone tz){
     		this.format = format;
+    		this.tz = tz;
     	}
         public Time valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {

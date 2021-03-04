@@ -324,14 +324,18 @@ public class UserImpl extends ModelImpl<User>{
 		    		continue;
 		    	}
 				PARTICIPANT participant = ref.getAnnotation(ref.getFieldGetter(key),PARTICIPANT.class);
-		    	if (participant.redundant() || values == null){
-		    		continue;
+		    	if (participant.redundant() ){
+					continue;
+				}
+				Expression dsw = optionalWhere.get(participantRoleGroup);
+
+		    	if (values == null){
+					dsw.add(new Expression(getPool(),"1",Operator.EQ,1));
+					continue;
 				}
 
 		    	values = new ArrayList<>(values);
 
-		    	Expression dsw = optionalWhere.get(participantRoleGroup);
-				
 		    	if (values.isEmpty()){
 		    		dsw.add(new Expression(getPool(),cd.getName(),Operator.EQ));
 		    	}else if (values.size() == 1){
