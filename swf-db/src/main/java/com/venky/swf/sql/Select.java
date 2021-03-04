@@ -377,7 +377,8 @@ public class Select extends SqlStatement{
 	private Expression whereExpression ;
 	public Select where(Expression expression){
 		this.whereExpression = expression;
-		if (this.whereExpression != null && tableNames != null && tableNames.length == 1){
+		if (this.whereExpression != null && tableNames != null && tableNames.length == 1 &&
+				Config.instance().getBooleanProperty("swf.encryption.support",false)){
 			ModelReflector<? extends Model> ref = ModelReflector.instance(Table.modelClass(tableNames[0],getPool()));
 			this.whereExpression.encryptBindValuesIfRequired(ref);
 		}
