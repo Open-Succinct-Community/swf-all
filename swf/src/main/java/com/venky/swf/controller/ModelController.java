@@ -1184,11 +1184,13 @@ public class ModelController<M extends Model> extends Controller {
             Cache<String, Map<String, List<Long>>> pOptions = getSessionUser().getParticipationOptions(reflector.getModelClass(), model);
             if (pOptions.get(participant.value()).containsKey(autoCompleteFieldName)) {
                 List<Long> autoCompleteFieldValues = pOptions.get(participant.value()).get(autoCompleteFieldName);
-                if (!autoCompleteFieldValues.isEmpty()) {
-                    autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
-                    where.add(Expression.createExpression(reflector.getPool(), "ID", Operator.IN, autoCompleteFieldValues.toArray()));
-                } else {
-                    where.add(new Expression(reflector.getPool(), "ID", Operator.EQ));
+                if (autoCompleteFieldValues != null){
+                    if (!autoCompleteFieldValues.isEmpty()) {
+                        autoCompleteFieldValues.remove(null); // We need not try to use null for lookups.
+                        where.add(Expression.createExpression(reflector.getPool(), "ID", Operator.IN, autoCompleteFieldValues.toArray()));
+                    } else {
+                        where.add(new Expression(reflector.getPool(), "ID", Operator.EQ));
+                    }
                 }
             }
         }
