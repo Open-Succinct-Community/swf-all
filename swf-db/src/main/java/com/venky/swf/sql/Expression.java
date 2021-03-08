@@ -297,6 +297,11 @@ public class Expression {
 	private Object get(Object record, String columnName){
 		boolean isModelProxyObject = Proxy.isProxyClass(record.getClass()) && (record instanceof Model);
 		Object value = null;
+		String constantIdentifyingRegExp = "^('[^']*')|([0-9]*)$" ;
+
+		if (columnName.matches(constantIdentifyingRegExp)){
+			return columnName; //A Constant
+		}
 		if (isModelProxyObject){
 			Model m = (Model)record;
 			ModelInvocationHandler h = (ModelInvocationHandler) Proxy.getInvocationHandler(m);

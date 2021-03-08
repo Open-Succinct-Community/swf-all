@@ -28,6 +28,15 @@ public class AttachmentImpl extends ModelImpl<Attachment> {
 
 
     public void setAttachmentUrl(String url){
-        
+
     }
+
+    private String url;
+    public String getUploadUrl(){
+        return url;
+    }
+    public void setUploadUrl(String url){
+        this.url = url;
+    }
+
 }

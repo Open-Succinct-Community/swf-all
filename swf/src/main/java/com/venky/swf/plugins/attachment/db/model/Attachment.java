@@ -33,6 +33,7 @@ public interface Attachment extends Model{
 		}
 	}
 
+	@EXPORTABLE(value = false)
 	public InputStream getAttachment();
 	public void setAttachment(InputStream attachment);
 
@@ -40,6 +41,11 @@ public interface Attachment extends Model{
 	@PROTECTION(Kind.NON_EDITABLE)
 	public String getAttachmentUrl();
 	public void setAttachmentUrl(String url);
+
+	@IS_VIRTUAL
+	@HIDDEN
+	public String getUploadUrl();
+	public void setUploadUrl(String url);
 
 	@PROTECTION(Kind.NON_EDITABLE)
 	@UNIQUE_KEY
