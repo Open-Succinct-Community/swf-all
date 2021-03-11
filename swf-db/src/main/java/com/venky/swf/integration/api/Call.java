@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-public class Call<T> {
+public class Call<T> implements Serializable {
     HttpMethod method = HttpMethod.GET;
     InputFormat inputFormat = InputFormat.FORM_FIELDS;
 
@@ -36,11 +37,9 @@ public class Call<T> {
         return responseHeaders;
     }
 
-    Map<String, List<String>> responseHeaders = new IgnoreCaseMap<>();
-
-    ByteArrayInputStream responseStream = null;
-
-    ByteArrayInputStream errorStream = null;
+    private transient Map<String, List<String>> responseHeaders = new IgnoreCaseMap<>();
+    private transient  ByteArrayInputStream responseStream = null;
+    private transient ByteArrayInputStream errorStream = null;
 
     T input;
 
