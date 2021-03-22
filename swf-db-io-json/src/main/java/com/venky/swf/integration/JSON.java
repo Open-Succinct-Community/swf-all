@@ -55,7 +55,7 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public JSONObject createChildElement(String name){
+	public JSONObject createArrayElement(String name){
 		String pluralName = StringUtil.pluralize(name);
 		JSONArray children = (JSONArray)root.get(pluralName);
 		if (children == null){
@@ -70,7 +70,7 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<JSONObject> getChildElements(String name){
+	public List<JSONObject> getArrayElements(String name){
 		String pluralName = StringUtil.pluralize(name);
 		JSONArray children = (JSONArray)root.get(pluralName);
 		if (children == null){
@@ -85,7 +85,56 @@ public class JSON extends FormatHelper<JSONObject>{
 		}
 		return ret;
 	}
-	
+
+	@Override
+	public Set<String> getArrayElementNames() {
+		Set<String> attr = new HashSet<String>();
+		JSONObject obj = root;
+		for (Object key : obj.keySet()){
+			Object value = obj.get(key);
+			if (value instanceof JSONObject){
+				continue;
+			}else if (value instanceof JSONArray){
+				attr.add(StringUtil.valueOf(StringUtil.singularize(StringUtil.valueOf(key))));
+			}else {
+				continue;
+			}
+		}
+		return attr;
+	}
+
+	@Override
+	public void removeArrayElement(String name) {
+		String pluralName = StringUtil.pluralize(name);
+		root.remove(pluralName);
+	}
+
+	@Override
+	public void setArrayElement(String name, List<JSONObject> elements) {
+		String pluralName = StringUtil.pluralize(name);
+		JSONArray array = new JSONArray();
+		array.addAll(elements);
+		root.put(pluralName,array);
+	}
+
+	@Override
+	public Set<String> getElementAttributeNames() {
+		Set<String> attr = new HashSet<String>();
+		JSONObject obj = root;
+		for (Object key : obj.keySet()){
+			Object value = obj.get(key);
+			if (value instanceof JSONObject){
+				attr.add(StringUtil.valueOf(key));
+			}else if (value instanceof JSONArray){
+				continue;
+			}else {
+				continue;
+			}
+		}
+		return attr;
+	}
+
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void setAttribute(String name , String obj){

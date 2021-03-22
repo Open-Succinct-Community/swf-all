@@ -31,7 +31,7 @@ public class XML extends FormatHelper<XMLElement>{
 	}
 	
 	@Override
-	public XMLElement createChildElement(String name) {
+	public XMLElement createArrayElement(String name) {
 		String plural = StringUtil.pluralize(name);
 		XMLElement pluralElement = null;
 		if (root.getNodeName().equals(plural)){
@@ -46,7 +46,7 @@ public class XML extends FormatHelper<XMLElement>{
 	}
 	
 	@Override
-	public List<XMLElement> getChildElements(String name){
+	public List<XMLElement> getArrayElements(String name){
 		String plural = StringUtil.pluralize(name);
 		XMLElement pluralElement = null;
 		if (root.getNodeName().equals(plural)){
@@ -64,6 +64,58 @@ public class XML extends FormatHelper<XMLElement>{
 		}
 		return ret;
 	}
+
+	@Override
+	public Set<String> getArrayElementNames() {
+		Set<String> attributes = new HashSet<>();
+		for (Iterator<XMLElement> i =  root.getChildElements() ; i.hasNext() ; ){
+			XMLElement element = i.next();
+			String pluralTagName = element.getTagName();
+
+			if (ObjectUtil.isVoid(element.getNodeValue()) &&
+					pluralTagName.equals(StringUtil.pluralize(pluralTagName))){
+				String singularTagName = StringUtil.singularize(pluralTagName);
+
+				Iterator<XMLElement> elementIterator = element.getChildElements();
+				if (!elementIterator.hasNext()){
+					attributes.add(singularTagName);
+				}else if (elementIterator.next().getTagName().equals(singularTagName)){
+					attributes.add(singularTagName);
+				}
+			}
+		}
+		return attributes;
+	}
+
+	@Override
+	public void removeArrayElement(String name) {
+		XMLElement arrayElement = root.getChildElement(StringUtil.pluralize(name));
+		if (arrayElement != null) {
+			root.removeChild(arrayElement);
+		}
+	}
+
+	@Override
+	public void setArrayElement(String name, List<XMLElement> elements) {
+		XMLElement plural = root.getChildElement(StringUtil.pluralize(name),true);
+		for (XMLElement element : elements){
+			plural.appendChild(element);
+		}
+	}
+
+	@Override
+	public Set<String> getElementAttributeNames() {
+		Set<String> attributes = new HashSet<>();
+		for (Iterator<XMLElement> i =  root.getChildElements() ; i.hasNext() ; ){
+			XMLElement element = i.next();
+			if (ObjectUtil.isVoid(element.getNodeValue()) &&
+					element.getTagName().equals(StringUtil.singularize(element.getTagName()))){
+				attributes.add(element.getTagName());
+			}
+		}
+		return attributes;
+	}
+
 	@Override
 	public void setAttribute(String name, String value) {
 		if (value != null){
@@ -139,7 +191,10 @@ public class XML extends FormatHelper<XMLElement>{
 
 	@Override
 	public void removeElementAttribute(String name){
-		root.removeChild(root.getChildElement(name));
+		XMLElement child = root.getChildElement(name);
+		if (child != null) {
+			root.removeChild(child);
+		}
 	}
 	@Override
 	public void removeAttribute(String name){

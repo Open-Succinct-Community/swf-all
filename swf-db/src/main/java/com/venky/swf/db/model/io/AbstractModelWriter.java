@@ -68,7 +68,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
 		FormatHelper<T> helper  = FormatHelper.instance(getMimeType(),StringUtil.pluralize(getBeanClass().getSimpleName()),true);
 		for (M record: records){
-			T childElement = helper.createChildElement(getBeanClass().getSimpleName());
+			T childElement = helper.createArrayElement(getBeanClass().getSimpleName());
 			write(record,childElement,fields,parentsAlreadyConsidered, childrenToBeConsidered, templateFields);
 		}
 		os.write(helper.toString().getBytes());
@@ -242,7 +242,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			Map<String,List<String>> newConsiderChilden = new HashMap<>(considerChildren);
 			newConsiderChilden.remove(getBeanClass().getSimpleName()); //Don't print children of parent via children. !! Duplication.
 			for (R child : children) {
-				T childElement = formatHelper.createChildElement(childModelClass.getSimpleName());
+				T childElement = formatHelper.createArrayElement(childModelClass.getSimpleName());
 				childWriter.writeSimplified(child, childElement, fields, parentsWritten, newConsiderChilden, templateFields);
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

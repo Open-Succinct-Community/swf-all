@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
 
@@ -96,19 +98,73 @@ public abstract class FormatHelper<T> {
 	}
 	
 	public abstract T getRoot();
-	public abstract T createChildElement(String name);
-	public abstract List<T> getChildElements(String name) ;
-	
+
+	public abstract T createArrayElement(String name);
+	public abstract List<T> getArrayElements(String name) ;
+	public abstract Set<String> getArrayElementNames();
+	public abstract void removeArrayElement(String name);
+	public abstract void setArrayElement(String name, List<T> elements);
+
 	public abstract T createElementAttribute(String name);
 	public abstract T getElementAttribute(String name);
+	public abstract Set<String> getElementAttributeNames();
 	public abstract void setAttribute(String name,T element);
-	
+	public abstract void removeElementAttribute(String name);
+
+
 	public abstract void setAttribute(String name, String value);
 	public abstract void setElementAttribute(String name, String value);
-	
 	public abstract Set<String> getAttributes();
 	public abstract String getAttribute(String name);
-	public abstract void removeElementAttribute(String name);
 	public abstract void removeAttribute(String name) ;
+
+	public enum KeyCase {
+		TITLE,
+		CAMEL,
+	}
+	public void change_key_case(KeyCase toKeyCase){
+		FormatHelper<T> helper = this;
+		for (String name : helper.getAttributes()){
+			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
+					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+				String v = helper.getAttribute(name);
+				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				helper.setAttribute(newName,v);
+				helper.removeAttribute(name);
+			}else {
+				break;
+			}
+		}
+		for (String name : helper.getArrayElementNames()) {
+			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
+					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+				List<T> childElements = helper.getArrayElements(name);
+				for (T childElement : childElements){
+					FormatHelper.instance(childElement).change_key_case(toKeyCase);
+				}
+
+				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				helper.setArrayElement(newName,childElements);
+				helper.removeElementAttribute(name);
+			}else {
+				break;
+			}
+
+		}
+		for (String name : helper.getElementAttributeNames()) {
+			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
+					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+				FormatHelper.instance(helper.getElementAttribute(name)).change_key_case(toKeyCase);
+
+				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				helper.setAttribute(newName,helper.getElementAttribute(name));
+				helper.removeElementAttribute(name);
+			}else {
+				break;
+			}
+
+		}
+
+	}
 	
 }

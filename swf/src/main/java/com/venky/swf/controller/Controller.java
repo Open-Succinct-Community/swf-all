@@ -9,7 +9,6 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
-import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
@@ -370,7 +369,7 @@ public class Controller {
     }
 
     private void createEntry(ModelReflector<? extends Model> reflector, FormatHelper<JSONObject> doc, Object name, Object id) {
-        JSONObject elem = doc.createChildElement("entry");
+        JSONObject elem = doc.createArrayElement("entry");
         FormatHelper<JSONObject> elemHelper = FormatHelper.instance(elem);
         elemHelper.setAttribute("name", Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(name.getClass()).getTypeConverter().toString(name));
         elemHelper.setAttribute("id", Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(id.getClass()).getTypeConverter().toString(id));
