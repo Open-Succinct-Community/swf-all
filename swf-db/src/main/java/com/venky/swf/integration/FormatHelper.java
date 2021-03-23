@@ -2,6 +2,7 @@ package com.venky.swf.integration;
 
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,8 @@ public abstract class FormatHelper<T> {
 	}
 	
 	public abstract T getRoot();
+	public abstract String getRootName();
+	public abstract T changeRootName(String toName);
 
 	public abstract T createArrayElement(String name);
 	public abstract List<T> getArrayElements(String name) ;
@@ -122,7 +125,7 @@ public abstract class FormatHelper<T> {
 		TITLE,
 		CAMEL,
 	}
-	public void change_key_case(KeyCase toKeyCase){
+	public T change_key_case(KeyCase toKeyCase){
 		FormatHelper<T> helper = this;
 		for (String name : helper.getAttributes()){
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
@@ -139,13 +142,18 @@ public abstract class FormatHelper<T> {
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
 					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
 				List<T> childElements = helper.getArrayElements(name);
+				List<T> newChildElements = new ArrayList<>();
 				for (T childElement : childElements){
-					FormatHelper.instance(childElement).change_key_case(toKeyCase);
+					newChildElements.add(FormatHelper.instance(childElement).change_key_case(toKeyCase));
 				}
-
 				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
-				helper.setArrayElement(newName,childElements);
-				helper.removeElementAttribute(name);
+				String rootName = getRootName();
+				if (rootName != null && rootName.equals(StringUtil.pluralize(name))){
+					helper.setArrayElement(name, newChildElements);
+				}else {
+					helper.setArrayElement(newName, newChildElements);
+					helper.removeArrayElement(name);
+				}
 			}else {
 				break;
 			}
@@ -164,7 +172,13 @@ public abstract class FormatHelper<T> {
 			}
 
 		}
-
+		String name = getRootName();
+		if (name != null && (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
+					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0)))){
+			String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+			helper.changeRootName(newName);
+		}
+		return helper.getRoot();
 	}
 	
 }

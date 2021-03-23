@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.io.json.JSONFormatter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,8 +52,27 @@ public class JSON extends FormatHelper<JSONObject>{
 	public JSONObject getRoot(){
 		return root;
 	}
-	
-	
+
+	@Override
+	public String getRootName() {
+		if( root.size() == 1 ){
+			return (String)root.keySet().iterator().next();
+		}else {
+			return null;
+		}
+	}
+
+	@Override
+	public JSONObject changeRootName(String toName) {
+		String rootName = getRootName();
+		if (rootName != null && !ObjectUtil.equals(rootName,toName)){
+			Object v = root.remove(rootName);
+			root.put(toName,v);
+		}
+		return root;
+	}
+
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public JSONObject createArrayElement(String name){

@@ -29,7 +29,35 @@ public class XML extends FormatHelper<XMLElement>{
 	public XMLElement getRoot() {
 		return root;
 	}
-	
+
+	@Override
+	public String getRootName() {
+		return root.getTagName();
+	}
+
+	@Override
+	public XMLElement changeRootName(String toName) {
+		if (root.getTagName().equals(toName)){
+			return root;
+		}
+		XMLElement parent = root.getParentElement();
+		XMLDocument document = root.getXMLDocument();
+		final XMLElement clone ;
+		if (parent == null){
+			document.remove(root);
+			clone = document.createElement(toName);
+			document.append(clone);
+		}else {
+			parent.removeChild(root);
+			clone = parent.createChildElement(toName);
+		}
+
+		root.getAttributes().forEach((n,v)-> clone.setAttribute(n,v));
+		root.getChildElements().forEachRemaining(e-> clone.appendChild(e));
+		root = clone;
+		return root;
+	}
+
 	@Override
 	public XMLElement createArrayElement(String name) {
 		String plural = StringUtil.pluralize(name);
@@ -70,17 +98,21 @@ public class XML extends FormatHelper<XMLElement>{
 		Set<String> attributes = new HashSet<>();
 		for (Iterator<XMLElement> i =  root.getChildElements() ; i.hasNext() ; ){
 			XMLElement element = i.next();
-			String pluralTagName = element.getTagName();
+			String tagName = element.getTagName();
 
-			if (ObjectUtil.isVoid(element.getNodeValue()) &&
-					pluralTagName.equals(StringUtil.pluralize(pluralTagName))){
-				String singularTagName = StringUtil.singularize(pluralTagName);
+			if (ObjectUtil.isVoid(element.getNodeValue())){
+				if (tagName.equals(StringUtil.pluralize(tagName))) {
+					String singularTagName = StringUtil.singularize(tagName);
 
-				Iterator<XMLElement> elementIterator = element.getChildElements();
-				if (!elementIterator.hasNext()){
-					attributes.add(singularTagName);
-				}else if (elementIterator.next().getTagName().equals(singularTagName)){
-					attributes.add(singularTagName);
+					Iterator<XMLElement> elementIterator = element.getChildElements();
+					if (!elementIterator.hasNext()) {
+						attributes.add(singularTagName);
+					} else if (elementIterator.next().getTagName().equals(singularTagName)) {
+						attributes.add(singularTagName);
+					}
+				}else if (tagName.equals(StringUtil.singularize(tagName)) && root.getTagName().equals(StringUtil.pluralize(tagName))){
+					attributes.add(tagName);
+					break;
 				}
 			}
 		}
@@ -97,7 +129,8 @@ public class XML extends FormatHelper<XMLElement>{
 
 	@Override
 	public void setArrayElement(String name, List<XMLElement> elements) {
-		XMLElement plural = root.getChildElement(StringUtil.pluralize(name),true);
+		String pluralName = StringUtil.pluralize(name);
+		XMLElement plural = root.getTagName().equals(pluralName) ? root : root.getChildElement(pluralName,true);
 		for (XMLElement element : elements){
 			plural.appendChild(element);
 		}
@@ -109,7 +142,8 @@ public class XML extends FormatHelper<XMLElement>{
 		for (Iterator<XMLElement> i =  root.getChildElements() ; i.hasNext() ; ){
 			XMLElement element = i.next();
 			if (ObjectUtil.isVoid(element.getNodeValue()) &&
-					element.getTagName().equals(StringUtil.singularize(element.getTagName()))){
+					element.getTagName().equals(StringUtil.singularize(element.getTagName())) &&
+					!root.getTagName().equals(StringUtil.pluralize(element.getTagName()))){
 				attributes.add(element.getTagName());
 			}
 		}
@@ -180,11 +214,15 @@ public class XML extends FormatHelper<XMLElement>{
 
 	@Override
 	public void setAttribute(String name, XMLElement element) {
-		if (element != null && ObjectUtil.equals(element.getTagName(),name)){
-			if (element.getOwnerDocument() == root.getOwnerDocument()){
-				root.appendChild(element.cloneElement(true));
+		if (element != null ){
+			if (!ObjectUtil.equals(element.getTagName(),name)) {
+				new XML(element).changeRootName(name);
 			}else {
-				root.appendChild(element);
+				if (element.getOwnerDocument() == root.getOwnerDocument()){
+					root.appendChild(element.cloneElement(true));
+				}else {
+					root.appendChild(element);
+				}
 			}
 		}
 	}
