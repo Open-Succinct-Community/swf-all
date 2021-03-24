@@ -28,11 +28,9 @@ public abstract class VirtualModelController<M extends Model> extends ModelContr
 		return throwOperationNotSupportedException();
 	}
 
-	@Override
-	public View search() {
+	protected View search(String strQuery, int maxRecords) {
 		return throwOperationNotSupportedException();
 	}
-
 	@Override
 	public View show(long id) {
 		return throwOperationNotSupportedException();
