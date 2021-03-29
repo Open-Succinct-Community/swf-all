@@ -17,4 +17,9 @@ public class PropertiesController extends Controller {
         ret.put("value",Config.instance().getProperty(key));
         return new BytesView(getPath(),ret.toString().getBytes());
     }
+
+    @RequireLogin(false)
+    public View environment(){
+        return get("swf.env");
+    }
 }
