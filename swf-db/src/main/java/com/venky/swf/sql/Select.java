@@ -263,7 +263,7 @@ public class Select extends SqlStatement{
 	            Config.instance().getLogger(getClass().getName()).fine(getRealSQL());
 	            try {
 		            st = prepare();
-		            if (maxRecords != Select.MAX_RECORDS_ALL_RECORDS ) { 
+		            if (maxRecords != Select.MAX_RECORDS_ALL_RECORDS ) {
 		            	//st.setMaxRows(maxRecords + 1);
 		            	st.setFetchSize(Math.min(maxRecords+1,10000));
 		            }

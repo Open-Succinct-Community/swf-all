@@ -32,7 +32,6 @@ public interface City extends Model , GeoLocation {
 	public void setStateId(Long id);
 	public State getState();
 
-
 	@Index
 	@UNIQUE_KEY(value = "K2" , allowMultipleRecordsWithNull = false)
 	public String getRegionName();

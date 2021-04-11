@@ -1348,4 +1348,20 @@ public class Path implements _IPath{
         }
         return value;
     }
+
+    Map<String,String> headers = null;
+    public Map<String,String> getHeaders(){
+        if (headers == null){
+            headers = new HashMap<>();
+            Enumeration<String> names = getRequest().getHeaderNames();
+            while(names.hasMoreElements()){
+                String name = names.nextElement();
+                String value = getRequest().getHeader(name);
+                if (value != null){
+                    headers.put(name,value);
+                }
+            }
+        }
+        return headers;
+    }
 }

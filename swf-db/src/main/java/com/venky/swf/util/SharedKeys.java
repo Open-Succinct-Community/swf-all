@@ -79,6 +79,7 @@ public class SharedKeys {
             }
         }
     }
+
     private static SharedKeys instance= null;
 
     public static SharedKeys getInstance(){

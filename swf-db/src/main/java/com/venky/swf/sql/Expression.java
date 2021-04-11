@@ -18,14 +18,17 @@ import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
 
-import javax.xml.crypto.Data;
-
 
 public class Expression {
 	String columnName = null;
 	List<BindVariable> values = null ;
 	Operator op = null;
 	public static final int CHUNK_SIZE = 30;
+	private boolean useBindVariables = true;
+
+	public boolean isUseBindVariables(){
+		return useBindVariables;
+	}
 
 
 	public static Expression createExpression(String pool,String columnName, Operator op, Object... values){
@@ -69,13 +72,22 @@ public class Expression {
 	}
 	@SafeVarargs
 	public <T> Expression(String pool,String columnName,Operator op, T... values){
+		this(pool,true,columnName,op,values);
+	}
+	@SafeVarargs
+	public <T> Expression(String pool,boolean useBindVariables,String columnName,Operator op,  T... values){
 		this.columnName = columnName;
 		if (columnName.contains("(")){
-			this.realColumnName = columnName.substring(columnName.indexOf("(")+1,columnName.lastIndexOf(")"));
 			this.functionName = columnName.substring(0,columnName.indexOf("("));
+			if (isLowerFunction()){
+				this.realColumnName = columnName.substring(columnName.indexOf("(")+1,columnName.lastIndexOf(")"));
+			}else {
+				this.realColumnName = null;
+			}
 		}else {
 			this.realColumnName = columnName;
 		}
+		this.useBindVariables = useBindVariables;
 
 		this.op = op ;
 		this.values = new SequenceSet<BindVariable>();
@@ -84,9 +96,14 @@ public class Expression {
 		try {
 			for (int i = 0 ; i < values.length ; i ++ ){
 				if (values[i] instanceof BindVariable) {
-					this.values.add((BindVariable)values[i]);	
+					this.values.add((BindVariable)values[i]);
 				}else {
 					this.values.add(new BindVariable(pool,values[i]));
+				}
+				Object value = this.values.get(i).getValue();
+
+				if (this.useBindVariables && value != null && (value instanceof String) && ((String) value).indexOf("(") > 0 ) {
+					this.useBindVariables = false;
 				}
 			}
 		}catch (NullPointerException ex){
@@ -103,6 +120,7 @@ public class Expression {
 		this.conjunction = conjunction;
 		this.values = new ArrayList<BindVariable>();
 	}
+
 
 	private boolean finalized = false;
 	private boolean isFinalized(){
@@ -216,7 +234,11 @@ public class Expression {
 						//To handle In clause.
 						builder.append(",");
 					}
-					builder.append(" ? ");
+					if (useBindVariables){
+						builder.append(" ? ");
+					}else {
+						builder.append(values.get(i).getValue());
+					}
 				}
 				
 				if (op.isMultiValued()){
@@ -252,7 +274,11 @@ public class Expression {
 	}
 	
 	public List<BindVariable> getValues(){
-		return Collections.unmodifiableList(values);
+		if (isUseBindVariables()) {
+			return Collections.unmodifiableList(values);
+		}else {
+			return new ArrayList<>();
+		}
 	}
 	
 	public boolean isEmpty(){
@@ -322,7 +348,11 @@ public class Expression {
 	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public  boolean eval(Object record){
+		String columnName = getColumnName();
 		if (conjunction == null){
+			if (columnName == null){
+				return false;
+			}
 			Object value = get(record,getColumnName());
 			if (value != null && value instanceof  String && isLowerFunction()){
 				value = ((String) value).toLowerCase();
