@@ -704,9 +704,10 @@ public class Table<M extends Model> {
         }
         if (fullModel != null){
             User loggedInUser = Database.getInstance().getCurrentUser();
-
-            if (loggedInUser != null && ensureAccessibleByLoggedInUser && !fullModel.isAccessibleBy(loggedInUser)) {
-                throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by " + getReflector().get(fullModel, getReflector().getDescriptionField()) + " cannot be  modified.");
+            if (ensureAccessibleByLoggedInUser){
+                if (loggedInUser == null || !fullModel.isAccessibleBy(loggedInUser)){
+                    throw new AccessDeniedException("Existing Record in " + getModelClass().getSimpleName() + " identified by " + getReflector().get(fullModel, getReflector().getDescriptionField()) + " cannot be  modified.");
+                }
             }
         }
         return fullModel;
