@@ -8,7 +8,7 @@ import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 
 @HAS_DESCRIPTION_FIELD("ALIAS")
-public interface Key extends Model {
+public interface CryptoKey extends Model {
     @UNIQUE_KEY
     public String getAlias();
     public void setAlias(String alias);
@@ -22,10 +22,10 @@ public interface Key extends Model {
     public String getPublicKey();
     public void setPublicKey(String key);
 
-    public static Key find(String alias){
-        Key key = Database.getTable(Key.class).newRecord();
+    public static CryptoKey find(String alias){
+        CryptoKey key = Database.getTable(CryptoKey.class).newRecord();
         key.setAlias(alias);
-        key = Database.getTable(Key.class).find(key,false);
+        key = Database.getTable(CryptoKey.class).find(key,false);
         return key;
     }
 }
