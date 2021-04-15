@@ -19,7 +19,7 @@ public class KeysController extends VirtualModelController<Key> {
     @RequireLogin(false)
     public View generate(){
         Key key = Database.getTable(Key.class).newRecord();
-        KeyPair pair = Crypt.getInstance().generateKeyPair();
+        KeyPair pair = Crypt.getInstance().generateKeyPair(Crypt.KEY_ALGO,2048);
         key.setPrivateKey(Crypt.getInstance().getBase64Encoded(pair.getPrivate()));
         key.setPublicKey(Crypt.getInstance().getBase64Encoded(pair.getPublic()));
         return getIntegrationAdaptor().createResponse(getPath(),key, Arrays.asList("PUBLIC_KEY","PRIVATE_KEY"));

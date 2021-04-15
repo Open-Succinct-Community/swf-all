@@ -256,7 +256,10 @@ public class Select extends SqlStatement{
         	QueryCache cache = Database.getInstance().getCache(ref);
         	if (isCacheable(ref)){
         		result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
-        	}
+        	}else if (ref.getRealModelClass() == null){
+        		result = cache.getCachedResult(getWhereExpression(),(orderByPassed != null ? Select.MAX_RECORDS_ALL_RECORDS :maxRecords),locked);
+        		//Return if cached manually.
+			}
         	
         	if (result == null){
 	            Timer queryTimer = cat.startTimer(getRealSQL());

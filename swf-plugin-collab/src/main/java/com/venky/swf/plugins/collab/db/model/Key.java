@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.collab.db.model;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
@@ -13,9 +14,11 @@ public interface Key extends Model {
     public void setAlias(String alias);
 
     @ENCRYPTED
+    @COLUMN_SIZE(4096)
     public String getPrivateKey();
     public void setPrivateKey(String key);
 
+    @COLUMN_SIZE(4096)
     public String getPublicKey();
     public void setPublicKey(String key);
 
