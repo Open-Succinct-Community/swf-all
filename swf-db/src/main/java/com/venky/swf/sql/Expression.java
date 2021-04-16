@@ -102,9 +102,11 @@ public class Expression {
 				}
 				Object value = this.values.get(i).getValue();
 
-				if (this.useBindVariables && value != null && (value instanceof String) && ((String) value).indexOf("(") > 0 ) {
+				/* if (this.useBindVariables && value != null && (value instanceof String) && ((String) value).indexOf("(") > 0 ) {
 					this.useBindVariables = false;
 				}
+				value may need to have (. In those cases let  developer pass variable useBindVariables as false.
+				*/
 			}
 		}catch (NullPointerException ex){
 			MultiException mex =  new MultiException("NPE found while creating expression for " + columnName + op.toString()  );
