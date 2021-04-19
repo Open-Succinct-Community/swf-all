@@ -100,9 +100,10 @@ public class Expression {
 				}else {
 					this.values.add(new BindVariable(pool,values[i]));
 				}
-				Object value = this.values.get(i).getValue();
 
-				/* if (this.useBindVariables && value != null && (value instanceof String) && ((String) value).indexOf("(") > 0 ) {
+				/*
+				Object value = this.values.get(i).getValue();
+				if (this.useBindVariables && value != null && (value instanceof String) && ((String) value).indexOf("(") > 0 ) {
 					this.useBindVariables = false;
 				}
 				value may need to have (. In those cases let  developer pass variable useBindVariables as false.

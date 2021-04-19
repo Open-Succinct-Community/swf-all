@@ -3,6 +3,7 @@ package com.venky.swf.plugins.lucene.index;
 import com.venky.cache.Cache;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
@@ -239,7 +240,7 @@ public class LuceneIndexer {
     }
 
     public List<Long> findIds(Query q, int numHits) {
-        final List<Long> ids = new ArrayList<>();
+        final List<Long> ids = new SequenceSet<>();
         fire(q, numHits, new ResultCollector() {
             public boolean found(Document d) {
                 return ids.add(Long.valueOf(d.getField("ID").stringValue()));

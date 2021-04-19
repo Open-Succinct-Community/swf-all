@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.core.collections.SequenceSet;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
@@ -13,7 +14,7 @@ import org.apache.lucene.search.SimpleCollector;
 
 public class CompleteSearchCollector extends SimpleCollector {
 
-	List<Integer> docIds = new ArrayList<>();
+	List<Integer> docIds = new SequenceSet<>();
 	public List<Integer> getDocIds(){
 		return docIds;
 	}
