@@ -266,7 +266,7 @@ public class TemplateEngine {
         }
     }
     private void _send(TransportType transportType,User user, String subject, String templateName, Map<String,Object> root){
-        if (user == null || !user.isNotificationEnabled()){
+        if (user == null ){
             return;
         }
         if (!exists(templateName)){
@@ -276,13 +276,20 @@ public class TemplateEngine {
         try {
             switch (transportType){
                 case MAIL:
-                    mail(user,subject,templateName,root);
+                    if (user.isEmailNotificationEnabled() ){
+                        mail(user,subject,templateName,root);
+                    }
                     break;
                 case PUSH:
-                    push(user,subject,templateName,root);
+                    if (user.isNotificationEnabled()) {
+                        push(user, subject, templateName, root);
+                    }
                     break;
                 case UI:
-                    logAlert(user,subject,templateName,root);
+                    if (user.isNotificationEnabled()) {
+                        logAlert(user, subject, templateName, root);
+                    }
+                    break;
             }
         }catch (Exception ex){
             Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not send message to " + user.getName() , ex );
