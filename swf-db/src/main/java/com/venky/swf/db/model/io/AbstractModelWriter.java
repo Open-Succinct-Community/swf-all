@@ -10,6 +10,7 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.integration.FormatHelper.KeyCase;
 import com.venky.swf.routing.Config;
 
 import java.io.IOException;
@@ -70,6 +71,9 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		for (M record: records){
 			T childElement = helper.createArrayElement(getBeanClass().getSimpleName());
 			write(record,childElement,fields,parentsAlreadyConsidered, childrenToBeConsidered, templateFields);
+		}
+		if (Config.instance().getBooleanProperty("swf.api.keys.title_case",false)){
+			helper.change_key_case(KeyCase.TITLE);
 		}
 		os.write(helper.toString().getBytes());
 	}

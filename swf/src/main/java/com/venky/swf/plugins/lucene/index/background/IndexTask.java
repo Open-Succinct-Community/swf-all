@@ -1,10 +1,12 @@
 package com.venky.swf.plugins.lucene.index.background;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
@@ -35,7 +37,7 @@ public class IndexTask implements Task{
 	}
 	private IndexWriter getIndexWriter() throws CorruptIndexException, LockObtainFailedException, IOException{
 		DatabaseDirectory.getIndexDirectory(directory,true);
-		IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+		IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer(new CharArraySet(new ArrayList<>(),false)));
 		config.setCommitOnClose(true);
 		config.setMergeScheduler(new SerialMergeScheduler());
 		return new IndexWriter(IndexManager.instance().getDirectory(directory), config);

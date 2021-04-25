@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import com.venky.swf.db.model.io.ModelIOFactory;
 import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.io.ModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.integration.FormatHelper.KeyCase;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.BytesView;
@@ -76,6 +78,12 @@ public class IntegrationAdaptor<M extends Model,T> {
             InputStream is = null;
             try {
                     is = path.getInputStream();
+					if (Config.instance().getBooleanProperty("swf.api.keys.title_case",false)){
+						//If input has come in title_case, make it camel case
+						FormatHelper<T> helper = FormatHelper.instance(getMimeType(),is);
+						helper.change_key_case(KeyCase.CAMEL);
+						is = new ByteArrayInputStream(helper.toString().getBytes(StandardCharsets.UTF_8));
+					}
                     return reader.read(is);
             }catch(IOException ex){
                     throw new RuntimeException(ex);

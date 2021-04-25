@@ -18,6 +18,7 @@ import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -264,7 +266,7 @@ public class LuceneIndexer {
         }
         try {
             //return new QueryParser(Version.LUCENE_35,defaultField,new StandardAnalyzer(Version.LUCENE_35)).parse(queryString);
-            return new IntelligentQueryParser(defaultField, new StandardAnalyzer()).parse(queryString);
+            return new IntelligentQueryParser(defaultField, new StandardAnalyzer(new CharArraySet(new ArrayList<String>(),false))).parse(queryString);
 
         } catch (ParseException e) {
             MultiException ex = new MultiException("Could not form lucene query for:\n" + queryString + "\n");
