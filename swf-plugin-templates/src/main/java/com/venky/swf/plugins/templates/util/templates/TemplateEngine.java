@@ -328,6 +328,9 @@ public class TemplateEngine {
         Call<JSONObject> call = new Call<JSONObject>().url(whatsAppProviderUrl).inputFormat(InputFormat.FORM_FIELDS).
                 input(input).method(HttpMethod.GET);
         JSONObject response = call.getResponseAsJson();
+        if (response != null){
+            response = (JSONObject) response.get("response");
+        }
         if (call.hasErrors() || (ObjectUtil.equals(response.get("status"),"error"))){
             throw  new RuntimeException("Could not send whatsapp notification to " + phoneNumber);
         }
