@@ -31,7 +31,7 @@ public interface User extends com.venky.swf.plugins.mail.db.model.User {
     public Boolean isEmailNotificationEnabled();
     public void setEmailNotificationEnabled(boolean enabled);
 
-    @COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)
+    @COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
     public boolean isWhatsAppNotificationEnabled();
     public void setWhatsAppNotificationEnabled(boolean enabled);
 
