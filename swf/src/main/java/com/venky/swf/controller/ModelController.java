@@ -1275,4 +1275,10 @@ public class ModelController<M extends Model> extends Controller {
             throw new RuntimeException("Request must be invoked as a http api content-type cannot be " + getPath().getProtocol().toString() );
         }
     }
+
+    public View reindex(long id) throws IOException {
+        M record = Database.getTable(getModelClass()).get(id);
+        LuceneIndexer.instance(getModelClass()).updateDocument(record.getRawRecord());
+        return  show(record);
+    }
 }
