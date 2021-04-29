@@ -29,7 +29,7 @@ public class BeforeSaveUser extends BeforeModelSaveExtension<User> {
             }
             String whatsAppProviderUrl = Config.instance().getProperty("whatsapp.url");
             input.put("format","json");
-            input.put("phone_number",user.getPhoneNumber());
+            input.put("phone_number",user.getPhoneNumber().substring(1));
             input.put("v",1.1);
             input.put("auth_scheme","plain");
             input.put("channel","WHATSAPP");
