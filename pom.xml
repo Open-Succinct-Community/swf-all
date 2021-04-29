@@ -96,10 +96,10 @@
     <module>swf-archetype</module>
     <module>swf-plugin-archetype</module>
     <module>swf-maven-plugin</module>
+    <module>swf-plugin-templates</module>
     <module>swf-plugin-collab</module>
     <module>swf-plugin-bugs</module>
     <module>swf-plugin-mail</module>
-    <module>swf-plugin-templates</module>
     <module>swf-plugin-datamart</module>
   </modules>
 </project>

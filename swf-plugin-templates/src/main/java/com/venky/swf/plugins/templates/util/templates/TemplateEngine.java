@@ -20,6 +20,9 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.json.JSONModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.integration.api.Call;
+import com.venky.swf.integration.api.HttpMethod;
+import com.venky.swf.integration.api.InputFormat;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.templates.db.model.User;
@@ -48,7 +51,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Security;
@@ -156,10 +162,11 @@ public class TemplateEngine {
             return false;
         }
     }
-    public static enum TransportType {
+    public enum TransportType {
         MAIL,
         PUSH,
-        UI
+        UI,
+        WHATSAPP
     }
     public void send(User user, String subject, String templateName, List<Model> entities, Map<Class<? extends Model>, List<String>> entityFieldMap, TransportType ... transportType){
         send(user,subject,templateName,entities,entityFieldMap,new HashMap<>(),transportType);
@@ -285,11 +292,60 @@ public class TemplateEngine {
                     break;
                 case UI:
                     logAlert(user,subject,templateName,root);
+                    break;
+                case WHATSAPP:
+                    sendWhatsApp(user,subject,templateName,root);
             }
         }catch (Exception ex){
             Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Could not send message to " + user.getName() , ex );
         }
     }
+
+    private void sendWhatsApp(User user, String subject, String templateName, Map<String, Object> root) throws UnsupportedEncodingException {
+        String phoneNumber = sanitize(user.getPhoneNumber());
+        if (ObjectUtil.isVoid(phoneNumber)) {
+            return;
+        }
+        String message = publish(templateName,root);
+        String whatsAppProviderUrl = Config.instance().getProperty("whatsapp.url");
+        if (ObjectUtil.isVoid(whatsAppProviderUrl)){
+            return;
+        }
+        JSONObject input = new JSONObject();
+        input.put("userid",Config.instance().getProperty("whatsapp.userid"));
+        input.put("password",Config.instance().getProperty("whatsapp.password"));
+        if (ObjectUtil.isVoid(input.get("userid")) || ObjectUtil.isVoid(input.get("password"))){
+            return;
+        }
+        input.put("method","SendMessage");
+
+        input.put("auth_scheme","plain");
+        input.put("v",1.1);
+        input.put("send_to",phoneNumber);
+        input.put("msg", URLEncoder.encode(message, "UTF-8"));
+        input.put("msg_type","HSM");
+        input.put("format","json");
+        Call<JSONObject> call = new Call<JSONObject>().url(whatsAppProviderUrl).inputFormat(InputFormat.FORM_FIELDS).
+                input(input).method(HttpMethod.GET);
+        JSONObject response = call.getResponseAsJson();
+        if (call.hasErrors() || (ObjectUtil.equals(response.get("status"),"error"))){
+            throw  new RuntimeException("Could not send whatsapp notification to " + phoneNumber);
+        }
+        // May need to adaptorize later. !! this is GUPSHUP adaptor
+    }
+    public String sanitize(String phoneNumber){
+        if (ObjectUtil.isVoid(phoneNumber)){
+            return "";
+        }
+        if (phoneNumber.charAt(0) == '+'){
+            String ret = phoneNumber.substring(1);
+            if (ret.length() == 12){
+                return ret;
+            }
+        }
+        return "";
+    }
+
     protected void logAlert(User user, String subject, String templateName, Map<String,Object> root) {
         Alert alert = Database.getTable(Alert.class).newRecord();
         alert.setTemplate(templateName);
