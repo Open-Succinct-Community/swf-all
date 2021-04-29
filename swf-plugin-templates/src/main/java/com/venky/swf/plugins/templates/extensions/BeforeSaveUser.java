@@ -45,20 +45,30 @@ public class BeforeSaveUser extends BeforeModelSaveExtension<User> {
                     input(input).method(HttpMethod.GET);
             JSONObject response = call.getResponseAsJson();
             Set<String> statuses = new HashSet<>();
+            StringBuilder errors = new StringBuilder();
             if (response != null){
                 JSONObject data = (JSONObject)response.get("data");
                 response = (JSONObject) response.get("response");
-                statuses.add((String)response.get("status"));
+
                 JSONArray messages = (JSONArray) data.get("response_messages");
                 if (messages == null) {
                     messages = new JSONArray();
                 }
+                messages.add(response);
+
                 for (Object r : messages){
-                    statuses.add((String)((JSONObject)r).get("status"));
+                    String status = (String)((JSONObject)r).get("status");
+                    if (ObjectUtil.equals("error",status)){
+                        String details = (String)((JSONObject)r).get("details");
+                        if (!ObjectUtil.isVoid(details)){
+                            errors.append(details);
+                        }
+                    }
+                    statuses.add(status);
                 }
             }
             if (call.hasErrors() || (statuses.contains("error"))){
-                throw  new RuntimeException("Could not subscribe to whatsapp notifications for " + user.getPhoneNumber());
+                throw  new RuntimeException(errors.toString());
             }
         }
     }
