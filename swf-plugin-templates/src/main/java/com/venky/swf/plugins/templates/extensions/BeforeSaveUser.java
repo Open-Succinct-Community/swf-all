@@ -49,7 +49,7 @@ public class BeforeSaveUser extends BeforeModelSaveExtension<User> {
                 JSONObject data = (JSONObject)response.get("data");
                 response = (JSONObject) response.get("response");
                 statuses.add((String)response.get("status"));
-                JSONArray messages = (JSONArray) response.get("response_messages");
+                JSONArray messages = (JSONArray) data.get("response_messages");
                 if (messages == null) {
                     messages = new JSONArray();
                 }
