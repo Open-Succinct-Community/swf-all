@@ -326,6 +326,7 @@ public class TemplateEngine {
         input.put("msg", message);
         input.put("msg_type","HSM");
         input.put("format","json");
+        input.put("isTemplate",true);
         Call<JSONObject> call = new Call<JSONObject>().url(whatsAppProviderUrl).inputFormat(InputFormat.FORM_FIELDS).
                 input(input).method(HttpMethod.GET);
         JSONObject response = call.getResponseAsJson();
