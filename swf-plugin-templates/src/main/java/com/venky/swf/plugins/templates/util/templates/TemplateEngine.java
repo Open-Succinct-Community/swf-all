@@ -322,7 +322,8 @@ public class TemplateEngine {
         input.put("auth_scheme","plain");
         input.put("v",1.1);
         input.put("send_to",phoneNumber);
-        input.put("msg", URLEncoder.encode(message, "UTF-8"));
+        //input.put("msg", URLEncoder.encode(message, "UTF-8"));
+        input.put("msg", message);
         input.put("msg_type","HSM");
         input.put("format","json");
         Call<JSONObject> call = new Call<JSONObject>().url(whatsAppProviderUrl).inputFormat(InputFormat.FORM_FIELDS).
