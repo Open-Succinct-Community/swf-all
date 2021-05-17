@@ -20,10 +20,15 @@ public class BeforeSaveUser extends BeforeModelSaveExtension<User> {
     }
     @Override
     public void beforeSave(User user) {
-        if (ObjectUtil.isVoid(user.getPhoneNumber())){
+        if (ObjectUtil.isVoid(user.getPhoneNumber())) {
             return;
         }
-        if (user.getRawRecord().isNewRecord() || user.getRawRecord().isFieldDirty("WHATS_APP_NOTIFICATION_ENABLED")){
+        
+        if (user.getRawRecord().isNewRecord() && !user.isWhatsAppNotificationEnabled()) {
+            return;
+        }
+
+        if (user.getRawRecord().isFieldDirty("WHATS_APP_NOTIFICATION_ENABLED")){
             JSONObject input = new JSONObject();
             input.put("userid", Config.instance().getProperty("whatsapp.userid"));
             input.put("password",Config.instance().getProperty("whatsapp.password"));
