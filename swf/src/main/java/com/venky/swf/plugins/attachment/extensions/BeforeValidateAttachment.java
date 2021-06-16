@@ -31,6 +31,7 @@ public class BeforeValidateAttachment  extends BeforeModelValidateExtension<Atta
             {
                 Attachment model2 = Database.getTable(Attachment.class).getRefreshed(model);
                 model.getRawRecord().load(model2.getRawRecord());
+                model.getRawRecord().setNewRecord(false);
             }
         }
 
