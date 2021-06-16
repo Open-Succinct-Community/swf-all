@@ -2,6 +2,7 @@ package com.venky.swf.plugins.attachment.extensions;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.extensions.BeforeModelValidateExtension;
 import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
@@ -26,6 +27,11 @@ public class BeforeValidateAttachment  extends BeforeModelValidateExtension<Atta
             List<String> contentTypes = call.getResponseHeaders().get("content-type");
             model.setAttachmentContentType(contentTypes.get(0));
             model.setAttachmentContentName(fileName == null ? "blob" : fileName);
+
+            {
+                Attachment model2 = Database.getTable(Attachment.class).getRefreshed(model);
+                model.getRawRecord().load(model2.getRawRecord());
+            }
         }
 
     }
