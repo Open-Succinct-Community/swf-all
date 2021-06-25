@@ -161,6 +161,16 @@ public class Config {
     public String getProperty(String name,String defaultValue){
     	return properties.getProperty(name, defaultValue);
     }
+
+    public void setProperty(String name, String value){
+    	properties.setProperty(name,value);
+    	propertyValueList.remove(name); //Let cache work it out.
+	}
+	public void removeProperty(String name){
+		properties.remove(name);
+		propertyValueList.remove(name); //Let cache work it out.
+	}
+
     public int getIntProperty(String name){
     	String sValue = getProperty(name);
 		return Integer.parseInt(sValue);

@@ -60,7 +60,7 @@
     <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.61</version>
+        <version>1.69</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/net.sf.jtidy/jtidy -->
     <dependency>
