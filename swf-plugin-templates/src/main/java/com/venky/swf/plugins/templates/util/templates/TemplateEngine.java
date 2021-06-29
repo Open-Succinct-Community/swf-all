@@ -31,10 +31,13 @@ import com.venky.swf.plugins.templates.db.model.alerts.Device;
 import com.venky.swf.routing.Config;
 import freemarker.cache.NullCacheStorage;
 import freemarker.core.ArithmeticEngine;
+import freemarker.core.ParseException;
 import freemarker.template.Configuration;
+import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.TemplateNotFoundException;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Utils;
@@ -121,16 +124,22 @@ public class TemplateEngine {
     public void publish(String templateName, Map<String,Object> root, Writer output){
         try {
             Template template = cfg.getTemplate(templateName);
+            publish(template,root,output);
+        } catch (IOException ex) {
+            throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
+        }
+    }
+    public void publish (Template template, Map<String,Object> root,Writer output){
+        try {
             for (String key : Config.instance().getPropertyKeys("swf.*host")){
                 putEnvKey(root,key,Config.instance().getProperty(key));
             }
 
             Config.instance().getLogger(getClass().getName()).info(root.toString());
             template.process(root,output);
-        } catch (IOException | TemplateException e) {
-            throw new RuntimeException(root.toString() + "\n" + e.getMessage(),e);
+        }catch (IOException | TemplateException ex) {
+            throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
         }
-
     }
 
     public byte[] htmlToPdf(byte[] htmlBytes){
