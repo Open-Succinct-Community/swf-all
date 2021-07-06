@@ -1,11 +1,13 @@
 package com.venky.swf.db.model.io.json;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 
 /**
@@ -18,21 +20,48 @@ public class JSONFormatter  {
     public JSONFormatter(int spacing){
     	SPACES=spacing;
     }
-    public void writePrettyJsonArray(JSONArray jsonArray, Writer w) throws IOException{
-    	w.append("[");
-    	for (int i = 0 ; i < jsonArray.size() ; i ++ ){
-    		Object o = jsonArray.get(i);
-            if (i > 0){
-                w.append(",");
-            }
-    		writeObject(o, w);
-    	}
-    	w.append("]");
+    public String toString(JSONAware jsonAware){
+		if (jsonAware instanceof JSONArray){
+			return toString((JSONArray) jsonAware);
+		}else if (jsonAware instanceof JSONObject){
+			return toString((JSONObject) jsonAware);
+		}else {
+			return jsonAware.toString();
+		}
+	}
+    public String toString(JSONArray jsonArray){
+		StringWriter writer = new StringWriter();
+		writePrettyJsonArray(jsonArray,writer);
+		return writer.toString();
+	}
+	public String toString(JSONObject jsonObject){
+		StringWriter writer = new StringWriter();
+		writePrettyJson(jsonObject,writer);
+		return writer.toString();
+	}
+    public void writePrettyJsonArray(JSONArray jsonArray, Writer w) {
+		try {
+			w.append("[");
+			for (int i = 0 ; i < jsonArray.size() ; i ++ ){
+				Object o = jsonArray.get(i);
+				if (i > 0){
+					w.append(",");
+				}
+				writeObject(o, w);
+			}
+			w.append("]");
+		}catch (IOException ex){
+			throw new RuntimeException(ex);
+		}
     }
-    public void writePrettyJson(JSONObject obj,Writer w) throws IOException{
-    	w.append("{");
-    	writeAttributes(obj,w);
-    	w.append("}");
+    public void writePrettyJson(JSONObject obj,Writer w) {
+		try {
+			w.append("{");
+			writeAttributes(obj, w);
+			w.append("}");
+		}catch (IOException ex){
+			throw new RuntimeException(ex);
+		}
     }
     private int indent = 0;
     private int SPACES = 2;

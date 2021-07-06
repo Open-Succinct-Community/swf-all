@@ -195,11 +195,7 @@ public class JSON extends FormatHelper<JSONObject>{
 	public String toString(){
 		StringWriter w =  new StringWriter();
 		JSONFormatter formatter  = new JSONFormatter();
-		try {
-			formatter.writePrettyJson(root, w);
-		}catch(IOException ex){
-			throw new RuntimeException(ex);
-		}
+        formatter.writePrettyJson(root, w);
 		return w.toString();
 	}
 

@@ -652,6 +652,9 @@ public class ModelInvocationHandler implements InvocationHandler {
         	Class<? extends Model> childModelClass = ref.getChildModelClass(childrenGetter);
         	ModelReflector<? extends Model> childReflector = ModelReflector.instance(childModelClass);
         	List<String> referenceFields = childReflector.getReferenceFields(ref.getModelClass());
+        	if (ref.isAnnotationPresent(childrenGetter,IS_VIRTUAL.class)){
+        		continue;
+			}
         	
         	for (String referenceField: referenceFields){
 				try {

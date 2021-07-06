@@ -38,7 +38,7 @@ public interface State extends Model{
 	public static State findByCountryAndName(String  countryName , String stateName) { 
 		return findByCountryAndName(Country.findByName(countryName).getId(), stateName);
 	}
-	
+
 	public static State findByCountryAndName(Long countryId , String stateName) {
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
