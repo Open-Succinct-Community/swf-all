@@ -224,7 +224,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Css("/resources/scripts/node_modules/bootstrap/dist/css/bootstrap.min.css"));
         head.addControl(new Css("/resources/scripts/node_modules/@fortawesome/fontawesome-free/css/all.min.css"));
         head.addControl(new Css("/resources/scripts/node_modules/tablesorter/dist/css/theme.bootstrap.min.css"));
-        head.addControl(new Css("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
+        head.addControl(new Css("/resources/scripts/node_modules/bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
 
         head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/umd/popper.min.js"));
@@ -233,7 +233,7 @@ public abstract class HtmlView extends View{
         head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.widgets.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/bootstrap-ajax-typeahead/bootstrap-typeahead.js"));
         head.addControl(new Script("/resources/scripts/node_modules/moment/min/moment-with-locales.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"));
+        head.addControl(new Script("/resources/scripts/node_modules/bootstrap4-datetimepicker/build/js/bootstrap-datetimepicker.min.js"));
         head.addControl(new Script("/resources/scripts/node_modules/lockr/lockr.min.js"));
         
         

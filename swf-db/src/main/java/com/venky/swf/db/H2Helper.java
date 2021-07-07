@@ -151,7 +151,8 @@ public class H2Helper extends JdbcTypeHelper{
             
             registerjdbcSQLType(java.sql.Timestamp.class, new TypeRef<Timestamp>(
                             java.sql.Types.TIMESTAMP, "TIMESTAMP", 0, 0, true,false,
-                            new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT_STR,TimeZone.getDefault())));
+                            new TimestampConverter()));
+                            //new TimestampConverter(DateUtils.ISO_DATE_TIME_FORMAT_STR,TimeZone.getDefault())));
 
             registerjdbcSQLType(String.class, new TypeRef<String>(
                             java.sql.Types.VARCHAR, "VARCHAR", 128, 0, true,true,

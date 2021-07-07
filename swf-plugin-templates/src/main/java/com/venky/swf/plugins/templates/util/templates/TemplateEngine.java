@@ -311,6 +311,9 @@ public class TemplateEngine {
     }
 
     private void sendWhatsApp(User user, String subject, String templateName, Map<String, Object> root) throws UnsupportedEncodingException {
+        if (!user.isWhatsAppNotificationEnabled()) {
+            return;
+        }
         String phoneNumber = sanitize(user.getPhoneNumber());
         if (ObjectUtil.isVoid(phoneNumber)) {
             return;

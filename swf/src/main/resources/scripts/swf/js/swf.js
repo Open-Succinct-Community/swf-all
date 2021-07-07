@@ -160,7 +160,19 @@ $(function(){
         }) ;
         $(this).data("DateTimePicker").date(date);
         */
-        $(this).datetimepicker({format: 'YYYY-MM-DD',allowInputToggle : true});
+        $(this).datetimepicker({format: 'YYYY-MM-DD',
+                                allowInputToggle : true,
+                                icons: {
+                                        time: 'fa fa-clock',
+                                        date: 'fa fa-calendar',
+                                        up: 'fa fa-chevron-up',
+                                        down: 'fa fa-chevron-down',
+                                        previous: 'fa fa-chevron-left',
+                                        next: 'fa fa-chevron-right',
+                                        today: 'fa fa-check',
+                                        clear: 'fa fa-trash',
+                                        close: 'fa fa-times'
+                                    }});
     });
 });
 $(function(){
@@ -174,7 +186,19 @@ $(function(){
         }) ;
         $(this).data("DateTimePicker").date(date);
         */
-        $(this).datetimepicker({format: 'DD/MM/YYYY HH:mm:00',allowInputToggle : true});
+        $(this).datetimepicker({format: 'DD/MM/YYYY HH:mm:00',
+                                allowInputToggle : true,
+                                icons: {
+                                        time: 'fa fa-clock',
+                                        date: 'fa fa-calendar',
+                                        up: 'fa fa-chevron-up',
+                                        down: 'fa fa-chevron-down',
+                                        previous: 'fa fa-chevron-left',
+                                        next: 'fa fa-chevron-right',
+                                        today: 'fa fa-check',
+                                        clear: 'fa fa-trash',
+                                        close: 'fa fa-times'
+                                    }});
     });
 });
 
