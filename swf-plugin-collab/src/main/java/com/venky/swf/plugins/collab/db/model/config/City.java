@@ -63,24 +63,16 @@ public interface City extends Model , GeoLocation {
 	public String getCode();
 	public void setCode(String code);
 
-	public static City findByCountryAndStateAndCode(String  countryName , String stateName, String code) {
-		return findByStateAndCode(State.findByCountryAndName(countryName, stateName).getId(), code);
-	}
-	public static City findByStateAndCode(long stateId, String code) {
+	public static City findByCode(String code) {
 		Select s = new Select().from(City.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
 		where.add(new Expression(s.getPool(),"CODE", Operator.EQ,code));
-		where.add(new Expression(s.getPool(),"STATE_ID",Operator.EQ,stateId));
 
 		List<City> cities = s.where(where).execute();
-		if (cities.size() == 1) {
+		if (!cities.isEmpty()) {
 			return cities.get(0);
 		}else {
-			City city = Database.getTable(City.class).newRecord();
-			city.setStateId(stateId);
-			city.setName(code);
-			city.save();
-			return city;
+			return null;
 		}
 	}
 }

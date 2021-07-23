@@ -3,9 +3,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import com.venky.core.string.StringUtil;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
@@ -84,6 +90,14 @@ public class JSONFormatter  {
     	}
     	
     }
+    private static Set<Class> nonStrings = new HashSet<Class>(){{
+    	add(Boolean.class);
+    	add(Integer.class);
+    	add(Long.class);
+    	add(Double.class);
+		add(Short.class);
+		add(Float.class);
+	}};
 	private void writeAttributes(JSONObject obj, Writer w) throws IOException {
 		boolean first = true;
 		List<String> keys = new ArrayList<String>();
@@ -103,8 +117,14 @@ public class JSONFormatter  {
 				writePrettyJson((JSONObject)v, w);
 			}else if (v instanceof JSONArray) {
 				writePrettyJsonArray((JSONArray)v, w);
+			}else if (v != null){
+				if (v.getClass().isPrimitive() || nonStrings.contains(v.getClass())){
+					w.append(StringUtil.valueOf(v));
+				}else {
+					w.append('"').append(JSONObject.escape(StringUtil.valueOf(v))).append('"');
+				}
 			}else {
-				w.append('"').append(JSONObject.escape(v.toString())).append("\"");
+				w.append("null");
 			}
 			backIndent(w);
 		}

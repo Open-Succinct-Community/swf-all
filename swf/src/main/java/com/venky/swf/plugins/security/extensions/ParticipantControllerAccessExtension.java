@@ -231,7 +231,11 @@ public class ParticipantControllerAccessExtension implements Extension{
 				if (expression == null ){
 					expression = new XMLExpressionParser(modelClass).parse(sCondition);
 				}
-				if (selectedModel == null || !expression.eval(selectedModel)) {
+				if (selectedModel == null && !permission.isAllowed()) {
+					//Only on some condition this is not allowed. We are trying to find if it is allowed. at all so lets not confuse.
+					permissionIterator.remove();
+				}else if (selectedModel != null && !expression.eval(selectedModel)) {
+					//Remove irrelevant permissions that don't match the condition.
 					permissionIterator.remove();
 				}
 			}

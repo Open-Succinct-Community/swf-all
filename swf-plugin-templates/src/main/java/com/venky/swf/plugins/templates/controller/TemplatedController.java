@@ -16,4 +16,5 @@ public class TemplatedController extends Controller implements TemplateLoader {
         super(path);
     }
 
+
 }

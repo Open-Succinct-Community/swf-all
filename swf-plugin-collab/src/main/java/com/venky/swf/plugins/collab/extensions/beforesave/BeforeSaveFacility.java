@@ -7,4 +7,9 @@ public class BeforeSaveFacility extends BeforeSaveAddress<Facility> {
     static {
         registerExtension(new BeforeSaveFacility());
     }
+
+    @Override
+    protected boolean isOkToSetLocationAsync() {
+        return false;
+    }
 }
