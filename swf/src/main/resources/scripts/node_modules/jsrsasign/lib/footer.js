@@ -12,6 +12,7 @@ exports.Cipher = KJUR.crypto.Cipher;
 exports.KEYUTIL = KEYUTIL;
 exports.ASN1HEX = ASN1HEX;
 exports.X509 = X509;
+exports.X509CRL = X509CRL;
 exports.CryptoJS = CryptoJS;
 
 // ext/base64.js
@@ -61,12 +62,18 @@ exports.ipv6tohex = ipv6tohex;
 exports.hextoipv6 = hextoipv6;
 exports.hextoip = hextoip;
 exports.iptohex = iptohex;
+exports.ucs2hextoutf8 = ucs2hextoutf8;
 exports.encodeURIComponentAll = encodeURIComponentAll;
 exports.newline_toUnix = newline_toUnix;
 exports.newline_toDos = newline_toDos;
 exports.hextoposhex = hextoposhex;
 exports.intarystrtohex = intarystrtohex;
 exports.strdiffidx = strdiffidx;
+exports.oidtohex = oidtohex;
+exports.hextooid = hextooid;
+exports.strpad = strpad;
+exports.bitstrtoint = bitstrtoint;
+exports.inttobitstr = inttobitstr;
 
 // name spaces
 exports.KJUR = KJUR;
