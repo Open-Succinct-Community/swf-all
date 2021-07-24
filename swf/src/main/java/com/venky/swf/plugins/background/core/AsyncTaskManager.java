@@ -132,7 +132,7 @@ public class AsyncTaskManager  {
 	public static class ShutdownInitiatedException extends RuntimeException {
 		private static final long serialVersionUID = -8216421138960049897L;
 	}
-	public void addAll(Collection<Task> tasks) {
+	public void addAll(Collection<? extends Task> tasks) {
 		Cache<Boolean,List<Task>> remoteableTasks = new Cache<Boolean, List<Task>>() {
 			@Override
 			protected List<Task> getValue(Boolean aBoolean) {
