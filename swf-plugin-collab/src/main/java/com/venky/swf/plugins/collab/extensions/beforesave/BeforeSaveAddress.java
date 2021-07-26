@@ -4,6 +4,7 @@ import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Registry;
 import com.venky.geo.GeoCoder;
 import com.venky.geo.GeoLocation;
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
@@ -161,8 +162,11 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                 oAddress.setLat(oAddress.getCity().getLat());
                 oAddress.setLng(oAddress.getCity().getLng());
             }
-            if ((oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) && persistAfterSetting) {
-                oAddress.save();
+            if (oAddress.getRawRecord().isFieldDirty("LAT") || oAddress.getRawRecord().isFieldDirty("LNG")) {
+                Registry.instance().callExtensions(oAddress.getReflector().getModelClass().getSimpleName() +".after.location.set",oAddress);
+                if (persistAfterSetting) {
+                    oAddress.save();
+                }
             }
         }
 
