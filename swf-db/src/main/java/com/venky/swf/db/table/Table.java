@@ -684,6 +684,9 @@ public class Table<M extends Model> {
             Record rawPartiallyFilledRecord = partiallyFilledModel.getRawRecord();
             Record rawFullRecord = fullModel.getRawRecord();
             for (String field : rawPartiallyFilledRecord.getDirtyFields()) {
+                if (getReflector().isHouseKeepingField(field) && rawPartiallyFilledRecord.isNewRecord()){
+                    continue;//Defaulting would have made it dirty.!
+                }
                 rawFullRecord.put(field, partiallyFilledModel.getRawRecord().get(field));
             }
         }
