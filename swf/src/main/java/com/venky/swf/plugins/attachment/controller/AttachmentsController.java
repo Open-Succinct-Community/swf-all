@@ -59,6 +59,7 @@ public class AttachmentsController extends ModelController<Attachment>{
 					getPath().getFormFields().remove("ID");
 				}
 			}
+
 		}
 		return super.save();
 	}
