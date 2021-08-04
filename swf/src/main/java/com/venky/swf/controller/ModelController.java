@@ -588,13 +588,16 @@ public class ModelController<M extends Model> extends Controller {
         return blank(record);
     }
 
-    protected View blank(M record) {
+    protected void defaultFields(M record){
         record.defaultFields();
         getPath().fillDefaultsForReferenceFields(record, getModelClass());
         if (getSessionUser() != null){
             record.setCreatorUserId(getSessionUser().getId());
             record.setUpdaterUserId(getSessionUser().getId());
         }
+    }
+    protected View blank(M record) {
+        defaultFields(record);
         if (returnIntegrationAdaptor != null) {
             return returnIntegrationAdaptor.createResponse(getPath(), record);
         } else {
