@@ -146,8 +146,17 @@ public class AutoCompleteText<M extends Model> extends Div {
     	}
     	return null;
     }
-    
+
     @Override
+	public String getUnescapedValue(){
+    	if (descriptionControl != null){
+    		return descriptionControl.getUnescapedValue();
+		}
+    	return null;
+	}
+
+
+	@Override
     public void setForm(String formId){
     	if (hiddenIdControl != null){
     		hiddenIdControl.setForm(formId);
