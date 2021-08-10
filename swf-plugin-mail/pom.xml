@@ -52,18 +52,5 @@
             <artifactId>httpclient</artifactId>
             <version>4.5.13</version>
         </dependency>
-        <dependency>
-            <!-- ALWAYS required. -->
-            <groupId>com.openhtmltopdf</groupId>
-            <artifactId>openhtmltopdf-core</artifactId>
-            <version>${openhtml.version}</version>
-        </dependency>
-
-        <dependency>
-            <!-- Required for PDF output. -->
-            <groupId>com.openhtmltopdf</groupId>
-            <artifactId>openhtmltopdf-pdfbox</artifactId>
-            <version>${openhtml.version}</version>
-        </dependency>
     </dependencies>
 </project>

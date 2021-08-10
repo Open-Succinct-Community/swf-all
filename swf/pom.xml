@@ -32,6 +32,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <openhtml.version>1.0.0</openhtml.version>
 	</properties>
 
 	<dependencies>
@@ -110,5 +111,28 @@
             <artifactId>activation</artifactId>
             <version>1.1.1</version>
         </dependency>
+	    <dependency>
+	        <groupId>org.freemarker</groupId>
+	        <artifactId>freemarker</artifactId>
+	        <version>2.3.30</version>
+	    </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-core</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtml.version}</version>
+        </dependency>
+    <dependency>
+        <groupId>net.sf.jtidy</groupId>
+        <artifactId>jtidy</artifactId>
+        <version>r938</version>
+    </dependency>
+
+		
 	</dependencies>
 </project>

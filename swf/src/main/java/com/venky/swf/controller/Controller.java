@@ -76,7 +76,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author venky
  */
-public class Controller {
+public class Controller implements TemplateLoader{
 
     public static final int MAX_LIST_RECORDS = 30;
     protected Path path;

@@ -42,6 +42,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.ForwardedView;
 import com.venky.swf.views.HtmlView;
@@ -92,6 +93,11 @@ public class ModelController<M extends Model> extends Controller {
     private boolean indexedModel = false;
     private IntegrationAdaptor<M, ?> integrationAdaptor = null;
     private IntegrationAdaptor<M, ?> returnIntegrationAdaptor = null ;
+
+    @Override
+    public String getTemplateDirectory() {
+        return getTemplateDirectory(getReflector().getTableName().toLowerCase());
+    }
 
     public ModelController(Path path) {
         super(path);
@@ -153,8 +159,12 @@ public class ModelController<M extends Model> extends Controller {
 
     @Override
 
-    @RequireLogin(true)
+    @RequireLogin
     public View index() {
+        if (returnIntegrationAdaptor == null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/index.html")){
+            return html("index");
+        }
+
         Timer index = Config.instance().getLogger(getClass().getName()).startTimer(getReflector().getTableName() + ".index");
         try {
             if (indexedModel) {
@@ -415,6 +425,10 @@ public class ModelController<M extends Model> extends Controller {
     @SingleRecordAction(icon = "glyphicon-eye-open", tooltip = "See this record")
     @Depends("index")
     public View show(long id) {
+        if (returnIntegrationAdaptor ==  null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/show.html")){
+            return redirectTo("html/show?id="+id);
+        }
+
         M record = Database.getTable(modelClass).get(id);
         if (record == null) {
             throw new RecordNotFoundException();
@@ -534,6 +548,9 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("save,index")
     public View edit(long id) {
         ensureUI();
+        if (returnIntegrationAdaptor == null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/edit.html")){
+            return redirectTo("html/edit?id="+id);
+        }
         return dashboard(createModelEditView(id, "save"));
     }
 
@@ -584,6 +601,9 @@ public class ModelController<M extends Model> extends Controller {
 
     @Depends("save")
     public View blank() {
+        if (returnIntegrationAdaptor == null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/blank.html")){
+            return redirectTo("html/blank");
+        }
         M record = Database.getTable(modelClass).newRecord();
         return blank(record);
     }

@@ -1,19 +1,16 @@
-package com.venky.swf.plugins.templates.controller;
+package com.venky.swf.controller;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper;
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
-import com.venky.swf.path._IPath;
-import com.venky.swf.plugins.templates.util.templates.TemplateEngine;
-import com.venky.swf.plugins.templates.views.TemplateView;
 import com.venky.swf.routing.Config;
+import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.TemplateView;
 import com.venky.swf.views.View;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -94,7 +91,7 @@ public interface TemplateLoader {
                 FileInputStream inputStream = new FileInputStream(new File(getTemplateDirectory(),s));
                 return new BytesView(getPath(), StringUtil.readBytes(inputStream),contentType,"content-disposition", "attachment; filename=" + s);
             }else{
-                return new BytesView(getPath(), TemplateEngine.getInstance(getTemplateDirectory()).publish("/"+s, new HashMap<>()).getBytes(),contentType);
+                return new BytesView(getPath(), TemplateProcessor.getInstance(getTemplateDirectory()).publish("/"+s, new HashMap<>()).getBytes(),contentType);
             }
         }catch (Exception ex){
             throw new RuntimeException(ex);

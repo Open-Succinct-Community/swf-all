@@ -1,4 +1,4 @@
-package com.venky.swf.plugins.templates.util.templates;
+package com.venky.swf.util;
 
 import com.venky.core.string.StringUtil;
 import freemarker.core.Environment;

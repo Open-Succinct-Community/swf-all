@@ -1,8 +1,5 @@
 package com.venky.swf.controller;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.User;
@@ -11,6 +8,9 @@ import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class UsersController extends ModelController<User>{
 

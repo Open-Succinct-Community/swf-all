@@ -1,8 +1,7 @@
-package com.venky.swf.plugins.templates.views;
+package com.venky.swf.views;
 
 import com.venky.swf.path._IPath;
-import com.venky.swf.plugins.templates.util.templates.TemplateEngine;
-import com.venky.swf.views.HtmlView;
+import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Head;
@@ -44,7 +43,7 @@ public class TemplateView extends HtmlView {
         if (!fragment) {
             return super.toString();
         }
-        return TemplateEngine.getInstance(templateDir).publish(templateName,data);
+        return TemplateProcessor.getInstance(templateDir).publish(templateName,data);
     }
 
     @Override
@@ -54,7 +53,7 @@ public class TemplateView extends HtmlView {
 
     @Override
     protected void createBody(_IControl b) {
-        b.addControl( new Dummy(TemplateEngine.getInstance(templateDir).publish(templateName,data)));
+        b.addControl( new Dummy(TemplateProcessor.getInstance(templateDir).publish(templateName,data)));
     }
 
     @Override
