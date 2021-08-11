@@ -50,6 +50,15 @@ public class TriggersController extends VirtualModelController<Trigger>{
 		}
 		
 	}
+	public View fire(String agentId){
+		Agent.instance().start(agentId);
+		return getIntegrationAdaptor().createStatusResponse(getPath(), null);
+	}
+	public View halt(String agentId){
+		Agent.instance().finish(agentId);
+		return getIntegrationAdaptor().createStatusResponse(getPath(), null);
+	}
+
 	
 	public View fire() {
 		return performAction("fire");
