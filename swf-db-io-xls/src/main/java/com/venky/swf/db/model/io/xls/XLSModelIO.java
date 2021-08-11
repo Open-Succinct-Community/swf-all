@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import com.venky.core.util.ObjectUtil;
 import org.apache.poi.ss.usermodel.Row;
 
 import com.venky.core.collections.SequenceSet;
@@ -29,7 +30,8 @@ public class XLSModelIO<M extends Model>  extends ModelIO<M>{
 		for (UniqueKey<? extends Model> k : referredModelReflector.getUniqueKeys()){
 			for (UniqueKeyFieldDescriptor<? extends Model> ukf: k.getFields()){
 				if (ukf.getReferredModelReflector() == null){
-					if (ukf.isExportable() && referredModelReflector.isFieldExportable(ukf.getFieldName())){
+					//If Id is a unique  key field, we must export it. 
+					if (ukf.isExportable() && ( ObjectUtil.equals("ID",ukf.getFieldName()) || referredModelReflector.isFieldExportable(ukf.getFieldName())){
 						fields.add(baseFieldHeading + "." +  StringUtil.camelize(ukf.getFieldName()));
 					}
 				}else {
