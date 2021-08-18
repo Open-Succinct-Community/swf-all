@@ -179,6 +179,10 @@ public class Config {
     	String sValue = getProperty(name, String.valueOf(defaultValue));
 		return Integer.parseInt(sValue);
     }
+    public long getLongProperty(String name, long defaultValue){
+		String sValue = getProperty(name, String.valueOf(defaultValue));
+		return Long.parseLong(sValue);
+	}
     public boolean getBooleanProperty(String name){
     	String sValue = getProperty(name);
     	return Boolean.parseBoolean(sValue);

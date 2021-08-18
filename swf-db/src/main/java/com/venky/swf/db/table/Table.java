@@ -400,7 +400,7 @@ public class Table<M extends Model> {
         return true;
     }
 
-    public int recordCount() {
+    public long recordCount() {
         Select sel = new Select("COUNT(1) AS COUNT").from(getModelClass());
         Count count = sel.execute(Count.class).get(0); // number of records would be one.!!
         return count.getCount();

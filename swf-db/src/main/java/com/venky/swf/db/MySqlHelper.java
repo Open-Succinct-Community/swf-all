@@ -157,7 +157,10 @@ public class MySqlHelper extends JdbcTypeHelper{
     	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
     	Count count = counts.get(0);
     	DataManupulationStatement ddl = new DataManupulationStatement(table.getPool());
-    	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf(count.getCount() + 1) );
+    	if (count.getCount() < getPrimaryKeyOffset() ){
+    	    count.setCount(getPrimaryKeyOffset());
+        }
+    	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf( count.getCount() + 1) );
     	ddl.executeUpdate();
     }
 

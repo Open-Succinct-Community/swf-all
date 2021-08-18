@@ -865,7 +865,7 @@ public class ModelReflector<M extends Model> {
 	    	if (size  == 0 && !isVirtual() && !fieldDescriptor.isVirtual() && Config.instance().getBooleanProperty(modelClass.getSimpleName()+ "."+fieldColumnName+ ".checkMaxLength")){
 	    		counts = new Select("MAX(LENGTH("+ fieldColumnName + ")) AS COUNT").from(modelClass).execute(Count.class);
 		    	if (!counts.isEmpty()){
-		    		size = counts.get(0).getCount(); 
+		    		size = (int) counts.get(0).getCount();
 		    	}else {
 		    		size = MAX_DATA_LENGTH_FOR_TEXT_BOX;
 		    	}

@@ -694,6 +694,11 @@ public abstract class JdbcTypeHelper {
     public String getAutoIncrementInstruction() {
         return " BIGINT NOT NULL ";
     }
+
+    public long getPrimaryKeyOffset(){
+        String s = String.format("%d0000000000001",100000L + Config.instance().getLongProperty("swf.node.id",0L));
+        return Long.valueOf(s);
+    }
     
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();

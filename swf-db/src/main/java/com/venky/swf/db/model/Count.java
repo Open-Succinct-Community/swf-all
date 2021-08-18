@@ -4,6 +4,6 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 
 @IS_VIRTUAL
 public interface Count extends Model{
-	public int getCount();
-	public void setCount(int count);
+	public long getCount();
+	public void setCount(long count);
 }

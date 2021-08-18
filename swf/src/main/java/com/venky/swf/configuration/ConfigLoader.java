@@ -24,7 +24,7 @@ public class ConfigLoader implements Installer {
 			if (currentTable.getReflector().isAnnotationPresent(CONFIGURATION.class)) {
 				List<Count> counts = new Select("COUNT(1) AS COUNT").from(currentTable.getModelClass()).execute(Count.class);
 				Count count = counts.get(0);
-				if (count.getCount() < Config.instance().getIntProperty("swf.load.complete.config.tables.if.count.less.than", 500)){
+				if (count.getCount() < Config.instance().getLongProperty("swf.load.complete.config.tables.if.count.less.than", 500L)){
 					new Select().from(currentTable.getModelClass()).execute(); // Loading Complete
 				}
 			}
