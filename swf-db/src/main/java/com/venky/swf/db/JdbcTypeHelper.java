@@ -339,23 +339,29 @@ public abstract class JdbcTypeHelper {
     }
     public class ShortConverter extends NumberConverter<Short> {
         public Short valueOf(Object o) {
-        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
-        	return dc.valueOf(o).shortValue();
+            return getTypeRef(Long.class).getTypeConverter().valueOf(o).shortValue();
         }
         
     }
 
     public class IntegerConverter extends NumberConverter<Integer> {
         public Integer valueOf(Object o) {
-        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
-        	return dc.valueOf(o).intValue();
+        	return getTypeRef(Long.class).getTypeConverter().valueOf(o).intValue();
         }
     }
 
     public class LongConverter extends NumberConverter<Long> {
         public Long valueOf(Object o) {
-        	DoubleConverter dc = (DoubleConverter) getTypeRef(Double.class).getTypeConverter();
-        	return dc.valueOf(o).longValue();
+            if (ObjectUtil.isVoid(o)) {
+                return Long.valueOf(0L);
+            }else if (o instanceof Date){
+                return ((Date)o).getTime();
+            }else if (o instanceof Boolean){
+                BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
+                return Long.valueOf(bc.valueOf("1").equals(o)? 1L : 0L);
+            }else {
+                return Long.valueOf(StringUtil.valueOf(o));
+            }
         }
     }
 
@@ -696,10 +702,13 @@ public abstract class JdbcTypeHelper {
     }
 
     public long getPrimaryKeyOffset(){
-        String s = String.format("%d0000000000001",100000L + Config.instance().getLongProperty("swf.node.id",0L));
+        return getPrimaryKeyOffset(Config.instance().getIntProperty("swf.node.id",0));
+    }
+    public long getPrimaryKeyOffset(int nodeId){
+        String s = String.format("%d0000000000001",100000 + nodeId);
         return Long.valueOf(s);
     }
-    
+
     public abstract String getCurrentTimeStampKW();
     public abstract String getCurrentDateKW();
     public String toDefaultKW(TypeRef<?> ref, COLUMN_DEF def){

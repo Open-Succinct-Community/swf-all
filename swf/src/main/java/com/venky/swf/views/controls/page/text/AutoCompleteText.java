@@ -121,7 +121,7 @@ public class AutoCompleteText<M extends Model> extends Div {
     	}
     	if (descriptionControl != null){
 	        if (!ObjectUtil.isVoid(value)){
-				M model = Database.getTable(modelClass).get(Integer.valueOf(String.valueOf(value)));
+				M model = Database.getTable(modelClass).get(Long.valueOf(String.valueOf(value)));
 	            if (model != null) {
 	                ModelReflector<M> reflector = ModelReflector.instance(modelClass);
 	                Method descriptionGetter = reflector.getFieldGetter(descriptionField);

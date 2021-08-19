@@ -179,7 +179,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					T refElement = formatHelper.createElementAttribute(refElementName);
 					parentsAlreadyConsidered.add(aParent.getSimpleName());
 					try {
-						write(aParent, ((Number) value).intValue(), refElement, parentsAlreadyConsidered, considerChildren,templateFields);
+						write(aParent, ((Number) value).longValue(), refElement, parentsAlreadyConsidered, considerChildren,templateFields);
 					}finally {
 						parentsAlreadyConsidered.remove(aParent.getSimpleName());
 					}

@@ -22,6 +22,7 @@ import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.queryparser.classic.CharStream;
@@ -30,9 +31,12 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserTokenManager;
 import org.apache.lucene.search.Query;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -137,6 +141,16 @@ public class LuceneIndexer {
         return sanitized.toString();
     }
 
+    public void addTextField(Document doc, String fieldName, String value, Store store){
+        doc.add(new TextField(fieldName,sanitize(value),store));
+    }
+    public void addDateField(Document doc, String fieldName , String dateValue, Store store){
+        doc.add(new TextField(fieldName, sanitizeTs(dateValue), Field.Store.YES));
+    }
+    public void addLongField(Document doc, String name, Long value) {
+        doc.add(new LongPoint(name,value));
+    }
+
     public Document getDocument(Record r) throws IOException {
         if (!hasIndexedFields()) {
             return null;
@@ -149,13 +163,15 @@ public class LuceneIndexer {
             String fieldName = reflector.getFieldName(columnName);
             Object value = reflector.get(r, fieldName);
 
+            String parentName = fieldName.endsWith("_ID") ? fieldName.substring(0, fieldName.length() - "_ID".length()) : null;
+
             if (!ObjectUtil.isVoid(value)) {
                 TypeRef<?> ref = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());
                 TypeConverter<?> converter = ref.getTypeConverter();
                 if (!ref.isBLOB()) {
                     addedFields = true;
                     if (Reader.class.isAssignableFrom(ref.getJavaClass())) {
-                        doc.add(new TextField(fieldName, sanitize(converter.toString(value)), Field.Store.NO));
+                        addTextField(doc,fieldName,converter.toString(value), Store.NO);
                     } else {
                         Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
                         String sValue = converter.toStringISO(value);
@@ -164,36 +180,34 @@ public class LuceneIndexer {
                                 ModelReflector<?> referredModelReflector = ModelReflector.instance(referredModelClass);
                                 Model referred = Database.getTable(referredModelClass).get(((Number) converter.valueOf(value)).intValue());
                                 if (referred != null) {
-                                    doc.add(new TextField(fieldName.substring(0, fieldName.length() - "_ID".length()),
-                                            sanitize(StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField()))),
-                                            Field.Store.YES));
+                                    addTextField(doc,parentName,StringUtil.valueOf(referred.getRawRecord().get(referredModelReflector.getDescriptionField())),Store.YES)
                                 }
                             }
-                            doc.add(new TextField(fieldName, sValue, Field.Store.YES));
+                            addTextField(doc,fieldName,sValue,Store.YES);
                         } else if (ref.isDate() || ref.isTimestamp()) {
-                            doc.add(new TextField(fieldName, sanitizeTs(sValue), Field.Store.YES));
+                            addDateField(doc,fieldName,sValue,Store.YES);
                         } else {
-                            doc.add(new TextField(fieldName, sanitize(sValue), Field.Store.YES));
+                            addTextField(doc,fieldName,sValue,Store.YES);
                         }
                     }
                 }
             } else {
                 addedFields = true;
                 if (indexedReferenceColumns.containsKey(fieldName)) {
-                    doc.add(new TextField(fieldName.substring(0, fieldName.length() - "_ID".length()),
-                            "NULL", Field.Store.YES));
+                    addTextField(doc,parentName,"NULL",Store.YES);
                 }
-                doc.add(new TextField(fieldName, "NULL", Field.Store.YES));
+                addTextField(doc,fieldName,"NULL",Store.YES);
             }
         }
         if (addedFields) {
-            doc.add(new TextField("ID", StringUtil.valueOf(r.getId()), Field.Store.YES));
-            doc.add(new LongPoint("_ID", r.getId()));
+            addTextField(doc,"ID",StringUtil.valueOf(r.getId()), Store.YES);
+            addLongField(doc,"_ID",r.getId());
         } else {
             doc = null;
         }
         return doc;
     }
+
 
     private String sanitizeTs(String value) {
         return value.replaceAll("[- :]", "");
