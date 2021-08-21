@@ -83,6 +83,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 /**
  *
@@ -320,6 +321,7 @@ public class Path implements _IPath{
 
     public Path(String target) {
         this.target = target;
+        Config.instance().getLogger(Path.class.getName()).log(Level.INFO,"Api Called:" + target);
         pathelements = parsePathElements(target);
         boolean isResource = pathelements.isEmpty()? false : pathelements.get(0).equals("resources");
 

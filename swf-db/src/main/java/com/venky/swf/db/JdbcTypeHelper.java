@@ -702,11 +702,11 @@ public abstract class JdbcTypeHelper {
     }
 
     public long getPrimaryKeyOffset(){
-        return getPrimaryKeyOffset(Config.instance().getIntProperty("swf.node.id",0));
+        return getPrimaryKeyOffset(Config.instance().getIntProperty("swf.node.id",1));
     }
     public long getPrimaryKeyOffset(int nodeId){
-        String s = String.format("%d0000000000001",100000 + nodeId);
-        return Long.valueOf(s);
+        //String s = String.format("%d0000000000001",100000 + nodeId);
+        return nodeId << 44 | 1;
     }
 
     public abstract String getCurrentTimeStampKW();
