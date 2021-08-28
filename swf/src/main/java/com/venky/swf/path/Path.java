@@ -377,12 +377,13 @@ public class Path implements _IPath{
         }
         loadControllerClassName();
     }
-
+    public boolean isAppAuthenticationRequired() {
+        return getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
+    }
     public boolean isAppAuthenticated() {
-        boolean appAuthRequired = getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
-        if (!appAuthRequired){
-            return true;
-        }
+        return getApplication() != null;
+    }
+    public Application getApplication(){
         String authorization = getRequest().getHeader("Authorization");
         if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
             // Authorization: Basic base64credentials
@@ -395,12 +396,13 @@ public class Path implements _IPath{
                 String appId = values[0];
                 String plainPass = values[1];
                 Application app = ApplicationUtil.find(appId);
-                if (ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
-                    return true;
+                if (app != null && ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
+                    return app;
                 }
             }
         }
-        return false;
+        return null;
+
     }
 
     public static class ControllerInfo {
@@ -645,10 +647,12 @@ public class Path implements _IPath{
         if (isUserLoggedOn()){
             return true;
         }
-
-        if (!isAppAuthenticated()){
-            return false;
+        if (isAppAuthenticationRequired()) {
+            if (!isAppAuthenticated()){
+                return false;
+            }
         }
+
 
         ObjectHolder<User> userObjectHolder = new ObjectHolder<>(null);
         Registry.instance().callExtensions(Path.REQUEST_AUTHENTICATOR,this, userObjectHolder);

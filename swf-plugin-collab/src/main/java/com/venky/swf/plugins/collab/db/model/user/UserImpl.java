@@ -27,13 +27,17 @@ public class UserImpl extends ModelImpl<User> {
 
 
     public boolean isStaff(){
-        List<Long> roleIds = getProxy().getUserRoles().stream().map(userRole -> userRole.getRoleId()).collect(Collectors.toList());
-        List<Role> roles = new Select().from(Role.class).where(new Expression(ModelReflector.instance(Role.class).getPool(),"ID", Operator.IN,roleIds.toArray())).execute();
         boolean isStaff= false;
-        for (Role role : roles){
-            if (role.getName().equalsIgnoreCase("STAFF") || role.isStaff()){
-                isStaff = true;
-                break;
+        if (getProxy().getId() == 1){
+            isStaff = true;
+        }else {
+            List<Long> roleIds = getProxy().getUserRoles().stream().map(userRole -> userRole.getRoleId()).collect(Collectors.toList());
+            List<Role> roles = new Select().from(Role.class).where(new Expression(ModelReflector.instance(Role.class).getPool(), "ID", Operator.IN, roleIds.toArray())).execute();
+            for (Role role : roles) {
+                if (role.getName().equalsIgnoreCase("STAFF") || role.isStaff()) {
+                    isStaff = true;
+                    break;
+                }
             }
         }
         return isStaff;

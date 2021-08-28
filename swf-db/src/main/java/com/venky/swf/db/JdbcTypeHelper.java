@@ -359,8 +359,15 @@ public abstract class JdbcTypeHelper {
             }else if (o instanceof Boolean){
                 BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
                 return Long.valueOf(bc.valueOf("1").equals(o)? 1L : 0L);
+            }else if (o instanceof Long) {
+                return (Long)o;
             }else {
-                return Long.valueOf(StringUtil.valueOf(o));
+                String v = StringUtil.valueOf(o);
+                int indexOfDot = v.indexOf(".");
+                if ( indexOfDot >= 0){
+                    v = v.substring(0,indexOfDot);
+                }
+                return Long.valueOf(v);
             }
         }
     }
@@ -702,11 +709,11 @@ public abstract class JdbcTypeHelper {
     }
 
     public long getPrimaryKeyOffset(){
-        return getPrimaryKeyOffset(Config.instance().getIntProperty("swf.node.id",1));
+        return getPrimaryKeyOffset(Config.instance().getLongProperty("swf.node.id",1L));
     }
-    public long getPrimaryKeyOffset(int nodeId){
+    public long getPrimaryKeyOffset(long nodeId){
         //String s = String.format("%d0000000000001",100000 + nodeId);
-        return nodeId << 44 | 1;
+        return ((nodeId << 44) | 1);
     }
 
     public abstract String getCurrentTimeStampKW();

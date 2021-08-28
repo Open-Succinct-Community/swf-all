@@ -996,7 +996,7 @@ public class ModelController<M extends Model> extends Controller {
             return;
         }
         Object autoCompleteHelperFieldValue = formFields.get(autoCompleteHelperField);
-        Object currentValue = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Integer.class).getTypeConverter().valueOf(formFields.get(field));
+        Object currentValue = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter().valueOf(formFields.get(field));
 
         Method referredModelIdGetter = reflector.getFieldGetter(field);
         Method referredModelGetter = referredModelIdGetter == null ? null : reflector.getReferredModelGetterFor(referredModelIdGetter);

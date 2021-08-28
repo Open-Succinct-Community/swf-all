@@ -172,7 +172,7 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     	if (count.getCount() < getPrimaryKeyOffset() ){
     		count.setCount(getPrimaryKeyOffset());
 		}
-    	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1) +") AS COUNT").from(new String[]{});
+    	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1L) +") AS COUNT").from(new String[]{});
     	updateSequence.addPool(table.getPool());
     	updateSequence.execute(Count.class);
     }
