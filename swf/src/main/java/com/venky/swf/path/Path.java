@@ -5,6 +5,7 @@
 package com.venky.swf.path;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
@@ -1358,7 +1359,7 @@ public class Path implements _IPath{
     Map<String,String> headers = null;
     public Map<String,String> getHeaders(){
         if (headers == null){
-            headers = new HashMap<>();
+            headers = new IgnoreCaseMap<>();
             Enumeration<String> names = getRequest().getHeaderNames();
             while(names.hasMoreElements()){
                 String name = names.nextElement();

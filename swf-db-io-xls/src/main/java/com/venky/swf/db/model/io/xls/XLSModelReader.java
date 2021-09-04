@@ -38,6 +38,13 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements ModelReader<M,Row>{
+	public void setInvalidReferencesAllowed(boolean invalidReferencesAllowed) {
+		this.invalidReferencesAllowed = invalidReferencesAllowed;
+	}
+	private boolean invalidReferencesAllowed = false;
+	public boolean isInvalidReferencesAllowed(){
+		return invalidReferencesAllowed;
+	}
 
 	public XLSModelReader(Class<M> modelClass) {
 		super(modelClass);

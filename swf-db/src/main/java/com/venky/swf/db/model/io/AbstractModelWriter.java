@@ -29,7 +29,13 @@ import java.util.Set;
 import java.util.Stack;
 
 public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> implements ModelWriter<M, T>{
-
+	boolean parentIdExposed = true;
+	public void setParentIdExposed(boolean parentIdExposed){
+		this.parentIdExposed = parentIdExposed;
+	}
+	public boolean isParentIdExposed() {
+		return this.parentIdExposed;
+	}
 	protected AbstractModelWriter(Class<M> beanClass) {
 		super(beanClass);
 	}
@@ -268,7 +274,10 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 		List<String> parentFieldsToAdd = referredModelReflector.getUniqueFields();
 		parentFieldsToAdd.removeIf(referredModelReflector::isFieldHidden);
-		parentFieldsToAdd.add("ID");
+
+		if (isParentIdExposed() || parentFieldsToAdd.isEmpty()) {
+			parentFieldsToAdd.add("ID");
+		}
 
 		if (templateFields != null){
 			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();

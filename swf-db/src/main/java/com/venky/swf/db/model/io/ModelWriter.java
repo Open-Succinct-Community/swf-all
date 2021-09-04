@@ -30,4 +30,7 @@ public interface ModelWriter<M extends Model,T> {
 					   Map<Class<? extends Model>,List<Class<? extends Model>>> childrenToBeConsidered,
 					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException ;
 
+	public void setParentIdExposed(boolean parentIdExposed);
+	public boolean isParentIdExposed();
+
 }

@@ -10,7 +10,13 @@ import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.integration.FormatHelper;
 
 public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M> implements ModelReader<M, T> {
-
+    public void setInvalidReferencesAllowed(boolean invalidReferencesAllowed) {
+        this.invalidReferencesAllowed = invalidReferencesAllowed;
+    }
+    private boolean invalidReferencesAllowed = false;
+    public boolean isInvalidReferencesAllowed(){
+        return invalidReferencesAllowed;
+    }
     protected AbstractModelReader(Class<M> beanClass) {
         super(beanClass);
     }
@@ -59,17 +65,33 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
 
             T refElement = helper.getElementAttribute(refElementName);
             if (refElement != null) {
-                if (!FormatHelper.instance(refElement).getAttributes().isEmpty()) {
+                FormatHelper<T> refHelper = FormatHelper.instance(refElement);
+                if (!refHelper.getAttributes().isEmpty()) {
                     Class<T> formatClass = getFormatClass();
+                    if (refHelper.getAttributes().size() > 1){
+                        if (isInvalidReferencesAllowed()) {
+                            refHelper.removeAttribute("Id");
+                        }
+                    }
                     ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>) ModelIOFactory.getReader(referredModelClass, formatClass);
+                    reader.setInvalidReferencesAllowed(isInvalidReferencesAllowed());
                     Model referredModel = reader.read(refElement, false,false);
                     if (referredModel != null) {
                         if (referredModel.getRawRecord().isNewRecord()) {
-                            throw new RuntimeException("Oops! Please select the correct " + referredModelClass.getSimpleName());
+                            if (!isInvalidReferencesAllowed()) {
+                                throw new RuntimeException("Oops! Please select the correct " + referredModelClass.getSimpleName());
+                            }else {
+                                getReflector().set(m, getReflector().getReferenceField(referredModelGetter), null);
+                            }
+                        }else {
+                            getReflector().set(m, getReflector().getReferenceField(referredModelGetter), referredModel.getId());
                         }
-                        getReflector().set(m, getReflector().getReferenceField(referredModelGetter), referredModel.getId());
                     } else {
-                        throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information " + refElement.toString());
+                        if (!isInvalidReferencesAllowed()){
+                            throw new RuntimeException(referredModelClass.getSimpleName() + " not found for passed information " + refElement.toString());
+                        }else {
+                            getReflector().set(m, getReflector().getReferenceField(referredModelGetter), null);
+                        }
                     }
                 } else {
                     getReflector().set(m, getReflector().getReferenceField(referredModelGetter), null);

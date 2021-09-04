@@ -12,4 +12,6 @@ public interface ModelReader<M extends Model,T> {
 	public M read(T source);
 	public M read(T source,boolean ensureAccessibleByLoggedInUser);
 	public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement);
+	public void setInvalidReferencesAllowed(boolean invalidReferencesAllowed);
+	public boolean isInvalidReferencesAllowed();
 }

@@ -121,7 +121,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 		try {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			writer.write(m, baos, includeFields,ignoreParents,considerChildren,templateFields);
-			return new BytesView(path, baos.toByteArray());
+			return new BytesView(path, baos.toByteArray(), getMimeType());
 		}catch (IOException ex){ 
 			throw new RuntimeException(ex);
 		}
@@ -167,7 +167,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, considerChildren,templateFields);
 			return true;
 		});
-		return TimerUtils.time(cat, "Returning Bytes View" , () -> new BytesView(path, helper.toString().getBytes()));
+		return TimerUtils.time(cat, "Returning Bytes View" , () -> new BytesView(path, helper.toString().getBytes(), getMimeType()));
 	}
 	private transient  final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 

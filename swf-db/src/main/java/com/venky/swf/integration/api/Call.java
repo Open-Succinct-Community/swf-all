@@ -31,7 +31,7 @@ public class Call<T> implements Serializable {
     InputFormat inputFormat = InputFormat.FORM_FIELDS;
 
     String url ;
-    Map<String, String> requestHeaders = new HashMap<>();
+    Map<String, String> requestHeaders = new IgnoreCaseMap<>();
 
     public Map<String, List<String>> getResponseHeaders() {
         return responseHeaders;
@@ -183,13 +183,12 @@ public class Call<T> implements Serializable {
             if (connection.getResponseCode() >= 200 && connection.getResponseCode() < 299 ) {
                 //2xx is success.!!
                 InputStream in = null;
-                if (connection.getContentEncoding()!=null && connection.getContentEncoding().equals("gzip")) {
+                if (isResponseDecompressed() && connection.getContentEncoding()!=null && connection.getContentEncoding().equals("gzip")) {
                     in = new GZIPInputStream(connection.getInputStream());
                 }else {
                     in = connection.getInputStream();
                 }
                 responseHeaders.putAll(connection.getHeaderFields());
-
                 responseStream = new ByteArrayInputStream(StringUtil.readBytes(in));
                 errorStream= new ByteArrayInputStream(new byte[]{});
                 this.hasErrors = false;
@@ -315,5 +314,13 @@ public class Call<T> implements Serializable {
         }else {
             throw new RuntimeException("unknown raw parameter" + p.getClass());
         }
+    }
+
+    boolean responseDecompressed = true;
+    public boolean isResponseDecompressed() {
+        return responseDecompressed;
+    }
+    public void setResponseDecompressed(boolean responseDecompressed) {
+        this.responseDecompressed = responseDecompressed;
     }
 }

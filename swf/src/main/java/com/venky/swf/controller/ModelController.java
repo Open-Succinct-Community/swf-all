@@ -1079,6 +1079,11 @@ public class ModelController<M extends Model> extends Controller {
 
     protected <T> List<M>   persistModelsFromRequest() {
         List<M> models = integrationAdaptor.readRequest(getPath());
+        persistModels(models);
+        return models;
+    }
+
+    protected void persistModels(List<M> models) {
         for (M m : models) {
             try {
                 save(m, getModelClass());
@@ -1091,7 +1096,6 @@ public class ModelController<M extends Model> extends Controller {
                 }
             }
         }
-        return models;
     }
 
     @SuppressWarnings("unchecked")

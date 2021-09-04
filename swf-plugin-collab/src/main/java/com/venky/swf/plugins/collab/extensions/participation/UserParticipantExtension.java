@@ -2,6 +2,7 @@ package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.Database;
+import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.pm.DataSecurityFilter;
 
@@ -36,7 +37,12 @@ public class UserParticipantExtension extends CompanyNonSpecificParticipantExten
 			}
 		}else if (fieldName.equals("CITY_ID")){
 			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getStateId())){
-				ret = DataSecurityFilter.getIds(partiallyFilledModel.getState().getCities());
+				State state =  partiallyFilledModel.getState();
+				if (state != null) {
+					ret = DataSecurityFilter.getIds(state.getCities());
+				}else {
+					ret = null;
+				}
 			}else {
 				ret = null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(City.class, user));
 			}

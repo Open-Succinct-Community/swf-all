@@ -44,7 +44,13 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.util.WordWrapUtil;
 
 public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
-
+	boolean parentIdExposed = true;
+	public void setParentIdExposed(boolean parentIdExposed){
+		this.parentIdExposed = parentIdExposed;
+	}
+	public boolean isParentIdExposed() {
+		return this.parentIdExposed;
+	}
 	private final SequenceMap<String, Class<? extends Model>> referedModelMap = new SequenceMap<String,Class<? extends Model>>();
 	private final SequenceMap<String, SequenceSet<String>> referredModelFieldsToExport = new SequenceMap<String, SequenceSet<String>>();
 	public XLSModelWriter(Class<M> modelClass){

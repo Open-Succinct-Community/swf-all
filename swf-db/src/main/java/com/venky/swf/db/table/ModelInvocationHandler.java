@@ -296,9 +296,9 @@ public class ModelInvocationHandler implements InvocationHandler {
     	if (!getReflector().reflects(asModel)){
     		throw new AccessDeniedException(); 
     	}
-    	return getParticipatingRoles(user, user.getParticipationOptions(asModel,getProxy()));
+    	return getParticipatingRoles(user.getParticipationOptions(asModel,getProxy()));
     }
-    private Set<String> getParticipatingRoles(User user,Cache<String,Map<String,List<Long>>> pGroupOptions){
+    private Set<String> getParticipatingRoles(Cache<String,Map<String,List<Long>>> pGroupOptions){
     	Timer timer = cat().startTimer();
     	try {
         	ModelReflector<? extends Model> reflector = getReflector();
