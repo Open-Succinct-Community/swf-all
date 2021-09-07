@@ -75,7 +75,6 @@ public class TemplateProcessor {
     }
     public String publish(String templateName, Map<String,Object> root) {
         StringWriter writer = new StringWriter();
-        Config.instance().getLogger(getClass().getName()).info("Data for " + templateName +":" + root.toString());
         publish(templateName,root,writer);
         return writer.toString();
     }
@@ -93,7 +92,7 @@ public class TemplateProcessor {
                 putEnvKey(root,key,Config.instance().getProperty(key));
             }
 
-            Config.instance().getLogger(getClass().getName()).info(root.toString());
+            Config.instance().getLogger(getClass().getName()).info("Data for " + template.getName() +":" + root.toString());
             template.process(root,output);
         }catch (IOException | TemplateException ex) {
             throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
