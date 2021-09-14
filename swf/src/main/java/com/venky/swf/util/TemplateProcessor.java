@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 public class TemplateProcessor {
 
@@ -116,6 +117,7 @@ public class TemplateProcessor {
                 builder.run();
                 return os.toByteArray();
             } catch (Exception e) {
+                Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"HTML to pdf Failed", e);
                 return new byte[]{};
             }
         }
