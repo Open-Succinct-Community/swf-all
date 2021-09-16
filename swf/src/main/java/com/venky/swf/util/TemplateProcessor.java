@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TemplateProcessor {
 
@@ -103,11 +104,22 @@ public class TemplateProcessor {
 
     public byte[] htmlToPdf(byte[] htmlBytes){
         StringWriter tidyWriter = new StringWriter();
-
         Tidy tidy =  new Tidy();
         tidy.setXHTML(true);
+        tidy.setDropProprietaryTags(false);
+        tidy.setErrfile(Config.instance().getProperty("swf.html.tidy.err.file"));
         tidy.parse(new ByteArrayInputStream(htmlBytes), tidyWriter);
+        Logger logger = Config.instance().getLogger(TemplateProcessor.class.getName());
 
+        if (logger.isLoggable(Level.FINE)){
+            logger.log(Level.FINE,"Original Html-START");
+            logger.log(Level.FINE,new String(htmlBytes));
+            logger.log(Level.FINE,"Original Html-END");
+            logger.log(Level.FINE,"Tidy Html-START");
+            logger.log(Level.FINE,tidyWriter.toString());
+            logger.log(Level.FINE,"Tidy Html-END");
+        }
+        //tidyWriter.write(new String(htmlBytes));
 
         if (tidyWriter.getBuffer().length() > 0){
             try (SeekableByteArrayOutputStream os = new SeekableByteArrayOutputStream()) {
