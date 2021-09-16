@@ -32,7 +32,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <openhtml.version>1.0.0</openhtml.version>
+        <openhtml.version>1.0.10</openhtml.version>
 	</properties>
 
 	<dependencies>
@@ -127,11 +127,20 @@
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
+        <!--
     <dependency>
         <groupId>net.sf.jtidy</groupId>
         <artifactId>jtidy</artifactId>
         <version>r938</version>
     </dependency>
+        -->
+    <!-- https://mvnrepository.com/artifact/com.github.jtidy/jtidy -->
+    <dependency>
+        <groupId>com.github.jtidy</groupId>
+        <artifactId>jtidy</artifactId>
+        <version>1.0.2</version>
+    </dependency>
+
 
 		
 	</dependencies>
