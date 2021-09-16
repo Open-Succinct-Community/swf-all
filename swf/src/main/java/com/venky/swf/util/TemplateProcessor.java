@@ -15,7 +15,12 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.json.simple.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.helper.W3CDom;
+import org.jsoup.nodes.Document;
 import org.w3c.tidy.Tidy;
 
 import java.io.File;
@@ -100,6 +105,7 @@ public class TemplateProcessor {
             throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
         }
     }
+    W3CDom w3CDom = new W3CDom();
 
     public byte[] htmlToPdf(byte[] htmlBytes){
         StringWriter tidyWriter = new StringWriter();
@@ -122,12 +128,16 @@ public class TemplateProcessor {
 
         if (tidyWriter.getBuffer().length() > 0){
             try (SeekableByteArrayOutputStream os = new SeekableByteArrayOutputStream()) {
+
                 PdfRendererBuilder builder = new PdfRendererBuilder();
                 builder.useFastMode();
-                builder.withHtmlContent(tidyWriter.toString(), ".");
+                Document document = Jsoup.parse(tidyWriter.toString());
+
+                builder.withW3cDocument(w3CDom.fromJsoup(document),".");
                 builder.toStream(os);
                 builder.run();
                 return os.toByteArray();
+
             } catch (Exception e) {
                 Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"HTML to pdf Failed", e);
                 return new byte[]{};
