@@ -16,6 +16,8 @@ public class Css extends Link{
 
 	public Css(String path){
         super("link",path);
-        setProperty("rel", "stylesheet");
+        setProperty("rel", "preload");
+        setProperty("as","style");
+        setProperty("onload","this.onload=null;this.rel='stylesheet'");
     }
 }

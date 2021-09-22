@@ -19,7 +19,7 @@ public class Script extends Control{
         this(null);
     }
     public Script(String source){
-	    this(source,false);
+	    this(source,true);
     }
     public Script(String source, boolean defer){
         super("script");
