@@ -34,12 +34,14 @@ public interface PinCode extends Model {
 
     @IS_NULLABLE
     @IS_VIRTUAL
+    @EXPORTABLE(false)
     public Long getStateId();
     public void setStateId(Long id);
     public State getState();
 
     @IS_NULLABLE
     @IS_VIRTUAL
+    @EXPORTABLE(false)
     public Long getCityId();
     public void setCityId(Long id);
     public City getCity();
