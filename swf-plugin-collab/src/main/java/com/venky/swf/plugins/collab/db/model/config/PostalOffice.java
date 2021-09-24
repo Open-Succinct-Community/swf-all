@@ -10,9 +10,6 @@ import com.venky.swf.db.model.Model;
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
 @EXPORTABLE(false)
 public interface PostalOffice extends Model {
-    public Long getCountryId();
-    public void setCountryId(Long id);
-    public Country getCountry();
 
     public String getOfficeName();
     public void setOfficeName(String name);
@@ -51,14 +48,21 @@ public interface PostalOffice extends Model {
     public String getDistrict();
     public void setDistrict(String district);
 
+    @Index
     public String getStateName();
     public void setStateName(String stateName);
 
-    @Index
+    @EXPORTABLE(false)
+    public Long getCountryId();
+    public void setCountryId(Long id);
+    public Country getCountry();
+
+    @EXPORTABLE(false)
     public Long getStateId();
     public void setStateId(Long id);
     public State getState();
 
+    @EXPORTABLE(false)
     public Long getCityId();
     public void setCityId(Long id);
     public City getCity();
