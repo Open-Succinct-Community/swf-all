@@ -35,7 +35,16 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
     public Long getStateId() {
         loadPostalOffice();
         if ( postalOffice != null){
-            return postalOffice.getStateId();
+            if (postalOffice.getStateId() != null) {
+                return postalOffice.getStateId();
+            }else {
+                List<State> states = new Select().from(State.class).where(
+                        new Expression(ModelReflector.instance(State.class).getPool(),"lower(NAME)", Operator.EQ, postalOffice.getStateName().toLowerCase()))
+                        .execute(1);
+                if (!states.isEmpty()){
+                    return states.get(0).getId();
+                }
+            }
         }
         return null;
     }
