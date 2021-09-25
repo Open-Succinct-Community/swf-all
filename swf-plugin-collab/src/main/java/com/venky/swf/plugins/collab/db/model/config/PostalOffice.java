@@ -15,7 +15,6 @@ public interface PostalOffice extends Model {
     public void setOfficeName(String name);
 
     @Index
-    @UNIQUE_KEY
     public String getPinCode();
     public void setPinCode(String code);
 
