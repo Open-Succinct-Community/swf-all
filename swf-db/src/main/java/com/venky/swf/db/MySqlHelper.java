@@ -158,9 +158,9 @@ public class MySqlHelper extends JdbcTypeHelper{
     	Count count = counts.get(0);
     	DataManupulationStatement ddl = new DataManupulationStatement(table.getPool());
     	if (count.getCount() < getPrimaryKeyOffset() ){
-    	    count.setCount(getPrimaryKeyOffset());
+    	    count.setCount(getPrimaryKeyOffset()- 1L);
         }
-    	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf( count.getCount() + 1) );
+    	ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" AUTO_INCREMENT = ").add( String.valueOf( count.getCount() + 1L) );
     	ddl.executeUpdate();
     }
 

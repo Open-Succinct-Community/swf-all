@@ -170,7 +170,7 @@ public class PostgresqlHelper extends JdbcTypeHelper{
     	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
     	Count count = counts.get(0);
     	if (count.getCount() < getPrimaryKeyOffset() ){
-    		count.setCount(getPrimaryKeyOffset());
+    		count.setCount(getPrimaryKeyOffset() - 1L);
 		}
     	Select updateSequence = new Select("setval('"+table.getTableName()+"_id_seq',"+ (count.getCount() + 1L) +") AS COUNT").from(new String[]{});
     	updateSequence.addPool(table.getPool());

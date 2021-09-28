@@ -709,10 +709,9 @@ public abstract class JdbcTypeHelper {
     }
 
     public long getPrimaryKeyOffset(){
-        return getPrimaryKeyOffset(Config.instance().getLongProperty("swf.node.id",1L));
+        return getPrimaryKeyOffset(Config.instance().getLongProperty("swf.node.id",0L));
     }
     public long getPrimaryKeyOffset(long nodeId){
-        //String s = String.format("%d0000000000001",100000 + nodeId);
         return ((nodeId << 44) | 1);
     }
 

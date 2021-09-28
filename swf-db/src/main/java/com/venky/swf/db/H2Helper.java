@@ -184,10 +184,10 @@ public class H2Helper extends JdbcTypeHelper{
         List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
         Count count = counts.get(0);
         if (count.getCount() < getPrimaryKeyOffset()){
-            count.setCount(getPrimaryKeyOffset());
+            count.setCount(getPrimaryKeyOffset() - 1L);
         }
         DataManupulationStatement ddl = new DataManupulationStatement(table.getPool());
-        ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" ALTER COLUMN ID RESTART WITH ").add( String.valueOf( count.getCount() + 1) );
+        ddl.add("ALTER TABLE ").add(table.getRealTableName()).add(" ALTER COLUMN ID RESTART WITH ").add( String.valueOf( count.getCount() + 1L) );
         ddl.executeUpdate();
     }
 }
