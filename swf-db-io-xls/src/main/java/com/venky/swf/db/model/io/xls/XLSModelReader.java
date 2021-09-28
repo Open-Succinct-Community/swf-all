@@ -54,26 +54,31 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	public List<M> read(InputStream source) throws IOException{
 		return read(source,getBeanClass().getSimpleName());
 	}
-	
+
 	public List<M> read(Sheet sheet){
-        List<M> records = new ArrayList<M>();
+		RecordCollector<M> collector = new RecordCollector<>();
+		read(sheet,collector);
+		return collector.getCollection();
+	}
+	public void read(Sheet sheet, RecordVisitor<M> visitor){
+
         if (sheet == null){
-        	return records;
+        	return ;
         }
         
 		Iterator<Row> rowIterator = sheet.iterator();
         Row header = rowIterator.hasNext() ? rowIterator.next() : null;
         if (header == null){
-        	return records;
+        	return ;
         }
-        
+
         Map<String,Integer> headingIndexMap = headingIndexMap(sheet);
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
         	M m = read(row,headingIndexMap,true,true);
-    		records.add(m);
+        	visitor.visit(m);
         }
-        return records;
+
 	}
 
 	public CellStyle getHeaderStyle(Sheet sheet){ 
@@ -352,4 +357,18 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 			}
 		}
 	}
+	public interface RecordVisitor<M> {
+		public void visit(M m);
+	}
+	public class RecordCollector<M> implements RecordVisitor<M> {
+		List<M> collection = new ArrayList<>();
+		@Override
+		public void visit(M m) {
+			collection.add(m);
+		}
+		public List<M> getCollection(){
+			return collection;
+		}
+	}
+
 }

@@ -19,6 +19,8 @@ import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.io.xls.XLSModelReader;
+
+import com.venky.swf.db.model.io.xls.XLSModelReader.RecordVisitor;
 import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -28,6 +30,9 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.Task;
+import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
@@ -470,10 +475,36 @@ public class Controller implements TemplateLoader{
 
     protected <M extends Model> void importxls(Sheet sheet, Class<M> modelClass) {
         XLSModelReader<M> modelReader = getXLSModelReader(modelClass);
-        importRecords(modelReader.read(sheet), modelClass);
+        boolean raw = ModelReflector.instance(modelClass).getJdbcTypeHelper().getTypeRef(boolean.class).getTypeConverter().valueOf(getFormFields().get("raw"));
+        if (!raw){
+            importRecords(modelReader.read(sheet), modelClass);
+        }else {
+            RecordVisitor<M> visitor =  new RecordVisitor<M>() {
+                List<Task> tasks = new ArrayList<>();
+                @Override
+                public void visit(M m) {
+                    if (m != null) {
+                        tasks.add(new ImportTask<>(m));
+                    }
+                    if (m == null || tasks.size() >= 200){
+                        AsyncTaskManager.getInstance().addAll(tasks);
+                        tasks.clear();
+                    }
+                }
+            };
+            modelReader.read(sheet, visitor);
+            visitor.visit(null);
+            TaskManager.instance().executeAsync(new ReindexTask<>(modelClass), false);
+        }
     }
 
     protected <M extends Model> void importRecords(List<M> records, Class<M> modelClass) {
+        long recordCount = Database.getTable(modelClass).recordCount();
+
+        if (records.size() > recordCount) {
+            LuceneIndexer.instance(modelClass).setIndexingEnabled(false);
+            TaskManager.instance().executeAsync(new ReindexTask<>(modelClass), false);//This will be executed post commit.
+        }
         for (M m : records) {
             importRecord(m, modelClass);
         }
@@ -483,6 +514,7 @@ public class Controller implements TemplateLoader{
         getPath().fillDefaultsForReferenceFields(record, modelClass);
         save(record, modelClass);
     }
+
 
     protected <M extends Model> void save(M record, Class<M> modelClass) {
         if (record.getRawRecord().isNewRecord()) {
@@ -495,7 +527,7 @@ public class Controller implements TemplateLoader{
         }
         record.save(); //Allow extensions to fill defaults etc.
 
-        if (getSessionUser() != null && (!record.isAccessibleBy(getSessionUser())
+        if (getSessionUser() != null && !getSessionUser().isAdmin() && (!record.isAccessibleBy(getSessionUser())
                 || !getPath().getModelAccessPath(modelClass).canAccessControllerAction("save", String.valueOf(record.getId())))) {
             Database.getInstance().getCache(ModelReflector.instance(modelClass)).clear();
             throw new AccessDeniedException();
@@ -639,4 +671,49 @@ public class Controller implements TemplateLoader{
         Registry.instance().callExtensions(CLEAR_CACHED_RESULT_EXTENSION,CacheOperation.CLEAR,getPath());
         return new BytesView(getPath(),"OK".getBytes());
     }
+
+
+    public static class ImportTask<M extends Model> implements Task{
+        M model;
+        public ImportTask(M model){
+            this.model = model;
+        }
+        @Override
+        public void execute() {
+            if (model != null){
+                try {
+                    LuceneIndexer.instance(model.getReflector().getModelClass()).setIndexingEnabled(false);
+                    model.save();
+                }finally {
+                    LuceneIndexer.instance(model.getReflector().getModelClass()).setIndexingEnabled(true);
+                }
+            }
+        }
+    }
+    public static class ReindexTask<M extends Model> implements Task{
+
+        Class<M> modelClass;
+        public  ReindexTask(Class<M> modelClass) {
+            this.modelClass = modelClass;
+        }
+
+        @Override
+        public void execute() {
+            if (!LuceneIndexer.instance(modelClass).hasIndexedFields()){
+                return;
+            }
+            List<M> models = new Select().from(modelClass).execute();
+            for (M m : models){
+                try {
+                    LuceneIndexer.instance(modelClass).updateDocument(m.getRawRecord());
+                }catch (Exception ex){
+                    throw new RuntimeException(ex);
+                }
+            }
+
+        }
+    }
+
+
+
 }

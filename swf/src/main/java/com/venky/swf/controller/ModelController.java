@@ -36,6 +36,7 @@ import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ControllerInfo;
+import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -56,6 +57,7 @@ import com.venky.swf.views.model.ModelShowView;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.TableStyle;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONObject;
@@ -1307,5 +1309,13 @@ public class ModelController<M extends Model> extends Controller {
         M record = Database.getTable(getModelClass()).get(id);
         LuceneIndexer.instance(getModelClass()).updateDocument(record.getRawRecord());
         return  show(record);
+    }
+    public View reindex() {
+        TaskManager.instance().executeAsync(new ReindexTask<>(getModelClass()),false);
+        if (getReturnIntegrationAdaptor() == null) {
+            return back();
+        }else {
+            return getReturnIntegrationAdaptor().createStatusResponse(getPath(),null);
+        }
     }
 }

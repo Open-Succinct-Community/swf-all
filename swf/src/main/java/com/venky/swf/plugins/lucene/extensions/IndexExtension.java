@@ -23,7 +23,9 @@ public abstract class IndexExtension implements Extension{
 		Class<? extends Model> realModelClass = getRealModelClass(proxy);
 		if (realModelClass != null){
 			LuceneIndexer indexer = LuceneIndexer.instance(ModelReflector.instance(realModelClass));
-			updateIndex(indexer,proxy.getRawRecord());
+			if (indexer.isIndexingEnabled() && indexer.hasIndexedFields()) {
+				updateIndex(indexer, proxy.getRawRecord());
+			}
 		}
 	}
 	

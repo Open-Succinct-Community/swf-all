@@ -339,4 +339,17 @@ public class LuceneIndexer {
             return super.newTermQuery(term);
         }
     }
+
+    public boolean isIndexingEnabled(){
+        Boolean enabled = Database.getInstance().getCurrentTransaction().getAttribute(getTableName() +".indexing_enabled");
+        if (enabled == null){
+            enabled = true;
+        }
+        return enabled;
+    }
+
+    public void setIndexingEnabled(boolean enabled){
+        Database.getInstance().getCurrentTransaction().setAttribute(getTableName()+".indexing_enabled",enabled);
+    }
+
 }

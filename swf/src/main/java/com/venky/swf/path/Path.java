@@ -1218,7 +1218,7 @@ public class Path implements _IPath{
             @SuppressWarnings("unchecked")
             Class<? extends Model> referredModelClass = (Class<? extends Model>)referredModelGetter.getReturnType();
             String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-            if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) ){ //|| reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()
+            if (!reflector.isFieldSettable(referredModelIdFieldName) || reflector.isFieldVirtual(referredModelIdFieldName) || reflector.isHouseKeepingField(referredModelIdFieldName) ){ //|| reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()
                 continue;
             }
             Method referredModelIdSetter =  reflector.getFieldSetter(referredModelIdFieldName);
