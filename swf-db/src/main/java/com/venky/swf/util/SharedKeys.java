@@ -29,6 +29,7 @@ public class SharedKeys {
         String keyStoreDirectory = Config.instance().getProperty("swf.key.store.directory");
         String keyStorePassword = Config.instance().getProperty("swf.key.store.password");
         if (ObjectUtil.isVoid(keyStoreDirectory) || ObjectUtil.isVoid(keyStorePassword)){
+            Config.instance().setProperty("swf.encryption.support","false");
             return;
         }
 
