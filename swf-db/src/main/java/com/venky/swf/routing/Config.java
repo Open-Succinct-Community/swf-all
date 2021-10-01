@@ -92,9 +92,22 @@ public class Config {
 		}
 	}	
 
+	ThreadLocal<String> host= new ThreadLocal<>();
+    public void setHostName(String hostName){
+    	if (hostName == null){
+    		host.remove();
+		}else {
+			host.set(hostName);
+		}
+	}
+
 	public String getHostName(){
     	loadExternalIp();
-    	return getProperty("swf.host","localhost");
+    	if (host.get() != null){
+    		return host.get();
+		}else {
+			return getProperty("swf.host","localhost");
+		}
 	}
 
 	public void loadExternalIp(){
