@@ -224,6 +224,9 @@ public class ModelController<M extends Model> extends Controller {
 
             List<Long> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
             if (!ids.isEmpty()) {
+                if (ids.size() > Config.instance().getIntProperty("swf.search.maxRecords",Integer.MAX_VALUE)){
+                    throw new RuntimeException("Too many records being returned. Please filter better.");
+                }
                 Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getWhereClause())).orderBy(getReflector().getOrderBy());
