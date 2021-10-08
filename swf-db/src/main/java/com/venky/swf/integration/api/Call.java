@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -60,7 +61,14 @@ public class Call<T> implements Serializable {
     }
     public Call<T> url(String url){
         checkExpired();
-        this.url = url;
+        if (url != null) {
+            try {
+                this.url = new URI(url).normalize().toString();
+            }catch (Exception ex){
+                this.url = url;
+            }
+        }
+
         return this;
     }
     public Call<T> url(String baseUrl, String relativeUrl){
