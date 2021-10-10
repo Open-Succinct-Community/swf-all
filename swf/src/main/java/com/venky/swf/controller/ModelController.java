@@ -213,6 +213,7 @@ public class ModelController<M extends Model> extends Controller {
         String q = StringUtil.valueOf(formData.get("q"));
         return search(q, getMaxListRecords());
     }
+    private final int MAX_SEARCH_RESULT_COUNT_ALLOWED = Config.instance().getIntProperty("swf.search.maxRecords",Integer.MAX_VALUE);
 
     protected View search(String strQuery, int maxRecords) {
         if (!ObjectUtil.isVoid(strQuery)) {
@@ -224,9 +225,20 @@ public class ModelController<M extends Model> extends Controller {
 
             List<Long> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
             if (!ids.isEmpty()) {
-                if (ids.size() > Config.instance().getIntProperty("swf.search.maxRecords",Integer.MAX_VALUE)){
-                    throw new RuntimeException("Too many records being returned. Please filter better.");
+
+                {
+                    int numResultsExpected;
+                    if (maxRecords > 0) {
+                        numResultsExpected = Math.min(ids.size(), maxRecords);
+                    } else {
+                        numResultsExpected = ids.size();
+                    }
+
+                    if (numResultsExpected > MAX_SEARCH_RESULT_COUNT_ALLOWED) {
+                        throw new RuntimeException("Too many records being returned. Please filter better.");
+                    }
                 }
+
                 Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getWhereClause())).orderBy(getReflector().getOrderBy());
