@@ -6,11 +6,8 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.model.User;
-import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
-import com.venky.swf.routing.Config;
-import com.venky.swf.sql.parser.SQLExpressionParser.ColumnName;
 
 import java.math.BigDecimal;
 
@@ -26,8 +23,7 @@ public class RequestAuthenticator implements Extension {
         String apiKey = getHeader(path,"ApiKey");
         String lat = getHeader( path,"Lat");
         String lng = getHeader( path, "Lng");
-        String host = getHeader( path, "Host");
-        Config.instance().setHostName(host);
+
 
         if (!ObjectUtil.isVoid(apiKey)){
             User user = path.getUser("api_key",apiKey);

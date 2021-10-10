@@ -828,6 +828,9 @@ public class Path implements _IPath{
 
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
+        String host = getHeader( "Host");
+        Config.instance().setHostName(host);
+
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());
         for (Method m :methods){
