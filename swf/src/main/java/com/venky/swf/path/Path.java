@@ -15,7 +15,6 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
-import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
@@ -28,7 +27,6 @@ import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
-import com.venky.swf.db.model._Identifiable;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -38,7 +36,6 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
-import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -56,9 +53,9 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -66,6 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -80,6 +78,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
@@ -219,6 +218,30 @@ public class Path implements _IPath{
 
     public HttpServletRequest getRequest() {
         return request;
+    }
+
+    public Cookie[] getCookies(){
+        jakarta.servlet.http.Cookie[] cookies = getRequest().getCookies();
+        if (cookies == null){
+            return new Cookie[]{};
+        }
+        Cookie[] cookies1 = new Cookie[cookies.length];
+        for (int i = 0 ; i < cookies.length; i++){
+            cookies1[i] = getCookie(cookies[i]);
+        }
+        return cookies1;
+    }
+    private Cookie getCookie(jakarta.servlet.http.Cookie cookie){
+        return (Cookie) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Cookie.class},
+                (proxy, method, args) -> method.invoke(cookie,args));
+    }
+
+    public Cookie getCookie(String name){
+        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
+        if (cookieOptional.isPresent()){
+            return cookieOptional.get();
+        }
+        return null;
     }
 
     private ByteArrayInputStream inputStream = null;
@@ -633,7 +656,9 @@ public class Path implements _IPath{
 
     public void createUserSession(User user,boolean autoInvalidate){
         invalidateSession();
-        HttpSession session = getRequest().getSession(true);
+        jakarta.servlet.http.HttpSession jaksession = getRequest().getSession(true);
+        HttpSession session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
+                (proxy, method, args) -> method.invoke(jaksession,args));
         if (user != null){
             session.setAttribute("user.id",user.getId());
             Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
@@ -829,6 +854,11 @@ public class Path implements _IPath{
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
         String host = getHeader( "Host");
+
+        int colonIndex = host == null ? -1 : host.lastIndexOf(":");
+        if (colonIndex > 0){
+            host = host.substring(0,colonIndex);
+        }
         Config.instance().setHostName(host);
 
         MultiException ex = null;
@@ -1292,11 +1322,14 @@ public class Path implements _IPath{
         }
     }
 
+
     public void addMessage(StatusType type, String message){
         HttpSession session = getSession();
 
         if (session == null){
-            session = getRequest().getSession(true);
+            jakarta.servlet.http.HttpSession jakSession = getRequest().getSession(true);
+            session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
+                    (proxy, method, args) -> method.invoke(jakSession,args));
             setSession(session);
         }
         @SuppressWarnings("unchecked")

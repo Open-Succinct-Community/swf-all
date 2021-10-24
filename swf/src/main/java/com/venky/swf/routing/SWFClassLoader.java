@@ -48,6 +48,8 @@ public class SWFClassLoader extends ClassLoader {
 		}else if (name.startsWith("com.venky.swf")
 				&& name.substring(name.lastIndexOf(".") + 1).startsWith("_I")) {
 			return super.loadClass(name);
+		}else if (name.startsWith("javax.servlet.http")){
+			return super.loadClass(name);
 		}
 
 		String loc = name.replace('.', '/') + ".class";

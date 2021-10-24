@@ -7,7 +7,9 @@ package com.venky.swf.routing;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.venky.core.util.ObjectUtil;
+import jakarta.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -41,8 +44,18 @@ public class Router extends AbstractHandler {
     protected Router() {
     	
     }
-    
-    private static Router router = new Router();
+
+	@Override
+	public void handle(String s, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
+		HttpServletRequest httpServletRequest1 = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
+				(proxy, method, args) -> method.invoke(httpServletRequest,args));
+		HttpServletResponse httpServletResponse1 = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
+				(proxy, method, args) -> method.invoke(httpServletResponse,args));
+
+		handle(s,request,httpServletRequest1,httpServletResponse1);
+	}
+
+	private static Router router = new Router();
     public static Router instance(){
     	return router;
     }
@@ -198,7 +211,10 @@ public class Router extends AbstractHandler {
 	        _IView ev = null ;	
 	        
 	        _IPath p = createPath(target);
-	        p.setSession(request.getSession(false));
+			HttpSession jakSession = request.getSession(false);
+			javax.servlet.http.HttpSession session = jakSession == null ? null : (javax.servlet.http.HttpSession) Proxy.newProxyInstance(getLoader(), new Class[]{javax.servlet.http.HttpSession.class},
+					(proxy, method, args) -> method.invoke(jakSession,args));
+	        p.setSession(session);
 	        p.setRequest(request);
 	        p.setResponse(response);
 	        response.addHeader("Cache-Control","no-cache");

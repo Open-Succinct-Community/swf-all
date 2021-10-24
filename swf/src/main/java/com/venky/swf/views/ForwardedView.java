@@ -6,9 +6,8 @@ package com.venky.swf.views;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-
 import com.venky.swf.path.Path;
+import jakarta.servlet.ServletException;
 
 /**
  *
