@@ -1,5 +1,7 @@
 package javax.servlet.http;
 
-public interface HttpServletRequest extends jakarta.servlet.http.HttpServletRequest {
+import javax.servlet.ServletRequest;
+
+public interface HttpServletRequest extends jakarta.servlet.http.HttpServletRequest, ServletRequest {
 
 }

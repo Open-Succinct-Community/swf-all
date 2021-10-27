@@ -48,7 +48,10 @@ public class Router extends AbstractHandler {
 	@Override
 	public void handle(String s, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
 		HttpServletRequest httpServletRequest1 = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
-				(proxy, method, args) -> method.invoke(httpServletRequest,args));
+				(proxy, method, args) -> {
+					if (method.getReturnType().getName().endsWith("."))
+					return method.invoke(httpServletRequest,args);
+				});
 		HttpServletResponse httpServletResponse1 = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
 				(proxy, method, args) -> method.invoke(httpServletResponse,args));
 
