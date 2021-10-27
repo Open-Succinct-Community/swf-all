@@ -59,6 +59,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -66,6 +67,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -80,6 +82,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
@@ -1373,5 +1376,16 @@ public class Path implements _IPath{
             }
         }
         return headers;
+    }
+
+    public Cookie[] getCookies(){
+        return getRequest().getCookies();
+    }
+    public Cookie getCookie(String name){
+        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
+        if (cookieOptional.isPresent()){
+            return cookieOptional.get();
+        }
+        return null;
     }
 }
