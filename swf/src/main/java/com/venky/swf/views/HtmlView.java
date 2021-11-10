@@ -316,7 +316,7 @@ public abstract class HtmlView extends View{
         if (logo != null && logo.getProperty("src") != null){
             head.addControl(new Meta("og:image",logo.getProperty("src")));
         }
-        head.addControl(new Meta("og.url",Config.instance().getServerBaseUrl()));
+        head.addControl(new Meta("og:url",Config.instance().getServerBaseUrl()));
         //head.addControl(new Meta( "Service-Worker-Allowed" , "yes"));
 
 
