@@ -110,6 +110,9 @@ public abstract class HtmlView extends View{
 
         Image image = null;
         if (!ObjectUtil.isVoid(icon_url)){
+            if (icon_url.startsWith("/")){
+                icon_url = Config.instance().getServerBaseUrl() + icon_url;
+            }
             image = new Image(icon_url);
             image.addClass("w-100");
         }

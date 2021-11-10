@@ -4,6 +4,6 @@ import com.venky.swf.views.controls.Control;
 
 public class Meta extends Control {
     public Meta(String name,String content) {
-        super("meta","name", name, "content", content);
+        super("meta","property", name, "content", content);
     }
 }
