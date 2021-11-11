@@ -20,22 +20,11 @@ public class CacheVersionsController extends ModelController<CacheVersion> {
         super(path);
     }
 
-    public CacheVersion getLastVersion(){
-        List<CacheVersion> versionList = new Select().from(CacheVersion.class).orderBy("VERSION_NUMBER DESC").execute(1);
-        CacheVersion version = null;
-        if (!versionList.isEmpty()){
-            version = versionList.get(0);
-        }else {
-            version = Database.getTable(CacheVersion.class).newRecord();
-            version.setVersionNumber(new Bucket(1));
-            version.save();
-        }
-        return version;
-    }
+
 
     @RequireLogin(false)
     public View last(){
-        CacheVersion version = getLastVersion();
+        CacheVersion version = CacheVersion.getLastVersion();
         if (getReturnIntegrationAdaptor() == null){
             return back();
         }else {
@@ -44,7 +33,7 @@ public class CacheVersionsController extends ModelController<CacheVersion> {
     }
 
     public View increment(){
-        CacheVersion version = getLastVersion();
+        CacheVersion version = CacheVersion.getLastVersion();
         version.getVersionNumber().increment();
         version.save();
         Registry.instance().callExtensions(Controller.CLEAR_CACHED_RESULT_EXTENSION, CacheOperation.CLEAR,getPath(),new ObjectHolder<>(null));

@@ -112,7 +112,7 @@ public class Config {
 
 	public void loadExternalIp(){
 		if (properties.getProperty("swf.host") == null){
-			String externalIp = StringUtil.read(new Call<String>().url("http://bot.whatismyipaddress.com").getResponseStream());
+			String externalIp = StringUtil.read(new Call<String>().url("https://api.ipify.org/").getResponseStream());
 			properties.put("swf.host", externalIp);
 		}
 	}
