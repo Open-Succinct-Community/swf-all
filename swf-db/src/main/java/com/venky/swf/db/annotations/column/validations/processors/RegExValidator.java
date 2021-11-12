@@ -27,7 +27,7 @@ public class RegExValidator extends FieldValidator<RegEx>{
         if (ObjectUtil.isVoid(value) || pattern.matcher(value).matches()){
             return true;
         }
-        ex.add(new FieldValidationException(humanizedFieldName + "("+ value +")" +" doesnot match regex :" + annotation.value()));
+        ex.add(new FieldValidationException( "("+ value +") is not a valid value for " + humanizedFieldName));
         return false;
     }
     
