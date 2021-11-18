@@ -186,7 +186,7 @@ public class TemplateProcessor {
         return formatEntityMap(entityMap,entityFieldMap,getDefaultChildModelMap(entityMap,entityFieldMap));
     }
     public Map<Class<? extends Model>, List<Class<? extends Model>>> getDefaultChildModelMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap){
-        Map<Class<? extends Model>, List<Class<? extends Model>>> childModelMap = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
+        Cache<Class<? extends Model>, List<Class<? extends Model>>> childModelMap = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
             @Override
             protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
                 return new ArrayList<>();
