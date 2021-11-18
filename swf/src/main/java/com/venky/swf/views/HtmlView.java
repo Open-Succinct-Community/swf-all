@@ -92,6 +92,7 @@ public abstract class HtmlView extends View{
         }
         return manifestJson;
     }
+    @SuppressWarnings("unchecked")
     public Image getLogo(){
         JSONObject manifest = getManifestJson();
         if (manifest.get("resource_path") == null){
@@ -99,9 +100,27 @@ public abstract class HtmlView extends View{
         }
         String path = (String)manifest.get("resource_path");
         JSONArray icons = (JSONArray)manifest.get("icons");
+        JSONObject icon = null;
         String icon_url = null;
         if (!icons.isEmpty()){
-            icon_url = (String)((JSONObject)icons.get(0)).getOrDefault("src", null);
+            for (Object oicon : icons){
+                JSONObject jsIcon = (JSONObject)oicon;
+                String sizes = (String)jsIcon.get("sizes");
+                for (String sSize : sizes.split(",")){
+                    String[] dims = sSize.split("x");
+                    int dim = Integer.parseInt(dims[0]);
+                    if (dim >= 300){
+                        icon = jsIcon;
+                        break;
+                    }
+                }
+                if (icon != null){
+                    break;
+                }
+            }
+            if (icon != null) {
+                icon_url = (String)icon.getOrDefault("src", null);
+            }
         }
         if (icon_url == null){
             icon_url = String.format("%s/manifest.png",path);

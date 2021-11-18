@@ -91,39 +91,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	}
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public Map<Class<? extends Model> , List<Class<? extends Model>>> getChildrenToConsider(Map<Class<? extends Model>, List<String>> templateFields){
-		Map<Class<? extends Model>,List<Class<? extends Model>>> considerChildren = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
-			@Override
-			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
-				return new ArrayList<>();
-			}
-		};
-
-
-		Set<String> modelClassesInTemplate = new HashSet<>();
-		modelClassesInTemplate.add(getBeanClass().getSimpleName());
-		if (templateFields != null){
-			for (Class<? extends Model> aClass : templateFields.keySet()) {
-				modelClassesInTemplate.add(aClass.getSimpleName());
-			}
-		}
-
-		Stack<Class<? extends Model>> modelClasses = new Stack<>();
-		modelClasses.push(getBeanClass());
-		while (!modelClasses.isEmpty()){
-			Class<? extends Model> aModelClass = modelClasses.pop();
-			if (considerChildren.containsKey(aModelClass)){
-				continue;
-			}
-			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);
-			for (Class<? extends Model> childModelClass : ref.getChildModels()){
-				if (modelClassesInTemplate.contains(childModelClass.getSimpleName())){
-					considerChildren.get(aModelClass).add(childModelClass);
-					modelClasses.push(childModelClass);
-				}
-			}
-		}
-		return  considerChildren;
-
+		return getReflector().getChildrenToBeConsidered(templateFields);
 	}
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered , Map<Class<? extends Model>,List<String>> templateFields) {
 		//Consider first level children.
