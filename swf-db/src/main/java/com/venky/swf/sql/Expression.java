@@ -17,6 +17,7 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.ModelInvocationHandler;
 import com.venky.swf.db.table.Record;
+import com.venky.swf.util.SharedKeys;
 
 
 public class Expression {
@@ -349,9 +350,15 @@ public class Expression {
 		}
 		return value;
 	}
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public  boolean eval(Object record){
+		return eval(record,null);
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public  boolean eval(Object record, ModelReflector<? extends Model> reflector){
 		String columnName = getColumnName();
+		String fieldName = reflector == null ? null : reflector.getFieldName(columnName);
+
+		boolean isEncrypted = fieldName != null && reflector.isFieldEncrypted(fieldName);
 		if (conjunction == null){
 			if (columnName == null){
 				return false;
@@ -383,6 +390,10 @@ public class Expression {
 					value = Database.getJdbcTypeHelper(pool).getTypeRef(v.getClass()).getTypeConverter().valueOf(value);
 					//Compare Apples and apples not apples and oranges.
 				}
+				if (isEncrypted){
+					value = SharedKeys.getInstance().encrypt((String)value);
+				}
+
 				if (op == Operator.EQ){
 					return ObjectUtil.equals(v,value);
 				}else if (value instanceof Comparable){
@@ -411,14 +422,14 @@ public class Expression {
 			boolean ret = connected.isEmpty();
 			for (Iterator<Expression> i = connected.iterator(); !ret && i.hasNext() ;){
 				Expression e = i.next();
-				ret = ret || e.eval(record);
+				ret = ret || e.eval(record,reflector);
 			}
 			return ret;
 		}else if (conjunction == Conjunction.AND){
 			boolean ret = true;
 			for (Iterator<Expression> i = connected.iterator(); ret && i.hasNext() ;){
 				Expression e = i.next();
-				ret = ret && e.eval(record);
+				ret = ret && e.eval(record,reflector);
 			}
 			return ret;
 		}
