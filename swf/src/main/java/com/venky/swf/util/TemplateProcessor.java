@@ -197,7 +197,7 @@ public class TemplateProcessor {
             Object entityOrEntityList = entityMap.get(entityName);
             List<Model> entityList = entityOrEntityList instanceof List ? (List<Model>) entityOrEntityList : null;
             Model entity = entityOrEntityList instanceof Model ? (Model) entityOrEntityList : null;
-            if (entity == null && !entityList.isEmpty()){
+            if (entity == null && entityList != null && !entityList.isEmpty()){
                 entity = entityList.get(0);
             }
             if (entity != null) {
