@@ -831,8 +831,18 @@ public class Path implements _IPath{
 
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
-        String host = getHeader( "Host");
-        Config.instance().setHostName(host);
+        String[] hostParams = new String[]{null,null};
+        String host = getHeader("Host");
+        if (host != null){
+            String[] parts = host.split(":");
+            for (int i = 0 ; i < Math.min(parts.length,2) ; i ++){
+                hostParams[i] = parts[i];
+            }
+        }
+        //Set request based host,port and scheme for this thread.
+        Config.instance().setHostName(hostParams[0]);
+        Config.instance().setExternalPort(hostParams[1]);
+        Config.instance().setExternalURIScheme(getRequest().getScheme());
 
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());

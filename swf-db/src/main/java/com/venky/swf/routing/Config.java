@@ -117,16 +117,41 @@ public class Config {
 		}
 	}
 	public int getPortNumber(){
-		return Integer.valueOf(getPort());
+    	return Integer.parseInt(getPort());
 	}
 
 	private String getPort(){
 		return getProperty("swf.port",getProperty("PORT","8080"));
 	}
+
+	ThreadLocal<String> externalPort = new ThreadLocal<>();
+	public void setExternalPort(String portNumber){
+		if (ObjectUtil.isVoid(portNumber)){
+			externalPort.remove();
+		}else {
+			externalPort.set(portNumber);
+		}
+	}
+
 	private String getExternalPort(){
+		if (externalPort.get() != null){
+			return externalPort.get();
+		}
     	return getProperty("swf.external.port",getPort());
 	}
+
+	ThreadLocal<String> uriScheme = new ThreadLocal<>();
+	public void setExternalURIScheme(String uriScheme){
+		if (uriScheme == null){
+			this.uriScheme.remove();
+		}else {
+			this.uriScheme.set(uriScheme);
+		}
+	}
 	private String getExternalURIScheme(){
+		if (uriScheme.get() != null){
+			return uriScheme.get();
+		}
 		return getProperty("swf.external.scheme", getExternalPortNumber() == 443 ? "https" : "http" );
 	}
 
@@ -141,7 +166,7 @@ public class Config {
 				return 80;
 			}
 		}else {
-			return Integer.valueOf(getExternalPort());
+			return Integer.parseInt(getExternalPort());
 		}
 	}
 
