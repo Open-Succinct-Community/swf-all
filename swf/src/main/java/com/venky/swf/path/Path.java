@@ -842,7 +842,11 @@ public class Path implements _IPath{
         //Set request based host,port and scheme for this thread.
         Config.instance().setHostName(hostParams[0]);
         Config.instance().setExternalPort(hostParams[1]);
-        Config.instance().setExternalURIScheme(getRequest().getScheme());
+        String extScheme = getHeader("URIScheme");
+        if (extScheme == null){
+            extScheme = request.getScheme();
+        }
+        Config.instance().setExternalURIScheme(extScheme);
 
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());

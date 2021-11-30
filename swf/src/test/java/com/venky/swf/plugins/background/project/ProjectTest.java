@@ -10,9 +10,9 @@ public class ProjectTest {
 
     @Test
     public void test(){
-        Project project = new Project();
-        for (int i = 0; i < 5 ; i ++){
-            project.submit(Arrays.asList(new RandomIntTask()));
+        Project project = ProjectManager.instance().getProject("1");
+        for (int i = 0; i < 10 ; i ++){
+            project.submit(Arrays.asList(new RandomIntTask(project)));
         }
         project.awaitCompletion();
         System.out.println("All Done!! Hurray");
@@ -21,15 +21,25 @@ public class ProjectTest {
     static AtomicInteger idGen = new AtomicInteger();
     public static class RandomIntTask implements Task {
         int id = idGen.getAndIncrement();
-        public RandomIntTask(){
-
+        Project project;
+        public RandomIntTask(Project project){
+            this.project = project;
         }
         @Override
         public void execute() {
             try {
-                Thread.sleep(3000);
-                System.out.println("Id: " + id + " Complete!," + System.currentTimeMillis());
-                System.out.flush();
+                try {
+                    if (id%10 == 9) {
+                        synchronized (project) {
+                            project.wait(100);
+                        }
+                    }
+                }catch (InterruptedException ex){
+                }finally {
+                    System.out.println("Id: " + id + " Complete!," + System.currentTimeMillis());
+                    System.out.flush();
+                    ProjectManager.instance().notify(project);
+                }
             }catch (Exception ex){
                 throw new RuntimeException(ex);
             }
