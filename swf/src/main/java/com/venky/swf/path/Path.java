@@ -1417,14 +1417,4 @@ public class Path implements _IPath{
         return headers;
     }
 
-    public Cookie[] getCookies(){
-        return getRequest().getCookies();
-    }
-    public Cookie getCookie(String name){
-        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
-        if (cookieOptional.isPresent()){
-            return cookieOptional.get();
-        }
-        return null;
-    }
 }
