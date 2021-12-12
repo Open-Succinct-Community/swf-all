@@ -96,12 +96,18 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		public boolean isText() {
+			return false;
+		}
 	},
 	APPLICATION_ZIP() {
 		public String toString(){
 			return "application/zip";
 		}
 		public boolean isImage(){
+			return false;
+		}
+		public boolean isText() {
 			return false;
 		}
 	},
@@ -112,6 +118,9 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		public boolean isText() {
+			return false;
+		}
 	},
     APPLICATION_PDF() {
         public String toString(){
@@ -120,10 +129,16 @@ public enum MimeType {
         public boolean isImage(){
             return false;
         }
+		public boolean isText() {
+			return false;
+		}
     },
 	;
 
 	public abstract boolean isImage();
+	public boolean isText() {
+		return !isImage();
+	}
 
 
 	private static Map<String,MimeType> mimeTypeMap = new HashMap<>();

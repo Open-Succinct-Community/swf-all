@@ -4,6 +4,7 @@ import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.Bucket;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.routing.Config;
@@ -181,7 +182,16 @@ public class Call<T> implements Serializable {
             if (method != HttpMethod.GET) {
                 byte[] parameterByteArray = inputFormat == InputFormat.INPUT_STREAM ? getParameterRaw(input) : parameterString.getBytes();
                 if (inputFormat == InputFormat.INPUT_STREAM){
-                    fakeCurlRequest.append("-d '").append("**Raw binary Stream**").append("'");
+                    String contentType = requestHeaders.get("content-type");
+                    MimeType mimeType = null;
+                    if (!ObjectUtil.isVoid(contentType)){
+                        mimeType = MimeType.getMimeType(contentType);
+                    }
+                    if (ObjectUtil.isVoid(contentType) || mimeType == null || !mimeType.isText() ){
+                        fakeCurlRequest.append("-d '").append("**Raw binary Stream**").append("'");
+                    }else {
+                        fakeCurlRequest.append("-d '").append(new String(parameterByteArray)).append("'");
+                    }
                 }else {
                     fakeCurlRequest.append("-d '").append(parameterString).append("'");
                 }
