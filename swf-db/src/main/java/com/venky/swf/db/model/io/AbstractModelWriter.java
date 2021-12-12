@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 
 public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> implements ModelWriter<M, T>{
 	boolean parentIdExposed = true;
@@ -61,19 +60,40 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	
 
 	public void write(List<M> records, OutputStream os,List<String> fields) throws IOException {
+		FormatHelper<T> helper  = FormatHelper.instance(getMimeType(),StringUtil.pluralize(getBeanClass().getSimpleName()),true);
+		write (records,helper.getRoot(),fields);
+		os.write(helper.toString().getBytes());
+	}
+
+	public void write(List<M> records, T into,List<String> fields) throws IOException {
 		Map<Class<? extends Model> , List<String>> mapFields = new HashMap<>();
 		Set<Class<? extends Model>> parentsWritten = new HashSet<>();
-		write (records,os,fields,parentsWritten,mapFields);
+		write (records,into,fields,parentsWritten,mapFields);
 	}
+
 	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<?extends Model>> parentsAlreadyConsidered,
 					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
-		write(records,os,fields,parentsAlreadyConsidered,getChildrenToConsider(templateFields),templateFields);
+		FormatHelper<T> helper  = FormatHelper.instance(getMimeType(),StringUtil.pluralize(getBeanClass().getSimpleName()),true);
+		write(records,helper.getRoot(),fields,parentsAlreadyConsidered,templateFields);
+		os.write(helper.toString().getBytes());
+
+	}
+	public void write (List<M> records,T into, List<String> fields, Set<Class<?extends Model>> parentsAlreadyConsidered,
+					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
+		write(records,into,fields,parentsAlreadyConsidered,getChildrenToConsider(templateFields),templateFields);
 	}
 
 	public void write (List<M> records,OutputStream os, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
 					   Map<Class<? extends Model>,List<Class<? extends Model>>> childrenToBeConsidered,
 					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
 		FormatHelper<T> helper  = FormatHelper.instance(getMimeType(),StringUtil.pluralize(getBeanClass().getSimpleName()),true);
+		write(records,helper.getRoot(),fields,parentsAlreadyConsidered,childrenToBeConsidered,templateFields);
+		os.write(helper.toString().getBytes());
+	}
+	public void write (List<M> records,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
+					   Map<Class<? extends Model>,List<Class<? extends Model>>> childrenToBeConsidered,
+					   Map<Class<? extends Model>,List<String>> templateFields) throws IOException {
+		FormatHelper<T> helper  = FormatHelper.instance(into);
 		for (M record: records){
 			T childElement = helper.createArrayElement(getBeanClass().getSimpleName());
 			write(record,childElement,fields,parentsAlreadyConsidered, childrenToBeConsidered, templateFields);
@@ -81,8 +101,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		if (Config.instance().getBooleanProperty("swf.api.keys.title_case",false)){
 			helper.change_key_case(KeyCase.TITLE);
 		}
-		os.write(helper.toString().getBytes());
 	}
+
 	public void write(M record,T into, List<String> fields){
 		write(record,into,fields,new HashSet<>(), new HashMap<>());
 	}
@@ -91,39 +111,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 	}
 	private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
 	public Map<Class<? extends Model> , List<Class<? extends Model>>> getChildrenToConsider(Map<Class<? extends Model>, List<String>> templateFields){
-		Map<Class<? extends Model>,List<Class<? extends Model>>> considerChildren = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
-			@Override
-			protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
-				return new ArrayList<>();
-			}
-		};
-
-
-		Set<String> modelClassesInTemplate = new HashSet<>();
-		modelClassesInTemplate.add(getBeanClass().getSimpleName());
-		if (templateFields != null){
-			for (Class<? extends Model> aClass : templateFields.keySet()) {
-				modelClassesInTemplate.add(aClass.getSimpleName());
-			}
-		}
-
-		Stack<Class<? extends Model>> modelClasses = new Stack<>();
-		modelClasses.push(getBeanClass());
-		while (!modelClasses.isEmpty()){
-			Class<? extends Model> aModelClass = modelClasses.pop();
-			if (considerChildren.containsKey(aModelClass)){
-				continue;
-			}
-			ModelReflector<? extends Model> ref = ModelReflector.instance(aModelClass);
-			for (Class<? extends Model> childModelClass : ref.getChildModels()){
-				if (modelClassesInTemplate.contains(childModelClass.getSimpleName())){
-					considerChildren.get(aModelClass).add(childModelClass);
-					modelClasses.push(childModelClass);
-				}
-			}
-		}
-		return  considerChildren;
-
+		return getReflector().getChildrenToBeConsidered(templateFields);
 	}
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered , Map<Class<? extends Model>,List<String>> templateFields) {
 		//Consider first level children.

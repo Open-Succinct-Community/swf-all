@@ -89,13 +89,27 @@ public class TemplateEngine {
     public Map<String,Object> formatEntityMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap) {
         return processor.formatEntityMap(entityMap,entityFieldMap);
     }
+    public Map<String,Object> formatEntityMap(Map<String, Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap, Map<Class<? extends Model>, List<Class<? extends Model>>> childModelMap) {
+        if (childModelMap == null){
+            return processor.formatEntityMap(entityMap,entityFieldMap);
+        }else {
+            return processor.formatEntityMap(entityMap, entityFieldMap, childModelMap);
+        }
+    }
+    public Map<Class<? extends Model>, List<Class<? extends Model>>> getDefaultChildModelMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap){
+        return processor.getDefaultChildModelMap(entityMap,entityFieldMap);
+    }
     public JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap){
         return processor.format(entity,entityFieldMap);
+    }
+    public JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap,Map<Class<? extends Model>, List<Class<? extends Model>>> childModelMap){
+        return processor.format(entity,entityFieldMap,childModelMap);
     }
 
     public void putEnvKey(Map<String,Object> root, String key, String value){
         processor.putEnvKey(root,key,value);
     }
+
 
     public enum TransportType {
         MAIL,

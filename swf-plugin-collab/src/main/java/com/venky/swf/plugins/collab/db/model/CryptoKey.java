@@ -17,6 +17,16 @@ public interface CryptoKey extends Model {
     public String getAlias();
     public void setAlias(String alias);
 
+    public static final String PURPOSE_SIGNING = "SIGNING";
+    public static final String PURPOSE_ENCRYPTION = "ENCRYPTION";
+
+    @UNIQUE_KEY
+    public String getPurpose();
+    public void setPurpose(String purpose);
+
+    public String getAlgorithm();
+    public void setAlgorithm(String algorithm);
+
     @ENCRYPTED
     @COLUMN_SIZE(4096)
     public String getPrivateKey();
@@ -26,10 +36,11 @@ public interface CryptoKey extends Model {
     public String getPublicKey();
     public void setPublicKey(String key);
 
-    public static CryptoKey find(String alias){
+    public static CryptoKey find(String alias,String purpose){
         CryptoKey key = Database.getTable(CryptoKey.class).newRecord();
         key.setAlias(alias);
-        key = Database.getTable(CryptoKey.class).find(key,false);
+        key.setPurpose(purpose);
+        key = Database.getTable(CryptoKey.class).getRefreshed(key,false);
         return key;
     }
 

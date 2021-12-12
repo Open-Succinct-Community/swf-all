@@ -11,6 +11,9 @@ import com.venky.swf.db.extensions.BeforeModelSaveExtension;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.collab.db.model.config.City;
+import com.venky.swf.plugins.collab.db.model.config.Country;
+import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.routing.Config;
 
@@ -97,9 +100,19 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
             StringBuilder defaultQueryString = new StringBuilder();
             if (priorityFields.containsKey("CITY_ID")) {
-                defaultQueryString.append(oAddress.getCity().getName());
-                defaultQueryString.append(" ").append(oAddress.getState().getName());
-                defaultQueryString.append(" ").append(oAddress.getCountry().getName());
+                City city = oAddress.getCity();
+                State state = oAddress.getStateId() != null ? oAddress.getState() : ( city != null ? city.getState() : null ) ;
+                Country country = oAddress.getCountryId() != null ? oAddress.getCountry() : ( state != null ? state.getCountry() : null );
+
+                if (city != null) {
+                    defaultQueryString.append(city.getName());
+                }
+                if (state != null) {
+                    defaultQueryString.append(" ").append(state.getName());
+                }
+                if (country != null) {
+                    defaultQueryString.append(" ").append(country.getName());
+                }
                 priorityFields.remove("CITY_ID");
                 priorityFields.remove("STATE_ID");
                 priorityFields.remove("COUNTRY_ID");

@@ -8,6 +8,7 @@ import com.venky.core.string.Inflector;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.json.JSONModelWriter;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
 import freemarker.cache.NullCacheStorage;
 import freemarker.core.ArithmeticEngine;
@@ -181,8 +182,31 @@ public class TemplateProcessor {
         }
         return entityMap;
     }
+    public Map<String,Object> formatEntityMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap){
+        return formatEntityMap(entityMap,entityFieldMap,getDefaultChildModelMap(entityMap,entityFieldMap));
+    }
+    public Map<Class<? extends Model>, List<Class<? extends Model>>> getDefaultChildModelMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap){
+        Cache<Class<? extends Model>, List<Class<? extends Model>>> childModelMap = new Cache<Class<? extends Model>, List<Class<? extends Model>>>() {
+            @Override
+            protected List<Class<? extends Model>> getValue(Class<? extends Model> aClass) {
+                return new ArrayList<>();
+            }
+        };
 
-    public Map<String,Object> formatEntityMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap) {
+        for (String entityName :entityMap.keySet()) {
+            Object entityOrEntityList = entityMap.get(entityName);
+            List<Model> entityList = entityOrEntityList instanceof List ? (List<Model>) entityOrEntityList : null;
+            Model entity = entityOrEntityList instanceof Model ? (Model) entityOrEntityList : null;
+            if (entity == null && entityList != null && !entityList.isEmpty()){
+                entity = entityList.get(0);
+            }
+            if (entity != null) {
+                childModelMap.putAll(entity.getReflector().getChildrenToBeConsidered(entityFieldMap));
+            }
+        }
+        return childModelMap;
+    }
+    public Map<String,Object> formatEntityMap(Map<String,Object> entityMap, Map<Class<? extends Model>, List<String>> entityFieldMap,Map<Class<? extends Model>, List<Class<? extends Model>>> childModelMap) {
         Map<String, Object> root = new HashMap<>();
         for (String entityName :entityMap.keySet()){
             Object entityOrEntityList = entityMap.get(entityName);
@@ -190,11 +214,11 @@ public class TemplateProcessor {
             Model entity = entityOrEntityList instanceof Model ? (Model)entityOrEntityList : null;
 
             if (entity != null){
-                root.put(entityName,format(entity,entityFieldMap));
+                root.put(entityName,format(entity,entityFieldMap,childModelMap));
             }else if (entityList != null){
                 List<JSONObject> out = new ArrayList<>();
                 for (Model e : entityList){
-                    out.add(format(e,entityFieldMap));
+                    out.add(format(e,entityFieldMap,childModelMap));
                 }
                 root.put(entityName,out);
             }
@@ -202,9 +226,13 @@ public class TemplateProcessor {
         return root;
     }
     public JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap){
+        return format(entity,entityFieldMap, entity.getReflector().getChildrenToBeConsidered(entityFieldMap));
+    }
+    public JSONObject format(Model entity,Map<Class<? extends Model>, List<String>> entityFieldMap, Map<Class<? extends Model>, List<Class<? extends Model>>> childModelMap){
         JSONObject into = new JSONObject();
         JSONModelWriter<Model> modelJSONModelWriter = new JSONModelWriter<>(entity.getReflector().getModelClass());
         modelJSONModelWriter.write(entity,into,entityFieldMap == null ? null : entityFieldMap.get(entity.getReflector().getModelClass()), new HashSet<>(),
+                childModelMap,
                 entityFieldMap == null ? new HashMap<>() : entityFieldMap);
         return  into;
     }

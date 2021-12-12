@@ -16,6 +16,7 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -25,6 +26,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
 	private HashMap<Expression, SequenceSet<Record>> queryCache = new HashMap<Expression, SequenceSet<Record>>();
 	private Table<? extends Model> table;
+	private ModelReflector<? extends Model> reflector ;
 	private String loggerName = null;
 	
 	public Table<? extends Model> getTable() {
@@ -38,6 +40,9 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	private <M extends Model> QueryCache(Table<M> table){
 		this.table = table;
+		if (this.table != null){
+			this.reflector = this.table.getReflector();
+		}
 		this.loggerName = QueryCache.class.getName() + "." + table.getModelClass().getSimpleName();
 	}
 	public void registerLockRelease(){
@@ -152,7 +157,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	private void filter( Set<Record> cachedRecords, Expression where, Set<Record> target, int maxRecords,boolean locked) {
 		for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || target.size() < maxRecords) ;) {
 			Record m = i.next();
-			if (where == null || where.isEmpty() || where.eval(m)) {
+			if (where == null || where.isEmpty() || where.eval(m,reflector)) {
 				if (!locked || (locked == m.isLocked())){
 					target.add(m);
 				}else if (locked && maxRecords == Select.MAX_RECORDS_ALL_RECORDS){
@@ -248,7 +253,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	public void registerInsert(Record record) {
 		if (add(record)) {
 			for (Expression cacheKey : queryCache.keySet()) {
-				if (cacheKey == null || cacheKey.eval(record)) {
+				if (cacheKey == null || cacheKey.eval(record,reflector)) {
 					Set<Record> values = queryCache.get(cacheKey);
 					values.add(record);
 				}
@@ -270,11 +275,11 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}
 		for (Expression cacheKey: queryCache.keySet()){
 			if (recordInCache == null){
-				if (cacheKey == null || cacheKey.eval(record)){
+				if (cacheKey == null || cacheKey.eval(record,reflector)){
 					queryCache.get(cacheKey).add(record); // Will not be added if already exists.
 				}	
 			}else if (cacheKey != null &&  !isIdWhereClause(cacheKey)){
-				if (!cacheKey.eval(record)){
+				if (!cacheKey.eval(record,reflector)){
 					queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
 				}else {
 					queryCache.get(cacheKey).add(record);
@@ -289,7 +294,7 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	public void registerDestroy(Record record) {
 		if (remove(record)) {
 			for (Expression cacheKey : queryCache.keySet()) {
-				if (cacheKey == null || cacheKey.eval(record)) {
+				if (cacheKey == null || cacheKey.eval(record,reflector)) {
 					Set<Record> values = queryCache.get(cacheKey);
 					values.remove(record);
 				}

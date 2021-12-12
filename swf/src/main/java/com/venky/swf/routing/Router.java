@@ -220,7 +220,7 @@ public class Router extends AbstractHandler {
 	        p.setSession(session);
 	        p.setRequest(request);
 	        p.setResponse(response);
-	        response.addHeader("Cache-Control","no-cache");
+	        //response.addHeader("Cache-Control","no-cache");
 
 			String origins = Config.instance().getProperty("swf.cors.allowed.origins");
 			if (!ObjectUtil.isVoid(origins)){

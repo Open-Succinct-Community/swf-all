@@ -11,6 +11,8 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.cache.CacheVersion;
+import com.venky.swf.extensions.LastCacheVersion;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
@@ -90,6 +92,7 @@ public abstract class HtmlView extends View{
         }
         return manifestJson;
     }
+    @SuppressWarnings("unchecked")
     public Image getLogo(){
         JSONObject manifest = getManifestJson();
         if (manifest.get("resource_path") == null){
@@ -97,9 +100,27 @@ public abstract class HtmlView extends View{
         }
         String path = (String)manifest.get("resource_path");
         JSONArray icons = (JSONArray)manifest.get("icons");
+        JSONObject icon = null;
         String icon_url = null;
         if (!icons.isEmpty()){
-            icon_url = (String)((JSONObject)icons.get(0)).getOrDefault("src", null);
+            for (Object oicon : icons){
+                JSONObject jsIcon = (JSONObject)oicon;
+                String sizes = (String)jsIcon.get("sizes");
+                for (String sSize : sizes.split(",")){
+                    String[] dims = sSize.split("x");
+                    int dim = Integer.parseInt(dims[0]);
+                    if (dim >= 300){
+                        icon = jsIcon;
+                        break;
+                    }
+                }
+                if (icon != null){
+                    break;
+                }
+            }
+            if (icon != null) {
+                icon_url = (String)icon.getOrDefault("src", null);
+            }
         }
         if (icon_url == null){
             icon_url = String.format("%s/manifest.png",path);
@@ -110,6 +131,9 @@ public abstract class HtmlView extends View{
 
         Image image = null;
         if (!ObjectUtil.isVoid(icon_url)){
+            if (icon_url.startsWith("/")){
+                icon_url = Config.instance().getServerBaseUrl() + icon_url + "?v=" + LastCacheVersion.getInstance().get().getVersionNumber();
+            }
             image = new Image(icon_url);
             image.addClass("w-100");
         }
@@ -307,13 +331,13 @@ public abstract class HtmlView extends View{
 
         head.addControl(new Meta("msapplication-starturl",start_url));
         head.addControl(new Meta("viewport","width=device-width, initial-scale=1, shrink-to-fit=no"));
-        head.addControl(new Meta("og:title",applicationName));
-        head.addControl(new Meta("og:description",applicationDescription));
+        head.addControl(new Meta("og:title",applicationName,true));
+        head.addControl(new Meta("og:description",applicationDescription,true));
         Image logo = getLogo();
         if (logo != null && logo.getProperty("src") != null){
-            head.addControl(new Meta("og:image",logo.getProperty("src")));
+            head.addControl(new Meta("og:image",logo.getProperty("src"),true));
         }
-        head.addControl(new Meta("og.url",Config.instance().getServerBaseUrl()));
+        head.addControl(new Meta("og:url",Config.instance().getServerBaseUrl(),true));
         //head.addControl(new Meta( "Service-Worker-Allowed" , "yes"));
 
 

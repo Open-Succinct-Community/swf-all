@@ -452,6 +452,9 @@ public class ModelReflector<M extends Model> {
 				return new SequenceSet<>();
 			}
 		};
+		if (templateFields == null){
+			return childrenToBeConsidered;
+		}
 
 		Set<String> templateModelNames = new HashSet<>(templateFields.keySet().stream().map(tm->tm.getSimpleName()).collect(Collectors.toSet()));
 

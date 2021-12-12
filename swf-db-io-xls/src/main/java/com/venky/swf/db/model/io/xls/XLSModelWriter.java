@@ -92,10 +92,21 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	public void write(List<M> records, OutputStream os, List<String> fields) throws IOException {
 		write(records,os,fields, new HashSet<Class<? extends Model>>(), new HashMap<Class<? extends Model>,List<String>>());
 	}
+
+	@Override
+	public void write(List<M> records, Row into, List<String> fields) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
 	public void write(List<M> records, OutputStream os, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered,
 			Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
 		write(records,os,fields,parentsAlreadyConsidered,null,templateFields);
+	}
+
+	@Override
+	public void write(List<M> records, Row into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -104,6 +115,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write(records,wb,fields,parentsAlreadyConsidered, templateFields);
 		wb.write(os);
 
+	}
+
+	@Override
+	public void write(List<M> records, Row into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<Class<? extends Model>>> childrenToBeConsidered, Map<Class<? extends Model>, List<String>> templateFields) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 

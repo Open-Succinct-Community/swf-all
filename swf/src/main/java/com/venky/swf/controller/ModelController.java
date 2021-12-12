@@ -8,6 +8,7 @@ import com.venky.cache.Cache;
 import com.venky.cache.UnboundedCache;
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ExceptionUtil;
@@ -60,19 +61,24 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.TableStyle;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -479,8 +485,38 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
-        return new HashMap<>();
+        Map<Class<? extends Model>,List<String>> map = getIncludedModelFieldsFromRequest();
+        if (map == null) {
+            map = new HashMap<>();
+        }
+        return map;
     }
+    public Map<Class<? extends Model>,List<String>> getIncludedModelFieldsFromRequest(){
+        Map<Class<? extends Model>,List<String>> map = null;
+        String template = getPath().getHeader("IncludedModelFields");
+        if (template != null){
+            JSONObject jsonObject = (JSONObject) JSONValue.parse(new InputStreamReader(new ByteArrayInputStream(Base64.getDecoder().decode(template.getBytes(StandardCharsets.UTF_8)))));
+            if (jsonObject != null){
+                map = new HashMap<>();
+                for (Object key : jsonObject.keySet()){
+                    List<String> modelClasses = Config.instance().getModelClasses((String)key);
+                    if (!modelClasses.isEmpty()){
+                        try {
+                            Class<? extends Model> modelClass = (Class<? extends Model>) Class.forName(modelClasses.get(0));
+                            JSONArray fields = (JSONArray)jsonObject.get(key);
+                            List<String> fieldNames = new ArrayList<>();
+                            fields.forEach(f->fieldNames.add(StringUtil.underscorize((String)f)));
+                            map.put(modelClass,fieldNames);
+                        } catch (ClassNotFoundException e) {
+                            //
+                        }
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
 
     protected HtmlView createModelShowView(M record) {
         return constructModelShowView(getPath(), record);

@@ -853,13 +853,22 @@ public class Path implements _IPath{
 
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
-        String host = getHeader( "Host");
-
-        int colonIndex = host == null ? -1 : host.lastIndexOf(":");
-        if (colonIndex > 0){
-            host = host.substring(0,colonIndex);
+        String[] hostParams = new String[]{null,null};
+        String host = getHeader("Host");
+        if (host != null){
+            String[] parts = host.split(":");
+            for (int i = 0 ; i < Math.min(parts.length,2) ; i ++){
+                hostParams[i] = parts[i];
+            }
         }
-        Config.instance().setHostName(host);
+        //Set request based host,port and scheme for this thread.
+        Config.instance().setHostName(hostParams[0]);
+        Config.instance().setExternalPort(hostParams[1]);
+        String extScheme = getHeader("URIScheme");
+        if (extScheme == null){
+            extScheme = request.getScheme();
+        }
+        Config.instance().setExternalURIScheme(extScheme);
 
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());
@@ -1406,5 +1415,16 @@ public class Path implements _IPath{
             }
         }
         return headers;
+    }
+
+    public Cookie[] getCookies(){
+        return getRequest().getCookies();
+    }
+    public Cookie getCookie(String name){
+        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
+        if (cookieOptional.isPresent()){
+            return cookieOptional.get();
+        }
+        return null;
     }
 }
