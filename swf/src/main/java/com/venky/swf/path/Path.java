@@ -36,6 +36,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
+import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -253,17 +254,12 @@ public class Path implements _IPath{
         return inputStream;
     }
 
-    private static final String ORIGNAL_REQUEST_KEY = "swf.original.request.uri";
     public void setRequest(HttpServletRequest request) {
         this.request = request;
-        Object originalUrl = request.getAttribute(ORIGNAL_REQUEST_KEY);
-        if (originalUrl == null){
-            request.setAttribute(ORIGNAL_REQUEST_KEY,request.getRequestURI());
-        }
     }
     
     public String getOriginalRequestUrl(){
-        return StringUtil.valueOf(request.getAttribute(ORIGNAL_REQUEST_KEY));
+        return StringUtil.valueOf(request.getRequestURI());
     }
     
     protected void logHeaders(){
@@ -1396,7 +1392,7 @@ public class Path implements _IPath{
         }
 
         if (ObjectUtil.isVoid(value)){
-            value = getRequest().getParameter(key);
+            value = getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString()) ? getRequest().getParameter(key) : null ;
         }
         return value;
     }

@@ -63,7 +63,7 @@ public class JettyServer {
 		addConnectors(server);
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(100);
-		Router router = Router.instance(); 
+		Router router = Router.instance();
 		if (isDevelopmentEnvironment()){
 			router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
 		}else {
@@ -72,7 +72,6 @@ public class JettyServer {
 		
 		ContextHandler ctxHandler = new ContextHandler();
 		ctxHandler.setHandler(router);
-
 		SessionHandler sessionHandler = new SessionHandler();
 		sessionHandler.setHandler(ctxHandler);
 		

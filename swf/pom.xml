@@ -50,6 +50,7 @@
             <version>${jetty.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>com.github.venkatramanm.swf-all</groupId>
             <artifactId>swf-db</artifactId>

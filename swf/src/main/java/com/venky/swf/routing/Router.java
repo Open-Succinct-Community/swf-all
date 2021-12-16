@@ -5,35 +5,35 @@
 package com.venky.swf.routing;
 
 
+import com.venky.core.log.ExtendedLevel;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerStatistics;
+import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectUtil;
+import com.venky.core.util.PackageUtil;
+import com.venky.extension.Registry;
+
+import com.venky.swf.db._IDatabase;
+import com.venky.swf.path._IPath;
+import com.venky.swf.views._IView;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpSession;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import com.venky.core.util.ObjectUtil;
-import jakarta.servlet.http.HttpSession;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
-import com.venky.core.log.ExtendedLevel;
-import com.venky.core.log.SWFLogger;
-import com.venky.core.log.TimerStatistics;
-import com.venky.core.log.TimerStatistics.Timer;
-import com.venky.core.util.MultiException;
-import com.venky.core.util.PackageUtil;
-import com.venky.extension.Registry;
-import com.venky.swf.db._IDatabase;
-import com.venky.swf.path._IPath;
-import com.venky.swf.views._IView;
 
 /**
  *
@@ -47,20 +47,46 @@ public class Router extends AbstractHandler {
 
 	@Override
 	public void handle(String s, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
-		HttpServletRequest httpServletRequest1 = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
-				(proxy, method, args) -> method.invoke(httpServletRequest,args));
-		HttpServletResponse httpServletResponse1 = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
-				(proxy, method, args) -> method.invoke(httpServletResponse,args));
 
-		handle(s,request,httpServletRequest1,httpServletResponse1);
+
+		AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
+		context.setTimeout(0);
+
+		context.start(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					HttpServletRequest httpServletRequest1 = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
+							(proxy, method, args) -> method.invoke(context.getRequest(),args));
+					HttpServletResponse httpServletResponse1 = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
+							(proxy, method, args) -> method.invoke(context.getResponse(),args));
+
+					handle(s, (Request)context.getRequest(), httpServletRequest1,httpServletResponse1);
+				}catch (Exception ex){
+					throw new RuntimeException(ex);
+				}finally {
+					context.complete();
+				}
+
+			}
+		});
 	}
 
-	private static Router router = new Router();
+	private static Router router = null;
+    private static Object mutex = new Object();
     public static Router instance(){
+    	if (router != null ){
+    		return router;
+		}
+    	synchronized (mutex){
+    		if (router == null){
+    			router = new Router();
+			}
+		}
     	return router;
     }
     
-    private ClassLoader loader = null; 
+    private ClassLoader loader = null;
     public ClassLoader getLoader() {
     	synchronized (this) {
     		return loader;
@@ -300,6 +326,10 @@ public class Router extends AbstractHandler {
     	}
     }
 	public void reset() {
-		setLoader(new SWFClassLoader(getClass().getClassLoader()));
+    	try {
+			setLoader(getClass().getClassLoader().getClass().getConstructor().newInstance());
+		}catch (Exception ex){
+    		throw new RuntimeException(ex);
+		}
 	}
 }
