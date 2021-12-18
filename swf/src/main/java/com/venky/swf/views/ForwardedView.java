@@ -41,7 +41,11 @@ public class ForwardedView extends View{
     
     public void write(int httpStatus) throws IOException {
         try {
-			getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
+            if (getPath().getAsyncContext() == null){
+                getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
+            }else {
+                getPath().getAsyncContext().dispatch(forwardToUrl);
+            }
 		} catch (ServletException e) {
 			throw new RuntimeException(e);
 		}

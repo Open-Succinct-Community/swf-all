@@ -5,16 +5,17 @@ import java.util.*;
 
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.routing.Config;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
-import org.w3c.dom.Node;
 
 public class XML extends FormatHelper<XMLElement>{
 	XMLElement root = null;
 	public XML(InputStream in){
 		this(XMLDocument.getDocumentFor(in).getDocumentRoot());
+		fixInputCase();
 	}
-	
+
 	public XML(XMLElement root){
 		this.root = root;
 	}
@@ -173,6 +174,7 @@ public class XML extends FormatHelper<XMLElement>{
 	}
 
 	public String toString(){
+		fixOutputCase();
 		return root.toString();
 	}
 

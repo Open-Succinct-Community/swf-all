@@ -78,12 +78,6 @@ public class IntegrationAdaptor<M extends Model,T> {
             InputStream is = null;
             try {
                     is = path.getInputStream();
-					if (Config.instance().getBooleanProperty("swf.api.keys.title_case",false)){
-						//If input has come in title_case, make it camel case
-						FormatHelper<T> helper = FormatHelper.instance(getMimeType(),is);
-						helper.change_key_case(KeyCase.CAMEL);
-						is = new ByteArrayInputStream(helper.toString().getBytes(StandardCharsets.UTF_8));
-					}
                     return reader.read(is);
             }catch(IOException ex){
                     throw new RuntimeException(ex);

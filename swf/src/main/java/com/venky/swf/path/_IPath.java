@@ -1,22 +1,24 @@
 package com.venky.swf.path;
 
+import com.venky.swf.db.model.Model;
+import com.venky.swf.views._IView;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.model.Model;
-import com.venky.swf.views._IView;
-
 public interface _IPath {
 
 	void setRequest(HttpServletRequest request);
 	HttpServletRequest getRequest();
+
+	void setAsyncContext(AsyncContext context);
+	AsyncContext getAsyncContext();
 
 	InputStream getInputStream() throws IOException;
 	

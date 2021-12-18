@@ -17,11 +17,13 @@ import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
+
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import jakarta.servlet.AsyncContext;
+
 import jakarta.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -49,19 +51,14 @@ public class Router extends AbstractHandler {
 	public void handle(String s, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
 
 
-		AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
+		jakarta.servlet.AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
 		context.setTimeout(0);
 
 		context.start(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					HttpServletRequest httpServletRequest1 = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
-							(proxy, method, args) -> method.invoke(context.getRequest(),args));
-					HttpServletResponse httpServletResponse1 = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
-							(proxy, method, args) -> method.invoke(context.getResponse(),args));
-
-					handle(s, (Request)context.getRequest(), httpServletRequest1,httpServletResponse1);
+					handle(s, context);
 				}catch (Exception ex){
 					throw new RuntimeException(ex);
 				}finally {
@@ -229,7 +226,18 @@ public class Router extends AbstractHandler {
 	
 	
 	
-    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public void handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
+    	Request baseRequest = (Request) context.getRequest();
+
+		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
+				(proxy, method, args) -> method.invoke(context.getRequest(),args));
+		HttpServletResponse response = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
+				(proxy, method, args) -> method.invoke(context.getResponse(),args));
+
+		AsyncContext asyncContext = (AsyncContext)  Proxy.newProxyInstance(getLoader(), new Class[]{AsyncContext.class},
+				(proxy, method, args) -> method.invoke(context,args));
+
+
     	SWFLogger cat = Config.instance().getLogger(getClass().getName());
     	Timer timer = cat.startTimer("handleRequest : " + target ,true);
     	try {
@@ -243,6 +251,7 @@ public class Router extends AbstractHandler {
 	        p.setSession(session);
 	        p.setRequest(request);
 	        p.setResponse(response);
+	        p.setAsyncContext(asyncContext);
 	        //response.addHeader("Cache-Control","no-cache");
 
 			String origins = Config.instance().getProperty("swf.cors.allowed.origins");

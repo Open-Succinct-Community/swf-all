@@ -56,6 +56,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.AsyncContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -257,6 +258,19 @@ public class Path implements _IPath{
     public void setRequest(HttpServletRequest request) {
         this.request = request;
     }
+
+    @Override
+    public AsyncContext getAsyncContext() {
+        return asyncContext;
+    }
+
+    @Override
+    public void setAsyncContext(AsyncContext asyncContext) {
+        this.asyncContext = asyncContext;
+    }
+
+    AsyncContext asyncContext;
+
     
     public String getOriginalRequestUrl(){
         return StringUtil.valueOf(request.getRequestURI());
@@ -338,6 +352,9 @@ public class Path implements _IPath{
         Registry.instance().callExtensions("swf.before.routing", pathComponents);
     }
 
+    public List<String> getPathElements() {
+        return pathelements;
+    }
 
     public Path(String target) {
         this.target = target;
