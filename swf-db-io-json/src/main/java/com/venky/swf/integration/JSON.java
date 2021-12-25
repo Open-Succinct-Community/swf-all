@@ -25,7 +25,6 @@ public class JSON extends FormatHelper<JSONObject>{
 	private JSONObject root = null;
 	public JSON(InputStream in) {
 		this(parseWithException(in));
-		fixInputCase();
 	}
 	private static JSONObject parseWithException(InputStream in){
 		try {
@@ -47,9 +46,15 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	public JSON(JSONObject obj){
 		this.root = obj;
+		fixInputCase();
 	}
-	
-	
+
+
+	@Override
+	public void setRoot(JSONObject root) {
+		this.root = root;
+	}
+
 	public JSONObject getRoot(){
 		return root;
 	}

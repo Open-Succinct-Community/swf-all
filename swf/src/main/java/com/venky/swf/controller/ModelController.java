@@ -880,10 +880,10 @@ public class ModelController<M extends Model> extends Controller {
                     if (buttonName.equals("_SUBMIT_MORE") && getPath().canAccessControllerAction("blank", String.valueOf(record.getId()))) {
                         //Usability Logic: If user is not modifying data shown, then why be in data entry mode.
                         getPath().addInfoMessage(getModelClass().getSimpleName() + " created sucessfully, press Done when finished.");
-                        return clone(record.getId());
+                        return forwardTo("clone/"+record.getId());
                     } else if (buttonName.equals("_SUBMIT_NO_MORE") && getPath().canAccessControllerAction("show", String.valueOf(record.getId())) && !record.getReflector().getChildModels(false, true).isEmpty()) {
                         //May want to add children
-                        return new ForwardedView(getPath(), "show/" + record.getId());
+                        return forwardTo("show/"+record.getId());
                     }
                 }
             } catch (RuntimeException ex) {

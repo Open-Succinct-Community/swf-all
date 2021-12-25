@@ -44,11 +44,15 @@ public class ForwardedView extends View{
             if (getPath().getAsyncContext() == null){
                 getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
             }else {
-                getPath().getAsyncContext().dispatch(forwardToUrl);
+                getPath().getAsyncContext().dispatch(getPath().getRequest().getServletContext(),forwardToUrl);
             }
 		} catch (ServletException e) {
 			throw new RuntimeException(e);
 		}
     }
 
+    @Override
+    public boolean isBeingForwarded() {
+        return true;
+    }
 }

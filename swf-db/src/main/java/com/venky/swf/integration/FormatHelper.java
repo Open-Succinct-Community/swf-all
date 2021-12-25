@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
 import com.venky.swf.routing.Config;
@@ -27,7 +28,16 @@ public abstract class FormatHelper<T> {
 			change_key_case(KeyCase.CAMEL);
 		}
 	}
+	protected boolean isPlural(){
+		return ObjectUtil.equals(StringUtil.pluralize(getRootName()), getRootName());
+	}
 	protected void fixOutputCase(){
+		if (!Config.instance().getBooleanProperty("swf.api.root.required",true)){
+			if (!isPlural() && getElementAttribute(getRootName()) != null) {
+				T element = getElementAttribute(getRootName());
+				setRoot(element);
+			}
+		}
 		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
 
 		if (keyCase != KeyCase.CAMEL){
@@ -113,7 +123,8 @@ public abstract class FormatHelper<T> {
 		}
 		return (FormatHelper<T>) helper;
 	}
-	
+
+	public abstract void setRoot(T root);
 	public abstract T getRoot();
 	public abstract String getRootName();
 	public abstract T changeRootName(String toName);

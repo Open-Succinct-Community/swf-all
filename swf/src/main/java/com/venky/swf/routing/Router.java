@@ -10,6 +10,7 @@ import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
@@ -24,6 +25,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
 import jakarta.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -33,6 +36,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URL;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -57,14 +61,22 @@ public class Router extends AbstractHandler {
 		context.start(new Runnable() {
 			@Override
 			public void run() {
+				boolean beingForwarded = false;
 				try {
-					handle(s, context);
+					
+					beingForwarded = handle(s, context);
 				}catch (Exception ex){
 					throw new RuntimeException(ex);
 				}finally {
-					context.complete();
+					if (!beingForwarded) {
+						try {
+							context.getResponse().flushBuffer();
+							context.complete();
+						}catch (Exception ex){
+							//
+						}
+					}
 				}
-
 			}
 		});
 	}
@@ -224,11 +236,8 @@ public class Router extends AbstractHandler {
 		}
 	}
 	
-	
-	
-    public void handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
-    	Request baseRequest = (Request) context.getRequest();
-
+    public boolean handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
+    	
 		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
 				(proxy, method, args) -> method.invoke(context.getRequest(),args));
 		HttpServletResponse response = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
@@ -242,7 +251,7 @@ public class Router extends AbstractHandler {
     	Timer timer = cat.startTimer("handleRequest : " + target ,true);
     	try {
 	        _IView view = null;
-	        _IView ev = null ;	
+	        _IView ev = null ;
 	        
 	        _IPath p = createPath(target);
 			HttpSession jakSession = request.getSession(false);
@@ -266,7 +275,7 @@ public class Router extends AbstractHandler {
 					response.addIntHeader ("Access-Control-Max-Age" ,1728000);
 					response.addIntHeader ("Content-Length" , 0);
 					response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-					return;
+					return false;
 				}
 			}
 
@@ -290,9 +299,10 @@ public class Router extends AbstractHandler {
 	            	viewWriteTimer.stop();
 	            }
 	            db.getCurrentTransaction().commit();
+	            return view.isBeingForwarded();
 	        }catch(Exception e){
 	        	try {
-	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" + p.getRequest().getMethod(), e);
+	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" , e);
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
 	        		logger.log(Level.INFO, "Rollback failed", ex);
@@ -331,8 +341,8 @@ public class Router extends AbstractHandler {
     	}finally{
     		timer.stop();
     		TimerStatistics.dumpStatistics();
-	        baseRequest.setHandled(true);
     	}
+    	return false;
     }
 	public void reset() {
     	try {

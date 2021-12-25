@@ -8,16 +8,17 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.routing.Config;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
+import org.json.simple.JSONObject;
 
 public class XML extends FormatHelper<XMLElement>{
 	XMLElement root = null;
 	public XML(InputStream in){
 		this(XMLDocument.getDocumentFor(in).getDocumentRoot());
-		fixInputCase();
 	}
 
 	public XML(XMLElement root){
 		this.root = root;
+		fixInputCase();
 	}
 	
 	public XML(String rootName, boolean isPlural) {
@@ -227,6 +228,9 @@ public class XML extends FormatHelper<XMLElement>{
 				}
 			}
 		}
+	}
+	public void setRoot(XMLElement root){
+		this.root = root;
 	}
 
 	@Override

@@ -1398,7 +1398,7 @@ public class Path implements _IPath{
     }
     
     public boolean isForwardedRequest(){
-        return !ObjectUtil.isVoid(getRequest().getAttribute("javax.servlet.forward.request_uri"));
+        return !ObjectUtil.equals(getRequest().getRequestURI() , getTarget());
     }
 
     public String getHeader(String key){
