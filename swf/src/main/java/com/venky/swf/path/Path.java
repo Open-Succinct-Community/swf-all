@@ -15,7 +15,6 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
-import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
@@ -28,7 +27,6 @@ import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
-import com.venky.swf.db.model._Identifiable;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -38,7 +36,7 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
-import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
@@ -56,9 +54,9 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.AsyncContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -224,6 +222,30 @@ public class Path implements _IPath{
         return request;
     }
 
+    public Cookie[] getCookies(){
+        jakarta.servlet.http.Cookie[] cookies = getRequest().getCookies();
+        if (cookies == null){
+            return new Cookie[]{};
+        }
+        Cookie[] cookies1 = new Cookie[cookies.length];
+        for (int i = 0 ; i < cookies.length; i++){
+            cookies1[i] = getCookie(cookies[i]);
+        }
+        return cookies1;
+    }
+    private Cookie getCookie(jakarta.servlet.http.Cookie cookie){
+        return (Cookie) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Cookie.class},
+                (proxy, method, args) -> method.invoke(cookie,args));
+    }
+
+    public Cookie getCookie(String name){
+        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
+        if (cookieOptional.isPresent()){
+            return cookieOptional.get();
+        }
+        return null;
+    }
+
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() throws IOException {
         if (inputStream == null){
@@ -233,17 +255,25 @@ public class Path implements _IPath{
         return inputStream;
     }
 
-    private static final String ORIGNAL_REQUEST_KEY = "swf.original.request.uri";
     public void setRequest(HttpServletRequest request) {
         this.request = request;
-        Object originalUrl = request.getAttribute(ORIGNAL_REQUEST_KEY);
-        if (originalUrl == null){
-            request.setAttribute(ORIGNAL_REQUEST_KEY,request.getRequestURI());
-        }
     }
+
+    @Override
+    public AsyncContext getAsyncContext() {
+        return asyncContext;
+    }
+
+    @Override
+    public void setAsyncContext(AsyncContext asyncContext) {
+        this.asyncContext = asyncContext;
+    }
+
+    AsyncContext asyncContext;
+
     
     public String getOriginalRequestUrl(){
-        return StringUtil.valueOf(request.getAttribute(ORIGNAL_REQUEST_KEY));
+        return StringUtil.valueOf(request.getRequestURI());
     }
     
     protected void logHeaders(){
@@ -322,6 +352,9 @@ public class Path implements _IPath{
         Registry.instance().callExtensions("swf.before.routing", pathComponents);
     }
 
+    public List<String> getPathElements() {
+        return pathelements;
+    }
 
     public Path(String target) {
         this.target = target;
@@ -636,7 +669,9 @@ public class Path implements _IPath{
 
     public void createUserSession(User user,boolean autoInvalidate){
         invalidateSession();
-        HttpSession session = getRequest().getSession(true);
+        jakarta.servlet.http.HttpSession jaksession = getRequest().getSession(true);
+        HttpSession session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
+                (proxy, method, args) -> method.invoke(jaksession,args));
         if (user != null){
             session.setAttribute("user.id",user.getId());
             Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
@@ -1309,11 +1344,14 @@ public class Path implements _IPath{
         }
     }
 
+
     public void addMessage(StatusType type, String message){
         HttpSession session = getSession();
 
         if (session == null){
-            session = getRequest().getSession(true);
+            jakarta.servlet.http.HttpSession jakSession = getRequest().getSession(true);
+            session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
+                    (proxy, method, args) -> method.invoke(jakSession,args));
             setSession(session);
         }
         @SuppressWarnings("unchecked")
@@ -1360,7 +1398,7 @@ public class Path implements _IPath{
     }
     
     public boolean isForwardedRequest(){
-        return !ObjectUtil.isVoid(getRequest().getAttribute("javax.servlet.forward.request_uri"));
+        return !ObjectUtil.equals(getRequest().getRequestURI() , getTarget());
     }
 
     public String getHeader(String key){
@@ -1371,7 +1409,7 @@ public class Path implements _IPath{
         }
 
         if (ObjectUtil.isVoid(value)){
-            value = getRequest().getParameter(key);
+            value = getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString()) ? getRequest().getParameter(key) : null ;
         }
         return value;
     }
@@ -1392,14 +1430,4 @@ public class Path implements _IPath{
         return headers;
     }
 
-    public Cookie[] getCookies(){
-        return getRequest().getCookies();
-    }
-    public Cookie getCookie(String name){
-        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
-        if (cookieOptional.isPresent()){
-            return cookieOptional.get();
-        }
-        return null;
-    }
 }

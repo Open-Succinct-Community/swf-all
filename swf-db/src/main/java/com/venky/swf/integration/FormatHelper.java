@@ -10,15 +10,41 @@ import java.util.Set;
 
 import com.venky.core.collections.LowerCaseStringCache;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
+import com.venky.swf.routing.Config;
 
 
 public abstract class FormatHelper<T> {
 	protected FormatHelper(){
 	
 	}
-	
+
+	protected void fixInputCase(){
+		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
+
+		if (keyCase != KeyCase.CAMEL){
+			change_key_case(KeyCase.CAMEL);
+		}
+	}
+	protected boolean isPlural(){
+		return ObjectUtil.equals(StringUtil.pluralize(getRootName()), getRootName());
+	}
+	protected void fixOutputCase(){
+		if (!Config.instance().getBooleanProperty("swf.api.root.required",true)){
+			if (!isPlural() && getElementAttribute(getRootName()) != null) {
+				T element = getElementAttribute(getRootName());
+				setRoot(element);
+			}
+		}
+		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
+
+		if (keyCase != KeyCase.CAMEL){
+			change_key_case(keyCase);
+		}
+	}
+
 	private static Map<MimeType,Class<?>> formatClassMap = new HashMap<MimeType, Class<?>>();
 	private static Map<MimeType,FormatHelperBuilder<?>> formatBuilderMap = new HashMap<MimeType,FormatHelperBuilder<?>>();
 	
@@ -97,7 +123,8 @@ public abstract class FormatHelper<T> {
 		}
 		return (FormatHelper<T>) helper;
 	}
-	
+
+	public abstract void setRoot(T root);
 	public abstract T getRoot();
 	public abstract String getRootName();
 	public abstract T changeRootName(String toName);
@@ -122,14 +149,14 @@ public abstract class FormatHelper<T> {
 	public abstract void removeAttribute(String name) ;
 
 	public enum KeyCase {
-		TITLE,
+		SNAKE,
 		CAMEL,
 	}
 	public T change_key_case(KeyCase toKeyCase){
 		FormatHelper<T> helper = this;
 		for (String name : helper.getAttributes()){
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
 				String v = helper.getAttribute(name);
 				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
 				helper.setAttribute(newName,v);
@@ -140,7 +167,7 @@ public abstract class FormatHelper<T> {
 		}
 		for (String name : helper.getArrayElementNames()) {
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
 				List<T> childElements = helper.getArrayElements(name);
 				List<T> newChildElements = new ArrayList<>();
 				for (T childElement : childElements){
@@ -161,7 +188,7 @@ public abstract class FormatHelper<T> {
 		}
 		for (String name : helper.getElementAttributeNames()) {
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0))){
+					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
 				FormatHelper.instance(helper.getElementAttribute(name)).change_key_case(toKeyCase);
 
 				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
@@ -174,11 +201,11 @@ public abstract class FormatHelper<T> {
 		}
 		String name = getRootName();
 		if (name != null && (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.TITLE && Character.isUpperCase(name.charAt(0)))){
+					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0)))){
 			String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
 			helper.changeRootName(newName);
 		}
 		return helper.getRoot();
 	}
-	
+
 }

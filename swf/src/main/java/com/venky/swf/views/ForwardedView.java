@@ -6,9 +6,8 @@ package com.venky.swf.views;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-
 import com.venky.swf.path.Path;
+import jakarta.servlet.ServletException;
 
 /**
  *
@@ -42,10 +41,18 @@ public class ForwardedView extends View{
     
     public void write(int httpStatus) throws IOException {
         try {
-			getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
+            if (getPath().getAsyncContext() == null){
+                getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
+            }else {
+                getPath().getAsyncContext().dispatch(getPath().getRequest().getServletContext(),forwardToUrl);
+            }
 		} catch (ServletException e) {
 			throw new RuntimeException(e);
 		}
     }
 
+    @Override
+    public boolean isBeingForwarded() {
+        return true;
+    }
 }

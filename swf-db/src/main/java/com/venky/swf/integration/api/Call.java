@@ -135,7 +135,8 @@ public class Call<T> implements Serializable {
     private Call<T> invoke(){
         checkExpired();
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
-            throw new RuntimeException("Cannot call API using Method " + method + " and parameter as " + inputFormat );
+            method = HttpMethod.POST;
+            //throw new RuntimeException("Cannot call API using Method " + method + " and parameter as " + inputFormat );
         }
 
         URL curl;

@@ -50,15 +50,6 @@ public class RequestAuthenticator implements Extension {
     }
 
     public String getHeader(Path path, String key){
-        String value = path.getRequest().getHeader("X-"+key);
-
-        if (ObjectUtil.isVoid(value)){
-            value = path.getRequest().getHeader(key);
-        }
-
-        if (ObjectUtil.isVoid(value)){
-            value = path.getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString()) ? path.getRequest().getParameter(key) : null ;
-        }
-        return value;
+        return path.getHeader(key);
     }
 }

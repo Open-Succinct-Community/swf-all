@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.github.venkatramanm.swf-all</groupId>
 		<artifactId>swf-all</artifactId>
-    <version>${revision}</version>
+        <version>${revision}</version>
 	</parent>
   <artifactId>swf-db-io-xls</artifactId>
 	<packaging>jar</packaging>

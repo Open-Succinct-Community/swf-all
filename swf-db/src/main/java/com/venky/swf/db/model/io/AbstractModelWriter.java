@@ -98,9 +98,6 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			T childElement = helper.createArrayElement(getBeanClass().getSimpleName());
 			write(record,childElement,fields,parentsAlreadyConsidered, childrenToBeConsidered, templateFields);
 		}
-		if (Config.instance().getBooleanProperty("swf.api.keys.title_case",false)){
-			helper.change_key_case(KeyCase.TITLE);
-		}
 	}
 
 	public void write(M record,T into, List<String> fields){

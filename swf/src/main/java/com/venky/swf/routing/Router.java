@@ -5,32 +5,41 @@
 package com.venky.swf.routing;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import com.venky.core.util.ObjectUtil;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
 import com.venky.core.log.ExtendedLevel;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectHolder;
+import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
+
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
+
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.http.HttpSession;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.URL;
+import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  *
@@ -41,13 +50,52 @@ public class Router extends AbstractHandler {
     protected Router() {
     	
     }
-    
-    private static Router router = new Router();
+
+	@Override
+	public void handle(String s, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
+
+
+		jakarta.servlet.AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
+		context.setTimeout(0);
+
+		context.start(new Runnable() {
+			@Override
+			public void run() {
+				boolean beingForwarded = false;
+				try {
+					
+					beingForwarded = handle(s, context);
+				}catch (Exception ex){
+					throw new RuntimeException(ex);
+				}finally {
+					if (!beingForwarded) {
+						try {
+							context.getResponse().flushBuffer();
+							context.complete();
+						}catch (Exception ex){
+							//
+						}
+					}
+				}
+			}
+		});
+	}
+
+	private static Router router = null;
+    private static Object mutex = new Object();
     public static Router instance(){
+    	if (router != null ){
+    		return router;
+		}
+    	synchronized (mutex){
+    		if (router == null){
+    			router = new Router();
+			}
+		}
     	return router;
     }
     
-    private ClassLoader loader = null; 
+    private ClassLoader loader = null;
     public ClassLoader getLoader() {
     	synchronized (this) {
     		return loader;
@@ -188,19 +236,31 @@ public class Router extends AbstractHandler {
 		}
 	}
 	
-	
-	
-    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public boolean handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
+    	
+		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
+				(proxy, method, args) -> method.invoke(context.getRequest(),args));
+		HttpServletResponse response = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
+				(proxy, method, args) -> method.invoke(context.getResponse(),args));
+
+		AsyncContext asyncContext = (AsyncContext)  Proxy.newProxyInstance(getLoader(), new Class[]{AsyncContext.class},
+				(proxy, method, args) -> method.invoke(context,args));
+
+
     	SWFLogger cat = Config.instance().getLogger(getClass().getName());
     	Timer timer = cat.startTimer("handleRequest : " + target ,true);
     	try {
 	        _IView view = null;
-	        _IView ev = null ;	
+	        _IView ev = null ;
 	        
 	        _IPath p = createPath(target);
-	        p.setSession(request.getSession(false));
+			HttpSession jakSession = request.getSession(false);
+			javax.servlet.http.HttpSession session = jakSession == null ? null : (javax.servlet.http.HttpSession) Proxy.newProxyInstance(getLoader(), new Class[]{javax.servlet.http.HttpSession.class},
+					(proxy, method, args) -> method.invoke(jakSession,args));
+	        p.setSession(session);
 	        p.setRequest(request);
 	        p.setResponse(response);
+	        p.setAsyncContext(asyncContext);
 	        //response.addHeader("Cache-Control","no-cache");
 
 			String origins = Config.instance().getProperty("swf.cors.allowed.origins");
@@ -215,7 +275,7 @@ public class Router extends AbstractHandler {
 					response.addIntHeader ("Access-Control-Max-Age" ,1728000);
 					response.addIntHeader ("Content-Length" , 0);
 					response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-					return;
+					return false;
 				}
 			}
 
@@ -239,9 +299,10 @@ public class Router extends AbstractHandler {
 	            	viewWriteTimer.stop();
 	            }
 	            db.getCurrentTransaction().commit();
+	            return view.isBeingForwarded();
 	        }catch(Exception e){
 	        	try {
-	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" + p.getRequest().getMethod(), e);
+	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" , e);
 	        		db.getCurrentTransaction().rollback(e);
 	        	}catch (Exception ex){
 	        		logger.log(Level.INFO, "Rollback failed", ex);
@@ -280,10 +341,14 @@ public class Router extends AbstractHandler {
     	}finally{
     		timer.stop();
     		TimerStatistics.dumpStatistics();
-	        baseRequest.setHandled(true);
     	}
+    	return false;
     }
 	public void reset() {
-		setLoader(new SWFClassLoader(getClass().getClassLoader()));
+    	try {
+			setLoader(getClass().getClassLoader().getClass().getConstructor().newInstance());
+		}catch (Exception ex){
+    		throw new RuntimeException(ex);
+		}
 	}
 }

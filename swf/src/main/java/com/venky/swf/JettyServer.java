@@ -1,27 +1,20 @@
 package com.venky.swf;
 
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.lang.management.ManagementFactory;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
 import com.venky.swf.routing.SWFClassLoader;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.session.SessionHandler;
+
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Hello world!
@@ -70,7 +63,7 @@ public class JettyServer {
 		addConnectors(server);
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(100);
-		Router router = Router.instance(); 
+		Router router = Router.instance();
 		if (isDevelopmentEnvironment()){
 			router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
 		}else {
@@ -79,7 +72,6 @@ public class JettyServer {
 		
 		ContextHandler ctxHandler = new ContextHandler();
 		ctxHandler.setHandler(router);
-
 		SessionHandler sessionHandler = new SessionHandler();
 		sessionHandler.setHandler(ctxHandler);
 		
@@ -96,29 +88,6 @@ public class JettyServer {
 
 		List<Connector> connectors = new ArrayList<>(); 
 		connectors.add(connector);
-		String keyStorePath = Config.instance().getProperty("swf.ssl.key.store.path");
-		if (keyStorePath == null ){
-			URL keystore = getClass().getClassLoader().getResource("config/keys/keystore.jks");
-			keyStorePath = keystore != null ? keystore.toExternalForm() : null ;
-		}
-		
-		if (keyStorePath != null){
-			System.out.println("SSL Store" + keyStorePath);
-			HttpConfiguration https = new HttpConfiguration();
-			https.addCustomizer(new SecureRequestCustomizer());
-			SslContextFactory sslContextFactory = new SslContextFactory();
-
-			sslContextFactory.setKeyStorePath(keyStorePath);
-			sslContextFactory.setKeyStorePassword(Config.instance().getProperty("swf.ssl.key.store.pass","venky12"));
-			
-			sslContextFactory.setKeyManagerPassword(Config.instance().getProperty("swf.ssl.key.manager.pass","venky12"));
-
-			ServerConnector sslConnector = new ServerConnector(server,
-					new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(https));
-			sslConnector.setPort(this.port+363); // 80 + 363 = 443 ; convention
-			connectors.add(sslConnector);
-		}
-		
 		server.setConnectors(connectors.toArray(new Connector[]{}));
 		
 	}

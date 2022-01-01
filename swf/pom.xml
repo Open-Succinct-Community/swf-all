@@ -34,6 +34,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <openhtml.version>1.0.10</openhtml.version>
+        <jetty.version>11.0.7</jetty.version>
     </properties>
 
     <dependencies>
@@ -46,9 +47,10 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>[9.4.27.v20200227,9.9]</version>
+            <version>${jetty.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>com.github.venkatramanm.swf-all</groupId>
             <artifactId>swf-db</artifactId>

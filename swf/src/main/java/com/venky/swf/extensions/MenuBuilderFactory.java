@@ -2,14 +2,13 @@ package com.venky.swf.extensions;
 
 import com.venky.swf.menu._IMenuBuilder;
 import com.venky.swf.routing.Config;
-import com.venky.swf.routing.Router;
 
 public class MenuBuilderFactory {
 	private MenuBuilderFactory(){
 	}
 	private static Object createObject(String className){
 		try {
-			return Router.instance().getClass(className).newInstance();
+			return Class.forName(className).getConstructor().newInstance();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

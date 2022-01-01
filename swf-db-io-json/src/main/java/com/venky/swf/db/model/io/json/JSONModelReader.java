@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -32,34 +33,34 @@ public class JSONModelReader<M extends Model> extends AbstractModelReader<M, JSO
 			JSONParser parser = new JSONParser();
 			List<M> list = new ArrayList<M>();
 			
-			JSONObject jsIn = (JSONObject)parser.parse(new InputStreamReader(in));
-			JSONObject singularObject = (JSONObject)jsIn.get(rootElementName);
-			if (singularObject != null){
-				list.add(read(singularObject));
+			JSONAware jsIn = (JSONAware) parser.parse(new InputStreamReader(in));
+			JSONArray jsArr = null;
+			if ((jsIn instanceof JSONArray)){
+				jsArr = (JSONArray) jsIn;
 			}else {
+				JSONObject possibleSingularObject = (JSONObject) jsIn;
 				String attrName = StringUtil.pluralize(rootElementName);
-				if (jsIn.keySet().size() == 1){
-					if (!jsIn.containsKey(attrName)){
-						Object o  = jsIn.values().iterator().next();
-						if (o instanceof JSONObject){
-							jsIn = (JSONObject)o;
-						}
+				if (possibleSingularObject.containsKey(StringUtil.pluralize(rootElementName))){
+					jsArr = (JSONArray)possibleSingularObject.get(attrName);
+				}else {
+					jsArr = new JSONArray();
+					if (possibleSingularObject.containsKey(rootElementName)){
+						jsArr.add((JSONObject)possibleSingularObject.get(rootElementName));
+					}else {
+						jsArr.add(possibleSingularObject);
 					}
 				}
-
-				JSONArray jsArr = (JSONArray)jsIn.get(attrName);
-				if (jsArr != null){
-					for (Object obj : jsArr){
-						JSONObject json = (JSONObject)obj;
-						JSONObject element = json;
-						Object oelement = json.get(rootElementName);
-						if (oelement != null && oelement instanceof JSONObject){
-							element = (JSONObject)oelement;
-						}
-						list.add(read(element));
-					}
+			}
+			for (Object obj : jsArr){
+				JSONObject json = (JSONObject)obj;
+				JSONObject element = json;
+				Object oelement = json.get(rootElementName);
+				if (oelement != null && oelement instanceof JSONObject){
+					element = (JSONObject)oelement;
 				}
-			}return list;
+				list.add(read(element));
+			}
+			return list;
 		} catch (ParseException e) {
 			throw new RuntimeException(e);
 		}

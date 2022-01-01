@@ -11,6 +11,7 @@ import java.util.Set;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.io.json.JSONFormatter;
+import com.venky.swf.routing.Config;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -23,15 +24,14 @@ public class JSON extends FormatHelper<JSONObject>{
 
 	private JSONObject root = null;
 	public JSON(InputStream in) {
+		this(parseWithException(in));
+	}
+	private static JSONObject parseWithException(InputStream in){
 		try {
-			JSONObject input = (JSONObject)JSONValue.parseWithException(new InputStreamReader(in));
-			this.root = input;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
+			return (JSONObject) JSONValue.parse(new InputStreamReader(in));
+		}catch (Exception ex){
+			throw new RuntimeException(ex);
 		}
-		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -46,9 +46,15 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	public JSON(JSONObject obj){
 		this.root = obj;
+		fixInputCase();
 	}
-	
-	
+
+
+	@Override
+	public void setRoot(JSONObject root) {
+		this.root = root;
+	}
+
 	public JSONObject getRoot(){
 		return root;
 	}
@@ -193,6 +199,7 @@ public class JSON extends FormatHelper<JSONObject>{
 	}
 
 	public String toString(){
+		fixOutputCase();
 		StringWriter w =  new StringWriter();
 		JSONFormatter formatter  = new JSONFormatter();
         formatter.writePrettyJson(root, w);
