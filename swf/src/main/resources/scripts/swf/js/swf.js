@@ -325,7 +325,7 @@ function api() {
         http : function(){
             return axios.create({
                 baseURL : "/",
-                timeout : 30000 ,
+                timeout : 120000 ,
                 auth : { username : "web"  , password : "venky12" },
                 headers : { 'Content-Type': 'application/json' , 'Cache-Control': 'no-cache' },
                 withCredentials: false,
