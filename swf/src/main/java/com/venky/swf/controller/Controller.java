@@ -222,10 +222,6 @@ public class Controller implements TemplateLoader{
         return new RedirectorView(getPath(), "", "login");
     }
 
-    @RequireLogin(false)
-    public View index() {
-        return new RedirectorView(getPath(), "dashboard");
-    }
 
     public DashboardView dashboard() {
         return Controller.dashboard(getPath());

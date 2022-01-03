@@ -1,6 +1,7 @@
 package com.venky.swf.views;
 
 import com.venky.swf.path._IPath;
+import com.venky.swf.util.PegDownProcessor;
 import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
@@ -14,6 +15,14 @@ public class TemplateView extends HtmlView {
     String templateDir = null;
     Map<String,Object> data = null;
     boolean fragment = false;
+
+    public String getTemplateName() {
+        return templateName;
+    }
+
+    public boolean isFragment() {
+        return fragment;
+    }
 
     public TemplateView(_IPath path, String templateName){
         this(path,null,templateName);
@@ -43,6 +52,10 @@ public class TemplateView extends HtmlView {
         if (!fragment) {
             return super.toString();
         }
+        return publish();
+    }
+
+    protected String publish(){
         return TemplateProcessor.getInstance(templateDir).publish(templateName,data);
     }
 
@@ -53,7 +66,7 @@ public class TemplateView extends HtmlView {
 
     @Override
     protected void createBody(_IControl b) {
-        b.addControl( new Dummy(TemplateProcessor.getInstance(templateDir).publish(templateName,data)));
+        b.addControl( new Dummy(publish()));
     }
 
     @Override
@@ -74,4 +87,7 @@ public class TemplateView extends HtmlView {
             return string;
         }
     }
+
+
+
 }

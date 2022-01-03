@@ -162,7 +162,6 @@ public abstract class HtmlView extends View{
         HttpServletResponse response = getPath().getResponse();
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(httpStatusCode);
-        response.getOutputStream().println("<!DOCTYPE html>");
         response.getOutputStream().println(this.toString());
     }
     

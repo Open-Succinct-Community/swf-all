@@ -92,18 +92,11 @@
             <artifactId>commons-io</artifactId>
             <version>2.7</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.oltu.oauth2/org.apache.oltu.oauth2.client -->
         <dependency>
             <groupId>org.apache.oltu.oauth2</groupId>
             <artifactId>org.apache.oltu.oauth2.client</artifactId>
             <version>1.0.2</version>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.1</version>
-        </dependency> -->
         <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
@@ -130,14 +123,7 @@
             <artifactId>openhtmltopdf-pdfbox</artifactId>
             <version>${openhtml.version}</version>
         </dependency>
-        <!--
-    <dependency>
-        <groupId>net.sf.jtidy</groupId>
-        <artifactId>jtidy</artifactId>
-        <version>r938</version>
-    </dependency>
-        -->
-        <!-- https://mvnrepository.com/artifact/com.github.jtidy/jtidy -->
+
         <dependency>
             <groupId>com.github.jtidy</groupId>
             <artifactId>jtidy</artifactId>
@@ -150,6 +136,11 @@
             <version>1.14.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.62.2</version>
+        </dependency>
 
     </dependencies>
 </project>

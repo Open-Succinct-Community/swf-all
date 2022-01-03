@@ -20,4 +20,12 @@ public class Html extends Control{
         super("html");
         setProperty("lang","en");
     }
+
+    @Override
+    public String toString() {
+	    StringBuilder builder =  new StringBuilder();
+        builder.append("<!DOCTYPE html>\n");
+        builder.append(super.toString());
+        return builder.toString();
+    }
 }
