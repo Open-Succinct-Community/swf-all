@@ -10,33 +10,26 @@ import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.MultiException;
-import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
-
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.path._IPath;
 import com.venky.swf.views._IView;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-
-import jakarta.servlet.AsyncEvent;
-import jakarta.servlet.AsyncListener;
 import jakarta.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -235,11 +228,23 @@ public class Router extends AbstractHandler {
 			throw new RuntimeException(ex);
 		}
 	}
-	
-    public boolean handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
+
+	private ServletInputStream getJavaxProxy(jakarta.servlet.ServletInputStream inputStream) {
+		return (ServletInputStream) Proxy.newProxyInstance(getLoader(),new Class[]{ServletInputStream.class},
+				(proxy, method, args) -> method.invoke(inputStream,args));
+	}
+
+	public boolean handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
     	
 		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
-				(proxy, method, args) -> method.invoke(context.getRequest(),args));
+				(proxy, method, args) -> {
+					if (method.getReturnType().isAssignableFrom(jakarta.servlet.ServletInputStream.class)){
+						return getJavaxProxy((jakarta.servlet.ServletInputStream) method.invoke(context.getRequest(), args));
+					}else {
+						return method.invoke(context.getRequest(), args);
+					}
+				});
+
 		HttpServletResponse response = (HttpServletResponse) Proxy.newProxyInstance(getLoader(),new Class[]{HttpServletResponse.class},
 				(proxy, method, args) -> method.invoke(context.getResponse(),args));
 
@@ -344,6 +349,8 @@ public class Router extends AbstractHandler {
     	}
     	return false;
     }
+
+
 	public void reset() {
     	try {
 			setLoader(getClass().getClassLoader().getClass().getConstructor().newInstance());

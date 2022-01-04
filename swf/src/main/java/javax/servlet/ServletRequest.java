@@ -1,5 +1,10 @@
 package javax.servlet;
 
-public interface ServletRequest extends jakarta.servlet.ServletRequest {
 
+
+
+import java.io.IOException;
+
+public interface ServletRequest extends jakarta.servlet.ServletRequest {
+    public ServletInputStream getInputStream() throws IOException;
 }
