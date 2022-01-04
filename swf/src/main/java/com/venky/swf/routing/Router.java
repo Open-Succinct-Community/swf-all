@@ -230,8 +230,7 @@ public class Router extends AbstractHandler {
 	}
 
 	private ServletInputStream getJavaxProxy(jakarta.servlet.ServletInputStream inputStream) {
-		return (ServletInputStream) Proxy.newProxyInstance(getLoader(),new Class[]{ServletInputStream.class},
-				(proxy, method, args) -> method.invoke(inputStream,args));
+		return new ServletInputStream(inputStream);
 	}
 
 	public boolean handle(String target, jakarta.servlet.AsyncContext context ) throws IOException, ServletException{
