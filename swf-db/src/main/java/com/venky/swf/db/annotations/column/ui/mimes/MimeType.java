@@ -1,11 +1,27 @@
 package com.venky.swf.db.annotations.column.ui.mimes;
 
-import com.venky.core.util.ObjectUtil;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public enum MimeType {
+	TEXT_JAVASCRIPT() {
+		public String toString(){
+			return "text/javascript";
+		}
+		@Override
+		public boolean isImage() {
+			return false;
+		}
+	},
+	TEXT_CSS(){
+		public String toString(){
+			return "text/css";
+		}
+		@Override
+		public boolean isImage() {
+			return false;
+		}
+	},
 	TEXT_MARKDOWN() {
 		public String toString(){
 			return "text/x-web-markdown";

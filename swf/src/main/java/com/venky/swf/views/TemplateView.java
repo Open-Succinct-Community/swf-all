@@ -25,18 +25,22 @@ public class TemplateView extends HtmlView {
     }
 
     public TemplateView(_IPath path, String templateName){
-        this(path,null,templateName);
+        this(path,null,templateName,null,false);
     }
     public TemplateView(_IPath path, String templateDir, String templateName){
-        this (path,templateDir,templateName,null);
+        this (path,templateDir,templateName,null,false);
     }
+    public TemplateView(_IPath path, String templateDir, String templateName, boolean fragment){
+        this(path,templateDir,templateName,null,fragment);
+    }
+
     public TemplateView(_IPath path, String templateName, Map<String, Object> data) {
-        this(path,null,templateName,data);
+        this(path,null,templateName,data, false);
     }
     public TemplateView(_IPath path, String templateDir, String templateName, Map<String,Object> data){
         this(path,templateDir,templateName,data,false);
     }
-    public TemplateView(_IPath path, String templateDir, String templateName, Map<String,Object> data, boolean fragment) {
+    private TemplateView(_IPath path, String templateDir, String templateName, Map<String,Object> data, boolean fragment) {
         super(path);
         this.templateDir = templateDir;
         this.templateName = templateName;
