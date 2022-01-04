@@ -71,10 +71,6 @@ public class ServletInputStream  extends jakarta.servlet.ServletInputStream {
         return inputStream.skip(n);
     }
 
-    @Override
-    public void skipNBytes(long n) throws IOException {
-        inputStream.skipNBytes(n);
-    }
 
     @Override
     public int available() throws IOException {
