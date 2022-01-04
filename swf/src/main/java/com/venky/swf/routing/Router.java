@@ -237,7 +237,7 @@ public class Router extends AbstractHandler {
     	
 		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(getLoader(), new Class[]{HttpServletRequest.class},
 				(proxy, method, args) -> {
-					if (method.getReturnType().isAssignableFrom(jakarta.servlet.ServletInputStream.class)){
+					if (method.getReturnType().isAssignableFrom(javax.servlet.ServletInputStream.class)){
 						return getJavaxProxy((jakarta.servlet.ServletInputStream) method.invoke(context.getRequest(), args));
 					}else {
 						return method.invoke(context.getRequest(), args);
