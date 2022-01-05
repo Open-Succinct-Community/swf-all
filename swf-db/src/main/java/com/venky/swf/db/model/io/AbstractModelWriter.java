@@ -155,7 +155,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 
 		FormatHelper<T> formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
-		for (String field: getFields(fields == null ? templateFields.get(ref.getModelClass().getSimpleName()) : fields)){
+		for (String field: getFields(fields == null  && templateFields.containsKey(ref.getModelClass().getSimpleName()) ?
+					templateFields.get(ref.getModelClass().getSimpleName()) : fields)){
 			Object value = TimerUtils.time(cat,"ref.get", ()-> ref.get(record, field));
 			if (value == null){
 				continue;
