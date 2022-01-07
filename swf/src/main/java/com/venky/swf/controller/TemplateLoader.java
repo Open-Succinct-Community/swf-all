@@ -15,12 +15,15 @@ import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.TemplateView;
+import com.venky.swf.views.TemplateView.Dummy;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls._IControl;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
+import java.util.Locale;
 
 public interface TemplateLoader {
 
@@ -118,16 +121,23 @@ public interface TemplateLoader {
 
     default View publish(TemplateSubDirectory subDirectory, String file, boolean includeMenu, boolean fragment){
         String templateName = String.format("/%s/%s%s",subDirectory.dir(),file,file.endsWith(subDirectory.fileExtension())?"":subDirectory.fileExtension());
-        HtmlView ret =  new TemplateView(getPath(),getTemplateDirectory() ,templateName,fragment){
-            @Override
-            protected String publish() {
-                String p = super.publish();
-                if (subDirectory == TemplateSubDirectory.MARKDOWN){
-                    p = pegDownProcessor.markdownToHtml(p);
+        HtmlView ret = null;
+        try {
+            FileInputStream inputStream = new FileInputStream(new File(getTemplateDirectory(),templateName));
+            ret = new HtmlView(getPath()) {
+                @Override
+                protected void createBody(_IControl b) {
+                    String p = StringUtil.read(inputStream);
+                    if (subDirectory == TemplateSubDirectory.MARKDOWN){
+                        p = pegDownProcessor.markdownToHtml(p);
+                    }
+                    b.addControl(new Dummy(p));
                 }
-                return p;
-            }
-        };
+            };
+        }catch (Exception ex){
+            throw new RuntimeException(ex);
+        }
+
         if (includeMenu && !fragment){
             ret = dashboard(ret);
         }
