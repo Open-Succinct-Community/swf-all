@@ -438,8 +438,15 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected String[] getIncludedFields() {
-        return null;
+        Map<Class<? extends Model>, List<String>> map  = getIncludedModelFields();
+        if (map.containsKey(getModelClass())){
+            return map.get(getModelClass()).toArray(new String[]{});
+        }else {
+            return null;
+        }
     }
+
+
 
     protected Class<M> getModelClass() {
         return modelClass;
