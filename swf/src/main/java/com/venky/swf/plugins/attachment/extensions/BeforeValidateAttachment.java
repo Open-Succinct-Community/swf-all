@@ -1,14 +1,16 @@
 package com.venky.swf.plugins.attachment.extensions;
 
 import com.venky.core.io.ByteArrayInputStream;
+import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.extensions.BeforeModelValidateExtension;
-import com.venky.swf.integration.api.Call;
-import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.plugins.attachment.db.model.Attachment;
 
-import java.util.List;
+import javax.activation.MimetypesFileTypeMap;
+import java.io.IOException;
+import java.net.URL;
 
 public class BeforeValidateAttachment  extends BeforeModelValidateExtension<Attachment> {
     static {
@@ -18,15 +20,27 @@ public class BeforeValidateAttachment  extends BeforeModelValidateExtension<Atta
     public void beforeValidate(Attachment model) {
         if (!ObjectUtil.isVoid(model.getUploadUrl())){
             String fileName = model.getUploadUrl().substring(model.getUploadUrl().lastIndexOf("/")+1);
-            Call<?> call = new Call<>();
-            ByteArrayInputStream inputStream = (ByteArrayInputStream) call.url(model.getUploadUrl()).method(HttpMethod.GET).getResponseStream();
+            //Call<?> call = new Call<>();
+
+            ByteArrayInputStream inputStream = null;
+            try {
+                inputStream = (ByteArrayInputStream) new ByteArrayInputStream(StringUtil.readBytes(new URL(model.getUploadUrl()).openConnection().getInputStream()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             model.setAttachment(inputStream);
             model.setAttachmentContentSize(inputStream.available());
 
-            List<String> contentTypes = call.getResponseHeaders().get("content-type");
-            model.setAttachmentContentType(contentTypes.get(0));
-            model.setAttachmentContentName(fileName == null ? "blob" : fileName);
+
+
+            if (fileName.contains(".")){
+                model.setAttachmentContentType(MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName));
+                model.setAttachmentContentName(fileName);
+            }else {
+                model.setAttachmentContentName("blob");
+                model.setAttachmentContentType(MimeType.APPLICATION_OCTET_STREAM.toString());
+            }
 
             {
                 Attachment model2 = Database.getTable(Attachment.class).getRefreshed(model);

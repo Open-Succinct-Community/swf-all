@@ -123,15 +123,14 @@ public interface TemplateLoader {
         String templateName = String.format("/%s/%s%s",subDirectory.dir(),file,file.endsWith(subDirectory.fileExtension())?"":subDirectory.fileExtension());
         HtmlView ret = null;
         try {
-            FileInputStream inputStream = new FileInputStream(new File(getTemplateDirectory(),templateName));
-            ret = new HtmlView(getPath()) {
+            ret = new TemplateView(getPath(),getTemplateDirectory(),templateName,fragment) {
                 @Override
-                protected void createBody(_IControl b) {
-                    String p = StringUtil.read(inputStream);
+                protected String publish() {
+                    String p =  super.publish();
                     if (subDirectory == TemplateSubDirectory.MARKDOWN){
                         p = pegDownProcessor.markdownToHtml(p);
                     }
-                    b.addControl(new Dummy(p));
+                    return p;
                 }
             };
         }catch (Exception ex){

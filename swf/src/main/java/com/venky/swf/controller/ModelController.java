@@ -221,7 +221,8 @@ public class ModelController<M extends Model> extends Controller {
     }
     private final int MAX_SEARCH_RESULT_COUNT_ALLOWED = Config.instance().getIntProperty("swf.search.maxRecords",Integer.MAX_VALUE);
 
-    protected View search(String strQuery, int maxRecords) {
+    protected List<M> searchRecords(String strQuery, int maxRecords){
+        List<M> records = new ArrayList<>();
         if (!ObjectUtil.isVoid(strQuery)) {
             if (!getFormFields().containsKey("q")) {
                 getFormFields().put("q", strQuery);
@@ -248,10 +249,18 @@ public class ModelController<M extends Model> extends Controller {
                 Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getWhereClause())).orderBy(getReflector().getOrderBy());
-                List<M> records = sel.execute(getModelClass(), maxRecords, getFilter());
+                records = sel.execute(getModelClass(), maxRecords, getFilter());
+            }
+        }
+        return records;
+    }
+    protected View search(String strQuery, int maxRecords) {
+        if (!ObjectUtil.isVoid(strQuery)) {
+            List<M> records = searchRecords(strQuery, maxRecords);
+            if (!records.isEmpty()) {
                 return list(records, maxRecords == 0 || records.size() < maxRecords);
             } else {
-                return list(new ArrayList<M>(), true);
+                return list(new ArrayList<>(), true);
             }
         }
         return list(maxRecords);

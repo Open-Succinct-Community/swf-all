@@ -300,7 +300,9 @@ public class Router extends AbstractHandler {
 	            Timer viewWriteTimer = cat.startTimer(target+".view_write", Config.instance().isTimerAdditive());
 	            try {
 	            	view.write();
-	            }finally{
+	            }catch (Exception ex){
+	            	// Don't rollback all the good work. because of conenction reset
+				}finally{
 	            	viewWriteTimer.stop();
 	            }
 	            db.getCurrentTransaction().commit();
