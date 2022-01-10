@@ -12,6 +12,11 @@ public enum MimeType {
 		public boolean isImage() {
 			return false;
 		}
+
+		@Override
+		public String getDefaultFileExtension() {
+			return "js";
+		}
 	},
 	TEXT_CSS(){
 		public String toString(){
@@ -20,6 +25,11 @@ public enum MimeType {
 		@Override
 		public boolean isImage() {
 			return false;
+		}
+
+		@Override
+		public String getDefaultFileExtension() {
+			return "css";
 		}
 	},
 	TEXT_MARKDOWN() {
@@ -31,6 +41,11 @@ public enum MimeType {
 		public boolean isImage() {
 			return false;
 		}
+
+		@Override
+		public String getDefaultFileExtension() {
+			return "md";
+		}
 	},
 	TEXT_CSV() {
 		public String toString(){
@@ -38,6 +53,10 @@ public enum MimeType {
 		}
 		public boolean isImage(){
 			return false;
+		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "csv";
 		}
 	},
 	TEXT_PLAIN(){
@@ -47,6 +66,11 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "txt";
+		}
+
 	},
 	TEXT_HTML (){
 		public String toString(){
@@ -55,6 +79,11 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "html";
+		}
+
 	},
 	IMAGE_JPEG(){
 		public String toString(){
@@ -62,6 +91,10 @@ public enum MimeType {
 		}
 		public boolean isImage(){
 			return true;
+		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "jpg";
 		}
 	},
 	IMAGE_GIF(){
@@ -71,6 +104,10 @@ public enum MimeType {
 		public boolean isImage(){
 			return true;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "gif";
+		}
 	},
 	IMAGE_PNG(){
 		public String toString(){
@@ -79,6 +116,11 @@ public enum MimeType {
 		public boolean isImage(){
 			return true;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "png";
+		}
+
 	},
 	/*
 	TEXT_XML(){
@@ -96,6 +138,11 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "xml";
+		}
+
 	},
 	APPLICATION_JSON(){
 		public String toString(){
@@ -104,6 +151,11 @@ public enum MimeType {
 		public boolean isImage(){
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "json";
+		}
+
 	},
 	APPLICATION_XLS() {
 		public String toString(){
@@ -115,6 +167,11 @@ public enum MimeType {
 		public boolean isText() {
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "xls";
+		}
+
 	},
 	APPLICATION_ZIP() {
 		public String toString(){
@@ -126,6 +183,11 @@ public enum MimeType {
 		public boolean isText() {
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "zip";
+		}
+
 	},
 	APPLICATION_OCTET_STREAM() {
 		public String toString(){
@@ -137,6 +199,11 @@ public enum MimeType {
 		public boolean isText() {
 			return false;
 		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "bin";
+		}
+
 	},
     APPLICATION_PDF() {
         public String toString(){
@@ -148,30 +215,28 @@ public enum MimeType {
 		public boolean isText() {
 			return false;
 		}
-    },
+		@Override
+		public String getDefaultFileExtension() {
+			return "pdf";
+		}
+
+	},
 	;
 
 	public abstract boolean isImage();
 	public boolean isText() {
 		return !isImage();
 	}
+	public abstract String getDefaultFileExtension();
 
 
-	private static Map<String,MimeType> mimeTypeMap = new HashMap<>();
-	private static void loadMimeTypeMap(){
-		if (mimeTypeMap.isEmpty()){
-			synchronized (mimeTypeMap){
-				if  (mimeTypeMap.isEmpty()) {
-					for (MimeType type : MimeType.values()) {
-						mimeTypeMap.put(type.toString(), type);
-					}
-				}
-			}
+	private static Map<String,MimeType> mimeTypeMap = new HashMap<String,MimeType>(){{
+		for (MimeType type : MimeType.values()) {
+			put(type.toString(), type);
 		}
-	}
+	}};
 
 	public static MimeType getMimeType(String mimeType){
-		loadMimeTypeMap();
 		return mimeTypeMap.get(mimeType);
 	}
 }

@@ -511,7 +511,9 @@ public class Controller implements TemplateLoader{
         save(record, modelClass);
     }
 
-
+    protected <M extends Model> void save(M record){
+        save(record,record.getReflector().getModelClass());
+    }
     protected <M extends Model> void save(M record, Class<M> modelClass) {
         if (record.getRawRecord().isNewRecord()) {
             record.setCreatorUserId(getPath().getSessionUserId());

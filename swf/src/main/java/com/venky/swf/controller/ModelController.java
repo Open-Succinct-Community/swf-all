@@ -80,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -250,6 +251,12 @@ public class ModelController<M extends Model> extends Controller {
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getWhereClause())).orderBy(getReflector().getOrderBy());
                 records = sel.execute(getModelClass(), maxRecords, getFilter());
+                records.sort(new Comparator<M>() {
+                    @Override
+                    public int compare(M o1, M o2) {
+                        return ids.indexOf(o1.getId())  - ids.indexOf(o2.getId());
+                    }
+                });
             }
         }
         return records;
