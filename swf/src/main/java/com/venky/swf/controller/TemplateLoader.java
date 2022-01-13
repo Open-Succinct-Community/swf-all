@@ -14,7 +14,6 @@ import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
-import com.venky.swf.views.TemplateView;
 import com.venky.swf.views.TemplateView.Dummy;
 import com.venky.swf.views.View;
 import com.venky.swf.views.controls._IControl;
@@ -23,8 +22,6 @@ import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Locale;
 
 public interface TemplateLoader {
 
