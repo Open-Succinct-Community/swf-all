@@ -15,6 +15,7 @@ import com.venky.swf.db.model.cache.CacheVersion;
 import com.venky.swf.extensions.LastCacheVersion;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
+import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Body;
 import com.venky.swf.views.controls.page.Css;
@@ -395,6 +396,22 @@ public abstract class HtmlView extends View{
 		}
     	
     }
+    public static class Dummy extends Control {
+
+        String string = null;
+        public Dummy(String string) {
+            super("dummy");
+            this.string = string;
+        }
+
+        @Override
+        public String toString() {
+            return string;
+        }
+    }
+
+
+
     protected abstract void createBody(_IControl b);
     
 }

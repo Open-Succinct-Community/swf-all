@@ -78,20 +78,5 @@ public class TemplateView extends HtmlView {
         super.createHead(head);
     }
 
-    public static class Dummy extends Control {
-
-        String string = null;
-        public Dummy(String string) {
-            super("dummy");
-            this.string = string;
-        }
-
-        @Override
-        public String toString() {
-            return string;
-        }
-    }
-
-
 
 }
