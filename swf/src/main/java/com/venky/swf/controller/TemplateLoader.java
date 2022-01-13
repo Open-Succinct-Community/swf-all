@@ -22,6 +22,7 @@ import com.venky.swf.views.controls._IControl;
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -121,8 +122,9 @@ public interface TemplateLoader {
 
     default View publish(TemplateSubDirectory subDirectory, String file, boolean includeMenu, boolean fragment){
         String templateName = String.format("/%s/%s%s",subDirectory.dir(),file,file.endsWith(subDirectory.fileExtension())?"":subDirectory.fileExtension());
-        HtmlView ret = null;
+        View ret = null;
         try {
+            /*
             ret = new TemplateView(getPath(),getTemplateDirectory(),templateName,fragment) {
                 @Override
                 protected String publish() {
@@ -133,13 +135,38 @@ public interface TemplateLoader {
                     return p;
                 }
             };
+
+             */
+            File template = new File(getTemplateDirectory(),templateName);
+            FileInputStream inputStream = new FileInputStream(template);
+            String p = StringUtil.read(inputStream);
+            if (subDirectory == TemplateSubDirectory.MARKDOWN){
+                p = pegDownProcessor.markdownToHtml(p);
+            }
+            if (!fragment){
+                final String processed = p;
+                ret = new HtmlView(getPath()) {
+                    @Override
+                    protected void createBody(_IControl b) {
+                        b.addControl(new Dummy(processed));
+                    }
+
+                    @Override
+                    public String toString() {
+                        return super.toString();
+                    }
+                };
+                if (includeMenu){
+                    ret = dashboard((HtmlView) ret);
+                }
+            }else {
+                ret = new BytesView(getPath(), p.getBytes(StandardCharsets.UTF_8), subDirectory.contentType(templateName));
+            }
+
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
 
-        if (includeMenu && !fragment){
-            ret = dashboard(ret);
-        }
         return ret;
     }
 
