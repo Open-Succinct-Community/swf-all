@@ -19,7 +19,7 @@
         <version>${revision}</version>
     </parent>
     <artifactId>swf</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>swf</name>
     <description>Succinct Web Framework</description>
     <url>http://maven.apache.org</url>
@@ -152,6 +152,12 @@
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
             <version>0.62.2</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.cloudevents/cloudevents-core -->
+        <dependency>
+            <groupId>io.cloudevents</groupId>
+            <artifactId>cloudevents-core</artifactId>
+            <version>2.3.0</version>
         </dependency>
 
     </dependencies>
