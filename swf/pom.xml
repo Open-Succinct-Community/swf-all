@@ -19,7 +19,7 @@
         <version>${revision}</version>
     </parent>
     <artifactId>swf</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <name>swf</name>
     <description>Succinct Web Framework</description>
     <url>http://maven.apache.org</url>

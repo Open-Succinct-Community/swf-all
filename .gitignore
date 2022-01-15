@@ -3,3 +3,4 @@
 .commit
 /*/.idea/
 **/.flattened-pom.xml
+**/*.iml

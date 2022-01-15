@@ -111,7 +111,7 @@ public class HiveMqAdaptor implements MessageAdaptor {
      * Subscribe async.
      *
      * @param topic    the topic
-     * @param callback the callback
+     * @param handler the callback
      */
     @Override
     public void subscribe(String topic, CloudEventHandler handler) {
