@@ -16,13 +16,14 @@ import io.cloudevents.CloudEvent;
 import io.cloudevents.core.provider.EventFormatProvider;
 import io.cloudevents.jackson.JsonFormat;
 
+import java.io.Closeable;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HiveMqAdaptor implements MessageAdaptor {
+public class HiveMqAdaptor implements MessageAdaptor, Closeable {
     public static void registerAdaptor() {
         MessageAdaptorFactory.getInstance().registerMessageAdaptor(getInstance());
     }

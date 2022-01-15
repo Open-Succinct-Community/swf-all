@@ -13,10 +13,11 @@ import io.nats.client.Nats;
 import io.nats.client.Options;
 import io.nats.client.Subscription;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
-public class NatsAdaptor implements MessageAdaptor {
+public class NatsAdaptor implements MessageAdaptor , Closeable {
     public static void registerAdaptor() {
         MessageAdaptorFactory.getInstance().registerMessageAdaptor(getInstance());
     }

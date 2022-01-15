@@ -19,7 +19,6 @@ import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.io.xls.XLSModelReader;
-
 import com.venky.swf.db.model.io.xls.XLSModelReader.RecordVisitor;
 import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -40,6 +39,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
@@ -222,9 +222,12 @@ public class Controller implements TemplateLoader{
         return new RedirectorView(getPath(), "", "login");
     }
 
-
-    public DashboardView dashboard() {
-        return Controller.dashboard(getPath());
+    public View dashboard() {
+        if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/dashboard.html")){
+            return  html("dashboard");
+        }else {
+            return Controller.dashboard(getPath());
+        }
     }
 
     public DashboardView dashboard(HtmlView aContainedView) {

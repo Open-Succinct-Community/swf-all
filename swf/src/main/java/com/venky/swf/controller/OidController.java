@@ -11,6 +11,8 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import com.venky.swf.util.TemplateProcessor;
+import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
@@ -273,7 +275,7 @@ public class OidController extends Controller{
 		}
 	}
 	protected RedirectorView redirectSuccess(String redirectedTo){
-		return new RedirectorView(getPath(),loginSuccessful(redirectedTo));
+		return new RedirectorView(getPath(),"",loginSuccessful(redirectedTo));
 	}
 	
 	public static class OidHttpClient implements HttpClient {

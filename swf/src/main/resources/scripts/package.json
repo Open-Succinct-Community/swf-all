@@ -7,6 +7,7 @@
     "bootstrap-input-spinner": "^1.17.2",
     "bootstrap4-datetimepicker": ">=5.2.3",
     "chart.js": "^2.9.4",
+    "cropper": "^4.1.0",
     "deepmerge": "^4.2.2",
     "device-uuid": "^1.0.4",
     "jquery": "^3.6.0",
