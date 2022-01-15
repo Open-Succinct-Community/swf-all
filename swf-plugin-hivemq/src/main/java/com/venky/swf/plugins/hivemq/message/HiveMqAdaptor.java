@@ -40,7 +40,7 @@ public class HiveMqAdaptor implements MessageAdaptor {
         if (sSoleInstance != null){
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
-        loadClient();
+        connect();
     }
 
     public static HiveMqAdaptor getInstance() {
@@ -61,35 +61,38 @@ public class HiveMqAdaptor implements MessageAdaptor {
 
     private Mqtt5Client client = null;
 
-    public void loadClient() {
+    public void connect(){
         if (client == null){
-            synchronized (this){
-                if (client == null){
+            synchronized (this) {
+                if (client == null) {
                     client = MqttClient.builder().identifier(UUID.randomUUID().toString()).
                             serverHost(Config.instance().getProperty("swf.message.hivemq.host")).useMqttVersion5().
                             build();
+
+                    Send<Mqtt5ConnAck> connAckSend = client.toBlocking().connectWith();
+                    String user = Config.instance().getProperty("swf.message.hivemq.auth.userid");
+                    String password = Config.instance().getProperty("swf.message.hivemq.auth.password");
+                    if (!ObjectUtil.isVoid(user) && !ObjectUtil.isVoid(password)) {
+                        connAckSend.simpleAuth().
+                                username(user).
+                                password(password.getBytes())
+                                .applySimpleAuth();
+                    }
+                    connAckSend.send();
+                    logger.log(Level.INFO, "Connected to broker");
                 }
             }
         }
     }
-    public void connect(){
-        if (client != null ){
-            Send<Mqtt5ConnAck> connAckSend = client.toBlocking().connectWith();
-            String user = Config.instance().getProperty("swf.message.hivemq.auth.userid");
-            String password = Config.instance().getProperty("swf.message.hivemq.auth.password");
-            if (!ObjectUtil.isVoid(user) && !ObjectUtil.isVoid(password)){
-                connAckSend.simpleAuth().
-                        username(user).
-                        password(password.getBytes())
-                        .applySimpleAuth();
+    public void close(){
+        synchronized (this) {
+            if (client != null) {
+                try {
+                    client.toBlocking().disconnect();
+                }finally {
+                    client = null;
+                }
             }
-            connAckSend.send();
-            logger.log(Level.INFO, "Connected to broker");
-        }
-    }
-    public void disconnect(){
-        if ( client != null) {
-            client.toBlocking().disconnect();
         }
     }
 

@@ -8,9 +8,6 @@ public interface MessageAdaptor {
     public CloudEvent receive (String topic, long timeOutMillis, boolean unsubscribeAfterReceipt);
     public void subscribe(String topic, CloudEventHandler handler );
 
-    public void connect();
-    public void disconnect();
-
     interface CloudEventHandler{
         public void handle(String topic,CloudEvent event);
     }

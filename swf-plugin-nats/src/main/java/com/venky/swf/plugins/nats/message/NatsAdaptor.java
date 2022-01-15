@@ -86,7 +86,6 @@ public class NatsAdaptor implements MessageAdaptor {
         dispatcher.subscribe(topic);
     }
 
-    @Override
     public void connect() {
         synchronized (this){
             if (nc == null){
@@ -102,8 +101,7 @@ public class NatsAdaptor implements MessageAdaptor {
         }
     }
 
-    @Override
-    public void disconnect() {
+    public void close() {
         synchronized (this) {
             if (nc != null) {
                 try {
@@ -111,6 +109,8 @@ public class NatsAdaptor implements MessageAdaptor {
                     nc.close();
                 } catch (InterruptedException | TimeoutException e) {
                     //
+                }finally {
+                    nc = null;
                 }
             }
         }

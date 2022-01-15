@@ -5,6 +5,8 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.routing.Config;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +43,9 @@ public class MessageAdaptorFactory implements Extension {
 
     private Map<String,MessageAdaptor> map = new HashMap<>();
     public void registerMessageAdaptor(MessageAdaptor adaptor){
+        if (!(adaptor instanceof Closeable)){
+            throw new RuntimeException(adaptor.getClass() + " must implement Closeable");
+        }
         map.put(adaptor.getProvider(),adaptor);
     }
     public MessageAdaptor getDefaultMessageAdaptor(){
@@ -65,7 +70,11 @@ public class MessageAdaptorFactory implements Extension {
     public void dispose(){
         Set<String> keySet = new HashSet<>(map.keySet());
         keySet.forEach(k->{
-            map.remove(k).disconnect();
+            try {
+                ((Closeable)map.remove(k)).close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
