@@ -356,7 +356,7 @@ public class Expression {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public  boolean eval(Object record, ModelReflector<? extends Model> reflector){
 		String columnName = getColumnName();
-		String fieldName = reflector == null ? null : reflector.getFieldName(columnName);
+		String fieldName = (reflector == null || columnName == null )? null : reflector.getFieldName(columnName);
 
 		boolean isEncrypted = fieldName != null && reflector.isFieldEncrypted(fieldName);
 		if (conjunction == null){
