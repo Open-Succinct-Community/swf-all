@@ -157,4 +157,15 @@ public class HiveMqAdaptor implements MessageAdaptor, Closeable {
         }
 
     }
+
+    public String getSeparatorToken(){
+        return "/";
+    }
+    public String getSingleLevelWildCard(){
+        return ".";
+    }
+    public String getMultiLevelWildCard(){
+        return "#";
+    }
+
 }

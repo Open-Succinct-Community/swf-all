@@ -16,6 +16,7 @@ import io.nats.client.Subscription;
 import java.io.Closeable;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 
 public class NatsAdaptor implements MessageAdaptor , Closeable {
     public static void registerAdaptor() {
@@ -48,7 +49,8 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
         return getInstance();
     }
 
-    Connection nc = null;
+    Connection published = null;
+    Connection subscribed = null;
 
     @Override
     public String getProvider() {
@@ -58,8 +60,8 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
     @Override
     public void publish(String topic, CloudEvent event) {
         try {
-            nc.publish(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).serialize(event));
-            nc.flush(Duration.ZERO);
+            published.publish(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).serialize(event));
+            published.flush(Duration.ZERO);
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
@@ -67,7 +69,7 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
 
     @Override
     public CloudEvent receive(String topic, long timeOutMillis, boolean unsubscribeAfterReceipt) {
-        Subscription subscription = nc.subscribe(topic);
+        Subscription subscription = subscribed.subscribe(topic);
         try {
             Message message = subscription.nextMessage(timeOutMillis);
             return EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(message.getData());
@@ -83,38 +85,75 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
 
     @Override
     public void subscribe(String topic, CloudEventHandler handler) {
-        Dispatcher dispatcher = nc.createDispatcher(msg -> handler.handle(topic,EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(msg.getData())));
+        Dispatcher dispatcher = subscribed.createDispatcher(msg -> {
+            try {
+                handler.handle(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(msg.getData()));
+            }catch (Exception ex){
+                Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Exception processing subscription ",ex);
+            }
+        });
         dispatcher.subscribe(topic);
     }
-
     public void connect() {
         synchronized (this){
-            if (nc == null){
+            if (published == null){
                 Options options = new Options.Builder().server(Config.instance().getProperty("swf.message.nats.url")).
                         pingInterval(Duration.ofSeconds(20)).maxPingsOut(5).noEcho().maxReconnects(5)
                         .build();
                 try {
-                    nc = Nats.connect(options);
+                    published = Nats.connect(options);
                 }catch (Exception ex){
                     throw new RuntimeException(ex);
                 }
             }
+            if (subscribed == null){
+                Options options = new Options.Builder().server(Config.instance().getProperty("swf.message.nats.url")).
+                        pingInterval(Duration.ofSeconds(20)).maxPingsOut(5).noEcho().maxReconnects(5)
+                        .build();
+                try {
+                    subscribed = Nats.connect(options);
+                }catch (Exception ex){
+                    throw new RuntimeException(ex);
+                }
+            }
+
+
         }
     }
-
     public void close() {
         synchronized (this) {
-            if (nc != null) {
+            if (published != null) {
                 try {
-                    nc.flush(Duration.ZERO);
-                    nc.close();
+                    published.flush(Duration.ZERO);
+                    published.close();
                 } catch (InterruptedException | TimeoutException e) {
                     //
                 }finally {
-                    nc = null;
+                    published = null;
+                }
+            }
+            if (subscribed != null) {
+                try {
+                    subscribed.flush(Duration.ZERO);
+                    subscribed.close();
+                } catch (InterruptedException | TimeoutException e) {
+                    //
+                }finally {
+                    subscribed = null;
                 }
             }
         }
 
     }
+
+    public String getSeparatorToken(){
+        return ".";
+    }
+    public String getSingleLevelWildCard(){
+        return "*";
+    }
+    public String getMultiLevelWildCard(){
+        return ">";
+    }
+
 }

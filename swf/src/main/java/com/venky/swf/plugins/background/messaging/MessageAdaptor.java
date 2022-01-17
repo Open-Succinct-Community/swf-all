@@ -12,4 +12,8 @@ public interface MessageAdaptor {
         public void handle(String topic,CloudEvent event);
     }
 
+    public String getSeparatorToken();
+    public String getSingleLevelWildCard();
+    public String getMultiLevelWildCard();
+
 }

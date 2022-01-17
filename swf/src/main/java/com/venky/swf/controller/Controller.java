@@ -155,7 +155,7 @@ public class Controller implements TemplateLoader{
 
     protected String loginSuccessful(String redirectedTo) {
         if (ObjectUtil.isVoid(redirectedTo)) {
-            redirectedTo = "/dashboard";
+            redirectedTo = "dashboard";
         }
         return redirectedTo;
     }
