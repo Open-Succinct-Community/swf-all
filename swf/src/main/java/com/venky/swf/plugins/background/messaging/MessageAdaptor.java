@@ -9,7 +9,11 @@ public interface MessageAdaptor {
     public void subscribe(String topic, CloudEventHandler handler );
 
     interface CloudEventHandler{
-        public void handle(String topic,CloudEvent event);
+        public void handle(String topic,CloudEvent event,SubscriptionHandle subscriptionHandle);
+    }
+
+    interface SubscriptionHandle {
+        public void unsubscribe();
     }
 
     public String getSeparatorToken();

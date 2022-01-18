@@ -121,14 +121,21 @@ public class HiveMqAdaptor implements MessageAdaptor, Closeable {
     public void subscribe(String topic, CloudEventHandler handler) {
         client.toAsync().subscribeWith().topicFilter(topic).qos(MqttQos.AT_MOST_ONCE)
                 .callback(serializedEvent -> handler.handle(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).
-                        deserialize(serializedEvent.getPayloadAsBytes()))).send().
+                        deserialize(serializedEvent.getPayloadAsBytes()), () -> client.toAsync().unsubscribeWith().
+                        topicFilter(topic).send().whenComplete((suback, throwable)->{
+                            if (throwable != null) {
+                                logger.log(Level.SEVERE, "Error unsubscribing", throwable);
+                            } else {
+                                logger.log(Level.INFO, "un subscribed from topic.." + topic);
+                            }
+                        }))).send().
                 whenComplete((suback, throwable) -> {
-            if (throwable != null) {
-                logger.log(Level.SEVERE, "Error subscribing", throwable);
-            } else {
-                logger.log(Level.INFO, "subscribed message from topic.." + topic);
-            }
-        });
+                    if (throwable != null) {
+                        logger.log(Level.SEVERE, "Error subscribing", throwable);
+                    } else {
+                        logger.log(Level.INFO, "subscribed message from topic.." + topic);
+                    }
+                });
     }
     /**
      * Subscribe blocking.

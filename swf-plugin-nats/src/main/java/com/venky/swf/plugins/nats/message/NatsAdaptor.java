@@ -85,14 +85,14 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
 
     @Override
     public void subscribe(String topic, CloudEventHandler handler) {
-        Dispatcher dispatcher = subscribed.createDispatcher(msg -> {
+        Dispatcher dispatcher = subscribed.createDispatcher();
+        dispatcher.subscribe(topic,msg -> {
             try {
-                handler.handle(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(msg.getData()));
+                handler.handle(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(msg.getData()),()->dispatcher.unsubscribe(topic));
             }catch (Exception ex){
                 Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Exception processing subscription ",ex);
             }
         });
-        dispatcher.subscribe(topic);
     }
     public void connect() {
         synchronized (this){
