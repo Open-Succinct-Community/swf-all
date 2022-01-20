@@ -72,6 +72,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -678,7 +679,22 @@ public class Path implements _IPath{
         }
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
+        addSameSiteCookieAttribute();
     }
+    private void addSameSiteCookieAttribute() {
+        HttpServletResponse response = getResponse();
+        Collection<String> headers = response.getHeaders("Set-Cookie");
+        boolean firstHeader = true;
+        for (String header : headers) { // there can be multiple Set-Cookie attributes
+            if (firstHeader) {
+                response.setHeader("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
+                firstHeader = false;
+                continue;
+            }
+            response.addHeader("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
+        }
+    }
+
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
 

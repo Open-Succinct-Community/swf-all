@@ -1,13 +1,11 @@
 package com.venky.swf.plugins.background.messaging;
 
-import com.venky.cache.Cache;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.routing.Config;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
