@@ -77,6 +77,7 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
             try {
                 published.publish(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).serialize(event));
                 published.flush(Duration.ZERO);
+                Config.instance().getLogger(getClass().getName()).log(Level.INFO,String.format("Published to topic %s",topic));
             }catch (Exception ex){
                 throw new RuntimeException(ex);
             }
@@ -104,10 +105,12 @@ public class NatsAdaptor implements MessageAdaptor , Closeable {
             dispatcher.subscribe(topic,msg -> {
                 try {
                     handler.handle(topic, EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE).deserialize(msg.getData()),()->dispatcher.unsubscribe(topic));
+                    Config.instance().getLogger(getClass().getName()).log(Level.INFO,String.format("Received to topic %s",topic));
                 }catch (Exception ex){
                     Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Exception processing subscription ",ex);
                 }
             });
+            Config.instance().getLogger(getClass().getName()).log(Level.INFO,String.format("Subscribed to topic %s",topic));
         }
         public void connect() {
             synchronized (this){

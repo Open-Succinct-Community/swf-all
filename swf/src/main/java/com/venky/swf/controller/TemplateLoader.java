@@ -86,7 +86,8 @@ public interface TemplateLoader {
                 return MimeType.TEXT_CSS.toString();
             }
         },
-        IMAGES;
+        IMAGES,
+        FONTS;
         public String contentType(String fileName){
             return MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName);
         }
@@ -222,6 +223,13 @@ public interface TemplateLoader {
         return load(TemplateSubDirectory.IMAGES,imageName);
         //return load("images/"+imageName, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(imageName),true);
     }
+
+    @RequireLogin(false)
+    default View fonts (String file){
+        return load(TemplateSubDirectory.FONTS,file);
+        //return load("images/"+imageName, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(imageName),true);
+    }
+
     default View load(TemplateSubDirectory dir, String file) {
         return load(dir.dir()+"/"+file,dir.contentType(file));
     }
