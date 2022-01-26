@@ -251,12 +251,15 @@ public class ModelController<M extends Model> extends Controller {
                         .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
                         .add(getWhereClause())).orderBy(getReflector().getOrderBy());
                 records = sel.execute(getModelClass(), maxRecords, getFilter());
+                /*
                 records.sort(new Comparator<M>() {
                     @Override
                     public int compare(M o1, M o2) {
                         return ids.indexOf(o1.getId())  - ids.indexOf(o2.getId());
                     }
                 });
+                    Forgot why I sorted this way. There doesnot seem to be any good reason for this.
+                 */
             }
         }
         return records;
