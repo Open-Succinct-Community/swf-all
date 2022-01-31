@@ -401,6 +401,16 @@ public class Path implements _IPath{
                         if (ControllerCache.instance().get(nextElement) != null){
                             info.setParameter(pathelements.get(i+1));
                             i ++ ;
+                        }else {
+                            StringBuilder filePath = new StringBuilder();
+                            for ( ; i< pathElementSize -1 ;  ){
+                                if (filePath.length() > 0){
+                                    filePath.append("/");
+                                }
+                                filePath.append(pathelements.remove(i+1));
+                                pathElementSize --;
+                            }
+                            pathelements.add(filePath.toString());
                         }
                     }
                 }else {
