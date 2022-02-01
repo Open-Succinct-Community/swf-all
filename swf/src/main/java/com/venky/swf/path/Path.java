@@ -387,6 +387,10 @@ public class Path implements _IPath{
             }
             try {
                 if (i < pathElementSize - 1){
+                    if (ControllerCache.instance().get(pathelements.get(i+1)) != null){
+                        // No parameter.!!
+                        continue;
+                    }
                     info.setParameter(Long.valueOf(pathelements.get(i+1)));
                     i+=1;
                 }
@@ -395,23 +399,19 @@ public class Path implements _IPath{
                 //the last pathelement.
                 if (i  < pathElementSize - 2){
                     String nextElement =  pathelements.get(i+2);
-                    try {
-                        Integer.valueOf(nextElement);
-                    }catch(NumberFormatException nfe){
-                        if (ControllerCache.instance().get(nextElement) != null){
-                            info.setParameter(pathelements.get(i+1));
-                            i ++ ;
-                        }else {
-                            StringBuilder filePath = new StringBuilder();
-                            for ( ; i< pathElementSize -1 ;  ){
-                                if (filePath.length() > 0){
-                                    filePath.append("/");
-                                }
-                                filePath.append(pathelements.remove(i+1));
-                                pathElementSize --;
+                    if (ControllerCache.instance().get(nextElement) != null){
+                        info.setParameter(pathelements.get(i+1));
+                        i ++ ;
+                    } else {
+                        StringBuilder filePath = new StringBuilder();
+                        for ( ; i< pathElementSize -1 ;  ){
+                            if (filePath.length() > 0){
+                                filePath.append("/");
                             }
-                            pathelements.add(filePath.toString());
+                            filePath.append(pathelements.remove(i+1));
+                            pathElementSize --;
                         }
+                        pathelements.add(filePath.toString());
                     }
                 }else {
                     //Last pathelement.
