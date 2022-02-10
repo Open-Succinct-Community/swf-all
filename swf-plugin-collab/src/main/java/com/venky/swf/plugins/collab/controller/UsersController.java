@@ -58,9 +58,15 @@ public class UsersController extends com.venky.swf.controller.UsersController {
     @Override
     protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
         Map<Class<? extends Model>,List<String>> map = super.getIncludedModelFields();
-        map.put(User.class, Arrays.asList("ID","NAME"));
-        map.put(UserPhone.class,Arrays.asList("ID","PHONE_NUMBER","VALIDATED"));
-        map.put(UserEmail.class,Arrays.asList("ID","EMAIL","VALIDATED"));
+        if (!map.containsKey(User.class)) {
+            map.put(User.class, Arrays.asList("ID", "NAME"));
+        }
+        if (!map.containsKey(UserPhone.class)) {
+            map.put(UserPhone.class, Arrays.asList("ID", "PHONE_NUMBER", "VALIDATED"));
+        }
+        if (!map.containsKey(UserEmail.class)){
+            map.put(UserEmail.class, Arrays.asList("ID", "EMAIL", "VALIDATED"));
+        }
         return map;
     }
 

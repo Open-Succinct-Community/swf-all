@@ -122,21 +122,26 @@ public class LuceneIndexer {
         }
         StringBuilder sanitized = new StringBuilder();
         boolean isAlphaNumericOnly = true;
+        boolean isNumeric = true;
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if ((c >= '0' && c <= '9') ||
-                    (c >= 'a' && c <= 'z') ||
+            if (c >= '0' && c<= '9'){
+                sanitized.append(c);
+            }else if ((c >= 'a' && c <= 'z') ||
                     (c >= 'A' && c <= 'Z') || (c == ' ')) {
+                isNumeric = false;
                 sanitized.append(c);
             } else if (sanitized.length() > 0) {
+                isNumeric = false;
                 isAlphaNumericOnly = false;
                 if (sanitized.charAt(sanitized.length() - 1) != ' ') {
                     sanitized.append(' ');
                 }
             }
         }
-        if (!isAlphaNumericOnly) {
-            sanitized.append(' ').append(value); //To allow exact match queries with special characters also.
+
+        if (!isNumeric){
+            sanitized.append(" LUCENE_START ").append(value).append(" LUCENE_END"); //To allow exact match queries with special characters also.
         }
         return sanitized.toString();
     }
