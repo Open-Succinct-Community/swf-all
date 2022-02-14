@@ -390,7 +390,11 @@ public abstract class JdbcTypeHelper {
             	BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
              	return new Double( bc.valueOf("1").equals(o)? 1 : 0);
             }else {
-            	return Double.valueOf(StringUtil.valueOf(o));
+                try {
+                    return Double.valueOf(StringUtil.valueOf(o));
+                }catch(Exception ex){
+                    throw new RuntimeException(String.format("Only Numeric Value is Allowed (%s)",o));
+                }
             }
         }
     }
@@ -405,7 +409,11 @@ public abstract class JdbcTypeHelper {
             	BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
              	return new Bucket( bc.valueOf("1").equals(o)? 1 : 0);
             }else {
-            	return new Bucket(Double.valueOf(StringUtil.valueOf(o)));
+                try {
+                    return new Bucket(Double.valueOf(StringUtil.valueOf(o)));
+                }catch(Exception ex){
+                    throw new RuntimeException(String.format("Only Numeric Value is Allowed (%s)",o));
+                }
             }
         }
     }

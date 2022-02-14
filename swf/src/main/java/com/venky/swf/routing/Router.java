@@ -310,10 +310,13 @@ public class Router extends AbstractHandler {
 	        }catch(Exception e){
 	        	try {
 	        		logger.log(Level.INFO, "Request failed for " + p.getTarget() + ":" , e);
-	        		db.getCurrentTransaction().rollback(e);
+					if (db != null) {
+						db.getCurrentTransaction().rollback(e);
+					}
 	        	}catch (Exception ex){
 	        		logger.log(Level.INFO, "Rollback failed", ex);
 	        	}
+	        	/*
 	        	if (p.isForwardedRequest()){
 	        		if (e instanceof RuntimeException){
 	        			throw (RuntimeException)e;
@@ -322,7 +325,7 @@ public class Router extends AbstractHandler {
 	        			ex.add(e);
 	        			throw ex;
 	        		}
-	        	}
+	        	}*/
 	        	if (p.getSession() != null){
 	        		if (p.redirectOnException()){
                         p.addErrorMessage(e.getMessage());

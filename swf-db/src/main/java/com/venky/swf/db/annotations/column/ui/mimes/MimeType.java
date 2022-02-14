@@ -173,6 +173,22 @@ public enum MimeType {
 		}
 
 	},
+	APPLICATION_XLSX() {
+		public String toString(){
+			return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		}
+		public boolean isImage(){
+			return false;
+		}
+		public boolean isText() {
+			return false;
+		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "xlsx";
+		}
+
+	},
 	APPLICATION_ZIP() {
 		public String toString(){
 			return "application/zip";

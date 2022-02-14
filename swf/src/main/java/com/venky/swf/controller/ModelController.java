@@ -150,7 +150,7 @@ public class ModelController<M extends Model> extends Controller {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new BytesView(getPath(), os.toByteArray(), MimeType.APPLICATION_XLS, "content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xlsx");
+        return new BytesView(getPath(), os.toByteArray(), MimeType.APPLICATION_XLSX, "content-disposition", "attachment; filename=" + getModelClass().getSimpleName() + ".xlsx");
     }
 
     @Depends("save")
