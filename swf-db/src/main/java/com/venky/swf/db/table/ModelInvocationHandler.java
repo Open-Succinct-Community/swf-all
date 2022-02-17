@@ -16,7 +16,6 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
-import com.venky.reflection.MethodSignatureCache;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -25,7 +24,16 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
-import com.venky.swf.db.annotations.column.validations.processors.*;
+import com.venky.swf.db.annotations.column.validations.processors.DateFormatValidator;
+import com.venky.swf.db.annotations.column.validations.processors.EnumerationValidator;
+import com.venky.swf.db.annotations.column.validations.processors.ExactLengthValidator;
+import com.venky.swf.db.annotations.column.validations.processors.FieldValidator;
+import com.venky.swf.db.annotations.column.validations.processors.IntegerRangeValidator;
+import com.venky.swf.db.annotations.column.validations.processors.MaxLengthValidator;
+import com.venky.swf.db.annotations.column.validations.processors.MinLengthValidator;
+import com.venky.swf.db.annotations.column.validations.processors.NotNullValidator;
+import com.venky.swf.db.annotations.column.validations.processors.NumericRangeValidator;
+import com.venky.swf.db.annotations.column.validations.processors.RegExValidator;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.validations.ModelValidator;
 import com.venky.swf.db.annotations.model.validations.UniqueKeyValidator;
@@ -35,13 +43,29 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.routing.Config;
-import com.venky.swf.sql.*;
+import com.venky.swf.sql.Conjunction;
+import com.venky.swf.sql.Delete;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Insert;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
+import com.venky.swf.sql.Update;
 import com.venky.swf.sql.parser.SQLExpressionParser;
 import com.venky.swf.util.SharedKeys;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -94,12 +118,22 @@ public class ModelInvocationHandler implements InvocationHandler {
         this.virtualFields = reflector.getVirtualFields();
         record.startTracking(false);
     }
+	public ModelInvocationHandler(Class<? extends Model> modelClass, Model proxy){
+		this.proxy = proxy;
+		this.modelClass = modelClass;
+
+		this.reflector = ModelReflector.instance(modelClass);
+		this.modelName = Table.getSimpleModelClassName(reflector.getTableName());
+		this.virtualFields = reflector.getVirtualFields();
+		this.record = null;
+	}
 	
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     	bootStrapProxy(getModelClass().cast(proxy));
         String mName = method.getName();
         Class<?> retType = method.getReturnType();
         Class<?>[] parameters = method.getParameterTypes();
+        Record record = getRawRecord();
 
         if (getReflector().getFieldGetterSignatures().contains(getReflector().getSignature(method))) {
             String fieldName = getReflector().getFieldName(method);
@@ -342,11 +376,33 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
     
     public Record getRawRecord(){
-    	return record;
+		if (record != null){
+			return record;
+		}else if (proxy != null){
+			ModelInvocationHandler invocationHandler = (ModelInvocationHandler) Proxy.getInvocationHandler(proxy);
+			if (invocationHandler != this){
+				return invocationHandler.getRawRecord();
+			}else{
+				return null;
+			}
+		}else {
+			return null;
+		}
     }
     public void setRawRecord(Record record){
-		this.record = record;
-    }
+		if (this.record != null){
+			this.record = record;
+		}else if (proxy != null){
+			ModelInvocationHandler invocationHandler = (ModelInvocationHandler) Proxy.getInvocationHandler(proxy);
+			if (invocationHandler != this){
+				invocationHandler.setRawRecord(record);
+			}else{
+				this.record = record;
+			}
+		}else {
+			this.record = record;
+		}
+	}
 
 	public static void dispose(){
 		modelImplClassesCache.clear();
@@ -491,6 +547,7 @@ public class ModelInvocationHandler implements InvocationHandler {
         	validate();
         }
         beforeSave();
+        Record record = getRawRecord();
         if (record.isNewRecord()) {
         	callExtensions("before.create");
         	if (!dryRun){
@@ -601,6 +658,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     	callExtensions("before.validate");
     }
     public void defaultFields(){
+    	Record record = getRawRecord();
         if (!record.isNewRecord()){
         	ColumnDescriptor updatedAt = getReflector().getColumnDescriptor("updated_at");
         	ColumnDescriptor updatorUser = getReflector().getColumnDescriptor("updater_user_id");
@@ -707,6 +765,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     }
 
     private void update() {
+    	Record record = getRawRecord();
 		encrypt();
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
@@ -779,6 +838,7 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     private void create() {
     	encrypt();
+    	Record record = getRawRecord();
     	proxy.setLockId(0);
 		//Table<? extends Model> table = Database.getTable(getReflector().getTableName());
         Insert insertSQL = new Insert(getReflector());

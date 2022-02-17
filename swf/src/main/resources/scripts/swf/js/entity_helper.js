@@ -40,7 +40,8 @@ class Autocomplete {
 
                 if (field){
                     if (val.length > 0 ){
-                        url = url + "/" + aq + ( aq.length > 0 ? " AND "  : "" ) + field +":" + val + "*";
+                        url = url + "/" + aq + ( aq.length > 0 ? " AND "  : "" ) + 
+                            field +":" + val.replace(" ",`* AND ${field}:`) + "*" ;
                     }else {
                         url = url + "/" + aq
                     }

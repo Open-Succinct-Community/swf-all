@@ -265,8 +265,7 @@ public class ModelListTable<M extends Model> extends Div{
         			//Probably html formating is better. convert hard enter to br 
             		sValue = sValue.replaceAll("(<br/>)?\n(<br/>)?", "<br/>");
                 }
-            	_IPath parentTarget = modelAwareness.getPath().createRelativePath( modelAwareness.getPath().action() + 
-            			( ObjectUtil.isVoid(modelAwareness.getPath().parameter()) ?  "" : "/" + modelAwareness.getPath().parameter() )+
+            	_IPath parentTarget = modelAwareness.getPath().createRelativePath( ( modelAwareness.getPath().parameter() == null ? modelAwareness.getPath().action() : "" ) +
             			"/" + tableName + "/show/" +  String.valueOf(parentId) );
             	if (parentTarget.canAccessControllerAction()){
                 	control = new Link(parentTarget.getTarget());
