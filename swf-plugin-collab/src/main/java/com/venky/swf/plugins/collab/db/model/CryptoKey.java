@@ -6,6 +6,7 @@ import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 
@@ -35,6 +36,9 @@ public interface CryptoKey extends Model {
     @COLUMN_SIZE(4096)
     public String getPublicKey();
     public void setPublicKey(String key);
+
+    @PARTICIPANT
+    public Long getCreatorUserId();
 
     public static CryptoKey find(String alias,String purpose){
         CryptoKey key = Database.getTable(CryptoKey.class).newRecord();
