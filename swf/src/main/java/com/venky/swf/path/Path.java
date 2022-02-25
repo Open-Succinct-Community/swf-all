@@ -689,7 +689,9 @@ public class Path implements _IPath{
         }
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
-        addSameSiteCookieAttribute();
+        if (Config.instance().getExternalURIScheme().equals("https")) {
+            addSameSiteCookieAttribute();
+        }
     }
     private void addSameSiteCookieAttribute() {
         HttpServletResponse response = getResponse();

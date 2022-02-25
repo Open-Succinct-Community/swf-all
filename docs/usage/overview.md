@@ -62,3 +62,13 @@ Web Applications in most domains have similar requirements and developers often 
 | |Attachments | plugin
 |ETL |Datamart	| plugin
 
+## Installing Succinct
+Succinct framework gets auto installed via maven when you try to create an application. However, if you  wish to be on the development version of Succinct, you can clone the relevant github repositories manually and build them locally. 
+
+|Repository Name | Instructions|
+|-|-
+|common |git clone https://github.com/venkatramanm/common.git <br> cd common <br>mvn install <br>|
+|reflection |git clone https://github.com/venkatramanm/reflection.git <br> cd reflection <br>mvn install <br>|
+|swf-all|git clone https://github.com/venkatramanm/swf-all.git <br> cd swf-all <br>mvn install|
+
+

@@ -148,7 +148,7 @@ public class Config {
 			this.uriScheme.set(uriScheme);
 		}
 	}
-	private String getExternalURIScheme(){
+	public String getExternalURIScheme(){
 		if (uriScheme.get() != null){
 			return uriScheme.get();
 		}

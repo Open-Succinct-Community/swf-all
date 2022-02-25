@@ -6,7 +6,7 @@ This section we will see how to write an application to store personal contacts.
 * Java >= 1.8 (We recommend use  of jdk LTS 17)
 * maven >= 3.8.3 
 
-### Cloning Succinct Locally
+
 
 
 

@@ -25,59 +25,35 @@
                         </dependency>
                     </dependencies>
             </plugin>
-      <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <versionRange>1.0.0</versionRange>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-dependency-plugin</artifactId>
+              <version>2.4</version>
+              <executions>
+                <execution>
+                    <id>copy-dependencies</id>
+                    <phase>package</phase>
                     <goals>
-                      <goal>copy-dependencies</goal>
+                        <goal>copy-dependencies</goal>
                     </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore />
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-      </plugin>
-      <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.4</version>
-          <executions>
-            <execution>
-                <id>copy-dependencies</id>
-                <phase>package</phase>
-                <goals>
-                    <goal>copy-dependencies</goal>
-                </goals>
-            </execution>
-          </executions>
-      </plugin>
-      <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.5.1</version>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-            <!--
-                <compilerArgs>
-                <arg>-verbose</arg>
-                <arg>-Xlint:all,-options,-path</arg>
-                </compilerArgs>
-             -->
-          </configuration>
-      </plugin>
+                </execution>
+              </executions>
+          </plugin>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.5.1</version>
+              <configuration>
+                <source>1.8</source>
+                <target>1.8</target>
+                <!--
+                    <compilerArgs>
+                    <arg>-verbose</arg>
+                    <arg>-Xlint:all,-options,-path</arg>
+                    </compilerArgs>
+                 -->
+              </configuration>
+          </plugin>
         </plugins>
     </build>
     <dependencies>
