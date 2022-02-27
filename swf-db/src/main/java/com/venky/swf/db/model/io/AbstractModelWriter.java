@@ -5,7 +5,9 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.ATTRIBUTE_GROUP;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -153,9 +155,12 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					  Map<String, List<String>> templateFields) {
 
 
-		FormatHelper<T> formatHelper = FormatHelper.instance(into);
+		FormatHelper<T> _formatHelper = FormatHelper.instance(into);
 		ModelReflector<M> ref = getReflector();
+		Map<String,List<String>> groupedFields = ref.getGroupedFields();
+
 		for (String field: getFields(fields)){
+			FormatHelper<T> formatHelper = _formatHelper;
 			Object value = TimerUtils.time(cat,"ref.get", ()-> ref.get(record, field));
 			if (value == null){
 				continue;
@@ -180,11 +185,23 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				String sValue = TimerUtils.time(cat, "toStringISO" ,
 						() -> Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value));
 
+				if (!groupedFields.isEmpty()){
+					ATTRIBUTE_GROUP group = ref.getAnnotation(fieldGetter, ATTRIBUTE_GROUP.class);
+					if (group != null && !ObjectUtil.isVoid(group.value())){
+						T groupElement  = formatHelper.getElementAttribute(group.value());
+						if (groupElement == null){
+							groupElement = formatHelper.createElementAttribute(group.value());
+						}
+
+						formatHelper = FormatHelper.instance(groupElement);
+					}
+				}
 				if (InputStream.class.isAssignableFrom(fieldGetter.getReturnType())) {
 				    formatHelper.setElementAttribute(attributeName,sValue);
                 }else {
-                    TimerUtils.time(cat,"setAttribute" , ()-> {
-						formatHelper.setAttribute(attributeName, sValue);
+					FormatHelper<T> finalFormatHelper = formatHelper;
+					TimerUtils.time(cat,"setAttribute" , ()-> {
+						finalFormatHelper.setAttribute(attributeName, sValue);
 						return true;
 					});
                 }
@@ -197,7 +214,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				try {
 					List<Method> childGetters = ref.getChildGetters();
 					for (Method childGetter : childGetters) {
-						write(formatHelper,record,childGetter,parentsAlreadyConsidered,considerChildren,templateFields);
+						write(_formatHelper,record,childGetter,parentsAlreadyConsidered,considerChildren,templateFields);
 					}
 				}finally {
 					parentsAlreadyConsidered.remove(ref.getModelClass().getSimpleName());

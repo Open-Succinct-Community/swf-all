@@ -13,6 +13,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.io.json.JSONFormatter;
 import com.venky.swf.routing.Config;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
@@ -26,9 +27,9 @@ public class JSON extends FormatHelper<JSONObject>{
 	public JSON(InputStream in) {
 		this(parseWithException(in));
 	}
-	private static JSONObject parseWithException(InputStream in){
+	private static JSONAware parseWithException(InputStream in){
 		try {
-			return (JSONObject) JSONValue.parse(new InputStreamReader(in));
+			return (JSONAware) JSONValue.parse(new InputStreamReader(in));
 		}catch (Exception ex){
 			throw new RuntimeException(ex);
 		}
@@ -43,9 +44,14 @@ public class JSON extends FormatHelper<JSONObject>{
 			root.put(name, new JSONObject());
 		}
 	}
-	
-	public JSON(JSONObject obj){
-		this.root = obj;
+
+	public JSON(JSONAware obj){
+		if (obj instanceof JSONObject) {
+			this.root = (JSONObject) obj;
+		}else {
+			this.root = new JSONObject();
+			root.put("Root",obj);
+		}
 		fixInputCase();
 	}
 
@@ -202,7 +208,11 @@ public class JSON extends FormatHelper<JSONObject>{
 		fixOutputCase();
 		StringWriter w =  new StringWriter();
 		JSONFormatter formatter  = new JSONFormatter();
-        formatter.writePrettyJson(root, w);
+		if (getRootName() == null || !isPlural() || isRootElementNameRequired()) {
+			formatter.writePrettyJson(root, w);
+		}else {
+			formatter.writePrettyJsonArray((JSONArray) root.get(getRootName()),w);
+		}
 		return w.toString();
 	}
 

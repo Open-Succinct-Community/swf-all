@@ -28,6 +28,7 @@ import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
+import com.venky.swf.db.annotations.column.ATTRIBUTE_GROUP;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
@@ -309,6 +310,20 @@ public class ModelReflector<M extends Model> {
     	}
     	return indexedFieldGetters;
     }
+
+    private SequenceSet<Method> groupedFieldGetters = null ;
+	public List<Method> getGroupedFieldGetters(){
+		if (groupedFieldGetters == null) {
+			synchronized (this) {
+				if (groupedFieldGetters == null){
+					SequenceSet<Method> groupedFieldGetters =  new SequenceSet<Method>();
+					loadMethods(groupedFieldGetters, getGroupedFieldGetterMatcher());
+					this.groupedFieldGetters = groupedFieldGetters;
+				}
+			}
+		}
+		return groupedFieldGetters;
+	}
     
     private SequenceSet<Method> fieldSetters = null;
     public List<Method> getFieldSetters(){
@@ -433,6 +448,30 @@ public class ModelReflector<M extends Model> {
 			timer.stop();
 		}
     }
+
+    private Map<String,List<String>> groupedFields = null;
+    public Map<String,List<String>> getGroupedFields(){
+		if (groupedFields == null){
+			synchronized (this) {
+				if (groupedFields == null){
+					Cache<String,List<String>> groupedFields = new Cache<String, List<String>>() {
+						@Override
+						protected List<String> getValue(String groupName) {
+							return new ArrayList<>();
+						}
+					};
+
+					for (Method groupedFieldGetter : getGroupedFieldGetters()){
+						ATTRIBUTE_GROUP attributeGroup = getAnnotation(groupedFieldGetter,ATTRIBUTE_GROUP.class);
+						groupedFields.get(attributeGroup.value()).add(getFieldName(groupedFieldGetter));
+					}
+
+					this.groupedFields = groupedFields;
+				}
+			}
+		}
+		return groupedFields;
+	}
 
 	public List<String> getVisibleFields(){
     	return getVisibleFields(Arrays.asList("ID","LOCK_ID","CREATED_AT" ,"UPDATED_AT"));
@@ -1509,7 +1548,24 @@ public class ModelReflector<M extends Model> {
     public MethodMatcher getIndexedFieldGetterMatcher() {
         return indexedFieldGetterMatcher;
     }
-    
+	private final MethodMatcher groupedFieldGetterMatcher = new GroupedFieldGetterMatcher();
+	public MethodMatcher getGroupedFieldGetterMatcher() {
+		return groupedFieldGetterMatcher;
+	}
+	public class GroupedFieldGetterMatcher extends FieldGetterMatcher {
+		@Override
+		public boolean matches(Method method){
+			if (method.getName().endsWith("Id")) {
+				if (getReferredModelGetterFor(method) != null){
+					return false;
+				}
+			}
+
+			return super.matches(method) && isAnnotationPresent(method,ATTRIBUTE_GROUP.class) ;
+		}
+	}
+
+
     public class IndexedFieldGetterMatcher extends FieldGetterMatcher {
 		@Override
         public boolean matches(Method method){

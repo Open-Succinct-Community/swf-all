@@ -31,12 +31,14 @@ public abstract class FormatHelper<T> {
 	protected boolean isPlural(){
 		return ObjectUtil.equals(StringUtil.pluralize(getRootName()), getRootName());
 	}
+
+	protected boolean isRootElementNameRequired(){
+		return Config.instance().getBooleanProperty("swf.api.root.required",true);
+	}
 	protected void fixOutputCase(){
-		if (!Config.instance().getBooleanProperty("swf.api.root.required",true)){
-			if (!isPlural() && getElementAttribute(getRootName()) != null) {
-				T element = getElementAttribute(getRootName());
-				setRoot(element);
-			}
+		if (!isRootElementNameRequired() && !isPlural() && getElementAttribute(getRootName()) != null) {
+			T element = getElementAttribute(getRootName());
+			setRoot(element);
 		}
 		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
 

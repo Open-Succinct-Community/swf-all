@@ -2,7 +2,10 @@ package com.venky.swf.db.model.io;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.Map;
 
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
@@ -121,5 +124,31 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
             }
             getReflector().set(m, fieldName, value);
         }
+        Map<String, List<String>> groupedFields = getReflector().getGroupedFields();
+        groupedFields.forEach((g,fl)->{
+            T groupElement = helper.getElementAttribute(g);
+            if (groupElement == null){
+                groupElement = helper.createElementAttribute(g);
+            }
+
+            FormatHelper<T> groupHelper = FormatHelper.instance(groupElement);
+            fl.forEach(fieldName ->{
+                if (!getReflector().isFieldSettable(fieldName)){
+                    return;
+                }
+
+                Object attrValue = groupHelper.getAttribute(getAttributeName(fieldName));
+                Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
+
+                ColumnDescriptor columnDescriptor = getReflector().getColumnDescriptor(fieldName);
+                Object value = null;
+                if (!getReflector().isVoid(attrValue) || !columnDescriptor.isNullable()){
+                    value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
+                }
+                getReflector().set(m, fieldName, value);
+
+            });
+        });
+
     }
 }

@@ -4,7 +4,8 @@
   <parent>
     <groupId>com.github.venkatramanm.swf-all</groupId>
     <artifactId>swf-all</artifactId>
-    <version>${archetypeVersion}</version>
+    <version>${symbol_dollar}{revision}</version>
+    <relativePath>../swf-all/pom.xml</relativePath>
   </parent>
   <artifactId>${artifactId}</artifactId>
   <name>${artifactId}</name>
