@@ -16,5 +16,6 @@ public class BeforeCreateCompany extends BeforeModelCreateExtension<Company> {
                 model.setCreatorCompanyId(creatorCompanyId);
             }
         }
+
     }
 }

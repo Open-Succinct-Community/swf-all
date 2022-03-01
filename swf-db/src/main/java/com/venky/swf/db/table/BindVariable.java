@@ -35,9 +35,11 @@ public class BindVariable {
     		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getTypeConverter().valueOf(value);
     	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getJdbcType() && value != null && !(value.getClass().equals(Long.class))){
     		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getTypeConverter().valueOf(value);
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(String[].class).getJdbcType() && value != null && !(value.getClass().equals(String[].class))){
+    		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(String[].class).getTypeConverter().valueOf(value);
     	}else {
-    		this.value = value;
-    	}
+			this.value = value;
+		}
     }
     
     public boolean equals(Object o){

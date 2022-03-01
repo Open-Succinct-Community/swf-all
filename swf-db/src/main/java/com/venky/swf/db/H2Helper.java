@@ -6,11 +6,13 @@ package com.venky.swf.db;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -46,11 +48,11 @@ public class H2Helper extends JdbcTypeHelper{
 	
     @Override
     public String getCurrentTimeStampKW(){
-    	return "CURRENT_TIMESTAMP()";
+    	return "CURRENT_TIMESTAMP";
     }
     @Override
     public String getCurrentDateKW(){
-    	return "CURRENT_DATE()";
+    	return "CURRENT_DATE";
     }
 
     public String getForUpdateLiteral(){
@@ -177,6 +179,9 @@ public class H2Helper extends JdbcTypeHelper{
                     "BLOB",1024*1024 * 1024 , 0, true , true,new InputStreamConverter()));
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
                     "BLOB",1024*1024 *1024, 0, true , true,new InputStreamConverter()));
+
+            registerjdbcSQLType(String[].class, new TypeRef<>(Types.ARRAY,
+                    "VARCHAR(128) ARRAY",0,0,false,false,new StringArrayConverter()));
 
     }
     @Override

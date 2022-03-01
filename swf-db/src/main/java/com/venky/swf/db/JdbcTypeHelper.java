@@ -8,6 +8,7 @@ package com.venky.swf.db;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -281,11 +282,11 @@ public abstract class JdbcTypeHelper {
 
         public Character valueOf(Object object) {
             if (ObjectUtil.isVoid(object)) {
-                return new Character((char) 0);
+                return (char) 0;
             }
             char[] c = StringUtil.valueOf(object).toCharArray();
             if (c.length == 1) {
-                return Character.valueOf(c[0]);
+                return c[0];
             }
             throw new RuntimeException("Cannot convert String "
                     + String.valueOf(object) + " to character");
@@ -301,7 +302,7 @@ public abstract class JdbcTypeHelper {
 
         public Byte valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
-                return new Byte((byte) 0);
+                return (byte) 0;
             }
             return Byte.valueOf(StringUtil.valueOf(o));
         }
@@ -383,12 +384,12 @@ public abstract class JdbcTypeHelper {
 
         public Double valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
-                return new Double(0.0);
+                return 0.0;
             }else if (o instanceof Date){
-            	return new Double(((Date)o).getTime());
+            	return (double) ((Date) o).getTime();
             }else if (o instanceof Boolean){
             	BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
-             	return new Double( bc.valueOf("1").equals(o)? 1 : 0);
+             	return (double) (bc.valueOf("1").equals(o) ? 1 : 0);
             }else {
                 try {
                     return Double.valueOf(StringUtil.valueOf(o));
@@ -546,6 +547,43 @@ public abstract class JdbcTypeHelper {
 			return "timestamp";
 		}
 
+    }
+    public class StringArrayConverter extends TypeConverter<String[]> {
+
+        @Override
+        public String[] valueOf(Object o) {
+            if (o ==  null){
+                return new String[0];
+            }
+            if (o instanceof String[]){
+                return (String[])o;
+            }
+
+            if (o instanceof String){
+                return new String[]{(String)o};
+            }
+            TypeConverter<String> stringTypeConverter = getTypeRef(String.class).getTypeConverter();
+            Object possiblyArray = o;
+            if (List.class.isAssignableFrom(o.getClass())) {
+                possiblyArray = ((List)possiblyArray).toArray();
+            }
+            if (possiblyArray.getClass().isArray()){
+                int len = Array.getLength(possiblyArray);
+                String[] out = new String[len];
+                for (int i = 0 ; i < len ;i ++){
+                    out[i] = stringTypeConverter.valueOf(Array.get(possiblyArray,i));
+                }
+                return out;
+            }else{
+                return new String[]{stringTypeConverter.toString(possiblyArray)};
+            }
+
+        }
+
+        @Override
+        public String getDisplayClassName() {
+            return "array";
+        }
     }
     public class InputStreamConverter extends TypeConverter<InputStream> {
 
