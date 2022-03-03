@@ -560,7 +560,12 @@ public abstract class JdbcTypeHelper {
             }
 
             if (o instanceof String){
-                return new String[]{(String)o};
+                StringTokenizer tok = new StringTokenizer((String)o,",\"[]");
+                List<String> arr = new ArrayList<>();
+                while (tok.hasMoreTokens()){
+                    arr.add(tok.nextToken().trim());
+                }
+                return arr.toArray(new String[]{});
             }
             TypeConverter<String> stringTypeConverter = getTypeRef(String.class).getTypeConverter();
             Object possiblyArray = o;
@@ -577,6 +582,30 @@ public abstract class JdbcTypeHelper {
             }else{
                 return new String[]{stringTypeConverter.toString(possiblyArray)};
             }
+
+        }
+
+        @Override
+        public String toString(Object m) {
+            if (m == null){
+                return "[]";
+            }
+            List<String> array = new ArrayList<>();
+            if (m instanceof List){
+                ((List)m).forEach(o->{
+                    array.add(StringUtil.valueOf(o));
+                });
+            }else if (m.getClass().isArray()){
+                for (int i = 0 ; i < Array.getLength(m) ; i ++){
+                    array.add(StringUtil.valueOf(Array.get(m,i)));
+                }
+            }else if (m instanceof String){
+                StringTokenizer tok = new StringTokenizer((String)m,",\"[]");
+                while (tok.hasMoreTokens()){
+                    array.add(tok.nextToken().trim());
+                }
+            }
+            return array.toString();
 
         }
 

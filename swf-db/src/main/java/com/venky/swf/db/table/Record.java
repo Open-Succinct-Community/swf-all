@@ -21,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -78,7 +79,9 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         			BindVariable b1 = new BindVariable(getPool(),o1);
         			BindVariable b2 = new BindVariable(getPool(),o2);
         			ret = b1.getValue().equals(b2.getValue()); // May be they are equal in db terms as the underlying db types for the 2 classes are same.
-    			}
+    			}else if (o1 instanceof String[]){
+					ret = Arrays.equals((String[])o1,(String[])o2);
+				}
     		}
     	}
     	return ret ;
@@ -172,7 +175,11 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         			ref = Database.getJdbcTypeHelper(getPool()).getTypeRef(reflector.getFieldGetter(fieldName).getReturnType());
         		}
         		if (type != Types.VARCHAR){
-					columnValue = ref.getTypeConverter().valueOf(columnValue);
+					if (type == Types.ARRAY){
+						columnValue = ref.getTypeConverter().valueOf(rs.getArray(i).getArray());
+					}else {
+						columnValue = ref.getTypeConverter().valueOf(columnValue);
+					}
 				}else if (!reflector.getEncryptedFields().isEmpty() && reflector.isFieldEncrypted(fieldName) && returnDecrypted){
 					columnValue = SharedKeys.getInstance().decrypt(ref.getTypeConverter().toString(columnValue));
 				}

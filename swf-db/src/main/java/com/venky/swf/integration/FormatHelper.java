@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,14 +141,26 @@ public abstract class FormatHelper<T> {
 	public abstract T createElementAttribute(String name);
 	public abstract T getElementAttribute(String name);
 	public abstract Set<String> getElementAttributeNames();
+
 	public abstract void setAttribute(String name,T element);
 	public abstract void removeElementAttribute(String name);
 
 
 	public abstract void setAttribute(String name, String value);
 	public abstract void setElementAttribute(String name, String value);
+
 	public abstract Set<String> getAttributes();
-	public abstract String getAttribute(String name);
+	public abstract <P> P getAttribute(String name);
+	public abstract boolean hasAttribute(String name);
+
+	public boolean isArrayAttribute(String name){
+		return false;
+	}
+
+	public void setAttribute(String name, String[] value) {
+		throw new UnsupportedOperationException("Array attribute not supported for " + getMimeType());
+	}
+
 	public abstract void removeAttribute(String name) ;
 
 	public enum KeyCase {
@@ -159,9 +172,15 @@ public abstract class FormatHelper<T> {
 		for (String name : helper.getAttributes()){
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
 					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
-				String v = helper.getAttribute(name);
+
+				boolean isArray = isArrayAttribute(name);
+				Object v = getAttribute(name) ;
 				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
-				helper.setAttribute(newName,v);
+				if (isArray) {
+					helper.setAttribute(newName, (String[])v);
+				}else {
+					helper.setAttribute(newName,(String)v);
+				}
 				helper.removeAttribute(name);
 			}else {
 				break;

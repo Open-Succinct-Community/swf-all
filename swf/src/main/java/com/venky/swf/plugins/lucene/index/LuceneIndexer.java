@@ -177,6 +177,17 @@ public class LuceneIndexer {
                     addedFields = true;
                     if (Reader.class.isAssignableFrom(ref.getJavaClass())) {
                         addTextField(doc,fieldName,converter.toString(value), Store.NO);
+                    } else if (String[].class.isAssignableFrom(ref.getJavaClass())) {
+                        StringBuilder builder = new StringBuilder();
+                        String[] sValue = (String[])value;
+                        for (String s: sValue){
+                            builder.append(sanitize(s)).append(" ");
+                        }
+                        if (builder.length() >0 ) {
+                            doc.add(new TextField(fieldName,builder.toString(),Store.YES));
+                        }else {
+                            addTextField(doc,fieldName,"NULL",Store.YES);
+                        }
                     } else {
                         Class<? extends Model> referredModelClass = indexedReferenceColumns.get(columnName);
                         String sValue = converter.toStringISO(value);

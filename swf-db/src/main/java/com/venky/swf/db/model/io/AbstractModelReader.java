@@ -1,16 +1,15 @@
 package com.venky.swf.db.model.io;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.util.List;
-import java.util.Map;
-
-import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.integration.FormatHelper;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M> implements ModelReader<M, T> {
     public void setInvalidReferencesAllowed(boolean invalidReferencesAllowed) {
@@ -105,6 +104,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
     }
 
     private void set(M m, FormatHelper<T> helper) {
+
         for (String attributeName : helper.getAttributes()) {
             String fieldName = getFieldName(attributeName);
             if (fieldName == null){
@@ -114,7 +114,10 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                 continue;
             }
 
-            Object attrValue = helper.getAttribute(attributeName);
+            Object attrValue = helper.getAttribute(attributeName) ;
+            if (attrValue == null && !helper.hasAttribute(attributeName)){
+                continue;
+            }
             Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
 
             ColumnDescriptor columnDescriptor = getReflector().getColumnDescriptor(fieldName);
@@ -124,6 +127,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
             }
             getReflector().set(m, fieldName, value);
         }
+
         Map<String, List<String>> groupedFields = getReflector().getGroupedFields();
         groupedFields.forEach((g,fl)->{
             T groupElement = helper.getElementAttribute(g);
@@ -136,8 +140,11 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                 if (!getReflector().isFieldSettable(fieldName)){
                     return;
                 }
-
-                Object attrValue = groupHelper.getAttribute(getAttributeName(fieldName));
+                String attrName = getAttributeName(fieldName);
+                Object attrValue = groupHelper.getAttribute(attrName);
+                if (attrValue == null && !groupHelper.hasAttribute(attrName)){
+                    return;
+                }
                 Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
 
                 ColumnDescriptor columnDescriptor = getReflector().getColumnDescriptor(fieldName);

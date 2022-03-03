@@ -5,11 +5,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
+import com.venky.swf.db.JdbcTypeHelper.StringArrayConverter;
 import com.venky.swf.db.model.io.json.JSONFormatter;
 import com.venky.swf.routing.Config;
 import org.json.simple.JSONArray;
@@ -193,9 +197,8 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	@Override
 	public JSONObject getElementAttribute(String name) {
-		JSONObject attr = (JSONObject)root.get(name);
-		return attr;
-	}
+		return (JSONObject)root.get(name);
+}
 
 	@Override
 	public void setAttribute(String name, JSONObject element) {
@@ -220,35 +223,73 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	@Override
 	public Set<String> getAttributes() {
-		Set<String> attr = extractAttributes(root);
-		return attr;
+		return extractAttributes(root);
 	}
+
+	@Override
+	public boolean isArrayAttribute(String name) {
+		Object attr = root.get(name);
+		if ( attr == null){
+			return false;
+		}
+		if (!(attr instanceof JSONArray)){
+			return false;
+		}
+		return !(((JSONArray)attr).get(0) instanceof JSONAware);
+	}
+
 	private Set<String> extractAttributes(JSONObject obj){
-		Set<String> attr = new HashSet<String>();
+		Set<String> attr = new HashSet<>();
 		for (Object key : obj.keySet()){
 			Object value = obj.get(key);
-			if (value instanceof JSONObject){
-				continue;
-			}else if (value instanceof JSONArray){
-				continue; 
+			if (value instanceof JSONAware){
+				if (value instanceof JSONArray){
+					JSONArray array = (JSONArray) value;
+					if (!array.isEmpty()){
+						if (!(array.get(0) instanceof JSONAware)){
+							attr.add(StringUtil.valueOf(key));
+						}
+					}
+				}
+			}else {
+				attr.add(StringUtil.valueOf(key));
 			}
-			attr.add(StringUtil.valueOf(key));
 		}
 		return attr;
 	}
 
 	@Override
-	public String getAttribute(String name) {
+	@SuppressWarnings("unchecked")
+	public <P> P getAttribute(String name) {
 		Object attr = root.get(name);
 		if (attr == null){
 			return null;
-		}else if (attr instanceof JSONObject){
-			return null; 
-		}else if (attr instanceof JSONArray){
-			return null;
+		}else if (attr instanceof JSONAware){
+			if (isArrayAttribute(name)){
+				JSONArray array = ((JSONArray) attr);
+				String[] value = new String[array.size()];
+				for (int i = 0; i < array.size(); i++) {
+					value[i] = StringUtil.valueOf(array.get(i));
+				}
+				return (P)value;
+			}
 		}else {
-			return StringUtil.valueOf(attr);
+			return (P)StringUtil.valueOf(attr);
 		}
+		return null;
+	}
+
+	@Override
+	public boolean hasAttribute(String name) {
+		return root.containsKey(name);
+	}
+
+
+	@Override
+	public void setAttribute(String name, String[] value) {
+		JSONArray array = new JSONArray() ;
+		root.put(name,array);
+		array.addAll(Arrays.asList(value));
 	}
 
 	@Override
