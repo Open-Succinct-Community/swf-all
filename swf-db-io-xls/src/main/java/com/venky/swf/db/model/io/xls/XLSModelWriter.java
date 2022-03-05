@@ -1,24 +1,20 @@
 package com.venky.swf.db.model.io.xls;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.venky.cache.Cache;
 import com.venky.core.collections.SequenceMap;
-import com.venky.swf.db.JdbcTypeHelper.BooleanConverter;
+import com.venky.core.collections.SequenceSet;
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper.NumericConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.io.ModelWriter;
+import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.util.WordWrapUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
@@ -32,16 +28,17 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.venky.core.collections.SequenceSet;
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.Bucket;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper.NumericConverter;
-import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.io.ModelWriter;
-import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.util.WordWrapUtil;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements ModelWriter<M,Row>{
 	boolean parentIdExposed = true;

@@ -491,15 +491,17 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected View show(M record) {
-        View view = null;
+        return show(record,getReturnIntegrationAdaptor());
+    }
+
+    protected <T> View show(M record, IntegrationAdaptor<M,T> returnIntegrationAdaptor){
         if (returnIntegrationAdaptor != null) {
-            view = returnIntegrationAdaptor.createResponse(getPath(), record, true,
+            return returnIntegrationAdaptor.createResponse(getPath(), record, true,
                     getIncludedFields() == null ? null : Arrays.asList(getIncludedFields()),
                     getIgnoredParentModels(), getConsideredChildModels(), getIncludedModelFields());
-        } else {
-            view = dashboard(createModelShowView(record));
+        }else{
+            return dashboard(createModelShowView(record));
         }
-        return view;
     }
 
     protected Map<Class<? extends Model>,List<Class <? extends Model>>> getConsideredChildModels() {

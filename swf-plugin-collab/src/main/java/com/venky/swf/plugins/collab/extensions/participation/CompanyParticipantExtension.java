@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.extensions.participation;
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationShip;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserEmail;
 
@@ -23,41 +24,40 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		List<Long> ret = null;
 		User u = (User)user;
 		if ("SELF_COMPANY_ID".equalsIgnoreCase(fieldName)){
-			if (u.getCompanyId() != null){
-				ret = Arrays.asList(u.getCompanyId());
-			}else {
-				ret = new ArrayList<>();
-				for (com.venky.swf.db.model.UserEmail ue : u.getUserEmails()){
-					UserEmail userEmail = ue.getRawRecord().getAsProxy(UserEmail.class);
-					if (userEmail.isValidated()){
-						ret.add(userEmail.getCompanyId());
-					}
-				}
-			}
+			ret = getAssociatedCompanyIds(u);
 		}else if ("CUSTOMER_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getCustomers().stream().map(r->r.getCustomerId()).collect(Collectors.toList()));
+				ret.addAll(partial.getCustomers().stream().map(CompanyRelationShip::getCustomerId).collect(Collectors.toList()));
 			}else {
 				return new ArrayList<>();
 			}
 		}else if ("VENDOR_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getVendors().stream().map(r->r.getVendorId()).collect(Collectors.toList()));
+				ret.addAll(partial.getVendors().stream().map(CompanyRelationShip::getVendorId).collect(Collectors.toList()));
 			}else {
-				return new ArrayList<>();
+				ret = new ArrayList<>();
 			}
 		}else if ("CREATOR_COMPANY_ID".equalsIgnoreCase(fieldName)){
-			if (u.getCompanyId() != null){
-				return Arrays.asList(u.getCompanyId());
-			}/*else if (!partial.getReflector().isVoid(partial.getId()) && partial.getCreatorCompanyId() == null){
-				return Arrays.asList(partial.getId());
-			}*/else {
-				ret = new ArrayList<>();
-				ret.add(null);
+			ret = getAssociatedCompanyIds(u);
+		}
+		return ret;
+	}
+
+	public List<Long> getAssociatedCompanyIds(User u){
+		List<Long> ret = new SequenceSet<>();
+		if (u.getCompanyId() != null){
+			ret.add(u.getCompanyId());
+		}
+
+		for (com.venky.swf.db.model.UserEmail ue : u.getUserEmails()){
+			UserEmail userEmail = ue.getRawRecord().getAsProxy(UserEmail.class);
+			if (userEmail.isValidated()){
+				ret.add(userEmail.getCompanyId());
 			}
 		}
+
 		return ret;
 	}
 

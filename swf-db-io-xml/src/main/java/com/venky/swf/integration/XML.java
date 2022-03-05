@@ -192,6 +192,11 @@ public class XML extends FormatHelper<XMLElement>{
         return attributes;
 	}
 
+	@Override
+	public boolean hasAttribute(String name) {
+		return root.hasAttribute(name);
+	}
+
 
 	@Override
 	public String getAttribute(String name) {

@@ -182,8 +182,8 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				}
 			}else {
 				String attributeName = TimerUtils.time(cat,"getAttributeName()" , ()->getAttributeName(field));
-				String sValue = TimerUtils.time(cat, "toStringISO" ,
-						() -> Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value));
+
+
 
 				if (!groupedFields.isEmpty()){
 					ATTRIBUTE_GROUP group = ref.getAnnotation(fieldGetter, ATTRIBUTE_GROUP.class);
@@ -196,15 +196,17 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 						formatHelper = FormatHelper.instance(groupElement);
 					}
 				}
-				if (InputStream.class.isAssignableFrom(fieldGetter.getReturnType())) {
-				    formatHelper.setElementAttribute(attributeName,sValue);
-                }else {
-					FormatHelper<T> finalFormatHelper = formatHelper;
-					TimerUtils.time(cat,"setAttribute" , ()-> {
-						finalFormatHelper.setAttribute(attributeName, sValue);
-						return true;
-					});
-                }
+
+				if (String[].class.isAssignableFrom(value.getClass())) {
+					formatHelper.setAttribute(attributeName, (String[])value);
+				}else {
+					String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);
+					if (InputStream.class.isAssignableFrom(fieldGetter.getReturnType())) {
+						formatHelper.setElementAttribute(attributeName, sValue);
+					} else {
+						formatHelper.setAttribute(attributeName, sValue);
+					}
+				}
 			}
 		}
 

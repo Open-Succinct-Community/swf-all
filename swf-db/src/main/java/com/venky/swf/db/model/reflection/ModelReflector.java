@@ -1578,7 +1578,7 @@ public class ModelReflector<M extends Model> {
         public boolean matches(Method method){
     		Timer timer = cat.startTimer();
         	try {
-    			if (super.matches(method) && 
+    			if (super.matches(method) && !Modifier.isStatic(method.getModifiers()) &&
                         !Model.class.isAssignableFrom(method.getReturnType()) &&
                         Database.getJdbcTypeHelper(getPool()).getTypeRef(method.getReturnType()) != null){
                      return true;

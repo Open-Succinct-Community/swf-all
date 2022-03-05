@@ -11,6 +11,7 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -162,9 +163,12 @@ public class PostgresqlHelper extends JdbcTypeHelper{
                             "BYTEA", 0, 0, true, true, new InputStreamConverter()));
             
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
-                            "BYTEA", 0, 0, true, true,  new InputStreamConverter())); 
-    
-    }
+                            "BYTEA", 0, 0, true, true,  new InputStreamConverter()));
+
+			registerjdbcSQLType(String[].class, new TypeRef<>(Types.ARRAY,
+				"TEXT ARRAY",0,0,true,true,new StringArrayConverter()));
+
+	}
     @Override
     protected <M extends Model> void updateSequence(Table<M> table){
     	List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);

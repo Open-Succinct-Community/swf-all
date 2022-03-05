@@ -474,9 +474,12 @@ public class Database implements _IDatabase{
     public static String getCaller(){
         StackTraceElement[] e = new Exception().getStackTrace();
         for (StackTraceElement elem : e) {
-            if (elem.getClassName().startsWith("com.venky.swf.db") || elem.getClassName().startsWith("com.venky.swf.sql") || elem.getClassName().startsWith("sun.") || elem.getClassName().startsWith("java.")) {
+            if (elem.getClassName().startsWith("sun.") || elem.getClassName().startsWith("java.") || elem.getClassName().startsWith("jdk.")) {
                 continue;
             }
+			if (elem.getClassName().matches( "com\\.venky\\.swf\\.(routing|db|sql)\\.")){
+				continue;
+			}
             return elem.toString();
         }
 

@@ -15,10 +15,10 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -89,7 +89,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 		Object value = null;
 		switch (cell.getCellType()) {
 			case NUMERIC:
-				if (HSSFDateUtil.isCellDateFormatted(cell)) {
+				if (DateUtil.isCellDateFormatted(cell)) {
 					value = cell.getDateCellValue();
 				} else {
 					value = cell.getNumericCellValue();

@@ -22,25 +22,31 @@ public class BeforeValidateAttachment  extends BeforeModelValidateExtension<Atta
     public void beforeValidate(Attachment model) {
         if (!ObjectUtil.isVoid(model.getUploadUrl())){
             try {
-                URL url = new URL(Encode.forUriComponent(model.getUploadUrl()));
+                URL url = new URL(Encode.forUri(model.getUploadUrl()));
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(StringUtil.readBytes(url.openStream()));
+
                 if (!url.getProtocol().startsWith("data")){
                     String fileName = model.getUploadUrl().substring(model.getUploadUrl().lastIndexOf("/")+1);
-                    ByteArrayInputStream inputStream = new ByteArrayInputStream(StringUtil.readBytes(url.openStream()));
-                    model.setAttachment(inputStream);
-                    model.setAttachmentContentSize(inputStream.available());
                     model.setAttachmentContentName(fileName);
                     if (fileName.contains(".")){
                         model.setAttachmentContentType(MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fileName));
                     }else {
                         model.setAttachmentContentType(MimeType.APPLICATION_OCTET_STREAM.toString());
                     }
-
-                    {
-                        Attachment model2 = Database.getTable(Attachment.class).getRefreshed(model);
-                        model.getRawRecord().load(model2.getRawRecord());
-                        model.getRawRecord().setNewRecord(model2.getRawRecord().isNewRecord());
-                    }
+                }else {
+                    model.setAttachmentContentName("blob");
+                    model.setAttachmentContentType(MimeType.APPLICATION_OCTET_STREAM.toString());
                 }
+
+
+                model.setAttachment(inputStream);
+                model.setAttachmentContentSize(inputStream.available());
+                {
+                    Attachment model2 = Database.getTable(Attachment.class).getRefreshed(model);
+                    model.getRawRecord().load(model2.getRawRecord());
+                    model.getRawRecord().setNewRecord(model2.getRawRecord().isNewRecord());
+                }
+
             }catch (Exception ex){
                 throw new RuntimeException(ex);
             }

@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.participants.admin;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.plugins.collab.db.model.user.User;
@@ -71,4 +72,14 @@ public class CompanyImpl extends ModelImpl<Company>{
 		return getProxy();
 	}
 
+
+	public Long getAnyUserId(){
+		return null;
+	}
+	public void setAnyUserId(Long anyUserId) {
+
+	}
+	public User getAnyUser(){
+		return null;
+	}
 }

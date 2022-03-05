@@ -24,6 +24,12 @@ import java.sql.Date;
 import java.util.List;
 
 public interface Company extends Model{
+	@IS_VIRTUAL
+	@PARTICIPANT
+	public Long getAnyUserId();
+	public void setAnyUserId(Long anyUserId);
+	public User getAnyUser();
+
 	@COLUMN_NAME("ID")
 	@PROTECTION
 	@HIDDEN
