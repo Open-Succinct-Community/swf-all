@@ -29,13 +29,13 @@ public class BindVariable {
     
     public BindVariable(String pool,Object value, TypeRef<?> ref){
     	this.ref = ref;
-    	if (ref.getJdbcType() == Types.VARCHAR && value != null && !value.getClass().equals(String.class)){
+    	if (ref.getJdbcType() == Types.VARCHAR && value != null){
     		this.value = ref.getTypeConverter().toString(value); //PGSql stores Clobs as Varchar(
-    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getJdbcType() && value != null && !(value.getClass().equals(Double.class))){
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getJdbcType() && value != null){
     		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Double.class).getTypeConverter().valueOf(value);
-    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getJdbcType() && value != null && !(value.getClass().equals(Long.class))){
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getJdbcType() && value != null ) {
     		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(Long.class).getTypeConverter().valueOf(value);
-    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(String[].class).getJdbcType() && value != null && !(value.getClass().equals(String[].class))){
+    	}else if (ref.getJdbcType() == Database.getJdbcTypeHelper(pool).getTypeRef(String[].class).getJdbcType() && value != null ){
     		this.value = Database.getJdbcTypeHelper(pool).getTypeRef(String[].class).getTypeConverter().valueOf(value);
     	}else {
 			this.value = value;
