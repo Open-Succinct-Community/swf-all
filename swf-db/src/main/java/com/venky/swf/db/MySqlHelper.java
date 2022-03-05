@@ -11,6 +11,7 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -148,6 +149,8 @@ public class MySqlHelper extends JdbcTypeHelper{
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.LONGVARBINARY,
                             "LONGBLOB", 0, 0, true, true, new InputStreamConverter()));
 
+            registerjdbcSQLType(String[].class, new TypeRef<>(Types.VARCHAR,
+                "VARCHAR",128,0,true,true,new StringArrayConverter()));
 
 
     }
