@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.TimeZone;
 
 import com.venky.core.date.DateUtils;
@@ -134,5 +135,7 @@ public class DerbyHelper extends JdbcTypeHelper{
             registerjdbcSQLType(InputStream.class, new TypeRef<InputStream>(java.sql.Types.BLOB,
                             "BLOB", 0, 0, true , true,new InputStreamConverter()));
 
+            registerjdbcSQLType(String[].class, new TypeRef<>(Types.VARCHAR,
+                    "VARCHAR",128,0,true,true,new StringArrayConverter()));
     }
 }
