@@ -7,27 +7,27 @@
     <version>${revision}</version>
   </parent>
   <artifactId>swf-plugin-test</artifactId>
-  <name>swf-plugin-test</name>
-  <description>swf-plugin-test</description>
 
-  <url>http://maven.apache.org</url>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Succinct Web Framework - Test</description>
+    <url>http://succinct.in</url>
   <licenses>
     <license>
       <name>MIT</name>
       <url>LICENSE.txt</url>
-      <distribution>repo</distribution>
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:venkatramanm/swf-all.git</connection>
-    <developerConnection>scm:git:git@github.com:venkatramanm/swf-all.git</developerConnection>
-    <url>git@github.com:venkatramanm/swf-all.git</url>
+    <connection>scm:git:git://github.com/venkatramanm/swf-all.git</connection>
+    <developerConnection>scm:git:ssh://github.com:venkatramanm/swf-all.git</developerConnection>
+    <url>https://github.com/venkatramanm/swf-all/tree/master/swf-plugin-test</url>
   </scm>
   <developers>
     <developer> 
-      <id>venky</id>
       <name>Venkatraman Mahadevan</name>
       <email>venky@succinct.in</email>
+      <organization>Succinct</organization>
+      <organizationUrl>http://succinct.in</organizationUrl>
     </developer>
   </developers>
 	<properties>
