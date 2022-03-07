@@ -4,6 +4,7 @@
         <groupId>com.github.venkatramanm.swf-all</groupId>
         <artifactId>swf-all</artifactId>
         <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>swf</artifactId>
     <packaging>jar</packaging>
