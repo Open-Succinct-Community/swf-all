@@ -5,7 +5,6 @@
     <groupId>com.github.venkatramanm.swf-all</groupId>
     <artifactId>swf-all</artifactId>
     <version>${symbol_dollar}{revision}</version>
-    <relativePath>../swf-all/pom.xml</relativePath>
   </parent>
   <artifactId>${artifactId}</artifactId>
   <name>${artifactId}</name>
@@ -20,9 +19,9 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:git:git@github.com:venkatramanm/swf-all.git</connection>
-    <developerConnection>scm:git:git@github.com:venkatramanm/swf-all.git</developerConnection>
-    <url>git@github.com:venkatramanm/swf-all.git</url>
+    <connection>scm:git:git@github.com:venkatramanm/${artifactId}.git</connection>
+    <developerConnection>scm:git:git@github.com:venkatramanm/${artifactId}.git</developerConnection>
+    <url>https://github.com/venkatramanm/${artifactId}/tree/master</url>
   </scm>
   <developers>
     <developer> 
@@ -38,7 +37,7 @@
   	<dependency>
         <groupId>${project.groupId}</groupId>
   		  <artifactId>swf</artifactId>
-        <version>${project.version}</version>
+        <version>${project.parent.version}</version>
   	</dependency>
   </dependencies>
 </project>
