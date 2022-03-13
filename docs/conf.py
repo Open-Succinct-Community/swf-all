@@ -22,7 +22,7 @@ copyright = '2022, Venkatraman Mahadevan'
 author = 'Venkatraman Mahadevan'
 
 # The full version, including alpha/beta/rc tags
-release = '2.6-SNAPSHOT'
+release = '2.8'
 
 
 # -- General configuration ---------------------------------------------------

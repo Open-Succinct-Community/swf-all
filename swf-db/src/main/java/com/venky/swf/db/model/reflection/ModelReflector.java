@@ -810,8 +810,7 @@ public class ModelReflector<M extends Model> {
     }
 
     public boolean isFieldEncrypted(String fieldName){
-		Method getter = getFieldGetter(fieldName);
-		return  isAnnotationPresent(getter, ENCRYPTED.class);
+		return getEncryptedFields().contains(fieldName);
 	}
 
 	List<String> encryptedFields = null;
@@ -826,6 +825,14 @@ public class ModelReflector<M extends Model> {
 		List<String> ret = new SequenceSet<>();
 		ret.addAll(encryptedFields);
 		return ret;
+	}
+
+	/**
+	 * Internal method. Not to use it by normal developers. !!! WARNING!
+	 * @param encryptedFields
+	 */
+	public void setEncryptedFields(List<String> encryptedFields){
+		this.encryptedFields = encryptedFields;
 	}
 
 

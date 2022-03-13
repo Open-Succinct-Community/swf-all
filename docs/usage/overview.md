@@ -40,27 +40,27 @@ Web Applications in most domains have similar requirements and developers often 
 
 ## Some popular plugins.
 
-|Category| Description | Bundled|
-|-|-|-|
-|Authentication |open id based user authentication| bundled
-|	 |phone/otp based authentication| plugin
-|Authorization|user-role and data-role based authorization.| bundled
-|Customizing default Views|  - |bundled
-|Asyncronous task processing.| Running background jobs| bundled 
-| Communication | Mails (smtp and sendgrid adaptors) | plugin
-| Communitation | In App Notification | plugin 
-| Message Queue Adaptors | nats | plugin 
-| |hivemq|plugin
-|Collaboration|Company based Collaboration|plugin
-| |	Resource Calendars|plugin
-|	| Ecommerce - Products and Services |plugin
-| | Beckn protocol support|plugin
-| | Wiki | plugin
-|Support | Issue  tracker |plugin
-| | Database Audits| plugin
-|Presentations | Slide show.| plugin
-| |Attachments | plugin
-|ETL |Datamart	| plugin
+|Category| Name | Description | Bundled|
+|-|-|-|-|
+|Authentication |swf|open id based user authentication| bundled
+|	 |swf-plugin-mobilesignup|phone/otp based authentication| plugin
+|Authorization|swf(security)|user-role and data-role based authorization.| bundled
+|Customizing default Views|swf| - |bundled
+|Asyncronous task processing.|swf(background)| Running background jobs| bundled 
+| Communication | (swf-plugin-mail)|Mails (smtp and sendgrid adaptors) | plugin
+| Communication | (swf-plugin-templates)|In App Notification | plugin 
+| Message Queue Adaptors |(swf-plugin-nats)| nats | plugin 
+| |(swf-plugin-hivemq)|hivemq|plugin
+|Collaboration|swf-plugin-collab|Company based Collaboration|plugin
+| |	swf-plugin-calendar|Resource Calendars|plugin
+|	| swf-plugin-ecommerce|Ecommerce - Products and Services |plugin
+| | swf-plugin-beckn|Beckn protocol support|plugin
+| | swf-plugin-wiki |Wiki | plugin
+|Support |swf-plugin-bugs| Issue  tracker |plugin
+| | swf-plugin-audit|Database Audits| plugin
+|Presentations | swf-plugin-slideshow|Slide show.| plugin
+| | swf(attachment)|Attachments |bundled
+|ETL |swf-plugin-datamart|Datamart	| plugin
 
 ## Installing Succinct
 Succinct framework gets auto installed via maven when you try to create an application. However, if you  wish to be on the development version of Succinct, you can clone the relevant github repositories manually and build them locally. 

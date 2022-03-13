@@ -358,7 +358,9 @@ public class Router extends AbstractHandler {
 
 	public void reset() {
     	try {
-			setLoader(getClass().getClassLoader().getClass().getConstructor().newInstance());
+			if (Config.instance().isDevelopmentEnvironment()){
+				setLoader(new SWFClassLoader(getClass().getClassLoader()));
+			}
 		}catch (Exception ex){
     		throw new RuntimeException(ex);
 		}

@@ -2,6 +2,7 @@ package com.venky.swf.util;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.routing.Config;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -13,9 +14,16 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.KeyStore.SecretKeyEntry;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.Base64;
 
 public class SharedKeys {
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null){
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
     private SharedKeys(){
         try {
             ensureKeyStore();
