@@ -766,12 +766,13 @@ public class ModelInvocationHandler implements InvocationHandler {
 
     private void update() {
     	Record record = getRawRecord();
+		Set<String> dirtyFields = new HashSet<>(record.getDirtyFields());
 		encrypt();
         int oldLockId = proxy.getLockId();
         int newLockId = oldLockId + 1;
 
         Update q = new Update(getReflector());
-        Iterator<String> fI = record.getDirtyFields().iterator();
+        Iterator<String> fI = dirtyFields.iterator();
         while (fI.hasNext()) {
             String columnName = fI.next();
             String fieldName =  getReflector().getFieldName(columnName);
