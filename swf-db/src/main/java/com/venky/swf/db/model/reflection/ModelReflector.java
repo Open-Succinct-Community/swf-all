@@ -822,9 +822,7 @@ public class ModelReflector<M extends Model> {
 				}
 			}
 		}
-		List<String> ret = new SequenceSet<>();
-		ret.addAll(encryptedFields);
-		return ret;
+		return new IgnoreCaseList(false,encryptedFields);
 	}
 
 	/**
