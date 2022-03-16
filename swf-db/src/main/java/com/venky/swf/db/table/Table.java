@@ -612,13 +612,11 @@ public class Table<M extends Model> {
             if (ref == null) {
                 throw new RuntimeException("Unknown JDBCType:" + getJDBCType() + " for column " + getName());
             }
-            buff.append("\"");
             if (helper.isColumnNameAutoLowerCasedInDB()) {
                 buff.append(LowerCaseStringCache.instance().get(getName()));
             } else {
                 buff.append(getName());
             }
-            buff.append("\"");
             if (isAutoIncrement()) {
                 buff.append(helper.getAutoIncrementInstruction());
             } else {

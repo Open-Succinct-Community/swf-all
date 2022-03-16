@@ -50,8 +50,11 @@ public class AppInstaller implements Installer {
 
 		for (String modelClassName : modelClasses){
 			try {
-				ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>)Class.forName(modelClassName));
-				encrypt(ref,map.get(ref.getModelClass().getName()));
+				Class<? extends Model> modelClass = (Class<? extends Model>) Class.forName(modelClassName);
+				if (!modelClassName.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)) {
+					ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>) modelClass);
+					encrypt(ref, map.get(ref.getModelClass().getName()));
+				}
 			}catch (Exception ex){
 				//
 			}
