@@ -427,12 +427,13 @@ public class ContactsController extends ModelController<Contact> {
 
         Contact contact = Database.getTable(Contact.class).newRecord();
         contact.setName(mostProbableNames.isEmpty()? "Unknown" : mostProbableNames.first());
-
+        contact.getRawRecord().setNewRecord(false);
         return show(contact);
 
     }
 
 }
+
 
 ````
 ####  Restart the application and open in [Browser](http://localhost:30030/)
@@ -441,7 +442,39 @@ public class ContactsController extends ModelController<Contact> {
 3. You will see the contact name in the output based  on the phonenumber of the contact. 
 
 
+### Iteration 5 
+Can this be exposed as a json api? 
 
+#### Response By Content-Type. 
+1. By passing content-type=application/json, you can get responses as json 
+2. To call an Api, you need to pass an ApiKey associated with a user in the http header.
+3. To know the api key, you can use the login api with user/password to know the api key. This key changes based on a security policy. so, you are advised to handle Request Status of 401 (Unauthorized) to try login again. 
+
+```shell 
+$ curl -H 'content-type:application/json' "http://localhost:30030/login" -d '{ "User" : {"Name" : "venky" , "Password" :"venky12" }}' 
+
+{
+  "User" : {
+    "ApiKey" : "9927ae0bcd45f32ad0af1205c11bd6ee30e940e1"
+    ,"Id" : "33"
+    ,"Name" : "venky"
+  }
+}
+
+$ curl -H 'content-type:application/json' -H 'ApiKey:9927ae0bcd45f32ad0af1205c11bd6ee30e940e1' "http://localhost:30030/contacts/whois/9845114558" 
+{
+  "Contact" : {
+    "Id" : "0"
+    ,"LockId" : "0"
+    ,"Name" : "Venky"
+  }
+}
+
+$ curl -H 'content-type:application/xml' -H 'ApiKey:9927ae0bcd45f32ad0af1205c11bd6ee30e940e1' "http://localhost:30030/contacts/whois/9845114558"
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Contact Id="0" LockId="0" Name="Venky"/>
+````
 
 
 

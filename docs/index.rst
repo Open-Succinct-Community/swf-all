@@ -12,6 +12,7 @@ Welcome to Succinct Web Framework's documentation!
 
    usage/overview
    usage/quickstart
+   usage/detailed
 
 
 Indices and tables
