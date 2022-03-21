@@ -235,8 +235,7 @@ public class Path implements _IPath{
         return cookies1;
     }
     private Cookie getCookie(jakarta.servlet.http.Cookie cookie){
-        return (Cookie) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Cookie.class},
-                (proxy, method, args) -> method.invoke(cookie,args));
+        return new Cookie(cookie.getName(),cookie.getValue());
     }
 
     public Cookie getCookie(String name){

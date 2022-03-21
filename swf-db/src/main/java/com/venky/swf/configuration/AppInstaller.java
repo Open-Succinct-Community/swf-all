@@ -44,7 +44,17 @@ public class AppInstaller implements Installer {
 		};
 		List<EncryptedModel> statuses = new Select().from(EncryptedModel.class).execute();
 		statuses.forEach(s->{
-			map.put(s.getName(),s);
+			String correctName = s.getName().replaceAll("^.*\\.","");
+			EncryptedModel encryptedModel = map.get(correctName);
+			if (encryptedModel != null){
+				s.destroy();
+			}else {
+				if (!ObjectUtil.equals(correctName,s.getName())) {
+					s.setName(correctName);
+					s.save();
+					map.put(correctName,s);
+				}
+			}
 		});
 
 
@@ -53,7 +63,7 @@ public class AppInstaller implements Installer {
 				Class<? extends Model> modelClass = (Class<? extends Model>) Class.forName(modelClassName);
 				if (!modelClassName.equals(Model.class.getName()) && modelClass.isInterface() && Model.class.isAssignableFrom(modelClass)) {
 					ModelReflector<? extends Model> ref = ModelReflector.instance((Class<? extends Model>) modelClass);
-					encrypt(ref, map.get(ref.getModelClass().getName()));
+					encrypt(ref, map.get(ref.getModelClass().getSimpleName()));
 				}
 			}catch (Exception ex){
 				//
@@ -100,7 +110,7 @@ public class AppInstaller implements Installer {
 		}else {
 			if (status == null) {
 				EncryptedModel encryptedModel = Database.getTable(EncryptedModel.class).newRecord();
-				encryptedModel.setName(ref.getModelClass().getName());
+				encryptedModel.setName(ref.getModelClass().getSimpleName());
 				encryptedModel.save();
 				status = encryptedModel;
 			}
