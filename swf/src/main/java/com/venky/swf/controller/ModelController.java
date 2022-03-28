@@ -605,6 +605,9 @@ public class ModelController<M extends Model> extends Controller {
                         } else {
                             return new BytesView(getPath(), StringUtil.readBytes((InputStream) getter.invoke(record)), mimeType);
                         }
+                    }else if (Reader.class.isAssignableFrom(getter.getReturnType())){
+                        String fieldName = ref.getFieldName(getter);
+                        return new BytesView(getPath(),StringUtil.read((Reader) ref.get(record,fieldName)).getBytes(StandardCharsets.UTF_8));
                     }
                 }
             } catch (IllegalAccessException e) {

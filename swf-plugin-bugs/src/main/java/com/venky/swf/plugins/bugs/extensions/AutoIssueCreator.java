@@ -7,7 +7,7 @@ import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.AsyncTaskWorker;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
@@ -40,7 +40,7 @@ public class AutoIssueCreator implements Extension {
         }
         Throwable throwable = context.length <= 1 ? null : ExceptionUtil.getRootCause((Throwable)context[1]);
         if (throwable != null){
-            AsyncTaskManager.getInstance().addAll(Arrays.asList(new Task() {
+            AsyncTaskManagerFactory.getInstance().addAll(Arrays.asList(new Task() {
                 @Override
                 public void execute() {
                     String title =  "Exception found " + throwable.getMessage() + " " + getLocation(throwable);

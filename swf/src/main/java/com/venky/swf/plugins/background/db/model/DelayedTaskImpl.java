@@ -1,19 +1,18 @@
 package com.venky.swf.plugins.background.db.model;
 
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import com.venky.core.io.StringReader;
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.CoreTask.Priority;
 import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.background.core.Task.Priority;
 import com.venky.swf.routing.Config;
+
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	public DelayedTaskImpl(){
@@ -24,8 +23,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 		super(proxy);
 	}
 	
-	public Priority getTaskPriority(){ 
-		return Task.getPriority(getProxy().getPriority());
+	public Priority getTaskPriority(){
+		return CoreTask.getPriority(getProxy().getPriority());
 	}
 	public long getTaskId(){
 		return getProxy().getId();

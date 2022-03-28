@@ -30,6 +30,8 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.CoreTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
@@ -486,7 +488,7 @@ public class Controller implements TemplateLoader{
                         tasks.add(new ImportTask<>(m));
                     }
                     if (m == null || tasks.size() >= 200){
-                        AsyncTaskManager.getInstance().addAll(tasks);
+                        AsyncTaskManagerFactory.getInstance().addAll(tasks);
                         tasks.clear();
                     }
                 }

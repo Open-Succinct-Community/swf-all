@@ -9,8 +9,6 @@ import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.MultiException;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.Transaction;
 import com.venky.swf.routing.Config;
 
 public class AsyncTaskWorker extends Thread{
@@ -26,7 +24,7 @@ public class AsyncTaskWorker extends Thread{
 			cat.log(level, "Thread :" + getName() + ":" + message);
 		}
 	}
-	protected <T extends Task> String getTaskIdentifier(T task){
+	protected <T extends CoreTask> String getTaskIdentifier(T task){
 		if (task instanceof  TaskHolder) {
 			return ((TaskHolder)task).innerTask().getClass().getName();
 		}else {
@@ -34,26 +32,21 @@ public class AsyncTaskWorker extends Thread{
 		}
 	}
 	public void run(){
-		Task task = null ;
+		CoreTask task = null ;
 		while ((task = manager.next()) != null ){
 			log(Level.INFO,"Started Task:" + getTaskIdentifier(task));
-			Database db = null; 
-			Transaction txn = null;
 			Timer timer = cat.startTimer(getTaskIdentifier(task));
 			try {
-				db = Database.getInstance();
-				txn = db.getCurrentTransaction();
+				task.onStart();
 				task.execute();
-				txn.commit();
+				task.onSuccess();
 			}catch (Throwable e){
 				StringWriter sw = new StringWriter();
 				PrintWriter p = new PrintWriter(sw);
 				ExceptionUtil.getRootCause(e).printStackTrace(p); p.close();
 				log(Level.WARNING,"Worker thread Rolling back due to exception " + sw.toString());
 				try {
-					if (txn != null) {
-						txn.rollback(e);
-					}
+					task.onException(e);
 				}catch (Exception ex){
 					ex.printStackTrace();
 				}
@@ -61,9 +54,7 @@ public class AsyncTaskWorker extends Thread{
 				timer.stop();
 				try {
 					log(Level.INFO,"Completed Task:" + getTaskIdentifier(task));
-					if (db != null) {
-						db.close();
-					}
+					task.onComplete();
 					TimerStatistics.dumpStatistics();
 				}catch(Exception ex) {
 					MultiException m = new MultiException("Error while closing connections");

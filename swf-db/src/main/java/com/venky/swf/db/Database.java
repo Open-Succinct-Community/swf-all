@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -357,11 +358,13 @@ public class Database implements _IDatabase{
 				try{
 					Installer installer = (Installer)Class.forName(installerName).newInstance();
 					installer.install();
-				}finally {
-					Config.instance().getLogger(Database.class.getName()).info("done!");
+				}catch (Exception ex){
+					Config.instance().getLogger(Database.class.getName()).log(Level.WARNING,"Installer " + installerName + " failed !" , ex);
+					throw new RuntimeException(ex);
+				} finally {
+					Config.instance().getLogger(Database.class.getName()).info(installerName + "done!");
 				}
 			}
-			Database.getInstance().getCurrentTransaction().commit();
 		} catch (Exception e) {
 			Config.instance().getLogger(Database.class.getName()).log(Level.WARNING,"Installers Failed!",e);
 			throw new RuntimeException(e);

@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -126,7 +127,14 @@ public class Router extends AbstractHandler {
 					loadExtensions();
 					try {
 						db.loadFactorySettings();
-					}finally {
+						db.getCurrentTransaction().commit();
+					}catch (Exception ex){
+						try {
+							db.getCurrentTransaction().rollback(ex);
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+					} finally{
 						db.close();
 					}
 					try {
