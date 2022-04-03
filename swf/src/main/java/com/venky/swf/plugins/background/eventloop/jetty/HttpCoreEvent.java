@@ -90,7 +90,7 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
                         try {
                             view.write();
                         }catch (Exception ex){
-                            // Don't rollback all the good work. because of conenction reset
+                            cat.log(Level.INFO,"Failed to write view. This is not an error mostly it could be due to connection reset!! " + iPath.getTarget() + ":" , ex);
                         }finally{
                             viewWriteTimer.stop();
                         }

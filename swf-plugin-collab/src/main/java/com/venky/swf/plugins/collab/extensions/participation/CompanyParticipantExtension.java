@@ -2,11 +2,17 @@ package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationShip;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserEmail;
+import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +66,9 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 			}
 		}
 
+		ModelReflector<Company> ref = ModelReflector.instance(Company.class);
+		List<Company> companies = new Select("ID").from(Company.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("CREATOR_USER_ID").getName(), Operator.EQ, u.getId())).execute();
+		ret.addAll(DataSecurityFilter.getIds(companies));
 		return ret;
 	}
 
