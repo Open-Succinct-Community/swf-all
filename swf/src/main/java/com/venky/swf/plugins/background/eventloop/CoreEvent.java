@@ -35,7 +35,7 @@ public  class CoreEvent implements CoreTask {
     }
 
     private CoreEvent createChild(CoreFuture child){
-        return new CoreEvent(parent,child);
+        return new CoreEvent(this,child);
     }
 
     public boolean isReady(){

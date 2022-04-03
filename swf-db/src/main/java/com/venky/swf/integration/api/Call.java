@@ -23,9 +23,21 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpClient.Redirect;
+import java.net.http.HttpClient.Version;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublisher;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpRequest.Builder;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Flow.Subscriber;
 import java.util.zip.GZIPInputStream;
 
 public class Call<T> implements Serializable {
@@ -44,7 +56,6 @@ public class Call<T> implements Serializable {
     private transient ByteArrayInputStream errorStream = null;
 
     T input;
-
     private void checkExpired(){
         if (responseStream != null){
             throw new RuntimeException("Call already used once. Create another instance of Call Object");
@@ -117,30 +128,15 @@ public class Call<T> implements Serializable {
         return this;
     }
 
-    private boolean beingRedirected = false;
-    public boolean isBeingRedirected(){
-        if (responseStream == null){
-            invoke();
-        }
-        return beingRedirected;
-    }
-    private String redirectedUrl = null;
-    public String getRedirectedUrl(){
-        if (responseStream == null){
-            invoke();
-        }
-        return redirectedUrl;
-    }
 
-    private Call<T> invoke(){
+    private Call<T> invoke() {
         checkExpired();
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
             method = HttpMethod.POST;
             //throw new RuntimeException("Cannot call API using Method " + method + " and parameter as " + inputFormat );
         }
 
-        URL curl;
-        HttpURLConnection connection = null;
+        Builder curlBuilder ;
         StringBuilder fakeCurlRequest = new StringBuilder();
         try {
             StringBuilder sUrl = new StringBuilder();
@@ -161,27 +157,27 @@ public class Call<T> implements Serializable {
             }
             fakeCurlRequest.append("Request ").append(":\n curl ");
 
-            curl = new URL(sUrl.toString());
-            connection = (HttpURLConnection)(curl.openConnection());
+            curlBuilder = HttpRequest.newBuilder().uri(new URI(sUrl.toString()));
+            curlBuilder.timeout(Duration.ofMillis(timeOut));
+            byte[] parameterByteArray = inputFormat == InputFormat.INPUT_STREAM ? getParameterRaw(input) : parameterString.getBytes();
+            if (method ==  HttpMethod.GET){
+                curlBuilder.GET();
+            }else {
+                curlBuilder.POST(BodyPublishers.ofByteArray(parameterByteArray));
+            }
+            curlBuilder.setHeader("Accept-Encoding", "gzip");
+            curlBuilder.version(Version.HTTP_2);
 
-            connection.setConnectTimeout(timeOut);
-            connection.setReadTimeout(timeOut);
-            connection.setRequestMethod(method.toString());
-
-            connection.setRequestProperty("Accept-Encoding", "gzip");
             for (String k : requestHeaders.keySet()) {
                 String v = requestHeaders.get(k);
-                connection.setRequestProperty(k, v);
+                curlBuilder.setHeader(k, v);
                 fakeCurlRequest.append(" -H '").append(k).append(": ").append(v).append("' ");
-            };
+            }
 
-            connection.setDoOutput(true);
-            connection.setDoInput(true);
 
             fakeCurlRequest.append("'").append(sUrl).append("'");
             fakeCurlRequest.append(" ");
             if (method != HttpMethod.GET) {
-                byte[] parameterByteArray = inputFormat == InputFormat.INPUT_STREAM ? getParameterRaw(input) : parameterString.getBytes();
                 if (inputFormat == InputFormat.INPUT_STREAM){
                     String contentType = requestHeaders.get("content-type");
                     MimeType mimeType = null;
@@ -196,29 +192,21 @@ public class Call<T> implements Serializable {
                 }else {
                     fakeCurlRequest.append("-d '").append(parameterString).append("'");
                 }
-                connection.getOutputStream().write(parameterByteArray);
             }
+            HttpRequest request  = curlBuilder.build();
+            HttpResponse<InputStream> response = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build().send(request, BodyHandlers.ofInputStream());
 
-            if (connection.getResponseCode() >= 200 && connection.getResponseCode() < 299 ) {
+
+            if (response.statusCode() >= 200 && response.statusCode() < 299 ) {
                 //2xx is success.!!
-                InputStream in = null;
-                if (isResponseDecompressed() && connection.getContentEncoding()!=null && connection.getContentEncoding().equals("gzip")) {
-                    in = new GZIPInputStream(connection.getInputStream());
-                }else {
-                    in = connection.getInputStream();
-                }
-                responseHeaders.putAll(connection.getHeaderFields());
+                InputStream in = isResponseDecompressed() && response.headers().firstValue("Content-Encoding").isPresent() ? new GZIPInputStream(response.body()) : response.body();
+                responseHeaders.putAll(response.headers().map());
                 responseStream = new ByteArrayInputStream(StringUtil.readBytes(in));
                 errorStream= new ByteArrayInputStream(new byte[]{});
                 this.hasErrors = false;
-            }else if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP || connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM ){
-                redirectedUrl = connection.getHeaderField("Location");
-                beingRedirected = true;
-                responseStream = new ByteArrayInputStream(new byte[]{});
-                errorStream = new ByteArrayInputStream(new byte[]{});
-                hasErrors = false;
             }else {
-                errorStream = new ByteArrayInputStream(StringUtil.readBytes(connection.getErrorStream()));
+                InputStream in = isResponseDecompressed() && response.headers().firstValue("Content-Encoding").isPresent() ? new GZIPInputStream(response.body()) : response.body();
+                errorStream = new ByteArrayInputStream(StringUtil.readBytes(in));
                 responseStream = new ByteArrayInputStream(new byte[] {});
                 this.hasErrors = true;
             }
@@ -239,12 +227,8 @@ public class Call<T> implements Serializable {
             }
             Config.instance().getLogger(getClass().getName()).info(fakeCurlRequest.toString());
             return this;
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e); //Soften the exception.
-        }finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
     }
 

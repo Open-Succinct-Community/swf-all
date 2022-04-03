@@ -26,6 +26,7 @@ import java.util.List;
 public interface Company extends Model{
 	@IS_VIRTUAL
 	@PARTICIPANT
+	@HIDDEN
 	public Long getAnyUserId();
 	public void setAnyUserId(Long anyUserId);
 	public User getAnyUser();

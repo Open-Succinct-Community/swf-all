@@ -289,7 +289,7 @@ public class Controller implements TemplateLoader{
     }
 
     public <M extends Model> JSONObject autocompleteJSON(Class<M> modelClass, Expression baseWhereClause, String fieldName, String value) {
-        FormatHelper<JSONObject> fh = FormatHelper.instance(MimeType.APPLICATION_JSON, "entries", true);
+            FormatHelper<JSONObject> fh = FormatHelper.instance(MimeType.APPLICATION_JSON, "entries", true);
 
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
@@ -371,7 +371,7 @@ public class Controller implements TemplateLoader{
     public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName, String value) {
         JSONObject doc = autocompleteJSON(modelClass, baseWhereClause, fieldName, value);
         Config.instance().getLogger(getClass().getName()).info(doc.toString());
-        return new BytesView(path, String.valueOf(doc).getBytes());
+        return new BytesView(path, String.valueOf(doc).getBytes(), MimeType.APPLICATION_JSON);
     }
 
     private void createEntry(ModelReflector<? extends Model> reflector, FormatHelper<JSONObject> doc, Object name, Object id) {

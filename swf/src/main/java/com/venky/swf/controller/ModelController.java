@@ -1206,6 +1206,10 @@ public class ModelController<M extends Model> extends Controller {
                 autoCompleteFieldName = fieldName.split("_AUTO_COMPLETE_")[1];
             }
         }
+        List<String> fieldsToSet = new ArrayList<>();
+        Record record = model.getRawRecord();
+        fieldsToSet.addAll(reflector.getVirtualFields());
+        fieldsToSet.addAll(record.getDirtyFields());
 
         Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
         OnLookupSelect onlookup = reflector.getAnnotation(autoCompleteFieldGetter, OnLookupSelect.class);
@@ -1217,17 +1221,15 @@ public class ModelController<M extends Model> extends Controller {
                 //
             }
         }
-        TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
 
-        JSONObject obj = new JSONObject();
-        Record record = model.getRawRecord();
-        List<String> fieldsToSet = new ArrayList<>();
-        fieldsToSet.addAll(reflector.getVirtualFields());
         fieldsToSet.addAll(record.getDirtyFields());
 
+        TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
+        JSONObject obj = new JSONObject();
         for (String f : fieldsToSet) {
             Object value = reflector.get(record, f);
-            obj.put(f, value);
+            Class<?>  type =  reflector.getFieldGetter(f).getReturnType();
+            obj.put(f, reflector.getJdbcTypeHelper().getTypeRef(type).getTypeConverter().toString(value));
 
             Method fieldGetter = reflector.getFieldGetter(f);
             Method referredModelGetter = reflector.getReferredModelGetterFor(fieldGetter);
@@ -1242,7 +1244,7 @@ public class ModelController<M extends Model> extends Controller {
                 obj.put("_AUTO_COMPLETE_" + f, referredModelReflector.get(referredModel, referredModelDescriptionField));
             }
         }
-        return new BytesView(getPath(), obj.toString().getBytes());
+        return new BytesView(getPath(), obj.toString().getBytes(), MimeType.APPLICATION_JSON);
     }
 
     public View autocomplete() {
@@ -1272,7 +1274,6 @@ public class ModelController<M extends Model> extends Controller {
         }
         Config.instance().getLogger(getClass().getName()).info(autoCompleteFieldName + "=" + value);
         model.getRawRecord().remove(autoCompleteFieldName);
-
         Expression where = getAutoCompleteBaseWhere(reflector, model, autoCompleteFieldName);
         ModelReflector<? extends Model> autoCompleteModelReflector = getAutoCompleteModelReflector(reflector, autoCompleteFieldName);
         return super.autocomplete(autoCompleteModelReflector.getModelClass(), where, autoCompleteModelReflector.getDescriptionField(), value);

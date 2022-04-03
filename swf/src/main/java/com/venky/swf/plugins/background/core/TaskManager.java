@@ -2,6 +2,7 @@ package com.venky.swf.plugins.background.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
@@ -34,7 +35,7 @@ public class TaskManager{
 	}
 
 	public <T extends CoreTask> void executeAsync(T task,boolean persistTaskQueue){
-		executeAsync(Arrays.asList(task), persistTaskQueue);
+		executeAsync(Collections.singleton(task), persistTaskQueue);
 	}
 	
 	public <T extends CoreTask> void executeAsync(Collection<T> tasks){
