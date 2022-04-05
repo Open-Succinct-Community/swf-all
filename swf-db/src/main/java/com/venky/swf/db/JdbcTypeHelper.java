@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.logging.Level;
 
 import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
@@ -35,6 +36,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefaulter;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
@@ -718,6 +720,14 @@ public abstract class JdbcTypeHelper {
             	return new H2Helper();
             }else if (driverClass.getName().equals("com.venky.swf.db.drivers.CockroachDBDummyDriver")) {
                 return new CockroachDBHelper();
+            }
+            String helper = ConnectionManager.instance().getNormalizedPropertyName("jdbc.type.helper."+driverClass.getName());
+            if (!ObjectUtil.isVoid(helper)){
+                try {
+                    return (JdbcTypeHelper) Class.forName(helper).getConstructor().newInstance();
+                }catch (Exception ex){
+                    Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Invalid helper " + helper + " configured. ", ex);
+                }
             }
 
             return null;
