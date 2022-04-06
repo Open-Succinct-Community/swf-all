@@ -128,16 +128,7 @@ Succinct uses java runtime Annotations to effectively derive meta information  a
 |-|-
 |@IS_VIRTUAL|Indicates if a model is backed by a database table or not.
 |@CONFIGURATION|If the data in this table/model does not change frequently, You may mark it with this annotation. Succinct would cache this information as it would change frequently.
-|@DBPOOL("some_pool") | Entities in an application may be backed by tables in diffent databases. In such situations, A DBPool may point to the appropriate jdbc connection configuration in swf.properties file.
-||swf.jdbc.some_pool.driver=org.h2.Driver
-||swf.jdbc.some_pool.url=jdbc:h2:./database/humbhi;AUTO_SERVER=TRUE;
-||swf.jdbc.some_pool.userid=humbhi
-||swf.jdbc.some_pool.password=humbhi
-||swf.jdbc.some_pool.validationQuery=values(1)
-||swf.jdbc.some_pool.dbschema=PUBLIC
-||swf.jdbc.some_pool.dbschema.setonconnection=true
-||swf.jdbc.some_pool.set.dbschema.command=set schema public
-||swf.jdbc.some_pool.readOnly=false
+|@DBPOOL("some_pool") | Entities in an application may be backed by tables in diffent databases. In such situations, A DBPool may point to the appropriate jdbc connection configuration in swf.properties file.<br/>swf.jdbc.some_pool.driver=org.h2.Driver<br/>swf.jdbc.some_pool.url=jdbc:h2:./database/some_db;AUTO_SERVER=TRUE;NON_KEYWORDS=VALUE;<br/>swf.jdbc.some_pool.userid=some_user<br/>swf.jdbc.some_pool.password=some_password<br/>swf.jdbc.some_pool.validationQuery=values(1)<br/>swf.jdbc.some_pool.dbschema=PUBLIC<br/>swf.jdbc.some_pool.dbschema.setonconnection=true<br/>swf.jdbc.some_pool.set.dbschema.command=set schema public<br/>swf.jdbc.some_pool.readOnly=false
 |@EXPORTABLE(true\|false)|Default is @EXPORTABLE(true).<br/>Models that are not annotated are considered EXPORTABLE(true)
 |@HAS_DESCRIPTION_FIELD("SOME_FIELD")| Indicates that  the field with name SOME_FIELD, corresponding to getSomeField() is treated as description column for records in this entity. It is typically used in lookups.   
 |@MENU("MAIN_MENU")| Indicates the Main menu in which this entity will be  shown for management of  this entity.
