@@ -332,7 +332,7 @@ public abstract class JdbcTypeHelper {
 				return "";
 			}
 			N n = (N)o; 
-			double fract = n.doubleValue() - Math.floor(n.doubleValue()); 
+			double fract = Double.isInfinite(n.doubleValue()) ? 0 : n.doubleValue() - Math.floor(n.doubleValue());
 			DecimalFormat fmt = getDisplayFormat();
 			if (DoubleUtils.compareTo(fract ,Math.round(fract*100.0)/100.0)== 0){
 				fmt = new DecimalFormat("##############.00");

@@ -3,12 +3,15 @@ package com.venky.swf.plugins.background.db.model;
 import java.io.InputStream;
 import java.io.Reader;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 
 @MENU("Admin")
@@ -44,4 +47,21 @@ public interface DelayedTask extends Task, Model {
 	public static final String[] DEFAULT_ORDER_BY_COLUMNS = new String[] {"PRIORITY", "NUM_ATTEMPTS", "UPDATED_AT", "ID"}; //Field and column names are same.
 
 	public boolean canExecuteRemotely() ;
+
+	@IS_VIRTUAL
+	public DbTaskManager getAsyncTaskManager();
+
+	@IS_VIRTUAL
+	public void onStart() ;
+
+	@IS_VIRTUAL
+	public void onSuccess() ;
+
+	@IS_VIRTUAL
+	public void onException(Throwable ex) ;
+
+
+	@IS_VIRTUAL
+	public void onComplete();
+
 }

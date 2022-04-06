@@ -21,7 +21,7 @@ Models are usually English nouns, and are named in the singular form. Their name
 
 Tables are plural form of the model's names and their names in the database are expressed in SNAKE_CASE. 
 
-for e.g. When the name of  a Model is Sample, The corresponding table would be named as SAMPLES. 
+for e.g. When the name of  a Model is SampleHeader, The corresponding table would be named as SAMPLE_HEADERS. 
 
 ### Simple Fields
 Fields added to models are expressed as getters and setters with  appropriate datatypes.  
@@ -38,7 +38,7 @@ Based on the return value of the getter, an appropriate db type would be automat
 
 The mappings from java type to db type are defined by a JdbcTypeHelper class that is chosen based on the dbdriver class . 
 
-Succinct 2.8 supports the derby,mysql,postgres,sqlite,sqldroid and h2 for databases to be used with succinct applications.
+Since 2.8 Succinct supports the derby,mysql,postgres,sqlite,sqldroid and h2 for databases to be used with succinct applications. 
 
 **On Field/Column Naming conventions**
 1. Field Getters and Setters are named in Camel case.
@@ -122,9 +122,30 @@ public interface Contact extends Model {
 ```
 
 ### Annotations.
-Succinct uses java runtime Annotations to effective derive 
-#### Field Annotations.
+Succinct uses java runtime Annotations to effectively derive meta information  about models and fields. 
 #### Model Annotations
+|Annotation|Usage|
+|-|-
+|@IS_VIRTUAL|Indicates if a model is backed by a database table or not.
+|@CONFIGURATION|If the data in this table/model does not change frequently, You may mark it with this annotation. Succinct would cache this information as it would change frequently.
+|@DBPOOL("some_pool") | Entities in an application may be backed by tables in diffent databases. In such situations, A DBPool may point to the appropriate jdbc connection configuration in swf.properties file.
+||swf.jdbc.some_pool.driver=org.h2.Driver
+||swf.jdbc.some_pool.url=jdbc:h2:./database/humbhi;AUTO_SERVER=TRUE;
+||swf.jdbc.some_pool.userid=humbhi
+||swf.jdbc.some_pool.password=humbhi
+||swf.jdbc.some_pool.validationQuery=values(1)
+||swf.jdbc.some_pool.dbschema=PUBLIC
+||swf.jdbc.some_pool.dbschema.setonconnection=true
+||swf.jdbc.some_pool.set.dbschema.command=set schema public
+||swf.jdbc.some_pool.readOnly=false
+|@EXPORTABLE(true\|false)|Default is @EXPORTABLE(true).<br/>Models that are not annotated are considered EXPORTABLE(true)
+|@HAS_DESCRIPTION_FIELD("SOME_FIELD")| Indicates that  the field with name SOME_FIELD, corresponding to getSomeField() is treated as description column for records in this entity. It is typically used in lookups.   
+|@MENU("MAIN_MENU")| Indicates the Main menu in which this entity will be  shown for management of  this entity.
+|@TABLE_NAME("SOME_NAME")| Model names and table names follow a naming convention but if you want to make them different, you can use this to do so.
+|@ORDER_BY("F1,F2,F3")| Indicates the default ordering by field names while listing records of this entity.
+
+
+#### Field Annotations.
 #### Relationship/Children Annotations
 ### Dynamic Proxy and ModelInvocationHandler 
 ### Model Implementation(s)
