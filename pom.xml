@@ -100,7 +100,7 @@
   <name>swf-all</name>
   <description>All components of succinct web framework</description>
   <url>http://www.succinct.in</url>
-  <version>2.11-SNAPSHOT</version>
+  <version>2.10</version>
   <licenses>
     <license>
       <name>MIT</name>
