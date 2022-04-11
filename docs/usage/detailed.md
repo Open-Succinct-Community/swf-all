@@ -137,9 +137,56 @@ Succinct uses java runtime Annotations to effectively derive meta information  a
 
 
 #### Field Annotations.
+Annotation|Usage
+-|-
+@IS_VIRTUAL| Indicates if a field is backed by a table column or not. The default meaning in absence of the annotation is the same as @IS_VIRTUAL(false)
+@COLUMN_NAME("SOME_COLUMN_NAME")| Name of the table column this field is backed by
+@COLUMN_SIZE(some_integer)|Size of the table column 
+@DATA_TYPE(some_integer) | Type of the table column as defined in java.sql.Types class
+@DECIMAL_DIGITS(some_integer) | Indicate the precision of a numeric field in the database.
+@COLUMN_DEF(StandardDefault[,String])|Used to assign a default value to the column if not specified during an insertion of a record in the table.
+@IS_AUTOINCREMENT|To mark an auto incremented primary key
+@IS_NULLABLE| If the field can be null. 
+@PASSWORD|To display **** and not show the data on the screen.
+@CLONING_PROTECT|When you duplicate a database record, field marked as CLONING_PROTECT is not copied over. 
+@HOUSE_KEEPING|Are fields managed by the framework. 
+@ENCRYPTED|Field marked thus will be encrypted at rest. These Properties have to be set accordingly if you need this feature for sensitive fields stored in the database.<br/>swf.encryption.support=true\|false <br/>swf.key.store.directory=a_key_store_directory_name<br/>swf.key.store.password=a_key_store_password<br/>swf.key.entry.succinct.password=some_other_password_for_key_entry
+@UNIQUE_KEY("comma separated key names")<br/> e.g @UNIQUE_KEY("K1,K2,K3")| All fields marked with same key names are considered to be composite unique keys of the table that backs the entity.
+@Index|Lucene Index for the model would include this field.
+@PARTICIPANT|The value stored in the columns  marked this are used to indentify if the logged in user has access to a table record. How it is determined is by application programmer implementing a ParticipantExtension for this Entity where the programmer can describe the values that are allowed for the column for the logged in user.
+
+
+UI Annotation|Description
+-|-
+@CONTENT_TYPE|Fields that are binary streams can be annotated with @CONTENT_TYPE(some_mime_type)
+@HIDDEN|Fields marked as @HIDDEN are not returned by default in default UI/API for the entity unless specifically asked for.
+@PROTECTION |Used to denote if a field is enabled/disabled/editable/non-editable on the default ui.
+@WATER_MARK(Some text) |This text is shown as a water mark in the input control for the field on the default ui.
+@TOOLTIP(Some Tool tip text)| This text will show as a tool tip on the ui control on the default ui
+
+Validation | Description
+-|-
+@MaxLength(number)|ensures the data in the field is limited to this length.
+@MinLength(number)|ensures the data in this field is of atleast this length.
+@NumericRange(min,max)|ensures that data value is between this numeric range.
+@IntegerRange(min,max)|ensures that data value is between this integer range.
+@ExactLength(number)|ensures that the data in the field is exactly of this length.
+@Regex(a regexp)|Ensures that the data in the field satisfies the mentioned regular expression.
+
+
+
+
 #### Relationship/Children Annotations
+Annotation|Description
+-|-
+@CONNECTED_VIA|child getters marked with @CONNECTED_VIA("PARENT_ID") would return child models whose column, "PARENT_ID" is treated as the reference column to the current entity as parent. These are only needed when child models have multiple reference fields to the current entity as parent.
+
+
 ### Dynamic Proxy and ModelInvocationHandler 
+
+
 ### Model Implementation(s)
+
 #### Method resolution 
 
 ## Persistence 
