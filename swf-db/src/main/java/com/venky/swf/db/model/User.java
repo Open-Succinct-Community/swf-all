@@ -133,4 +133,5 @@ public interface User extends Model {
     public BigDecimal getCurrentLng();
     public void setCurrentLng(BigDecimal lng);
 
+
 }

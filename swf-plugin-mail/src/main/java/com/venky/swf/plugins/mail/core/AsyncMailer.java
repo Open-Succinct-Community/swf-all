@@ -1,13 +1,10 @@
 package com.venky.swf.plugins.mail.core;
 
+import com.venky.swf.routing.Config;
+import org.codemonkey.simplejavamail.email.Email;
+
 import java.util.LinkedList;
 import java.util.logging.Level;
-
-import org.codemonkey.simplejavamail.Email;
-//import org.codemonkey.simplejavamail.Mailer;
-//import org.codemonkey.simplejavamail.TransportStrategy;
-
-import com.venky.swf.routing.Config;
 
 public class AsyncMailer extends Thread{
 	

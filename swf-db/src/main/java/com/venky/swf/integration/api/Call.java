@@ -54,7 +54,10 @@ public class Call<T> implements Serializable {
     private transient Map<String, List<String>> responseHeaders = new IgnoreCaseMap<>();
     private transient  ByteArrayInputStream responseStream = null;
     private transient ByteArrayInputStream errorStream = null;
-
+    private transient int status = -1;
+    public int getStatus(){
+        return status;
+    }
     T input;
     private void checkExpired(){
         if (responseStream != null){
@@ -196,6 +199,7 @@ public class Call<T> implements Serializable {
             HttpRequest request  = curlBuilder.build();
             HttpResponse<InputStream> response = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build().send(request, BodyHandlers.ofInputStream());
 
+            this.status = response.statusCode();
 
             if (response.statusCode() >= 200 && response.statusCode() < 299 ) {
                 //2xx is success.!!
