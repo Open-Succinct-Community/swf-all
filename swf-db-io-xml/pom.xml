@@ -7,7 +7,7 @@
 	</parent>
     <artifactId>swf-db-io-xml</artifactId>
 	<packaging>jar</packaging>
-    <version>2.11-SNAPSHOT</version>
+    <version>2.11</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Succinct Web Framework - XML Plugin</description>
     <url>http://succinct.in</url>
