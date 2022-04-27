@@ -68,12 +68,12 @@ public class AsyncTaskManagerFactory {
     }
 
     public <T extends CoreTask> void addAll(Collection<T> tasks) {
-        Map<AsyncTaskManager,List<CoreTask>> tasksMap = new HashMap<>();
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
-            Class<? extends AsyncTaskManager> cz = entry.getKey();
-            AsyncTaskManager atm = entry.getValue();
-            tasksMap.put(atm,new ArrayList<>());
-        }
+        Map<AsyncTaskManager,List<CoreTask>> tasksMap = new Cache<AsyncTaskManager, List<CoreTask>>() {
+            @Override
+            protected List<CoreTask> getValue(AsyncTaskManager asyncTaskManager) {
+                return new ArrayList<>();
+            }
+        };
 
         for (T task: tasks){
             tasksMap.get(task.getAsyncTaskManager()).add(task);
