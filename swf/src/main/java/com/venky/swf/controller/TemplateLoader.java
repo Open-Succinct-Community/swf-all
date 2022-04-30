@@ -199,6 +199,7 @@ public interface TemplateLoader {
         return publish(TemplateSubDirectory.MARKDOWN,file,false,true);
     }
 
+    @RequireLogin(false)
     default View htmlFragment(String file){
         return publish(TemplateSubDirectory.HTML,file,false,true);
     }
