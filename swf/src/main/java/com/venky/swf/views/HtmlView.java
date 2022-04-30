@@ -245,21 +245,11 @@ public abstract class HtmlView extends View{
     }
 
     protected void _createHead(Head head){
-        head.addControl(new Css("/resources/scripts/node_modules/bootstrap/dist/css/bootstrap.min.css"));
-        head.addControl(new Css("/resources/scripts/node_modules/@fortawesome/fontawesome-free/css/all.min.css"));
-        head.addControl(new Css("/resources/scripts/node_modules/tablesorter/dist/css/theme.bootstrap.min.css"));
-        head.addControl(new Css("/resources/scripts/node_modules/bootstrap4-datetimepicker/build/css/bootstrap-datetimepicker.min.css"));
+        Registry.instance().callExtensions("before.create.head."+getPath().controllerPathElement()+"/"+getPath().action(), getPath(), head);
+        Registry.instance().callExtensions("before.create.head",getPath(),head); // Global.
 
-        head.addControl(new Script("/resources/scripts/node_modules/jquery/dist/jquery.min.js",false));
-        head.addControl(new Script("/resources/scripts/node_modules/popper.js/dist/umd/popper.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/bootstrap/dist/js/bootstrap.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/tablesorter/dist/js/jquery.tablesorter.widgets.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/bootstrap-ajax-typeahead/bootstrap-typeahead.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/moment/min/moment-with-locales.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/bootstrap4-datetimepicker/build/js/bootstrap-datetimepicker.min.js"));
-        head.addControl(new Script("/resources/scripts/node_modules/lockr/lockr.min.js"));
-        
+
+
         
         head.addControl(new Css("/resources/scripts/swf/css/swf.css"));
         head.addControl(new Script("/resources/scripts/swf/js/swf.js"));
