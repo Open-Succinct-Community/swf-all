@@ -1,10 +1,16 @@
 package com.venky.swf.plugins.background.eventloop;
 
 import com.venky.core.util.MultiException;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.TaskManager;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public  class CoreEvent implements CoreTask {
@@ -40,18 +46,22 @@ public  class CoreEvent implements CoreTask {
 
     public boolean isReady(){
         synchronized (this){
+            boolean ready = true;
             for (Map.Entry<Long,CoreEvent> entry : childEvents.entrySet()){
-                if (!results.containsKey(entry.getKey()) && !exceptionMap.containsKey(entry.getKey())){
-                    return false;
+                ready = ( results.containsKey(entry.getKey()) || exceptionMap.containsKey(entry.getKey()) ) && entry.getValue().isReady();
+                if (!ready){
+                    break;
                 }
             }
-            return true;
+            return ready;
         }
     }
 
     public void onChildSuccess(CoreEvent child){
         synchronized (this){
-            results.put(child.getTaskId(), child.getFuture().get());
+            CoreFuture future = child.getFuture();
+            Object value = future == null ? null : future.get();
+            results.put(child.getTaskId(), value);
         }
     }
 
@@ -61,7 +71,8 @@ public  class CoreEvent implements CoreTask {
         }
     }
     public void onChildComplete(CoreEvent child){
-        if (isReady()){
+        if (isReady()) {
+            // Last child is completed
             getAsyncTaskManager().addAll(Collections.singleton(this));
         }
     }
@@ -74,6 +85,7 @@ public  class CoreEvent implements CoreTask {
 
     @Override
     public void execute() {
+        CoreEvent.setCurrentEvent(this);
         if (proxy != null) {
             proxy.execute();
         }
@@ -105,11 +117,16 @@ public  class CoreEvent implements CoreTask {
     }
     @Override
     public void onComplete() {
+        if (!isReady()){
+            // All children spawned  are not completed.
+            //this is not complete
+            return;
+        }
         if (proxy != null){
             proxy.onComplete();
         }
         CoreTask.super.onComplete();
-        if (parent != null){
+        if (parent != null ){
             parent.onChildComplete(this);
         }
 
@@ -129,13 +146,54 @@ public  class CoreEvent implements CoreTask {
     final Map<Long,Object> results = new HashMap<>();
     final Map<Long,Throwable> exceptionMap = new HashMap<>();
     final Map<Long,CoreEvent> childEvents = new HashMap<>();
-    public void spawn(CoreFuture child){
-        CoreEvent childEvent = createChild(child);
-        synchronized (this){
-            childEvents.put(childEvent.getTaskId(),childEvent);
+    public void spawn(CoreFuture... children){
+        List<CoreEvent> events = new ArrayList<>();
+        for (CoreFuture child : children){
+            CoreEvent childEvent = createChild(child);
+            events.add(childEvent);
         }
-        child.getAsyncTaskManager().addAll(Collections.singleton(childEvent));
+        spawn(events.toArray(new CoreEvent[]{}));
+    }
+    public void spawn(CoreEvent... childrenEvent){
+        synchronized (this){
+            for (CoreEvent childEvent: childrenEvent){
+                if (childEvent.parent == null){
+                    childEvent.parent = this;
+                }
+                if (childEvent.parent != this){
+                    throw new IllegalArgumentException("Not a child.");
+                }
+                childEvents.put(childEvent.getTaskId(),childEvent);
+            }
+        }
+        AsyncTaskManagerFactory.getInstance().addAll(Arrays.asList(childrenEvent));
     }
 
+    private static ThreadLocal<CoreEvent> currentEvent = new ThreadLocal<>();
+    public static void setCurrentEvent(CoreEvent event){
+        currentEvent.set(event);
+    }
+    public static void spawnOff(CoreFuture... children){
 
+        CoreEvent parent = currentEvent.get();
+        for (CoreFuture child: children){
+            if (parent != null){
+                parent.spawn(child);
+            }else {
+                CoreEvent childEvent = new  CoreEvent(null,child);
+                child.getAsyncTaskManager().addAll(Collections.singleton(childEvent));
+            }
+        }
+    }
+    public static void spawnOff(CoreEvent... children){
+
+        CoreEvent parent = currentEvent.get();
+        for (CoreEvent child: children){
+            if (parent != null){
+                parent.spawn(child);
+            }else {
+                child.getAsyncTaskManager().addAll(Collections.singleton(child));
+            }
+        }
+    }
 }

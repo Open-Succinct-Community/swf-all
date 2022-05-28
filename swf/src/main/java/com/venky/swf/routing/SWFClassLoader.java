@@ -46,6 +46,7 @@ public class SWFClassLoader extends ClassLoader {
         add(Pattern.compile("com\\.venky\\.swf\\.routing\\..*"));
         add(Pattern.compile("com\\.venky\\.core\\.log\\..*"));
         add(Pattern.compile("javax\\.servlet\\..*"));
+        add(Pattern.compile("com\\.venky\\.swf\\.plugins\\.background\\.eventloop\\..*"));
     }};
 
     public Class<?> loadClass(String name,boolean resolve) throws ClassNotFoundException {

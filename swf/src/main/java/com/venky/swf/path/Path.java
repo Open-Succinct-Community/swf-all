@@ -424,6 +424,7 @@ public class Path implements _IPath{
         }
         loadControllerClassName();
     }
+
     public boolean isAppAuthenticationRequired() {
         return getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
     }
@@ -522,15 +523,27 @@ public class Path implements _IPath{
             controllerClassName = cinfo.getControllerClass().getName();
             controllerPathIndex = cinfo.getControllerPathIndex();
         }
-        
+
         if (controllerClassName == null) {
             controllerClassName = Controller.class.getName();
             controllerPathIndex = -1;
         }
         actionPathIndex = controllerPathIndex + 1 ;
         parameterPathIndex = controllerPathIndex + 2;
+
+        if (parameterPathIndex < pathelements.size() -1 ){
+            StringBuilder filePath = new StringBuilder();
+            while ( parameterPathIndex < pathelements.size()){
+                if (filePath.length() > 0){
+                    filePath.append("/");
+                }
+                filePath.append(pathelements.remove(parameterPathIndex));
+            }
+            pathelements.add(filePath.toString()); //To absorb remaining  part of the path.
+        }
+
     }
-    
+
     public String controllerPath(){
         if (controllerPathIndex <= pathelements.size() -1){
             StringBuilder p = new StringBuilder();
@@ -813,13 +826,19 @@ public class Path implements _IPath{
     public boolean redirectOnException(){
         return getReturnProtocol().equals(MimeType.TEXT_HTML);
     }
-    
+
+    public String getContentType(){
+        return getProtocol().toString();
+    }
     public MimeType getProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)) {
             apiprotocol = getRequest().getHeader("content-type");
         }
         return Path.getProtocol(apiprotocol);
+    }
+    public String getAccept(){
+        return getReturnProtocol().toString();
     }
     public MimeType getReturnProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.

@@ -4,13 +4,19 @@ import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.Bucket;
+import com.venky.core.util.MultiException;
 import com.venky.swf.db._IDatabase;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.IOTask;
 import com.venky.swf.plugins.background.eventloop.CoreEvent;
 import com.venky.swf.plugins.background.eventloop.IOFuture;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
+import com.venky.swf.views.BytesView;
+import com.venky.swf.views.ExceptionView;
+import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
 import jakarta.servlet.http.HttpSession;
 
@@ -18,6 +24,7 @@ import javax.servlet.AsyncContext;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.logging.Level;
@@ -62,12 +69,14 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
         iPath.setResponse(response);
         iPath.setAsyncContext(context);
         requestHandler =  new IOFuture() {
-            Boolean beingForwarded = false;
+            Boolean beingForwarded = null;
 
 
             @Override
             public void execute() {
-                beingForwarded = handle();
+                if (beingForwarded == null) {
+                    beingForwarded = handle();
+                }
             }
 
 
@@ -146,19 +155,44 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
     }
 
     @Override
+    public void onStart() {
+        try {
+            super.onStart();
+        }catch (RuntimeException ex){
+            //If on start fails,, execute will not be called. Task will get directly completed after onException call.
+            try {
+                router.createExceptionView(iPath, ex).write();
+            }catch (IOException ioException){
+                MultiException multiException = new MultiException();
+                multiException.add(ex);
+                multiException.add(ioException);
+                Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Exception found  ",multiException);
+            }finally {
+                finalizeRequestHandler();
+                throw ex;
+            }
+        }
+    }
+
+    @Override
     public void execute() {
+        super.execute();
         if (calledNumberOfTimes.intValue() <= 0){
             spawn(requestHandler);
             calledNumberOfTimes.increment();
         }else {
-            boolean beingForwarded = requestHandler.get();
-            if (isReady() && !beingForwarded) {
-                try {
-                    _context.getResponse().flushBuffer();
-                    _context.complete();
-                } catch (Exception ex) {
-                    //
-                }
+            finalizeRequestHandler();
+        }
+    }
+
+    private void finalizeRequestHandler() {
+        boolean beingForwarded = requestHandler.get();
+        if (isReady() && !beingForwarded) {
+            try {
+                _context.getResponse().flushBuffer();
+                _context.complete();
+            } catch (Exception ex) {
+                //
             }
         }
     }
