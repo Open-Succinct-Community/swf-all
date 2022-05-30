@@ -137,7 +137,13 @@ public class LoginView extends HtmlView{
 		btn.setName("_LOGIN");
 
 		form.addControl(fg);
-        
+		Object error = getPath().getFormFields().get("error");
+		Object message = getPath().getFormFields().get("message");
+        if (!ObjectUtil.isVoid(error)) {
+			setStatus(StatusType.ERROR, error.toString());
+		}else if (ObjectUtil.isVoid(message)){
+			setStatus(StatusType.INFO, message.toString());
+		}
     }
 
     private class FormGroup extends Div{

@@ -127,7 +127,8 @@ public class Controller implements TemplateLoader{
                 getPath().getErrorMessages().forEach(m -> msg.append(m));
                 if (msg.length() > 0){
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        return createLoginView(StatusType.ERROR,msg.toString());
+                        //return createLoginView(StatusType.ERROR,msg.toString());
+                        return new RedirectorView(getPath(),"","/login?error="+msg);
                     }else {
                         throw new AccessDeniedException(msg.toString());
                     }

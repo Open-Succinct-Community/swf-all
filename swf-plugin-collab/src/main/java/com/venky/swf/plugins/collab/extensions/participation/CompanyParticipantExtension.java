@@ -4,7 +4,7 @@ import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
-import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationShip;
+import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationship;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserEmail;
 import com.venky.swf.pm.DataSecurityFilter;
@@ -12,7 +12,6 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,14 +33,14 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		}else if ("CUSTOMER_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getCustomers().stream().map(CompanyRelationShip::getCustomerId).collect(Collectors.toList()));
+				ret.addAll(partial.getCustomers().stream().map(CompanyRelationship::getCustomerId).collect(Collectors.toList()));
 			}else {
 				return new ArrayList<>();
 			}
 		}else if ("VENDOR_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getVendors().stream().map(CompanyRelationShip::getVendorId).collect(Collectors.toList()));
+				ret.addAll(partial.getVendors().stream().map(CompanyRelationship::getVendorId).collect(Collectors.toList()));
 			}else {
 				ret = new ArrayList<>();
 			}

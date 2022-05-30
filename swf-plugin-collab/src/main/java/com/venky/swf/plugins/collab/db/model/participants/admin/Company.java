@@ -110,10 +110,10 @@ public interface Company extends Model{
 
 
 	@CONNECTED_VIA("CUSTOMER_ID")
-	public List<CompanyRelationShip> getVendors();
+	public List<CompanyRelationship> getVendors();
 
 	@CONNECTED_VIA("VENDOR_ID")
-	public List<CompanyRelationShip> getCustomers();
+	public List<CompanyRelationship> getCustomers();
 
 	@PARTICIPANT
 	public Long getCreatorCompanyId();
