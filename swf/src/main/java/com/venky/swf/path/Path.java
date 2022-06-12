@@ -396,7 +396,7 @@ public class Path implements _IPath{
         this.target = target;
         Config.instance().getLogger(Path.class.getName()).log(Level.INFO,"Api Called:" + target);
         pathelements = parsePathElements(target);
-        boolean isResource = pathelements.isEmpty()? false : pathelements.get(0).equals("resources");
+        boolean isResource = !pathelements.isEmpty() && pathelements.get(0).equals("resources");
 
         int pathElementSize = pathelements.size();
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
