@@ -59,6 +59,7 @@ import org.json.simple.JSONObject;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -134,7 +135,8 @@ public class Controller implements TemplateLoader{
                     }
                 }else {
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        return createLoginView();
+                        //return createLoginView();
+                        return new RedirectorView(getPath(),"","/login");
                     }else {
                         return authenticate();
                     }
@@ -171,7 +173,8 @@ public class Controller implements TemplateLoader{
             } else {
                 StringBuilder msg = new StringBuilder();
                 getPath().getErrorMessages().forEach(m -> msg.append(m));
-                return createLoginView(StatusType.ERROR, msg.toString());
+                return new RedirectorView(getPath(),"/","login");
+                //return createLoginView(StatusType.ERROR, msg.toString());
             }
         } else {
             IntegrationAdaptor<User, ?> adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getPath().getProtocol()));
@@ -254,39 +257,12 @@ public class Controller implements TemplateLoader{
             return new BytesView(p, "Access Denied!".getBytes());
         }
 
-        InputStream is = null ;
-        File dir = new File("./src/main/resources");
-        if (dir.isDirectory() ){
-            File resource = new File(dir + "/" + name);
-            if (resource.exists() && resource.isFile()){
-                try {
-                    is = new FileInputStream(new File(dir + "/" + name));
-                }catch (Exception ex){
-                    is = null;
-                }
-            }
-        }
-        if (is == null) {
-            is = getClass().getResourceAsStream(name);
+        ByteArrayInputStream is = p.getResourceAsStream(name);
+        if (is == null){
+            throw new AccessDeniedException("No such resource!");
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int read = 0;
-        try {
-            if (is != null) {
-                while ((read = is.read(buffer)) >= 0) {
-                    baos.write(buffer, 0, read);
-                }
-            } else {
-                throw new AccessDeniedException("No such resource!");
-            }
-        } catch (IOException ex) {
-            //
-        }
-
-        //p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24 * 365 * 15));
-        return new BytesView(getPath(), baos.toByteArray(), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
+        return new BytesView(getPath(), StringUtil.readBytes(is), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
 
     public <M extends Model> JSONObject autocompleteJSON(Class<M> modelClass, Expression baseWhereClause, String fieldName, String value) {

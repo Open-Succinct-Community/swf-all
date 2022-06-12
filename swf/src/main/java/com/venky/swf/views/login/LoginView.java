@@ -141,7 +141,7 @@ public class LoginView extends HtmlView{
 		Object message = getPath().getFormFields().get("message");
         if (!ObjectUtil.isVoid(error)) {
 			setStatus(StatusType.ERROR, error.toString());
-		}else if (ObjectUtil.isVoid(message)){
+		}else if (!ObjectUtil.isVoid(message)){
 			setStatus(StatusType.INFO, message.toString());
 		}
     }

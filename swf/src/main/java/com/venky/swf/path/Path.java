@@ -49,6 +49,7 @@ import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
 import com.venky.swf.views.controls.model.ModelAwareness;
+import com.venky.swf.views.controls.page.text.Input;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
@@ -62,7 +63,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -294,7 +297,7 @@ public class Path implements _IPath{
     public void setResponse(HttpServletResponse response) {
         this.response = response;
     }
-    public Path constructNewPath(String target){
+    public Path  constructNewPath(String target){
         Path p = new Path(target);
         p.setSession(getSession());
         p.setRequest(getRequest());
@@ -328,8 +331,8 @@ public class Path implements _IPath{
         if (isResource) {
             if (!ObjectUtil.isVoid(resourcePath.toString())) {
                 try {
-                    URL resource = getClass().getResource(resourcePath.toString());
-                    if (resource == null) {
+                    InputStream resourceStream = getResourceAsStream(resourcePath.toString());
+                    if (resourceStream == null) {
                         isResource = false;
                     }
                 } catch (Exception ex) {
@@ -346,6 +349,39 @@ public class Path implements _IPath{
         }
         checkPathOverrides(pathComponents);
         return pathComponents;
+    }
+    Map<String,InputStream> map = new HashMap<>();
+    public ByteArrayInputStream getResourceAsStream(String path){
+        InputStream is = map.get(path) ;
+        if (is != null){
+            return (ByteArrayInputStream) is;
+        }
+        File dir = new File("./src/main/resources");
+        if (dir.isDirectory()) {
+            File resource = new File(dir + "/" + path);
+            if (resource.exists() && resource.isFile()) {
+                try {
+                    is = new FileInputStream(new File(dir + "/" + path));
+                } catch (Exception ex) {
+                    is = null;
+                }
+            }
+        }
+        if (is == null) {
+            is = getClass().getResourceAsStream(path);
+        }
+        ByteArrayInputStream bais = null;
+
+        if (is != null){
+            if (is instanceof ByteArrayInputStream){
+                bais = (ByteArrayInputStream) is;
+            }else {
+                byte[] bytes = StringUtil.readBytes(is, true);
+                bais = new ByteArrayInputStream(bytes);
+            }
+            map.put(path,bais);
+        }
+        return (ByteArrayInputStream) map.get(path);
     }
 
     private void checkPathOverrides(List<String> pathComponents) {
