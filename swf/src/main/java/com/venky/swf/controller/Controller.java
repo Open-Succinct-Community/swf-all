@@ -116,7 +116,7 @@ public class Controller implements TemplateLoader{
 
     @RequireLogin(false)
     public View login() {
-        if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null) {
+        if (getPath().getRequest().getMethod().equals("GET") && getSessionUser() == null) {
             if (getPath().getFormFields().isEmpty() || getPath().getFormFields().containsKey("_REGISTER")) {
                 return createLoginView();
             } else {
