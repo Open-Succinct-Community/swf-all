@@ -784,19 +784,25 @@ public class Path implements _IPath{
         }
         boolean keepalive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getHeader("KeepAlive"));
         autoInvalidate = !keepalive && !ObjectUtil.isVoid(getHeader("ApiKey"));
+
+        Map<String,Object> map = getFormFields();
+
+        String username = StringUtil.valueOf(map.get("name"));
+        String password = StringUtil.valueOf(map.get("password"));
+        String password2 = StringUtil.valueOf(map.get("password2"));
+
+        boolean isSignupRequest = map.containsKey("password2") && map.containsKey("_REGISTER") ;
+        boolean isLoginRequest = !map.containsKey("password2") && map.containsKey("_LOGIN");
+
         if (user == null){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
-                String username = null;
-                String password = null;
                 if (adaptor == null){
-                    Map<String,Object> map = getFormFields();
-                    username = StringUtil.valueOf(map.get("name"));
-                    password = StringUtil.valueOf(map.get("password"));
-                    String password2 = StringUtil.valueOf(map.get("password2"));
-                    if (map.containsKey("_REGISTER") && !ObjectUtil.isVoid(username)){
+                    if (isSignupRequest && !ObjectUtil.isVoid(username)){
                         if (ObjectUtil.isVoid(password) || ObjectUtil.isVoid(password2)){
                             createUserSession(null,true);
-                            addErrorMessage("Password cannot be blank");
+                            if (map.containsKey("password2") && map.containsKey("password")) {
+                                addErrorMessage("Password cannot be blank");
+                            }
                             return  false;
                         }else if (ObjectUtil.equals(password,password2)){
                             user = getUser("name",username);
@@ -844,12 +850,15 @@ public class Path implements _IPath{
                     Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
                     user = getUser("name",username);
                     Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    if (user != null && user.authenticate(password)){
+                    boolean canLogin = isLoginRequest || isSignupRequest && map.containsKey("password") && map.containsKey("password2");
+                    if (user != null && canLogin && user.authenticate(password)  ){
                         createUserSession(user,autoInvalidate);
                     }else {
                         createUserSession(null,true);
-                        addErrorMessage("Login Failed");
-                        Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                        if (canLogin) {
+                            addErrorMessage("Login Failed");
+                            Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                        }
                     }
                 }
             }

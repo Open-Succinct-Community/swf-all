@@ -113,30 +113,49 @@ public class Controller implements TemplateLoader{
         }
         return back();
     }
+    private String getLoginUrlParams(){
+        StringBuilder msg = new StringBuilder();
+        Map<String, Object> fields = getPath().getFormFields();
+        getPath().getErrorMessages().forEach(m -> msg.append(m));
 
+        if (msg.length() >0){
+            msg.insert(0,"?error=");
+        }
+
+        if (fields.containsKey("_REGISTER")){
+            if (msg.length() >0){
+                msg.append("&");
+            }else {
+                msg.append("?");
+            }
+            msg.append("_REGISTER=").append(fields.get("_REGISTER"));
+        }
+        return msg.toString();
+    }
     @RequireLogin(false)
     public View login() {
+        Map<String, Object> fields = getPath().getFormFields();
         if (getPath().getRequest().getMethod().equals("GET") && getSessionUser() == null) {
-            if (getPath().getFormFields().isEmpty() || getPath().getFormFields().containsKey("_REGISTER")) {
+            if (getPath().getFormFields().isEmpty() || fields.containsKey("_REGISTER")) {
                 return createLoginView();
             } else {
                 return authenticate();
             }
         } else if (getPath().getSession() != null) {
             if (getSessionUser() == null) {
-                StringBuilder msg = new StringBuilder();
-                getPath().getErrorMessages().forEach(m -> msg.append(m));
+                String msg = getLoginUrlParams();
+
                 if (msg.length() > 0){
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
                         //return createLoginView(StatusType.ERROR,msg.toString());
-                        return new RedirectorView(getPath(),"","/login?error="+msg);
+                        return new RedirectorView(getPath(),"","login"+msg);
                     }else {
-                        throw new AccessDeniedException(msg.toString());
+                        throw new AccessDeniedException(msg);
                     }
                 }else {
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
                         //return createLoginView();
-                        return new RedirectorView(getPath(),"","/login");
+                        return new RedirectorView(getPath(),"","login");
                     }else {
                         return authenticate();
                     }
@@ -171,9 +190,9 @@ public class Controller implements TemplateLoader{
             if (authenticated) {
                 return new RedirectorView(getPath(), "", loginSuccessful());
             } else {
-                StringBuilder msg = new StringBuilder();
-                getPath().getErrorMessages().forEach(m -> msg.append(m));
-                return new RedirectorView(getPath(),"/","login");
+                String msg = getLoginUrlParams();
+
+                return new RedirectorView(getPath(),"/","login"+msg);
                 //return createLoginView(StatusType.ERROR, msg.toString());
             }
         } else {

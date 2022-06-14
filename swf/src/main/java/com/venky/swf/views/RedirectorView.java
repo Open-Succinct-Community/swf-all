@@ -25,7 +25,7 @@ public class RedirectorView extends View{
 	}
 
     public void setRedirectUrl(String redirectUrl) {
-		this.redirectUrl = redirectUrl;
+		this.redirectUrl = redirectUrl.replaceAll("[/]+","/");
 	}
 	
     public RedirectorView(_IPath path,String controllerAction){
