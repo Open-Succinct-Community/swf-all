@@ -791,8 +791,8 @@ public class Path implements _IPath{
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
 
-        boolean isSignupRequest = map.containsKey("password2") && map.containsKey("_REGISTER") ;
-        boolean isLoginRequest = !map.containsKey("password2") && map.containsKey("_LOGIN");
+        boolean isSignupRequest = adaptor == null && map.containsKey("password2") && map.containsKey("_REGISTER") ;
+        boolean isLoginRequest = adaptor == null && !map.containsKey("password2") && map.containsKey("_LOGIN");
 
         if (user == null){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
@@ -817,6 +817,7 @@ public class Path implements _IPath{
                             Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
                             try {
                                 user.save();
+                                isLoginRequest = true;
                                 txn.commit();
                             }catch (Exception ex){
                                 txn.rollback(ex);
@@ -840,6 +841,7 @@ public class Path implements _IPath{
                                 Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
                                 username = input.get(0).getName();
                                 password = input.get(0).getPassword();
+                                isLoginRequest = true;
                             }
                         }
                     }catch (Exception ex){
@@ -850,12 +852,11 @@ public class Path implements _IPath{
                     Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
                     user = getUser("name",username);
                     Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    boolean canLogin = isLoginRequest || isSignupRequest && map.containsKey("password") && map.containsKey("password2");
-                    if (user != null && canLogin && user.authenticate(password)  ){
+                    if (user != null && isLoginRequest && user.authenticate(password)  ){
                         createUserSession(user,autoInvalidate);
                     }else {
                         createUserSession(null,true);
-                        if (canLogin) {
+                        if (isLoginRequest) {
                             addErrorMessage("Login Failed");
                             Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
                         }

@@ -118,17 +118,20 @@ public class Controller implements TemplateLoader{
         Map<String, Object> fields = getPath().getFormFields();
         getPath().getErrorMessages().forEach(m -> msg.append(m));
 
-        if (msg.length() >0){
-            msg.insert(0,"?error=");
-        }
-
-        if (fields.containsKey("_REGISTER")){
+        if (getPath().getProtocol() == MimeType.TEXT_HTML){
             if (msg.length() >0){
-                msg.append("&");
-            }else {
-                msg.append("?");
+                msg.insert(0,"?error=");
             }
-            msg.append("_REGISTER=").append(fields.get("_REGISTER"));
+
+            if (fields.containsKey("_REGISTER")){
+                if (msg.length() >0){
+                    msg.append("&");
+                }else {
+                    msg.append("?");
+                }
+                msg.append("_REGISTER=").append(fields.get("_REGISTER"));
+            }
+
         }
         return msg.toString();
     }
