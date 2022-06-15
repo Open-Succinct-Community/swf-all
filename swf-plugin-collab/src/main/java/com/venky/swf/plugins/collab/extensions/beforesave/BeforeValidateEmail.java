@@ -13,15 +13,7 @@ public class BeforeValidateEmail<E extends Email & Model> extends BeforeModelVal
         ModelReflector<E> reflector = ModelReflector.instance(getModelClass(this));
         String email = model.getEmail();
         if (!reflector.isVoid(email) && model.getRawRecord().isFieldDirty("EMAIL")){
-            String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\." +
-                    "[a-zA-Z0-9_+&*-]+)*@" +
-                    "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
-                    "A-Z]{2,7}$";
-
-            Pattern pat = Pattern.compile(emailRegex);
-            if (!pat.matcher(email).matches()){
-                throw new RuntimeException("Email is invalid!");
-            }
+            Email.validate(email);
         }
     }
 }
