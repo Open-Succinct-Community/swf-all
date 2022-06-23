@@ -141,25 +141,20 @@ public interface TemplateLoader {
                 p = pegDownProcessor.markdownToHtml(p);
             }
             if (!fragment){
-                int len = p.length();
-                if ((len > 5 && p.substring(0,5).equalsIgnoreCase("<html")) || (len > 14 && p.substring(0,14).equalsIgnoreCase("<!DOCTYPE html"))){
-                    ret = new BytesView(getPath(), p.getBytes(StandardCharsets.UTF_8), subDirectory.contentType(templateName));
-                }else {
-                    final String processed = p;
-                    ret = new HtmlView(getPath()) {
-                        @Override
-                        protected void createBody(_IControl b) {
-                            b.addControl(new Dummy(processed));
-                        }
-
-                        @Override
-                        public String toString() {
-                            return super.toString();
-                        }
-                    };
-                    if (includeMenu) {
-                        ret = dashboard((HtmlView) ret);
+                final String processed = p;
+                ret = new HtmlView(getPath()) {
+                    @Override
+                    protected void createBody(_IControl b) {
+                        b.addControl(new Dummy(processed));
                     }
+
+                    @Override
+                    public String toString() {
+                        return super.toString();
+                    }
+                };
+                if (includeMenu){
+                    ret = dashboard((HtmlView) ret);
                 }
             }else {
                 ret = new BytesView(getPath(), p.getBytes(StandardCharsets.UTF_8), subDirectory.contentType(templateName));
