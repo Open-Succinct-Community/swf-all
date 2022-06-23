@@ -138,9 +138,10 @@ $(function(){
     });
 });
 
-/* Focus on first editable field. 
 $(function() {
+/* Focus on first editable field. 
   $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
+*/
 
 
   $("a[name='_SUBMIT_NO_MORE']").click(function (){
@@ -150,7 +151,6 @@ $(function() {
                             $(":submit[name='_SUBMIT_MORE']").trigger('click');
                         });
 });
-*/
 
 /* Set DatePicker for dateboxes */
 $(function(){
