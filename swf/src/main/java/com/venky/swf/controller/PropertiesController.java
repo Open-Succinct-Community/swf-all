@@ -1,5 +1,7 @@
 package com.venky.swf.controller;
 
+import com.venky.extension.Extension;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
@@ -15,6 +17,7 @@ public class PropertiesController extends Controller {
     }
     public View get(String key){
         JSONObject ret = new JSONObject();
+        Registry.instance().callExtensions("secure.property",key);
         ret.put("key",key);
         ret.put("value",Config.instance().getProperty(key));
         return new BytesView(getPath(),ret.toString().getBytes());

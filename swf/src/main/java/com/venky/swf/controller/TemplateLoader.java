@@ -12,6 +12,7 @@ import com.venky.swf.util.PegDownProcessor;
 import com.venky.swf.util.TemplateProcessor;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.DashboardView;
+import com.venky.swf.views.ForwardedView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
@@ -105,7 +106,7 @@ public interface TemplateLoader {
 
 
     default View publish(TemplateSubDirectory subDirectory){
-        return new RedirectorView(getPath(), subDirectory.index());
+        return new ForwardedView(getPath(), subDirectory.index());
     }
 
     default View publish(TemplateSubDirectory subDirectory,String file){

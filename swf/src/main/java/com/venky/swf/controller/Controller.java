@@ -247,7 +247,7 @@ public class Controller implements TemplateLoader{
     @RequireLogin(false)
     public View logout() {
         invalidateSession();
-        return new RedirectorView(getPath(), "", "login");
+        return new RedirectorView(getPath(), "/", "");
     }
 
     public View dashboard() {
