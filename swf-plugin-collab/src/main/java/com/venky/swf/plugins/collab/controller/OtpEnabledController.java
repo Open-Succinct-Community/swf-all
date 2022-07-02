@@ -75,7 +75,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
                 }
 
                 @Override
-                public View error(T t) {
+                public View error(T t ,boolean newRecord) {
                     HtmlView errorView =  new ModelEditView<T>(getPath(),new String[]{"OTP"},t,"validateOtp");
                     return errorView;
                 }

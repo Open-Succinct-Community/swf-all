@@ -786,7 +786,7 @@ public class ModelController<M extends Model> extends Controller {
 
         public <C extends Model> void actOnChild(M parent, Class<C> childModelClass, Model c);
 
-        public View error(M m);
+        public View error(M m,boolean isNew);
     }
 
     public class SaveAction implements Action<M> {
@@ -815,9 +815,9 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         @Override
-        public View error(M m) {
+        public View error(M m,boolean isNew) {
             HtmlView errorView = null;
-            if (m.getRawRecord().isNewRecord()) {
+            if (isNew) {
                 errorView = createBlankView(getPath().createRelativePath("blank"), m, "save");
             } else {
                 errorView = createModelEditView(getPath().createRelativePath("edit/" + m.getId()), m, "save");
@@ -930,7 +930,7 @@ public class ModelController<M extends Model> extends Controller {
                     if (getReturnIntegrationAdaptor() != null){
                         throw ex;
                     }else {
-                        eView = action.error(record);
+                        eView = action.error(record,isNew);
                     }
                     if (eView instanceof HtmlView) {
                         getPath().addMessage(StatusType.ERROR, message);
