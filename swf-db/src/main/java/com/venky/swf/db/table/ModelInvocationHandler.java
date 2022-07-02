@@ -177,7 +177,11 @@ public class ModelInvocationHandler implements InvocationHandler {
         	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
 	        	CONNECTED_VIA join = getReflector().getAnnotation(method,CONNECTED_VIA.class);
 	        	if (join != null){
-					return getChildren(getReflector().getChildModelClass(method), getReflector().getFieldName(join.value()),join.additional_join());
+					ModelReflector<? extends Model> cReflector = ModelReflector.instance(getReflector().getChildModelClass(method));
+					String columName = join.value();
+					String fieldName = cReflector.getFieldName(columName);
+
+					return getChildren(getReflector().getChildModelClass(method),fieldName,join.additional_join());
 	        	}else {
 	        		return getChildren(getReflector().getChildModelClass(method));
 	        	}
