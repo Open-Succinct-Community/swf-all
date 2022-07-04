@@ -81,7 +81,12 @@ public interface User extends Model {
     @PROTECTION
     public String getPassword();
     public void setPassword(String password);
-    
+
+    @HIDDEN
+    @PROTECTION
+    public String getPassword2();
+    public void setPassword2(String password2); // Used for signup. !!
+
     public boolean authenticate(String password);
     public static final String USER_AUTHENTICATE = "user.authenticate" ;
    

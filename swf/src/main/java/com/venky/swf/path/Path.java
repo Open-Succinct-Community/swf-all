@@ -758,6 +758,44 @@ public class Path implements _IPath{
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
 
+    public User login(String username, String password, String password2){
+        if (ObjectUtil.isVoid(username)){
+            throw new RuntimeException("Username is blank.");
+        }
+        if (ObjectUtil.isVoid(password)){
+            throw new RuntimeException("Password is blank");
+        }
+
+        boolean isLoginRequest =  ObjectUtil.isVoid(password2);
+        User user = getUser("name",username);
+        if (user == null && isLoginRequest){
+            throw new RuntimeException("Login failed");
+        }else if (isLoginRequest){
+            if (!user.authenticate(password)){
+                throw new RuntimeException("Login failed");
+            }else {
+                return user;
+            }
+        }else if (!ObjectUtil.equals(password,password2)){
+            // Signup request;!
+            throw new RuntimeException("Passwords don't match!");
+        }else if (user != null){
+                throw new RuntimeException("Username "+ username + " is already registered");
+        }else {
+            user = Database.getTable(User.class).newRecord();
+            user.setName(username);
+            user.setPassword(password);
+            Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+            try {
+                user.save();
+                txn.commit();
+                return user;
+            }catch (Exception ex){
+                txn.rollback(ex);
+                throw new RuntimeException(ex);
+            }
+        }
+    }
     public <T> boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
             return true;
@@ -791,45 +829,15 @@ public class Path implements _IPath{
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
 
-        boolean isSignupRequest = adaptor == null && map.containsKey("password2") && map.containsKey("_REGISTER") ;
-        boolean isLoginRequest = adaptor == null && !map.containsKey("password2") && map.containsKey("_LOGIN");
-
+        
         if (user == null){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
                 if (adaptor == null){
-                    if (isSignupRequest && !ObjectUtil.isVoid(username)){
-                        if (ObjectUtil.isVoid(password) || ObjectUtil.isVoid(password2)){
-                            createUserSession(null,true);
-                            if (map.containsKey("password2") && map.containsKey("password")) {
-                                addErrorMessage("Password cannot be blank");
-                            }
-                            return  false;
-                        }else if (ObjectUtil.equals(password,password2)){
-                            user = getUser("name",username);
-                            if (user != null){
-                                createUserSession(null  ,true);
-                                addErrorMessage("Username "+ username + " is already registered");
-                                return  false;
-                            }
-                            user = Database.getTable(User.class).newRecord();
-                            user.setName(username);
-                            user.setPassword(password);
-                            Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
-                            try {
-                                user.save();
-                                isLoginRequest = true;
-                                txn.commit();
-                            }catch (Exception ex){
-                                txn.rollback(ex);
-                                createUserSession(null,true);
-                                addErrorMessage(ex.getMessage());
-                                return false;
-                            }
-                        }else {
-                            createUserSession(null,true);
-                            addErrorMessage("Passwords entered do not match");
-                            return false;
-                        }
+                    try {
+                        user = login(username, password, password2);
+                    }catch (Exception ex){
+                        addErrorMessage(ex.getMessage());
+                        return false;
                     }
                 }else {
                     FormatHelper<T> helper = null ;
@@ -841,7 +849,8 @@ public class Path implements _IPath{
                                 Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
                                 username = input.get(0).getName();
                                 password = input.get(0).getPassword();
-                                isLoginRequest = true;
+                                password2 = input.get(0).getPassword2();
+                                user = login(username,password,password2);
                             }
                         }
                     }catch (Exception ex){
@@ -850,15 +859,17 @@ public class Path implements _IPath{
                 }
                 if (!ObjectUtil.isVoid(username)){
                     Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
-                    user = getUser("name",username);
+                    //user = getUser("name",username);
                     Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    if (user != null && isLoginRequest && user.authenticate(password)  ){
+                    if (user != null ){
                         createUserSession(user,autoInvalidate);
                     }else {
                         createUserSession(null,true);
-                        if (isLoginRequest) {
+                        Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                        if (adaptor == null) {
                             addErrorMessage("Login Failed");
-                            Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                        }else {
+                            throw new RuntimeException("Login failed");
                         }
                     }
                 }
