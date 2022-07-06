@@ -767,20 +767,14 @@ public class Path implements _IPath{
                                             ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
                                     );
 
-
+        if (beingSwitched){
+            return null;
+        }
         if (ObjectUtil.isVoid(username)){
-            if (!beingSwitched) {
-                throw new RuntimeException("Username is blank.");
-            }else {
-                return null;
-            }
+            throw new RuntimeException("Username is blank.");
         }
         if (ObjectUtil.isVoid(password)){
-            if (!beingSwitched) {
-                throw new RuntimeException("Password is blank");
-            }else {
-                return null;
-            }
+            throw new RuntimeException("Password is blank");
         }
 
         boolean isLoginRequest =  getProtocol() == MimeType.TEXT_HTML ? !getFormFields().containsKey("password2") : ObjectUtil.isVoid(password2) ;
