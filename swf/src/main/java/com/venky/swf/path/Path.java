@@ -757,8 +757,10 @@ public class Path implements _IPath{
 
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
-
     public User login(String username, String password, String password2){
+        return login(username,password,password2,false);
+    }
+    public User login(String username, String password, String password2,boolean save){
         if (ObjectUtil.isVoid(username)){
             throw new RuntimeException("Username is blank.");
         }
@@ -785,15 +787,20 @@ public class Path implements _IPath{
             user = Database.getTable(User.class).newRecord();
             user.setName(username);
             user.setPassword(password);
-            Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
-            try {
-                user.save();
-                txn.commit();
-                return user;
-            }catch (Exception ex){
-                txn.rollback(ex);
-                throw new RuntimeException(ex);
+            if (save){
+                saveUserInNewTxn(user);
             }
+            return user;
+        }
+    }
+    public void saveUserInNewTxn(User user){
+        Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+        try {
+            user.save();
+            txn.commit();
+        }catch (Exception ex){
+            txn.rollback(ex);
+            throw new RuntimeException(ex);
         }
     }
     public <T> boolean isRequestAuthenticated(){
@@ -850,7 +857,13 @@ public class Path implements _IPath{
                                 username = input.get(0).getName();
                                 password = input.get(0).getPassword();
                                 password2 = input.get(0).getPassword2();
-                                user = login(username,password,password2);
+                                user = login(username,password,password2,false);
+                                if (user.getRawRecord().isNewRecord()) {
+                                    //signedup!
+                                    user.getRawRecord().load(input.get(0).getRawRecord());
+                                    saveUserInNewTxn(user);
+                                }
+
                             }
                         }
                     }catch (Exception ex){
