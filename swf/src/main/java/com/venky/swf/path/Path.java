@@ -758,7 +758,7 @@ public class Path implements _IPath{
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
     public User login(String username, String password, String password2){
-        return login(username,password,password2,false);
+        return login(username,password,password2,true);
     }
     public User login(String username, String password, String password2,boolean save){
         if (ObjectUtil.isVoid(username)){
