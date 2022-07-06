@@ -761,14 +761,29 @@ public class Path implements _IPath{
         return login(username,password,password2,true);
     }
     public User login(String username, String password, String password2,boolean save){
+        boolean beingSwitched = false;
+        beingSwitched = getProtocol() == MimeType.TEXT_HTML && (
+                                    ( getFormFields().containsKey("_REGISTER") && !getFormFields().containsKey("password2") ) ||
+                                            ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
+                                    );
+
+
         if (ObjectUtil.isVoid(username)){
-            throw new RuntimeException("Username is blank.");
+            if (!beingSwitched) {
+                throw new RuntimeException("Username is blank.");
+            }else {
+                return null;
+            }
         }
         if (ObjectUtil.isVoid(password)){
-            throw new RuntimeException("Password is blank");
+            if (!beingSwitched) {
+                throw new RuntimeException("Password is blank");
+            }else {
+                return null;
+            }
         }
 
-        boolean isLoginRequest =  ObjectUtil.isVoid(password2);
+        boolean isLoginRequest =  getProtocol() == MimeType.TEXT_HTML ? !getFormFields().containsKey("password2") : ObjectUtil.isVoid(password2) ;
         User user = getUser("name",username);
         if (user == null && isLoginRequest){
             throw new RuntimeException("Login failed");
