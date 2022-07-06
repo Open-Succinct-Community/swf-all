@@ -761,15 +761,6 @@ public class Path implements _IPath{
         return login(username,password,password2,true);
     }
     public User login(String username, String password, String password2,boolean save){
-        boolean beingSwitched = false;
-        beingSwitched = getProtocol() == MimeType.TEXT_HTML && (
-                                    ( getFormFields().containsKey("_REGISTER") && !getFormFields().containsKey("password2") ) ||
-                                            ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
-                                    );
-
-        if (beingSwitched){
-            return null;
-        }
         if (ObjectUtil.isVoid(username)){
             throw new RuntimeException("Username is blank.");
         }
@@ -844,9 +835,13 @@ public class Path implements _IPath{
         String username = StringUtil.valueOf(map.get("name"));
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
-
+        boolean beingSwitched = false;
+        beingSwitched = getProtocol() == MimeType.TEXT_HTML && (
+                ( getFormFields().containsKey("_REGISTER") && !getFormFields().containsKey("password2") ) ||
+                        ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
+        );
         
-        if (user == null){
+        if (user == null && !beingSwitched){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
                 if (adaptor == null){
                     try {
