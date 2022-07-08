@@ -32,6 +32,7 @@ import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
@@ -1283,9 +1284,13 @@ public class Path implements _IPath{
                     if (join == null){
                         for (Method referredModelGetter: referredModelGetters){ 
                             String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-                            String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
+                            ColumnDescriptor columnDescriptor = reflector.getColumnDescriptor(referredModelIdFieldName);
+
+                            String referredModelIdColumnName = columnDescriptor.getName();
                             reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
-                            referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
+                            if (!columnDescriptor.isVirtual()) {
+                                referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(), referredModelIdColumnName, Operator.EQ, new BindVariable(referredModelReflector.getPool(), controllerInfo.getId())));
+                            }
                             /*
                             if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
                                 referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));
