@@ -84,6 +84,7 @@ public interface User extends Model {
 
     @HIDDEN
     @PROTECTION
+    @IS_VIRTUAL
     public String getPassword2();
     public void setPassword2(String password2); // Used for signup. !!
 
