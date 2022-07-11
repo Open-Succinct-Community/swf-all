@@ -116,9 +116,16 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		//Consider first level children.
 		write(record,into,fields,parentsAlreadyConsidered,getChildrenToConsider(templateFields),templateFields);
 	}
+
 	public void write(M record,T into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered ,
 					  Map<Class<? extends Model>, List<Class<? extends  Model>>> considerChildren,
 					  Map<Class<? extends Model>, List<String>> templateFields) {
+		write(record,into,fields,parentsAlreadyConsidered,considerChildren,templateFields,false);
+	}
+	public void write (M record, T into , List<String> fields, Set<Class<?extends Model>> parentsAlreadyConsidered,
+					   Map<Class<? extends Model>,List<Class<? extends Model>>> considerChildren,
+					   Map<Class<? extends Model>,List<String>> templateFields , boolean includeNulls) {
+
 
 		Set<String> simplifiedParentsConsidered = new HashSet<>();
 		parentsAlreadyConsidered.forEach(c->simplifiedParentsConsidered.add(c.getSimpleName()));
@@ -146,13 +153,19 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				simplifiedTemplateFields.get(m.getSimpleName()).add(f);
 			}
 		});
-		writeSimplified(record,into,fields,simplifiedParentsConsidered,simplifiedConsiderChildren,simplifiedTemplateFields);
+		writeSimplified(record,into,fields,simplifiedParentsConsidered,simplifiedConsiderChildren,simplifiedTemplateFields,includeNulls);
 
+	}
+	public void writeSimplified(M record,T into, List<String> fields,
+								Set<String> parentsAlreadyConsidered ,
+								Map<String, List<String>> considerChildren,
+								Map<String, List<String>> templateFields) {
+		writeSimplified(record,into,fields,parentsAlreadyConsidered,considerChildren,templateFields,false);
 	}
 	public void writeSimplified(M record,T into, List<String> fields,
 					  Set<String> parentsAlreadyConsidered ,
 					  Map<String, List<String>> considerChildren,
-					  Map<String, List<String>> templateFields) {
+					  Map<String, List<String>> templateFields,boolean includeNulls) {
 
 
 		FormatHelper<T> _formatHelper = FormatHelper.instance(into);
@@ -162,12 +175,16 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 		for (String field: getFields(fields)){
 			FormatHelper<T> formatHelper = _formatHelper;
 			Object value = TimerUtils.time(cat,"ref.get", ()-> ref.get(record, field));
-			if (value == null){
-				continue;
-			}
+
+
 			Method fieldGetter = TimerUtils.time(cat,"getFieldGetter" , () ->ref.getFieldGetter(field));
 			Method referredModelGetter = TimerUtils.time(cat,"getReferredModelGetterFor" , ()->ref.getReferredModelGetterFor(fieldGetter));
-
+			if (value == null){
+				if (!includeNulls){
+					continue;
+				}
+				value =  Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().valueOf(null);
+			}
 			if (referredModelGetter != null){
 				Class<? extends Model> aParent = ref.getReferredModelClass(referredModelGetter);
 				if (!isParentIgnored(aParent,parentsAlreadyConsidered) || fields != null) {
@@ -197,7 +214,7 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 					}
 				}
 
-				if (String[].class.isAssignableFrom(value.getClass())) {
+				if (String[].class.isAssignableFrom(fieldGetter.getReturnType())) {
 					formatHelper.setAttribute(attributeName, (String[])value);
 				}else {
 					String sValue = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(fieldGetter.getReturnType()).getTypeConverter().toStringISO(value);

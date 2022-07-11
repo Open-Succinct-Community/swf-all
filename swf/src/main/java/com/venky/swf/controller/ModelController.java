@@ -703,7 +703,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View blank(M record) {
         defaultFields(record);
         if (returnIntegrationAdaptor != null) {
-            return returnIntegrationAdaptor.createResponse(getPath(), record);
+            return returnIntegrationAdaptor.createResponse(getPath(), record, true,null, new HashSet<>(),new HashMap<>(), new HashMap<>(),true);
         } else {
             return dashboard(createBlankView(record, "save"));
         }

@@ -198,6 +198,12 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 		write (record,into,fields,parentsAlreadyConsidered, templateFields,null);
 	}
 
+	@Override
+	public void write(M record, Row into, List<String> fields, Set<Class<? extends Model>> parentsAlreadyConsidered, Map<Class<? extends Model>, List<Class<? extends Model>>> childrenToBeConsidered,
+					  Map<Class<? extends Model>, List<String>> templateFields, boolean includeNulls) {
+		write (record,into,fields,parentsAlreadyConsidered, templateFields,null);
+	}
+
 
 	public void alignTop(CellStyle style){
 		style.setAlignment(HorizontalAlignment.LEFT);
@@ -256,6 +262,11 @@ public class XLSModelWriter<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 	@Override
 	public void writeSimplified(M record, Row into, List<String> fields, Set<String> parentsAlreadyConsidered, Map<String, List<String>> childrenToBeConsidered, Map<String, List<String>> templateFields) {
+		writeSimplified(record,into,fields,parentsAlreadyConsidered, templateFields,(StyleHelper)null);
+	}
+
+	@Override
+	public void writeSimplified(M record, Row into, List<String> fields, Set<String> parentsAlreadyConsidered, Map<String, List<String>> considerChildren, Map<String, List<String>> templateFields, boolean includeNulls) {
 		writeSimplified(record,into,fields,parentsAlreadyConsidered, templateFields,(StyleHelper)null);
 	}
 

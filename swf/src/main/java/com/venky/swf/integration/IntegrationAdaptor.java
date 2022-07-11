@@ -145,6 +145,13 @@ public class IntegrationAdaptor<M extends Model,T> {
 							   Set<Class<? extends Model>> ignoreParents,
 							   Map<Class<? extends Model>,List<Class <? extends Model>>> considerChildren,
 							   Map<Class<? extends Model>,List<String>> templateFields) {
+		return createResponse(path,m,rootElementRequiresName,includeFields,ignoreParents,considerChildren,templateFields,false);
+	}
+	public View createResponse(Path path, M m, boolean rootElementRequiresName,
+							   List<String> includeFields,
+							   Set<Class<? extends Model>> ignoreParents,
+							   Map<Class<? extends Model>,List<Class <? extends Model>>> considerChildren,
+							   Map<Class<? extends Model>,List<String>> templateFields,boolean includeNulls) {
 
 		FormatHelper<T> helper = FormatHelper.instance(getMimeType(),modelReflector.getModelClass().getSimpleName(),false); ;
 		T element = helper.getRoot();
@@ -158,7 +165,7 @@ public class IntegrationAdaptor<M extends Model,T> {
 
 		T elementAttributeToWrite = elementAttribute;
 		TimerUtils.time(cat,"Write Response" , ()-> {
-			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, considerChildren,templateFields);
+			writer.write(m, elementAttributeToWrite , includeFields, ignoreParents, considerChildren,templateFields,includeNulls);
 			return true;
 		});
 		return TimerUtils.time(cat, "Returning Bytes View" , () -> new BytesView(path, helper.toString().getBytes(), getMimeType()));
