@@ -85,8 +85,9 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
                 try {
                     _IDatabase iDatabase = router.getDatabase();
                     iDatabase.setContext(_IPath.class.getName(),iPath);
+                    _IView view = null;
                     try {
-                        _IView view = iPath.invoke(); //Most Expensive!!
+                        view = iPath.invoke(); //Most Expensive!!
 
                         if (iDatabase != router.getDatabase()){
                             iDatabase = router.getDatabase();
@@ -136,7 +137,9 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
                         if (iDatabase != null ){
                             iDatabase.close();
                         }
-                        iPath.autoInvalidateSession();
+                        if (view != null && !view.isBeingForwarded()) {
+                            iPath.autoInvalidateSession();
+                        }
                     }
                 }catch(Exception ex){
                     throw new RuntimeException(ex);
