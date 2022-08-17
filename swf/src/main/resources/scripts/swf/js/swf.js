@@ -94,7 +94,14 @@ $(function(){
                                     if ( bIsNameIndexed ) {
                                       $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]);
                                     }else {
-                                      $(':input[name="' + i +  '"]').attr("value",jsonresponse[i]);
+                                      var jq = $(':input[name="' + i +  '"]');
+                                      if (jq && jq.prop("tagName")){
+                                          if (jq.prop("tagName") === "TEXTAREA"){
+                                            jq.val(jsonresponse[i]);
+                                          }else {
+                                            jq.attr("value",jsonresponse[i]);
+                                          }
+                                      }
                                     }
                                     setConfirmUnload(true)
                                 }
