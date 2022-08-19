@@ -476,7 +476,7 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("index")
     public View show(long id) {
         if (returnIntegrationAdaptor ==  null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/show.html")){
-            return redirectTo("html/show?id="+id+"&"+ Encode.forUriComponent(getPath().getRequest().getQueryString()));
+            return redirectTo("html/show?id="+id);//+"&"+ Encode.forUri(getPath().getRequest().getQueryString()));
         }
 
         M record = Database.getTable(modelClass).get(id);

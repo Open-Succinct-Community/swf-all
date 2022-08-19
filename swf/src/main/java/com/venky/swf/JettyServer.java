@@ -74,6 +74,7 @@ public class JettyServer {
 		ctxHandler.setHandler(router);
 		SessionHandler sessionHandler = new SessionHandler();
 		sessionHandler.setHandler(ctxHandler);
+		sessionHandler.setMaxInactiveInterval(Config.instance().getIntProperty("swf.jetty.session.timeout.seconds",10*60)); //10 minutes;
 		
 		server.setHandler(sessionHandler);
 		
