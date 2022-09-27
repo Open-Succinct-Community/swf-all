@@ -6,17 +6,12 @@ import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.MultiException;
 import com.venky.swf.db._IDatabase;
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.IOTask;
 import com.venky.swf.plugins.background.eventloop.CoreEvent;
 import com.venky.swf.plugins.background.eventloop.IOFuture;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
-import com.venky.swf.views.BytesView;
-import com.venky.swf.views.ExceptionView;
-import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
 import jakarta.servlet.http.HttpSession;
 
@@ -27,9 +22,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.logging.Level;
 
-public class HttpCoreEvent extends CoreEvent implements IOTask {
+public class HttpCoreEvent extends CoreEvent implements _HttpCoreEvent, IOTask {
     Bucket calledNumberOfTimes = new Bucket();
     SWFLogger cat = Config.instance().getLogger(getClass().getName());
     Router router = Router.instance();
@@ -71,6 +67,10 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
         requestHandler =  new IOFuture() {
             Boolean beingForwarded = null;
 
+            @Override
+            public Priority getTaskPriority() {
+                return Priority.HIGH;
+            }
 
             @Override
             public void execute() {
@@ -125,7 +125,7 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
                                     ev = router.createRedirectorView(iPath, "/dashboard");
                                 }else {
                                     ev = router.createRedirectorView(iPath, iPath.getBackTarget());
-                                }
+                                  }
                             }else {
                                 ev = router.createExceptionView(iPath, e);
                             }
@@ -200,4 +200,12 @@ public class HttpCoreEvent extends CoreEvent implements IOTask {
         }
     }
 
+    public void run(){
+        getAsyncTaskManager().addAll(Collections.singleton(this));
+    }
+
+    @Override
+    public Priority getTaskPriority() {
+        return Priority.HIGH;
+    }
 }

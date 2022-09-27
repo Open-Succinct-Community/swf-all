@@ -35,13 +35,19 @@ public class FluidContainer extends Div{
 		public Column createColumn(){
 			return createColumn(-1,-1);
 		}
-		public Column createColumn(int offset, int width){
+		public Column createColumn(int offset, int ...width){
 			Column c = new Column();
 			if (offset >= 0) {
-				c.addClass("offset-sm-" + offset);
+				c.addClass(String.format("offset-%d", offset));
 			}
-			if (width >=0 ) {
-				c.addClass("col-sm-" + width);
+			if (width[0] >= 0) {
+				c.addClass(String.format("col-%d", width[0]));
+			}
+			String[] responsive = new String[]{"sm","lg"};
+			for (int i = 1 ; i < width.length ; i ++ ){
+				if (width[i] >=0 ) {
+					c.addClass(String.format("col-%s-%d %s:col-%d",responsive[i-1] , width[i],responsive[i-1],width[i] ));
+				}
 			}
 			addControl(c);
 			return c;

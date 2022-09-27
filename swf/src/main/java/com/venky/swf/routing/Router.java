@@ -6,35 +6,21 @@ package com.venky.swf.routing;
 
 
 import com.venky.core.log.ExtendedLevel;
-import com.venky.core.log.SWFLogger;
-import com.venky.core.log.TimerStatistics;
-import com.venky.core.log.TimerStatistics.Timer;
-import com.venky.core.util.ObjectUtil;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.path._IPath;
-import com.venky.swf.plugins.background.core.TaskManager;
-import com.venky.swf.plugins.background.eventloop.jetty.HttpCoreEvent;
+import com.venky.swf.plugins.background.eventloop.jetty._HttpCoreEvent;
 import com.venky.swf.views._IView;
-import jakarta.servlet.http.HttpSession;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 /**
  *
@@ -50,19 +36,11 @@ public class Router extends AbstractHandler {
 	public void handle(String target, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
 		jakarta.servlet.AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
 		context.setTimeout(0);
-		HttpCoreEvent coreEvent = new HttpCoreEvent(target,context);
-		HttpCoreRunnable coreRunnable = new HttpCoreRunnable(coreEvent);
-		context.start(coreRunnable);
-	}
-
-	public static class HttpCoreRunnable implements Runnable {
-		HttpCoreEvent event;
-		public HttpCoreRunnable(HttpCoreEvent event){
-			this.event = event;
-		}
-		@Override
-		public void run() {
-			event.getAsyncTaskManager().addAll(Collections.singleton(event));
+		try {
+			_HttpCoreEvent coreEvent = (_HttpCoreEvent) getClass("com.venky.swf.plugins.background.eventloop.jetty.HttpCoreEvent").getConstructor(String.class, jakarta.servlet.AsyncContext.class).newInstance(target, context);
+			context.start(coreEvent);
+		}catch (Exception ex){
+			throw new RuntimeException(ex);
 		}
 	}
 

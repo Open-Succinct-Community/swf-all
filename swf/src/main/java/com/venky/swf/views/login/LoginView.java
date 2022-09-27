@@ -73,19 +73,19 @@ public class LoginView extends HtmlView{
     	b.addControl(loginPanel);
     	
     	Column applicationDescPannel = loginPanel.createRow().createColumn(3,6);
-    	applicationDescPannel.addClass("text-center offset-3 col-6");
-		applicationDescPannel.addClass("text-center offset-lg-5 col-lg-2");
+    	applicationDescPannel.addClass("text-center sm:offset-5 sm:col-2 offset-sm-5 col-sm-2");//Bs and tailwind
 
 		addProgressiveWebAppLinks(applicationDescPannel);
 
 		Column extLinks = loginPanel.createRow().createColumn(3,6);
-		extLinks.addClass("text-center");
 
 		addExternalLoginLinks(extLinks,_redirect_to);
 
-		Column formHolder = loginPanel.createRow().createColumn(3,6);
+		Column formHolder = loginPanel.createRow().createColumn(2,8);
+		formHolder.addClass("offset-sm-4 col-sm-4 sm:offset-4 sm:col-4");
 
-        Form form = new Form();
+
+		Form form = new Form();
         form.setAction(getPath().controllerPath(),"login");
         form.setMethod(Form.SubmitMethod.POST);
         
@@ -120,19 +120,19 @@ public class LoginView extends HtmlView{
         if (allowRegistration){
         	Submit register = null;
         	if (newRegistration){
-				register = fg.createSubmit("Register", 0,6);
-				btn = fg.createSubmit("I'm an Existing User",0,6);
+				register = fg.createSubmit("Register", 0,12);
+				btn = fg.createSubmit("I'm an Existing User",0,12);
 				btn.removeClass("btn-primary");
 				btn.addClass("btn-link");
 			}else {
-				btn = fg.createSubmit("Login",0,6);
-				register = fg.createSubmit("I'm a new user", 0,6);
+				btn = fg.createSubmit("Login",0,12);
+				register = fg.createSubmit("I'm a new user", 0,12);
 				register.removeClass("btn-primary");
 				register.addClass("btn-link");
 			}
 			register.setName("_REGISTER");
 		}else {
-			btn = fg.createSubmit("Login",3,6);
+			btn = fg.createSubmit("Login",3,12,6);
 		}
 		btn.setName("_LOGIN");
 
@@ -162,53 +162,31 @@ public class LoginView extends HtmlView{
     		
     		box.setName(fieldName);
     		box.addClass("form-control");
+			box.setWaterMark(label);
     			
-    		Label lbl = new Label(label);
+    		/*Label lbl = new Label(label);
     		lbl.setProperty("for", box.getId());
     		lbl.addClass("col-form-label");
-    		lbl.addClass("col-sm-4");
-    		
+    		lbl.addClass("col-12 com-sm-4 sm:col-4");
+    		addControl(lbl);
+    		*/
     		Div div = new Div();
-    		div.addClass("col-sm-8");
+    		div.addClass("col-12" );
     		div.addControl(box);
     		
-    		addControl(lbl);
     		addControl(div);
     		return box;
     	}
     	
-    	public CheckBox createCheckBox(String label, String fieldName) {
-    		Div div = new Div();
-    		div.addClass("offset-4 col-sm-4");
-    		addControl(div);
-    		
-    		Div divcb = new Div();
-    		divcb.addClass(".form-check");
-    		div.addControl(divcb);
-    		
-    		Label lblCheckBox = new Label(label);
-    		CheckBox cb = new CheckBox();
-    		lblCheckBox.addControl(cb);
-    		divcb.addControl(lblCheckBox);
-    		
-    		cb.setName(fieldName);
-    		return cb;
-    	}
-    	public Link createLink(String label,String url, int offset, int width){
-			Div div = new Div();
-			div.addClass("offset-"+offset+ " col-sm-"+width);
-			addControl(div);
 
-			Link submit = new Link(url);
-			div.addControl(submit);
-			submit.addClass("btn btn-primary");
-			submit.setText(label);
-			return submit;
-		}
 
-    	public Submit createSubmit(String label, int offset, int width){
+    	public Submit createSubmit(String label, int offset, int... width){
     		Div div = new Div();
-    		div.addClass("offset-"+offset+ " col-sm-"+width );
+    		div.addClass("offset-"+offset);
+			String[] resp = new String[]{"","sm","lg"};
+			for (int i = 0 ; i < width.length ; i ++){
+				div.addClass(String.format(" col%s%d %scol-%d",resp[i].length() == 0? "-" :"-" + resp[i] + "-" ,width[i], resp[i].length() == 0? "" : resp[i] + ":",width[i]));
+			}
     		addControl(div);
     		
     		Submit submit = new Submit(label);
@@ -217,31 +195,7 @@ public class LoginView extends HtmlView{
     		return submit;
     	}
     	
-    	public DateBox createDateBox(String label,String fieldName){
-    		DateBox box = new DateBox();
-    		
-    		box.setName(fieldName);
-    		box.addClass("form-control");
-    			
-    		Label lbl = new Label(label);
-    		lbl.setProperty("for", box.getId());
-    		lbl.addClass("col-form-label");
-    		lbl.addClass("offset-3 col-sm-1");
-    		
-    		Span span = new Span();
-    		span.addClass("input-group-addon");
-    		span.addControl(new Glyphicon("glyphicon-calendar","Open Calendar"));
-    		
-    		Div div = new Div();
-    		div.addClass("col-sm-4 input-group date ");
-    		div.addControl(box);
-    		div.addControl(span);
-    		
-    		
-    		addControl(lbl);
-    		addControl(div);
-    		return box;
-    	}
+
     }
 
 }

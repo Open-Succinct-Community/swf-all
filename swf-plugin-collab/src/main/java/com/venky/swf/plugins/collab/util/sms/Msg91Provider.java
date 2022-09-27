@@ -41,7 +41,7 @@ public class Msg91Provider extends AbstractSMSProvider {
         }
 
 
-        JSONObject output = new Call<JSONObject>().method(HttpMethod.POST).url(url).
+            JSONObject output = new Call<JSONObject>().method(HttpMethod.GET).url(url).
                 inputFormat(InputFormat.FORM_FIELDS).input(params).getResponseAsJson();
 
         if (!ObjectUtil.equals(output.get("type"), "success")) {

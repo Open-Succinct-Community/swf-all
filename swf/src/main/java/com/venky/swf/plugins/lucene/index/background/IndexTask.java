@@ -90,5 +90,9 @@ public class IndexTask implements Task{
 	public void setOperation(Operation operation) {
 		this.operation = operation;
 	}
-	
+
+	@Override
+	public Priority getTaskPriority() {
+		return Priority.LOW;
+	}
 }

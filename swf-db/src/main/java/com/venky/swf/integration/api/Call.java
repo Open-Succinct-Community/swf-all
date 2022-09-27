@@ -124,8 +124,8 @@ public class Call<T> implements Serializable {
 
     }
 
-    int timeOut = 60000;
-    public Call<T> timeOut(int timeOut){
+    long timeOut = 60000L;
+    public Call<T> timeOut(long timeOut){
         checkExpired();
         this.timeOut = timeOut;
         return this;

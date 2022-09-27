@@ -63,5 +63,6 @@ public class AsyncTaskWorker extends Thread{
 				}
 			}
 		}
+		manager.evict(this);
 	}
 }

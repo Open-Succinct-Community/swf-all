@@ -71,12 +71,12 @@ public class FluidTable extends FluidContainer{
 		
 		Column column = null;
 		if (control.isVisible()) {
-			column = currentRow.createColumn(colSpanOffset * width, width * colSpan);
+			column = currentRow.createColumn(colSpanOffset * width,  12 , width * colSpan);
 		}else {
 			List<Column> columns = new ArrayList<Column>();
 			Control.hunt(currentRow, Column.class, columns);
 			if (columns.isEmpty()){
-				column = currentRow.createColumn(colSpanOffset * width, width * 1);
+				column = currentRow.createColumn(colSpanOffset * width, 12 , width * 1);
 			}else {
 				column = columns.get(columns.size() - 1);
 			}

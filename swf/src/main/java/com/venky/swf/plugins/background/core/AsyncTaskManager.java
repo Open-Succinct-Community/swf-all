@@ -101,6 +101,13 @@ public class AsyncTaskManager  {
 		return queue;
 	}
 
+	void evict(AsyncTaskWorker asyncTaskWorker) {
+		if (Thread.currentThread() == asyncTaskWorker) {
+			//Defense.
+			workerThreads.remove(asyncTaskWorker);
+		}
+	}
+
 	public static class ShutdownInitiatedException extends RuntimeException {
 		private static final long serialVersionUID = -8216421138960049897L;
 	}
@@ -162,12 +169,6 @@ public class AsyncTaskManager  {
 	private boolean shutdown = false;
 
 	public void shutdown() {
-		while (true) {
-			Config.instance().getLogger(getClass().getName()).info("Waiting for all Threads to shutdown");
-			evictWorker(workerThreads.size());
-			waitUntilWorkersAreEvicted();
-			break;
-		}
 		synchronized (queue) {
 			shutdown = true;
 			queue.notifyAll();
@@ -304,7 +305,7 @@ public class AsyncTaskManager  {
 	}
 	public void waitUntilWorkersAreEvicted() {
 		synchronized (numWorkersToEvict) {
-			while (numWorkersToEvict.intValue() != 0){
+			while (numWorkersToEvict.intValue() > 0){
 				try {
 					numWorkersToEvict.wait(5000);
 				} catch (InterruptedException e) {

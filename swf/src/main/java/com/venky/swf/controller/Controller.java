@@ -32,6 +32,7 @@ import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.IOTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
@@ -109,7 +110,7 @@ public class Controller implements TemplateLoader{
 
     public View reset_router() {
         if (Config.instance().isDevelopmentEnvironment()) {
-            Router.instance().reset();
+            TaskManager.instance().executeAsync((IOTask)()->Router.instance().reset(),false);
         }
         return back();
     }
@@ -230,7 +231,7 @@ public class Controller implements TemplateLoader{
         }
     }
 
-    protected boolean isRegistrationRequired() {
+    protected boolean   isRegistrationRequired() {
         return Config.instance().getBooleanProperty("swf.application.requires.registration", false);
     }
 

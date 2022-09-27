@@ -35,20 +35,26 @@ public class AsyncTaskManagerFactory {
         return getInstance();
     }
 
-    private final Cache<Class<? extends AsyncTaskManager>, AsyncTaskManager> taskManagerCache = new Cache<>(0,0) {
-        @Override
-        protected AsyncTaskManager getValue(Class<? extends AsyncTaskManager> aClass) {
-            try {
-                return aClass.getConstructor().newInstance();
-            }catch (Exception ex){
-                throw  new RuntimeException(ex);
-            }
-        }
-    };
+    private final Map<Class<? extends AsyncTaskManager>, AsyncTaskManager> taskManagerCache = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     public <T extends AsyncTaskManager> T get(Class<T> asyncTaskManagerClazz){
-        return (T)taskManagerCache.get(asyncTaskManagerClazz);
+        T t = (T)taskManagerCache.get(asyncTaskManagerClazz);
+        if (t != null){
+            return t;
+        }
+        synchronized (taskManagerCache){
+            t = (T)taskManagerCache.get(asyncTaskManagerClazz);
+            if (t == null){
+                try {
+                    t = asyncTaskManagerClazz.getConstructor().newInstance();
+                    taskManagerCache.put(asyncTaskManagerClazz,t);
+                }catch (Exception ex){
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+        return t;
     }
 
     public void shutdown() {
@@ -57,6 +63,7 @@ public class AsyncTaskManagerFactory {
             AsyncTaskManager atm = entry.getValue();
             atm.shutdown();
         }
+        taskManagerCache.clear();
     }
 
     public void wakeUp() {
