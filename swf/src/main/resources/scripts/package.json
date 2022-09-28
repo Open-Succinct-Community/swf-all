@@ -20,6 +20,6 @@
     "vue": "^2.6.14"
   },
   "devDependencies": {
-    "jsrsasign": "^10.4.0"
+    "jsrsasign": "^10.5.25"
   }
 }
