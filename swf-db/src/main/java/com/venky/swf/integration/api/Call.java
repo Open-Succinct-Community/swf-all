@@ -226,6 +226,7 @@ public class Call<T> implements Serializable {
                     fakeCurlRequest.append("**Raw binary Stream**");
                 }
             }else if (errorStream.available() >0){
+                fakeCurlRequest.append("\n Status: " + response.statusCode());
                 fakeCurlRequest.append("\n Error:\n");
                 fakeCurlRequest.append(StringUtil.read(errorStream,true));
             }
