@@ -829,7 +829,7 @@ public class Path implements _IPath{
             adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
         }
         boolean keepalive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getHeader("KeepAlive"));
-        autoInvalidate = !keepalive && !ObjectUtil.isVoid(getHeader("ApiKey"));
+        autoInvalidate = !keepalive || !ObjectUtil.isVoid(getHeader("ApiKey"));
 
         Map<String,Object> map = getFormFields();
 
