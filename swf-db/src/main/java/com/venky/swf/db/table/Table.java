@@ -406,6 +406,10 @@ public class Table<M extends Model> {
         return count.getCount();
     }
 
+    public boolean isEmpty(){
+        return new Select("1").from(getModelClass()).execute(1).isEmpty();
+    }
+
     public M lock(long id) {
         return lock(id, true);
     }

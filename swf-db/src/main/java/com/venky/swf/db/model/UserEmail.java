@@ -1,5 +1,6 @@
 package com.venky.swf.db.model;
 
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -19,6 +20,7 @@ public interface UserEmail extends Model{
 
 	@UNIQUE_KEY
 	@Index
+	@IS_NULLABLE(false)
 	public String getEmail();
 	public void setEmail(String email);
 }

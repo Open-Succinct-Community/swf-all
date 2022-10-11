@@ -53,6 +53,7 @@ import java.util.List;
 public abstract class HtmlView extends View{
     public HtmlView(_IPath path){
         super(path);
+        this.status.addClass("status-bar");
     }
     
     private SequenceSet<HotLink> links = null; 
@@ -231,6 +232,7 @@ public abstract class HtmlView extends View{
     	if (ObjectUtil.isVoid(text)){
     		return;
     	}
+
     	this.status.addClass(type.toString());
     	String statusText = this.status.getText();
     	if (!ObjectUtil.isVoid(statusText)){
@@ -238,7 +240,7 @@ public abstract class HtmlView extends View{
     	}
 		statusText += text;
     	
-		this.status.setText(statusText);
+		this.status.setText(statusText,false);
 	}
     protected void createHead(Head head){
 

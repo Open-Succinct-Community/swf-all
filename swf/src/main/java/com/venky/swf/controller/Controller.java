@@ -118,7 +118,9 @@ public class Controller implements TemplateLoader{
         StringBuilder msg = new StringBuilder();
         Map<String, Object> fields = getPath().getFormFields();
         getPath().getErrorMessages().forEach(m -> msg.append(m));
-
+        if (msg.length() == 0){
+            msg.append(fields.getOrDefault("error",""));
+        }
         if (getPath().getProtocol() == MimeType.TEXT_HTML){
             if (msg.length() >0){
                 msg.insert(0,"?error=");
@@ -140,7 +142,9 @@ public class Controller implements TemplateLoader{
     public View login() {
         Map<String, Object> fields = getPath().getFormFields();
         if (getPath().getRequest().getMethod().equals("GET") && getSessionUser() == null) {
-            if (getPath().getFormFields().isEmpty() || fields.containsKey("_REGISTER")) {
+            boolean isLoginOverridden = !getClass().getSimpleName().equals("Controller") && getPath().action().equals("login");
+
+            if (!isLoginOverridden) {
                 return createLoginView();
             } else {
                 return authenticate();

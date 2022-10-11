@@ -74,6 +74,7 @@ public interface Company extends Model{
 	public void setName(String name);
 
 	@Index
+	@UNIQUE_KEY("DOMAIN_NAME")
 	public String getDomainName();
 	public void setDomainName(String domainName);
 
