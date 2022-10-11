@@ -828,7 +828,11 @@ public class Path implements _IPath{
         if (getProtocol() != MimeType.TEXT_HTML) {
             adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
         }
-        boolean keepalive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getHeader("KeepAlive"));
+        String hKeepAlive = getHeader("KeepAlive");
+
+        boolean keepalive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(hKeepAlive) || (hKeepAlive == null && adaptor == null);
+
+
         autoInvalidate = !keepalive || !ObjectUtil.isVoid(getHeader("ApiKey"));
 
         Map<String,Object> map = getFormFields();
