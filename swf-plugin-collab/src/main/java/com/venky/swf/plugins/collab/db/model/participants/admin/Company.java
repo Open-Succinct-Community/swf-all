@@ -82,7 +82,6 @@ public interface Company extends Model{
 	public void setDateOfIncorporation(Date date);
 	
 	@CONTENT_TYPE(MimeType.IMAGE_PNG)
-	@HOUSEKEEPING
 	public InputStream getLogo();
 	public void setLogo(InputStream in);
 	
