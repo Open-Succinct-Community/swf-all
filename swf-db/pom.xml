@@ -64,10 +64,17 @@
             <artifactId>commons-dbcp2</artifactId>
             <version>2.5.0</version>
         </dependency>
+
         <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1</version>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.30</version>
         </dependency>
+        <dependency>
+            <groupId>org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
     </dependencies>
 </project>

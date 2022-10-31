@@ -55,6 +55,17 @@ public class UsersController extends com.venky.swf.controller.UsersController {
 
         return getIntegrationAdaptor().createResponse(getPath(),user, getIncludedModelFields().get(User.class), new HashSet<>(),getIncludedModelFields());
     }
+
+    @Override
+    protected String[] getIncludedFields() {
+        Map<Class<? extends Model>, List<String>> map  = getIncludedModelFields();
+        if (map.containsKey(User.class)){
+            return map.get(User.class).toArray(new String[]{});
+        }else {
+            return null;
+        }
+    }
+
     @Override
     protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
         Map<Class<? extends Model>,List<String>> map = super.getIncludedModelFields();

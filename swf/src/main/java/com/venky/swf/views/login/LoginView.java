@@ -93,7 +93,7 @@ public class LoginView extends HtmlView{
         formHolder.addControl(getStatus());
 
         FormGroup fg = new FormGroup();
-    	fg.createTextBox(Config.instance().getProperty("Login.Name.Literal","User"), "name",false);
+		fg.createTextBox(Config.instance().getProperty("Login.Name.Literal","User"), "name",false);
     	form.addControl(fg);
 
         fg = new FormGroup();
@@ -106,14 +106,14 @@ public class LoginView extends HtmlView{
 			form.addControl(fg);
 		}
 
-        if (!ObjectUtil.isVoid(_redirect_to)){
-            TextBox hidden = new TextBox();
-            hidden.setVisible(false);
-            hidden.setName("_redirect_to");
-            hidden.setValue(_redirect_to);
-            form.addControl(hidden);
+		getPath().getFormFields().forEach((k,v)->{
+			TextBox textBox = new TextBox();
+			textBox.setVisible(false);
+			textBox.setName(k);
+			textBox.setValue(v);
+			form.addControl(textBox);
+		});
 
-        }
 
         fg = new FormGroup();
 		Submit btn = null;

@@ -5,27 +5,16 @@ import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.SeekableByteArrayOutputStream;
 import com.venky.core.string.Inflector;
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.json.JSONModelWriter;
-import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.routing.Config;
-import freemarker.cache.NullCacheStorage;
-import freemarker.core.ArithmeticEngine;
-import freemarker.template.Configuration;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateExceptionHandler;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.json.simple.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
 import org.w3c.tidy.Tidy;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -50,62 +39,29 @@ public class TemplateProcessor {
         return getInstance(null);
     }
     public static TemplateProcessor getInstance(String directory){
-        return instance.get(directory == null? Config.instance().getProperty("swf.ftl.dir") : directory);
+        return instance.get(directory);
     }
-    Configuration cfg = null;
+    private final FreemarkerProcessor freemarkerProcessor;
     private TemplateProcessor(String directory){
-        cfg = new Configuration(Configuration.VERSION_2_3_28);
-        try {
-            File dir = null;
-            if (!ObjectUtil.isVoid(directory)) {
-                dir = new File(directory);
-            }
-            if (dir != null && dir.exists() && dir.isDirectory()){
-                cfg.setDirectoryForTemplateLoading(dir);
-            }else{
-                cfg.setClassForTemplateLoading(TemplateProcessor.class, directory);
-            }
-        }catch (Exception ex){
-            cfg.setClassForTemplateLoading(TemplateProcessor.class, "/templates");
-        }
-        cfg.setDefaultEncoding("UTF-8");
-        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setLogTemplateExceptions(false);
-        cfg.setLocalizedLookup(false);
-        cfg.setWrapUncheckedExceptions(true);
-        ArithmeticEngine engine = ArithmeticEngine.BIGDECIMAL_ENGINE;
-        engine.setMinScale(2);
-        engine.setMaxScale(2);
-        cfg.setArithmeticEngine(engine);
-        cfg.setCacheStorage(new NullCacheStorage()); //
-        cfg.setSharedVariable("to_words",new ToWords());
-
+        freemarkerProcessor = FreemarkerProcessor.getInstance(directory);
     }
     public String publish(String templateName, Map<String,Object> root) {
-        StringWriter writer = new StringWriter();
-        publish(templateName,root,writer);
-        return writer.toString();
+        return freemarkerProcessor.publish(templateName,root);
     }
     public void publish(String templateName, Map<String,Object> root, Writer output){
-        try {
-            Template template = cfg.getTemplate(templateName);
-            publish(template,root,output);
-        } catch (IOException ex) {
-            throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
-        }
+        freemarkerProcessor.publish(templateName,root,output);
     }
     public void publish (Template template, Map<String,Object> root,Writer output){
-        try {
-            for (String key : Config.instance().getPropertyKeys("swf.*host")){
-                putEnvKey(root,key,Config.instance().getProperty(key));
-            }
-
-            Config.instance().getLogger(getClass().getName()).info("Data for " + template.getName() +":" + root.toString());
-            template.process(root,output);
-        }catch (IOException | TemplateException ex) {
-            throw new RuntimeException(root +"\n"+ ex.getMessage(),ex);
-        }
+        freemarkerProcessor.publish(template,root,output);
     }
+    public boolean exists(String templateName){
+        return freemarkerProcessor.exists(templateName);
+    }
+
+    public void putEnvKey(Map<String,Object> root, String key, String value){
+        freemarkerProcessor.putEnvKey(root,key,value);
+    }
+
     W3CDom w3CDom = new W3CDom();
 
     public byte[] htmlToPdf(byte[] htmlBytes){
@@ -145,13 +101,6 @@ public class TemplateProcessor {
             }
         }
         return new byte[]{};
-    }
-    public boolean exists(String templateName){
-        try {
-            return (null != cfg.getTemplate(templateName,null,null,false,true));
-        }catch (Exception ex){
-            return false;
-        }
     }
     public Map<String,Object> createEntityMap(List<Model> entities) {
         Map<String, Object> entityMap = new HashMap<>();
@@ -237,29 +186,5 @@ public class TemplateProcessor {
         return  into;
     }
 
-    public void putEnvKey(Map<String,Object> root, String key, String value){
-        String[] path = key.split("\\.");
-        if (path.length == 0){
-            return;
-        }
-        Map previousLevelMap = (Map)root.get("env");
-        if (previousLevelMap == null){
-            previousLevelMap =  new HashMap<>();
-            root.put("env",previousLevelMap);
-        }
-        for (int i = 0 ; i < path.length ; i ++ ){
-            Object o = previousLevelMap.get(path[i]);
-            if (o == null) {
-                o = new HashMap<>();
-                previousLevelMap.put(path[i], o);
-            }
-            if (i < path.length - 1){
-                previousLevelMap = (Map)o;
-            }else {
-                previousLevelMap.put(path[i],value);
-                break;
-            }
-        }
-    }
 
 }

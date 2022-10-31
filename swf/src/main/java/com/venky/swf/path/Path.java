@@ -50,7 +50,6 @@ import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
 import com.venky.swf.views.controls.model.ModelAwareness;
-import com.venky.swf.views.controls.page.text.Input;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
@@ -71,11 +70,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -253,7 +249,7 @@ public class Path implements _IPath{
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() throws IOException {
         if (inputStream == null){
-            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false));
+            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false)); // Why is it not being closed? VENKY
         }
         inputStream.close();
         return inputStream;
@@ -466,28 +462,23 @@ public class Path implements _IPath{
         return getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
     }
     public boolean isAppAuthenticated() {
-        return getApplication() != null;
+        return getApplication() != null ;
     }
+    private Application application = null;
     public Application getApplication(){
-        String authorization = getRequest().getHeader("Authorization");
-        if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
-            // Authorization: Basic base64credentials
-            String base64Credentials = authorization.substring("basic".length()).trim();
-            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-            // credentials = username:password
-            final String[] values = credentials.split(":", 2);
-            if (values.length == 2){
-                String appId = values[0];
-                String plainPass = values[1];
-                Application app = ApplicationUtil.find(appId);
-                if (app != null && ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
-                    return app;
-                }
-            }
+        if (application != null){
+            return application;
         }
-        return null;
-
+        Map<String,String> headers = getHeaders();
+        headers.put("request-target", request.getMethod().toLowerCase() + " " + getTarget());
+        headers.putIfAbsent("host",Config.instance().getHostName());
+        //headers.putIfAbsent("X-Real-IP",getRequest().getRemoteAddr());
+        try {
+            application = ApplicationUtil.find(getInputStream(),headers);
+            return application;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static class ControllerInfo {
@@ -810,7 +801,7 @@ public class Path implements _IPath{
         }
         if (isAppAuthenticationRequired()) {
             if (!isAppAuthenticated()){
-                return false;
+                throw new AccessDeniedException("Application not authorized");
             }
         }
 
@@ -830,10 +821,9 @@ public class Path implements _IPath{
         }
         String hKeepAlive = getHeader("KeepAlive");
 
-        boolean keepalive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(hKeepAlive) || (hKeepAlive == null && adaptor == null);
+        boolean keepAlive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(hKeepAlive) || (hKeepAlive == null && adaptor == null);
 
-
-        autoInvalidate = !keepalive || !ObjectUtil.isVoid(getHeader("ApiKey"));
+        autoInvalidate = !keepAlive && !ObjectUtil.isVoid(getHeader("ApiKey"));
 
         Map<String,Object> map = getFormFields();
 

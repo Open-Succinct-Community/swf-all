@@ -98,20 +98,11 @@
             <artifactId>org.apache.oltu.oauth2.client</artifactId>
             <version>1.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.owasp.encoder</groupId>
-            <artifactId>encoder</artifactId>
-            <version>1.2.3</version>
-        </dependency>
+
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
             <version>1.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.freemarker</groupId>
-            <artifactId>freemarker</artifactId>
-            <version>2.3.30</version>
         </dependency>
         <dependency>
             <groupId>com.openhtmltopdf</groupId>
@@ -142,6 +133,7 @@
             <artifactId>flexmark-all</artifactId>
             <version>0.62.2</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/io.cloudevents/cloudevents-core -->
         <dependency>
             <groupId>io.cloudevents</groupId>
