@@ -5,6 +5,8 @@
 package com.venky.swf.views;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,7 +27,16 @@ public class RedirectorView extends View{
 	}
 
     public void setRedirectUrl(String redirectUrl) {
-		this.redirectUrl = redirectUrl.replaceAll("[/]+","/");
+
+        Pattern pattern = Pattern.compile("^(http[s]?):(/.*)");
+        String x = redirectUrl.replaceAll("[/]+","/");
+        Matcher m = pattern.matcher(x);
+        if (m.find()){
+            this.redirectUrl = m.group(1) + ":/" + m.group(2);
+        }else {
+            this.redirectUrl = redirectUrl;
+        }
+
 	}
 	
     public RedirectorView(_IPath path,String controllerAction){

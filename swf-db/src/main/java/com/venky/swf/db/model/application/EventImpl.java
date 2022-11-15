@@ -15,6 +15,7 @@ import freemarker.core.ArithmeticEngine;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
+import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,49 +29,21 @@ public class EventImpl extends ModelImpl<Event> {
         super(event);
     }
 
-    public void raise(Map<String,Object> variables){
+    public void raise(Object payload){
+        String sPayLoad = payload.toString();
+
         for (ApplicationEvent applicationEvent : getProxy().getApplicationEvents()) {
             Application application = applicationEvent.getApplication();
-            Template template = getTemplate(applicationEvent.getTemplate());
-            StringWriter writer = new StringWriter();
-            FreemarkerProcessor.getInstance().publish(template,variables,writer);
             if (!ObjectUtil.isVoid(applicationEvent.getNotificationUrl())){
                 Map<String,String> headers = new IgnoreCaseMap<>();
                 headers.put("content-type",applicationEvent.getContentType());
-                String payload = writer.toString();
-                ApplicationUtil.addAuthorizationHeader(applicationEvent,headers,payload);
+                ApplicationUtil.addAuthorizationHeader(applicationEvent,headers,sPayLoad);
 
                 new Call<InputStream>().url(applicationEvent.getNotificationUrl()).headers(headers).
                         inputFormat(InputFormat.INPUT_STREAM).
-                        input(new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8))).hasErrors();
+                        input(new ByteArrayInputStream(sPayLoad.getBytes(StandardCharsets.UTF_8))).hasErrors();
 
             }
         }
-    }
-
-    public Template getTemplate(Reader template){
-        try {
-            return new Template("request", StringUtil.read(template), getConfiguration());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    private static final Configuration cfg = null ;
-    static {
-        Configuration cfg = new Configuration(Configuration.VERSION_2_3_28);
-        cfg.setDefaultEncoding("UTF-8");
-        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setLogTemplateExceptions(false);
-        cfg.setLocalizedLookup(false);
-        cfg.setWrapUncheckedExceptions(true);
-        ArithmeticEngine engine = ArithmeticEngine.BIGDECIMAL_ENGINE;
-        engine.setMinScale(2);
-        engine.setMaxScale(2);
-        cfg.setArithmeticEngine(engine);
-        cfg.setCacheStorage(new NullCacheStorage()); //
-        cfg.setSharedVariable("to_words",new ToWords());
-    }
-    private Configuration getConfiguration(){
-        return cfg;
     }
 }

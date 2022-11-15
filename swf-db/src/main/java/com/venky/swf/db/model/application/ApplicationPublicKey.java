@@ -1,12 +1,17 @@
 package com.venky.swf.db.model.application;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
 
+import java.sql.Timestamp;
+
 public interface ApplicationPublicKey extends Model {
+
     public Long getApplicationId();
     public void setApplicationId(Long id);
     public Application getApplication();
@@ -15,11 +20,13 @@ public interface ApplicationPublicKey extends Model {
     public static final String PURPOSE_ENCRYPTION = "ENCRYPTION";
 
     @Enumeration(PURPOSE_ENCRYPTION+","+PURPOSE_SIGNING)
+
+    @UNIQUE_KEY("KeyId")
     public String getPurpose();
     public void setPurpose(String purpose);
 
 
-    @Enumeration("Ed25519,X35519,RSA")
+    @Enumeration("Ed25519,X25519,RSA")
     public String getAlgorithm();
     public void setAlgorithm(String algorithm);
 
@@ -31,9 +38,18 @@ public interface ApplicationPublicKey extends Model {
     public String getKeyId();
     public void setKeyId(String keyId);
 
+    @IS_NULLABLE
+    public Timestamp getValidFrom();
+    public void setValidFrom(Timestamp from);
 
-    public static ApplicationPublicKey find(String keyId){
+    @IS_NULLABLE
+    public Timestamp getValidUntil();
+    public void setValidUntil(Timestamp until);
+
+
+    public static ApplicationPublicKey find(String purpose, String keyId){
         ApplicationPublicKey applicationPublicKey = Database.getTable(ApplicationPublicKey.class).newRecord();
+        applicationPublicKey.setPurpose(purpose);
         applicationPublicKey.setKeyId(keyId);
         return  Database.getTable(ApplicationPublicKey.class).find(applicationPublicKey,false);
     }

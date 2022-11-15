@@ -4,6 +4,14 @@
  */
 package com.venky.swf.routing;
 
+import com.venky.cache.Cache;
+import com.venky.core.collections.SequenceSet;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+import com.venky.core.util.PackageUtil;
+import com.venky.swf.integration.api.Call;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -19,13 +27,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
-
-import com.venky.cache.Cache;
-import com.venky.core.log.SWFLogger;
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
-import com.venky.core.util.PackageUtil;
-import com.venky.swf.integration.api.Call;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -181,6 +184,17 @@ public class Config {
 
 		return url.toString();
 	}
+	public List<String> getOpenIdProviders(){
+		List<String> openIdProviders = new SequenceSet<>();
+		for (String k : getPropertyKeys("swf\\.[A-Z]*\\.client\\.id")){
+			if (getProperty(k) != null) {
+				// Youi may need property to say it is a openid client id ..!
+				//Can add a property swf.provider.client.openid=true
+				openIdProviders.add(k.split("\\.")[1]);
+			}
+		}
+		return openIdProviders;
+	}
 	public String getClientId(String opendIdProvider){
 		return getProperty("swf."+opendIdProvider +".client.id");
 	}
@@ -244,9 +258,11 @@ public class Config {
 
 	public List<String> getPropertyKeys(String regEx){
 		List<String> keys = new ArrayList<String>();
+		Pattern pattern = Pattern.compile(regEx);
+
 		for (Object key: properties.keySet()){
 			String sKey = StringUtil.valueOf(key);
-			if (sKey.matches(regEx)) {
+			if (pattern.matcher(sKey).matches()) {
 				keys.add(sKey);
 			}
 		}

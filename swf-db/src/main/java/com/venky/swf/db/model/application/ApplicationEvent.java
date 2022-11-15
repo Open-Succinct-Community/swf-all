@@ -1,11 +1,8 @@
 package com.venky.swf.db.model.application;
 
-import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
-import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
-
-import java.io.Reader;
+import com.venky.swf.db.model.application.api.ImplementedInterface;
 
 public interface ApplicationEvent extends Model {
     @UNIQUE_KEY
@@ -19,15 +16,9 @@ public interface ApplicationEvent extends Model {
     public Event getEvent();
 
 
-    public String getNotificationUrl();
-    public void setNotificationUrl(String notificationUrl);
-
-    @Enumeration("application/json")
-    public String getContentType();
-    public void setContentType(String contentType);
-
-    public Reader getTemplate();
-    public void setTemplate(Reader reader);
+    public Long getApiId();
+    public void setApiId(Long id);
+    public ImplementedInterface getApi();
 
 
 }

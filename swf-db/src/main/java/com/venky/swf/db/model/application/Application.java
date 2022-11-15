@@ -10,6 +10,7 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.application.api.EndPoint;
 
 import java.util.List;
 
@@ -37,8 +38,8 @@ public interface Application extends Model {
     public String getEncryptedSecret(String unEncryptedSecret);
 
     public List<WhiteListIp> getWhiteListIps();
-    public List<ApplicationEvent> getApplicationEvents();
     public List<ApplicationPublicKey> getApplicationPublicKeys();
+
 
 
     public String getHashingAlgorithm();
@@ -61,5 +62,7 @@ public interface Application extends Model {
     public void setHeaders(String headers);
 
 
+    public List<ApplicationEvent> getApplicationEvents(); //
+    public List<EndPoint> getEndPoints();
 
 }

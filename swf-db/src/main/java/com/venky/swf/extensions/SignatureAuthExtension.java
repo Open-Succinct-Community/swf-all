@@ -22,7 +22,7 @@ public class SignatureAuthExtension extends ApplicationAuthenticator{
         }
         Map<String,String> params = ApplicationUtil.extractAuthorizationParams(schemeDetails);
 
-        ApplicationPublicKey applicationPublicKey = ApplicationPublicKey.find(params.get("keyId"));
+        ApplicationPublicKey applicationPublicKey = ApplicationPublicKey.find(ApplicationPublicKey.PURPOSE_SIGNING,params.get("keyId"));
         if (applicationPublicKey == null){
             return ;
         }

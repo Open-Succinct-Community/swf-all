@@ -49,6 +49,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls.page.text.TextBox;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.model.FileUploadView;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -57,6 +58,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONObject;
+import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -126,14 +128,17 @@ public class Controller implements TemplateLoader{
                 msg.insert(0,"?error=");
             }
 
-            if (fields.containsKey("_REGISTER")){
+            fields.forEach((k,v)->{
+                if ("name".equals(k) || k.startsWith("password") ||  k.equals("_LOGIN") ){
+                    return;
+                }
                 if (msg.length() >0){
                     msg.append("&");
                 }else {
                     msg.append("?");
                 }
-                msg.append("_REGISTER=").append(fields.get("_REGISTER"));
-            }
+                msg.append(String.format("%s=%s",k, Encode.forUriComponent(v.toString())));
+            });
 
         }
         return msg.toString();
@@ -156,14 +161,14 @@ public class Controller implements TemplateLoader{
                 if (msg.length() > 0){
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
                         //return createLoginView(StatusType.ERROR,msg.toString());
-                        return new RedirectorView(getPath(),"","login"+msg);
+                        return new RedirectorView(getPath(), getPath().action()+msg);
                     }else {
                         throw new AccessDeniedException(msg);
                     }
                 }else {
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
                         //return createLoginView();
-                        return new RedirectorView(getPath(),"","login");
+                        return new RedirectorView(getPath(),getPath().action());
                     }else {
                         return authenticate();
                     }

@@ -53,14 +53,10 @@ public class LoginView extends HtmlView{
 		}
 	}
 	public void addExternalLoginLinks(Column column,String _redirect_to){
-		if (!ObjectUtil.isVoid(Config.instance().getClientId("GOOGLE"))){
-			column.addControl(new LinkedImage("/resources/images/google-icon.svg","/oid/login?SELECTED_OPEN_ID=GOOGLE" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
-		}
-		if (!ObjectUtil.isVoid(Config.instance().getClientId("FACEBOOK"))){
-			column.addControl(new LinkedImage("/resources/images/fb-icon.svg","/oid/login?SELECTED_OPEN_ID=FACEBOOK" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
-		}
-		if (!ObjectUtil.isVoid(Config.instance().getClientId("LINKEDIN"))){
-			column.addControl(new LinkedImage("/resources/images/linkedin-icon.png","/oid/login?SELECTED_OPEN_ID=LINKEDIN" + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
+		for (String provider :Config.instance().getOpenIdProviders()){
+			if (!ObjectUtil.isVoid(Config.instance().getClientId(provider))){
+				column.addControl(new LinkedImage(String.format("/resources/images/%s.svg",provider),String.format("/oid/login?SELECTED_OPEN_ID=%s",provider) + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
+			}
 		}
 	}
     @Override
@@ -78,6 +74,7 @@ public class LoginView extends HtmlView{
 		addProgressiveWebAppLinks(applicationDescPannel);
 
 		Column extLinks = loginPanel.createRow().createColumn(3,6);
+		extLinks.addClass("justify-center flex");
 
 		addExternalLoginLinks(extLinks,_redirect_to);
 
@@ -86,7 +83,7 @@ public class LoginView extends HtmlView{
 
 
 		Form form = new Form();
-        form.setAction(getPath().controllerPath(),"login");
+        form.setAction(getPath().controllerPath(),getPath().action());
         form.setMethod(Form.SubmitMethod.POST);
         
         formHolder.addControl(form);
@@ -107,6 +104,9 @@ public class LoginView extends HtmlView{
 		}
 
 		getPath().getFormFields().forEach((k,v)->{
+			if ( k.equals("_LOGIN") || k.equals("_REGISTER") || k.equals("error")){
+				return;
+			}
 			TextBox textBox = new TextBox();
 			textBox.setVisible(false);
 			textBox.setName(k);
