@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.extensions.participation;
 import com.venky.swf.plugins.collab.db.model.participants.Application;
 import com.venky.swf.plugins.collab.db.model.user.User;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +24,6 @@ public class ApplicationParticipantExtension extends CompanyNonSpecificParticipa
                 }
             }
         }
-        return null;
+        return new ArrayList<>();
     }
 }

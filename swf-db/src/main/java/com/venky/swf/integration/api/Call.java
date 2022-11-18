@@ -174,7 +174,11 @@ public class Call<T> implements Serializable {
             for (String k : requestHeaders.keySet()) {
                 String v = requestHeaders.get(k);
                 curlBuilder.setHeader(k, v);
-                fakeCurlRequest.append(" -H '").append(k).append(": ").append(v).append("' ");
+                if (Config.instance().isDevelopmentEnvironment()) {
+                    fakeCurlRequest.append(" -H '").append(k).append(": ").append(v).append("' ");
+                }else {
+                    fakeCurlRequest.append(" -H '").append(k).append(": ").append("****").append("' ");
+                }
             }
 
 

@@ -4,10 +4,9 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.validations.RegEx;
 import com.venky.swf.db.model.Model;
-import org.json.simple.JSONObject;
+import com.venky.swf.db.model.application.api.EventHandler;
 
 import java.util.List;
-import java.util.Map;
 
 public interface Event extends Model {
 
@@ -16,7 +15,7 @@ public interface Event extends Model {
     public String getName();
     public void setName(String name);
 
-    public List<ApplicationEvent> getApplicationEvents();
+    public List<EventHandler> getEventHandlers();
 
 
     public static Event find(String name){

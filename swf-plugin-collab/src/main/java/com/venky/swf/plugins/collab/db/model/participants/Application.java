@@ -7,6 +7,7 @@ import com.venky.swf.plugins.collab.db.model.CompanyNonSpecific;
 
 public interface Application extends com.venky.swf.db.model.application.Application , CompanyNonSpecific {
 
+
     @UNIQUE_KEY("K1,K2")
     @IS_NULLABLE(false)
     public String getAppId();

@@ -10,8 +10,10 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.application.api.EventHandler;
 import com.venky.swf.db.model.application.api.EndPoint;
 
+import java.io.Reader;
 import java.util.List;
 
 public interface Application extends Model {
@@ -61,8 +63,11 @@ public interface Application extends Model {
     public String getHeaders();
     public void setHeaders(String headers);
 
+    public String getIndustryClassificationCode();
+    public void setIndustryClassificationCode(String industryClassificationCode);
 
-    public List<ApplicationEvent> getApplicationEvents(); //
+
+    public List<EventHandler> getEventHandlers(); //
     public List<EndPoint> getEndPoints();
 
 }

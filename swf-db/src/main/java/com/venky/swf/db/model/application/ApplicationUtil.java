@@ -3,19 +3,16 @@ package com.venky.swf.db.model.application;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.security.Crypt;
-import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
-import com.venky.network.shortestpath.Dijkstra.Path;
+import com.venky.swf.db.model.application.api.EventHandler;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
-import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -86,9 +83,9 @@ public class ApplicationUtil {
 
     }
 
-    public static void addAuthorizationHeader(ApplicationEvent event, Map<String,String> headers, String payload){
+    public static void addAuthorizationHeader(EventHandler event, Map<String,String> headers, String payload){
 
-        Application app = event.getApplication();
+        Application app = event.getEndPoint().getApplication();
         String  sPrivateKey = getPrivateKey(app.getSigningAlgorithm());
         if (sPrivateKey == null){
             return;
