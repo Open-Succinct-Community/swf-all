@@ -2,10 +2,15 @@ package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
 import com.venky.swf.db.extensions.ParticipantExtension;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
-import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationShip;
+import com.venky.swf.plugins.collab.db.model.participants.admin.CompanyRelationship;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserEmail;
+import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,19 +33,23 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		}else if ("CUSTOMER_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getCustomers().stream().map(CompanyRelationShip::getCustomerId).collect(Collectors.toList()));
+				ret.addAll(partial.getCustomers().stream().map(CompanyRelationship::getCustomerId).collect(Collectors.toList()));
 			}else {
 				return new ArrayList<>();
 			}
 		}else if ("VENDOR_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getVendors().stream().map(CompanyRelationShip::getVendorId).collect(Collectors.toList()));
+				ret.addAll(partial.getVendors().stream().map(CompanyRelationship::getVendorId).collect(Collectors.toList()));
 			}else {
 				ret = new ArrayList<>();
 			}
 		}else if ("CREATOR_COMPANY_ID".equalsIgnoreCase(fieldName)){
 			ret = getAssociatedCompanyIds(u);
+		}else if ("ANY_USER_ID".equalsIgnoreCase(fieldName)){
+			ret = Arrays.asList(user.getId());
+		}else {
+			ret = new ArrayList<>();
 		}
 		return ret;
 	}
@@ -58,6 +67,9 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 			}
 		}
 
+		ModelReflector<Company> ref = ModelReflector.instance(Company.class);
+		List<Company> companies = new Select("ID").from(Company.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("CREATOR_USER_ID").getName(), Operator.EQ, u.getId())).execute();
+		ret.addAll(DataSecurityFilter.getIds(companies));
 		return ret;
 	}
 

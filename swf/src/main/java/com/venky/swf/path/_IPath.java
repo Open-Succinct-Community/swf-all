@@ -1,5 +1,6 @@
 package com.venky.swf.path;
 
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.views._IView;
 
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface _IPath {
+	public String getAccept();
+	public String getContentType();
 
 	void setRequest(HttpServletRequest request);
 	HttpServletRequest getRequest();

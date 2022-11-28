@@ -161,10 +161,9 @@ p#msg {
   .hotlinks {
     padding-top: 7px;
     padding-bottom: 7px;
-    position: fixed;
+    position: static;
     z-index: 5;
-    top: 10px;
-    width: 80% !important;
+    top: 20px;
     right: 5px;
   }
   .nav-tabs {

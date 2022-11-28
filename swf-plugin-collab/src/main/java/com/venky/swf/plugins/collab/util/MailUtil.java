@@ -8,7 +8,7 @@ import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.mail.core.MailerFactory;
 import com.venky.swf.plugins.mail.db.model.Mail;
 import com.venky.swf.routing.Config;
-import org.codemonkey.simplejavamail.Email;
+import org.codemonkey.simplejavamail.email.Email;
 
 import javax.mail.Message.RecipientType;
 

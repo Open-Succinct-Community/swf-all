@@ -1,5 +1,6 @@
 package com.venky.swf.util;
 
+import com.vladsch.flexmark.ext.attributes.AttributesExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
@@ -16,7 +17,7 @@ public class PegDownProcessor {
     final private static MutableDataHolder OPTIONS = new MutableDataSet();
     static {
         OPTIONS.setFrom(ParserEmulationProfile.GITHUB);
-        OPTIONS.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
+        OPTIONS.set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create(), AttributesExtension.create()));
     }
     /*final private static DataHolder OPTIONS = PegdownOptionsAdapter.flexmarkOptions(true,
             Extensions.ALL

@@ -27,7 +27,10 @@ public interface Role extends Model{
 	public List<UserRole> getUserRoles();
 
 	static Role getRole(String name) {
-		List<Role> roles = new Select().from(Role.class).where(new Expression(ModelReflector.instance(Role.class).getPool(),"NAME", Operator.EQ, name)).execute(1);
+		return getRole(Role.class,name);
+	}
+	static <R extends Role> R getRole(Class<R> clazz, String name) {
+		List<R> roles = new Select().from(clazz).where(new Expression(ModelReflector.instance(clazz).getPool(),"NAME", Operator.EQ, name)).execute(1);
 		if (roles.isEmpty()){
 			return null;
 		}else {

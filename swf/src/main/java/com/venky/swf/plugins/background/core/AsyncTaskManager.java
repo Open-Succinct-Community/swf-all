@@ -1,22 +1,5 @@
 package com.venky.swf.plugins.background.core;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-
 import com.venky.cache.Cache;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.io.SeekableByteArrayOutputStream;
@@ -25,45 +8,34 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.SWFHttpResponse;
-import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.io.json.JSONModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
-import com.venky.swf.integration.IntegrationAdaptor;
-import com.venky.swf.integration.JSON;
 import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.integration.api.InputFormat;
-import com.venky.swf.plugins.background.core.agent.Agent;
-import com.venky.swf.plugins.background.core.agent.AgentSeederTask;
-import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent;
-import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent.PersistedTaskPoller;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.plugins.background.extensions.InMemoryTaskQueueManager;
 import com.venky.swf.routing.Config;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 
-public class AsyncTaskManager  {
-	
-	private static AsyncTaskManager tm  = null;
-	public static AsyncTaskManager getInstance() {
-		if (tm == null) {
-			synchronized (AsyncTaskManager.class) {
-				if (tm == null){
-					tm = new AsyncTaskManager();
-				}
-			}
-		}
-		return tm;
-	}
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
-	protected AsyncTaskManager() {
-		this(getInitialNumWorkerThreads());
-	}
-	
-	protected AsyncTaskManager(int numWorkers) {
+public class AsyncTaskManager  {
+
+	public AsyncTaskManager() {
 		queue();
-		for (int i = 0; i < numWorkers; i++) {
+		for (int i = 0; i < getInitialNumWorkerThreads(); i++) {
 			addWorker();
 		}
 	}
@@ -101,8 +73,8 @@ public class AsyncTaskManager  {
 		}
 	}
 
-	public static final int getInitialNumWorkerThreads() {
-		return Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1);
+	public final int getInitialNumWorkerThreads() {
+		return Config.instance().getIntProperty( String.format("swf.plugins.background.core.%s.workers.numThreads", getClass().getSimpleName()) , Config.instance().getIntProperty("swf.plugins.background.core.workers.numThreads", 1));
 	}
 
 	private AtomicInteger instanceNumber = new AtomicInteger();
@@ -115,9 +87,9 @@ public class AsyncTaskManager  {
 		return workerThreads.size();
 	}
 
-	private Queue<Task> queue = null;
+	private Queue<CoreTask> queue = null;
 
-	protected Queue<Task> queue() {
+	protected Queue<CoreTask> queue() {
 		if (queue != null) {
 			return queue;
 		}
@@ -129,23 +101,30 @@ public class AsyncTaskManager  {
 		return queue;
 	}
 
+	void evict(AsyncTaskWorker asyncTaskWorker) {
+		if (Thread.currentThread() == asyncTaskWorker) {
+			//Defense.
+			workerThreads.remove(asyncTaskWorker);
+		}
+	}
+
 	public static class ShutdownInitiatedException extends RuntimeException {
 		private static final long serialVersionUID = -8216421138960049897L;
 	}
-	public void addAll(Collection<? extends Task> tasks) {
-		Cache<Boolean,List<Task>> remoteableTasks = new Cache<Boolean, List<Task>>() {
+	public void addAll(Collection<? extends CoreTask> tasks) {
+		Cache<Boolean,List<CoreTask>> remoteableTasks = new Cache<Boolean, List<CoreTask>>() {
 			@Override
-			protected List<Task> getValue(Boolean aBoolean) {
+			protected List<CoreTask> getValue(Boolean aBoolean) {
 				return new ArrayList<>();
 			}
 		};
-		for (Task task :tasks){
+		for (CoreTask task :tasks){
 			remoteableTasks.get(task.canExecuteRemotely()).add(task);
 		}
 		addAll(remoteableTasks.get(true),true);
 		addAll(remoteableTasks.get(false),false);
 	}
-	private void addAll(Collection<Task> tasks, boolean canExecuteRemote) {
+	private void addAll(Collection<CoreTask> tasks, boolean canExecuteRemote) {
 		if (tasks.isEmpty()) {
 			return;
 		}
@@ -190,20 +169,14 @@ public class AsyncTaskManager  {
 	private boolean shutdown = false;
 
 	public void shutdown() {
-		while (true) {
-			Config.instance().getLogger(getClass().getName()).info("Waiting for all Threads to shutdown");
-			evictWorker(workerThreads.size());
-			waitUntilWorkersAreEvicted();
-			break;
-		}
 		synchronized (queue) {
 			shutdown = true;
 			queue.notifyAll();
 		}
 	}
 
-	public Task waitUntilNextTask(boolean localWorker, boolean waitForTask) {
-		Task dt = null;
+	public CoreTask waitUntilNextTask(boolean localWorker, boolean waitForTask) {
+		CoreTask dt = null;
 		synchronized (queue){
 			while (waitForTask && isWorkerAlive(localWorker) && queue.isEmpty() ){
 				pullRemoteTasks(Config.instance().getIntProperty("swf.plugins.background.queue.server.batch",1000));
@@ -239,7 +212,7 @@ public class AsyncTaskManager  {
 			return ;
 		}
 
-		List<Task> tasks = new ArrayList<>();
+		List<CoreTask> tasks = new ArrayList<>();
 		JSONObject parameters = new JSONObject();
 		parameters.put("BatchSize",batch);
 
@@ -277,14 +250,14 @@ public class AsyncTaskManager  {
 		return Config.instance().getProperty("swf.plugins.background.queue.server.apikey");
 	}
 
-	public Task next() {
+	public CoreTask next() {
 		return next(true,true);
 	}
-	public Task next(boolean local,boolean wait) {
+	public CoreTask next(boolean local,boolean wait) {
 		if (local){
 			decrementWorkerCount();
 		}
-		Task task =  waitUntilNextTask(local,wait);
+		CoreTask task =  waitUntilNextTask(local,wait);
 		if (task != null && local) {
 			incrementWorkerCount();
 		}
@@ -332,7 +305,7 @@ public class AsyncTaskManager  {
 	}
 	public void waitUntilWorkersAreEvicted() {
 		synchronized (numWorkersToEvict) {
-			while (numWorkersToEvict.intValue() != 0){
+			while (numWorkersToEvict.intValue() > 0){
 				try {
 					numWorkersToEvict.wait(5000);
 				} catch (InterruptedException e) {
@@ -385,33 +358,33 @@ public class AsyncTaskManager  {
 		}
 	}
 
-	public <T extends Task>  void execute(Collection<T> tasks){ 
+	public <T extends CoreTask>  void execute(Collection<T> tasks){
 		execute(tasks, false);
 	}
 	
-	public <T extends Task> void execute(Collection<T> tasks, boolean persist){ 
+	public <T extends CoreTask> void execute(Collection<T> tasks, boolean persist){
 		if (getInitialNumWorkerThreads() == 0) {
-			for (Task task:tasks) {
+			for (CoreTask task:tasks) {
 				task.execute();
 			}
 		} else {
 			pushAsyncTasks(tasks, persist);
 		}
 	}
-	protected <T extends Task> void pushAsyncTasks(Collection<T> tasks, boolean persist) {
+	protected <T extends CoreTask> void pushAsyncTasks(Collection<T> tasks, boolean persist) {
 		if (tasks.isEmpty()) {
 			return;
 		}
 		if (!persist) {
-            List<Task> taskHolders = new LinkedList<Task>();
-            for (Task task : tasks){
+            List<CoreTask> taskHolders = new LinkedList<CoreTask>();
+            for (CoreTask task : tasks){
                 taskHolders.add(new TaskHolder(task));
             }
             //addAll(taskHolders);
             InMemoryTaskQueueManager.getPendingTasks().addAll(taskHolders); //To ensures tasks are executed after commit.
 		}else {
 			SerializationHelper helper = new SerializationHelper();
-			for (Task task: tasks){ 
+			for (CoreTask task: tasks){
 				DelayedTask de = Database.getTable(DelayedTask.class).newRecord();
 				ByteArrayOutputStream os = new ByteArrayOutputStream();
 				helper.write(os,task);

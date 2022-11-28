@@ -30,6 +30,9 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.IOTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
@@ -46,6 +49,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls.page.text.TextBox;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.model.FileUploadView;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -54,9 +58,11 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONObject;
+import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -106,32 +112,63 @@ public class Controller implements TemplateLoader{
 
     public View reset_router() {
         if (Config.instance().isDevelopmentEnvironment()) {
-            Router.instance().reset();
+            TaskManager.instance().executeAsync((IOTask)()->Router.instance().reset(),false);
         }
         return back();
     }
+    private String getLoginUrlParams(){
+        StringBuilder msg = new StringBuilder();
+        Map<String, Object> fields = getPath().getFormFields();
+        getPath().getErrorMessages().forEach(m -> msg.append(m));
+        if (msg.length() == 0){
+            msg.append(fields.getOrDefault("error",""));
+        }
+        if (getPath().getProtocol() == MimeType.TEXT_HTML){
+            if (msg.length() >0){
+                msg.insert(0,"?error=");
+            }
 
+            fields.forEach((k,v)->{
+                if ("name".equals(k) || k.startsWith("password") ||  k.equals("_LOGIN") ){
+                    return;
+                }
+                if (msg.length() >0){
+                    msg.append("&");
+                }else {
+                    msg.append("?");
+                }
+                msg.append(String.format("%s=%s",k, Encode.forUriComponent(v.toString())));
+            });
+
+        }
+        return msg.toString();
+    }
     @RequireLogin(false)
     public View login() {
-        if (getPath().getRequest().getMethod().equals("GET") && getPath().getSession() == null) {
-            if (getPath().getFormFields().isEmpty() || getPath().getFormFields().containsKey("_REGISTER")) {
+        Map<String, Object> fields = getPath().getFormFields();
+        if (getPath().getRequest().getMethod().equals("GET") && getSessionUser() == null) {
+            boolean isLoginOverridden = !getClass().getSimpleName().equals("Controller") && getPath().action().equals("login");
+
+            if (!isLoginOverridden) {
                 return createLoginView();
             } else {
                 return authenticate();
             }
         } else if (getPath().getSession() != null) {
             if (getSessionUser() == null) {
-                StringBuilder msg = new StringBuilder();
-                getPath().getErrorMessages().forEach(m -> msg.append(m));
+                String msg = getLoginUrlParams();
+
                 if (msg.length() > 0){
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        return createLoginView(StatusType.ERROR,msg.toString());
+                        //return createLoginView(StatusType.ERROR,msg.toString());
+                        return new RedirectorView(getPath(), getPath().action()+msg);
                     }else {
-                        throw new AccessDeniedException(msg.toString());
+                        throw new AccessDeniedException(msg);
                     }
                 }else {
                     if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        return createLoginView();
+                        //return createLoginView();
+                        return new RedirectorView(getPath(),getPath().action());
                     }else {
                         return authenticate();
                     }
@@ -166,9 +203,10 @@ public class Controller implements TemplateLoader{
             if (authenticated) {
                 return new RedirectorView(getPath(), "", loginSuccessful());
             } else {
-                StringBuilder msg = new StringBuilder();
-                getPath().getErrorMessages().forEach(m -> msg.append(m));
-                return createLoginView(StatusType.ERROR, msg.toString());
+                String msg = getLoginUrlParams();
+
+                return new RedirectorView(getPath(),"/","login"+msg);
+                //return createLoginView(StatusType.ERROR, msg.toString());
             }
         } else {
             IntegrationAdaptor<User, ?> adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getPath().getProtocol()));
@@ -202,7 +240,7 @@ public class Controller implements TemplateLoader{
         }
     }
 
-    protected boolean isRegistrationRequired() {
+    protected boolean   isRegistrationRequired() {
         return Config.instance().getBooleanProperty("swf.application.requires.registration", false);
     }
 
@@ -219,7 +257,7 @@ public class Controller implements TemplateLoader{
     @RequireLogin(false)
     public View logout() {
         invalidateSession();
-        return new RedirectorView(getPath(), "", "login");
+        return new RedirectorView(getPath(), "/", "");
     }
 
     public View dashboard() {
@@ -251,43 +289,16 @@ public class Controller implements TemplateLoader{
             return new BytesView(p, "Access Denied!".getBytes());
         }
 
-        InputStream is = null ;
-        File dir = new File("./src/main/resources");
-        if (dir.isDirectory() ){
-            File resource = new File(dir + "/" + name);
-            if (resource.exists() && resource.isFile()){
-                try {
-                    is = new FileInputStream(new File(dir + "/" + name));
-                }catch (Exception ex){
-                    is = null;
-                }
-            }
-        }
-        if (is == null) {
-            is = getClass().getResourceAsStream(name);
+        ByteArrayInputStream is = p.getResourceAsStream(name);
+        if (is == null){
+            throw new AccessDeniedException("No such resource!");
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int read = 0;
-        try {
-            if (is != null) {
-                while ((read = is.read(buffer)) >= 0) {
-                    baos.write(buffer, 0, read);
-                }
-            } else {
-                throw new AccessDeniedException("No such resource!");
-            }
-        } catch (IOException ex) {
-            //
-        }
-
-        //p.getResponse().setDateHeader("Expires", DateUtils.addHours(System.currentTimeMillis(), 24 * 365 * 15));
-        return new BytesView(getPath(), baos.toByteArray(), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
+        return new BytesView(getPath(), StringUtil.readBytes(is), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));
     }
 
     public <M extends Model> JSONObject autocompleteJSON(Class<M> modelClass, Expression baseWhereClause, String fieldName, String value) {
-        FormatHelper<JSONObject> fh = FormatHelper.instance(MimeType.APPLICATION_JSON, "entries", true);
+            FormatHelper<JSONObject> fh = FormatHelper.instance(MimeType.APPLICATION_JSON, "entries", true);
 
         ModelReflector<M> reflector = ModelReflector.instance(modelClass);
         ColumnDescriptor fd = reflector.getColumnDescriptor(fieldName);
@@ -369,7 +380,7 @@ public class Controller implements TemplateLoader{
     public <M extends Model> View autocomplete(Class<M> modelClass, Expression baseWhereClause, String fieldName, String value) {
         JSONObject doc = autocompleteJSON(modelClass, baseWhereClause, fieldName, value);
         Config.instance().getLogger(getClass().getName()).info(doc.toString());
-        return new BytesView(path, String.valueOf(doc).getBytes());
+        return new BytesView(path, String.valueOf(doc).getBytes(), MimeType.APPLICATION_JSON);
     }
 
     private void createEntry(ModelReflector<? extends Model> reflector, FormatHelper<JSONObject> doc, Object name, Object id) {
@@ -486,7 +497,7 @@ public class Controller implements TemplateLoader{
                         tasks.add(new ImportTask<>(m));
                     }
                     if (m == null || tasks.size() >= 200){
-                        AsyncTaskManager.getInstance().addAll(tasks);
+                        AsyncTaskManagerFactory.getInstance().addAll(tasks);
                         tasks.clear();
                     }
                 }

@@ -2,6 +2,7 @@ package com.venky.swf.plugins.background.core;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
@@ -22,33 +23,33 @@ public class TaskManager{
 		return _instance;
 	}
 
-	public <T extends Task> void execute(T task){
+	public <T extends CoreTask> void execute(T task){
 		task.execute();
 	}
 	@Deprecated
-	public <T extends Task> void executeDelayed(T task) {
+	public <T extends CoreTask> void executeDelayed(T task) {
 		executeAsync(task);
 	}
-	public <T extends Task>  void executeAsync(T task){
+	public <T extends CoreTask>  void executeAsync(T task){
 		executeAsync(task,true); 
 	}
 
-	public <T extends Task> void executeAsync(T task,boolean persistTaskQueue){
-		executeAsync(Arrays.asList(task), persistTaskQueue);
+	public <T extends CoreTask> void executeAsync(T task,boolean persistTaskQueue){
+		executeAsync(Collections.singleton(task), persistTaskQueue);
 	}
 	
-	public <T extends Task> void executeAsync(Collection<T> tasks){
+	public <T extends CoreTask> void executeAsync(Collection<T> tasks){
 		executeAsync(tasks, true); 
 	}
 
-	public <T extends Task> void executeAsync(Collection<T> tasks, boolean persistTaskQueue){
-		AsyncTaskManager.getInstance().execute(tasks, persistTaskQueue);
+	public <T extends CoreTask> void executeAsync(Collection<T> tasks, boolean persistTaskQueue){
+		AsyncTaskManagerFactory.getInstance().get(AsyncTaskManager.class).execute(tasks, persistTaskQueue);
 	}
 	
 	public void shutdown(){
-		AsyncTaskManager.getInstance().shutdown();
+		AsyncTaskManagerFactory.getInstance().shutdown();
 	}
 	public void wakeUp(){
-		AsyncTaskManager.getInstance().wakeUp();
+		AsyncTaskManagerFactory.getInstance().wakeUp();
 	}
 }

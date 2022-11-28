@@ -3,10 +3,11 @@
 	<parent>
 		<groupId>com.github.venkatramanm.swf-all</groupId>
 		<artifactId>swf-all</artifactId>
-    <version>2.11-SNAPSHOT</version>
+        <version>2.10</version>
 	</parent>
     <artifactId>swf-db-io-json</artifactId>
 	<packaging>jar</packaging>
+    <version>2.11</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Succinct Web Framework JSON plugin</description>
     <url>http://succinct.in</url>
@@ -43,7 +44,7 @@
 		<dependency>
 			<groupId>com.github.venkatramanm.swf-all</groupId>
 			<artifactId>swf-db</artifactId>
-			<version>${project.version}</version>
+			<version>[2.10,3.0)</version>
 		</dependency>
   </dependencies>
 </project>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="17.142618mm"
+   height="17.142033mm"
+   viewBox="0 0 17.142618 17.142033"
+   version="1.1"
+   id="svg862"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="link2.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview864"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="0.34386925"
+     inkscape:cx="218.10616"
+     inkscape:cy="407.13149"
+     inkscape:window-width="1366"
+     inkscape:window-height="699"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showborder="false"
+     inkscape:showpageshadow="true" />
+  <defs
+     id="defs859" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-46.827659,-40.672507)">
+    <path
+       id="Path_2520"
+       data-name="Path 2520"
+       d="m 61.433982,55.278674 h -2.54 v -3.977746 c 0,-0.948531 -0.01693,-2.169583 -1.321065,-2.169583 -1.322916,0 -1.525323,1.033462 -1.525323,2.100527 v 4.046537 h -2.54 v -8.179858 h 2.4384 v 1.117865 h 0.03413 a 2.6722916,2.6722916 0 0 1 2.405856,-1.321329 c 2.574396,0 3.049058,1.693333 3.049058,3.896254 z M 50.641628,45.980422 a 1.4739937,1.4739937 0 1 1 1.473729,-1.474258 1.4739937,1.4739937 0 0 1 -1.473729,1.474258 m 1.27,9.298252 h -2.542646 v -8.180123 h 2.542646 z m 10.78865,-14.605 H 48.092632 a 1.25095,1.25095 0 0 0 -1.264973,1.235604 v 14.668236 a 1.2517437,1.2517437 0 0 0 1.264973,1.236927 h 14.607646 a 1.2543896,1.2543896 0 0 0 1.27,-1.236927 V 41.90822 a 1.2535958,1.2535958 0 0 0 -1.27,-1.235604"
+       fill="#0a66c2"
+       style="stroke-width:0.264583" />
+  </g>
+</svg>

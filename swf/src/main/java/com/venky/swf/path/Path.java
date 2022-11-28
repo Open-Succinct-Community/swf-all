@@ -32,6 +32,7 @@ import com.venky.swf.db.model.application.ApplicationUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
@@ -62,16 +63,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -249,7 +249,7 @@ public class Path implements _IPath{
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() throws IOException {
         if (inputStream == null){
-            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false));
+            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false)); // Why is it not being closed? VENKY
         }
         inputStream.close();
         return inputStream;
@@ -294,7 +294,7 @@ public class Path implements _IPath{
     public void setResponse(HttpServletResponse response) {
         this.response = response;
     }
-    public Path constructNewPath(String target){
+    public Path  constructNewPath(String target){
         Path p = new Path(target);
         p.setSession(getSession());
         p.setRequest(getRequest());
@@ -328,8 +328,8 @@ public class Path implements _IPath{
         if (isResource) {
             if (!ObjectUtil.isVoid(resourcePath.toString())) {
                 try {
-                    URL resource = getClass().getResource(resourcePath.toString());
-                    if (resource == null) {
+                    InputStream resourceStream = getResourceAsStream(resourcePath.toString());
+                    if (resourceStream == null) {
                         isResource = false;
                     }
                 } catch (Exception ex) {
@@ -347,6 +347,39 @@ public class Path implements _IPath{
         checkPathOverrides(pathComponents);
         return pathComponents;
     }
+    Map<String,InputStream> map = new HashMap<>();
+    public ByteArrayInputStream getResourceAsStream(String path){
+        InputStream is = map.get(path) ;
+        if (is != null){
+            return (ByteArrayInputStream) is;
+        }
+        File dir = new File("./src/main/resources");
+        if (dir.isDirectory()) {
+            File resource = new File(dir + "/" + path);
+            if (resource.exists() && resource.isFile()) {
+                try {
+                    is = new FileInputStream(new File(dir + "/" + path));
+                } catch (Exception ex) {
+                    is = null;
+                }
+            }
+        }
+        if (is == null) {
+            is = getClass().getResourceAsStream(path);
+        }
+        ByteArrayInputStream bais = null;
+
+        if (is != null){
+            if (is instanceof ByteArrayInputStream){
+                bais = (ByteArrayInputStream) is;
+            }else {
+                byte[] bytes = StringUtil.readBytes(is, true);
+                bais = new ByteArrayInputStream(bytes);
+            }
+            map.put(path,bais);
+        }
+        return (ByteArrayInputStream) map.get(path);
+    }
 
     private void checkPathOverrides(List<String> pathComponents) {
         Registry.instance().callExtensions("swf.before.routing", pathComponents);
@@ -360,7 +393,7 @@ public class Path implements _IPath{
         this.target = target;
         Config.instance().getLogger(Path.class.getName()).log(Level.INFO,"Api Called:" + target);
         pathelements = parsePathElements(target);
-        boolean isResource = pathelements.isEmpty()? false : pathelements.get(0).equals("resources");
+        boolean isResource = !pathelements.isEmpty() && pathelements.get(0).equals("resources");
 
         int pathElementSize = pathelements.size();
         for (int i = 0 ; !isResource && i < pathElementSize ; i++){
@@ -424,32 +457,28 @@ public class Path implements _IPath{
         }
         loadControllerClassName();
     }
+
     public boolean isAppAuthenticationRequired() {
         return getProtocol() != MimeType.TEXT_HTML  && Config.instance().getBooleanProperty("swf.application.authentication.required",false);
     }
     public boolean isAppAuthenticated() {
-        return getApplication() != null;
+        return getApplication() != null ;
     }
+    private Application application = null;
     public Application getApplication(){
-        String authorization = getRequest().getHeader("Authorization");
-        if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
-            // Authorization: Basic base64credentials
-            String base64Credentials = authorization.substring("basic".length()).trim();
-            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-            // credentials = username:password
-            final String[] values = credentials.split(":", 2);
-            if (values.length == 2){
-                String appId = values[0];
-                String plainPass = values[1];
-                Application app = ApplicationUtil.find(appId);
-                if (app != null && ObjectUtil.equals(app.getEncryptedSecret(plainPass),app.getSecret())){
-                    return app;
-                }
-            }
+        if (application != null){
+            return application;
         }
-        return null;
-
+        Map<String,String> headers = getHeaders();
+        headers.put("request-target", request.getMethod().toLowerCase() + " " + getTarget());
+        headers.putIfAbsent("host",Config.instance().getHostName());
+        //headers.putIfAbsent("X-Real-IP",getRequest().getRemoteAddr());
+        try {
+            application = ApplicationUtil.find(getInputStream(),headers);
+            return application;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static class ControllerInfo {
@@ -522,15 +551,27 @@ public class Path implements _IPath{
             controllerClassName = cinfo.getControllerClass().getName();
             controllerPathIndex = cinfo.getControllerPathIndex();
         }
-        
+
         if (controllerClassName == null) {
             controllerClassName = Controller.class.getName();
             controllerPathIndex = -1;
         }
         actionPathIndex = controllerPathIndex + 1 ;
         parameterPathIndex = controllerPathIndex + 2;
+
+        if (parameterPathIndex < pathelements.size() -1 ){
+            StringBuilder filePath = new StringBuilder();
+            while ( parameterPathIndex < pathelements.size()){
+                if (filePath.length() > 0){
+                    filePath.append("/");
+                }
+                filePath.append(pathelements.remove(parameterPathIndex));
+            }
+            pathelements.add(filePath.toString()); //To absorb remaining  part of the path.
+        }
+
     }
-    
+
     public String controllerPath(){
         if (controllerPathIndex <= pathelements.size() -1){
             StringBuilder p = new StringBuilder();
@@ -708,14 +749,59 @@ public class Path implements _IPath{
 
 
     public static final String REQUEST_AUTHENTICATOR = "request.authenticator";
+    public User login(String username, String password, String password2){
+        return login(username,password,password2,true);
+    }
+    public User login(String username, String password, String password2,boolean save){
+        if (ObjectUtil.isVoid(username)){
+            throw new RuntimeException("Username is blank.");
+        }
+        if (ObjectUtil.isVoid(password)){
+            throw new RuntimeException("Password is blank");
+        }
 
+        boolean isLoginRequest =  getProtocol() == MimeType.TEXT_HTML ? !getFormFields().containsKey("password2") : ObjectUtil.isVoid(password2) ;
+        User user = getUser("name",username);
+        if (user == null && isLoginRequest){
+            throw new RuntimeException("Login failed");
+        }else if (isLoginRequest){
+            if (!user.authenticate(password)){
+                throw new RuntimeException("Login failed");
+            }else {
+                return user;
+            }
+        }else if (!ObjectUtil.equals(password,password2)){
+            // Signup request;!
+            throw new RuntimeException("Passwords don't match!");
+        }else if (user != null){
+                throw new RuntimeException("Username "+ username + " is already registered");
+        }else {
+            user = Database.getTable(User.class).newRecord();
+            user.setName(username);
+            user.setPassword(password);
+            if (save){
+                saveUserInNewTxn(user);
+            }
+            return user;
+        }
+    }
+    public void saveUserInNewTxn(User user){
+        Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+        try {
+            user.save();
+            txn.commit();
+        }catch (Exception ex){
+            txn.rollback(ex);
+            throw new RuntimeException(ex);
+        }
+    }
     public <T> boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
             return true;
         }
         if (isAppAuthenticationRequired()) {
             if (!isAppAuthenticated()){
-                return false;
+                throw new AccessDeniedException("Application not authorized");
             }
         }
 
@@ -733,46 +819,31 @@ public class Path implements _IPath{
         if (getProtocol() != MimeType.TEXT_HTML) {
             adaptor = IntegrationAdaptor.instance(User.class, FormatHelper.getFormatClass(getProtocol()));
         }
-        autoInvalidate = ( adaptor != null && !Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(getHeader("KeepAlive")) ) || !ObjectUtil.isVoid(getHeader("ApiKey"));
-        if (user == null){
+        String hKeepAlive = getHeader("KeepAlive");
+
+        boolean keepAlive = Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().valueOf(hKeepAlive) || (hKeepAlive == null && adaptor == null);
+
+        autoInvalidate = !keepAlive && !ObjectUtil.isVoid(getHeader("ApiKey"));
+
+        Map<String,Object> map = getFormFields();
+
+        String username = StringUtil.valueOf(map.get("name"));
+        String password = StringUtil.valueOf(map.get("password"));
+        String password2 = StringUtil.valueOf(map.get("password2"));
+        boolean beingSwitched = false;
+        beingSwitched = getProtocol() == MimeType.TEXT_HTML && (
+                ( getFormFields().containsKey("_REGISTER") && !getFormFields().containsKey("password2") ) ||
+                        ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
+        );
+        
+        if (user == null && !beingSwitched){
             if (getRequest().getMethod().equalsIgnoreCase("POST")){
-                String username = null;
-                String password = null;
                 if (adaptor == null){
-                    Map<String,Object> map = getFormFields();
-                    username = StringUtil.valueOf(map.get("name"));
-                    password = StringUtil.valueOf(map.get("password"));
-                    String password2 = StringUtil.valueOf(map.get("password2"));
-                    if (map.containsKey("_REGISTER") && !ObjectUtil.isVoid(username)){
-                        if (ObjectUtil.isVoid(password) || ObjectUtil.isVoid(password2)){
-                            createUserSession(null,true);
-                            addErrorMessage("Password cannot be blank");
-                            return  false;
-                        }else if (ObjectUtil.equals(password,password2)){
-                            user = getUser("name",username);
-                            if (user != null){
-                                createUserSession(null  ,true);
-                                addErrorMessage("Username "+ username + " is already registered");
-                                return  false;
-                            }
-                            user = Database.getTable(User.class).newRecord();
-                            user.setName(username);
-                            user.setPassword(password);
-                            Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
-                            try {
-                                user.save();
-                                txn.commit();
-                            }catch (Exception ex){
-                                txn.rollback(ex);
-                                createUserSession(null,true);
-                                addErrorMessage(ex.getMessage());
-                                return false;
-                            }
-                        }else {
-                            createUserSession(null,true);
-                            addErrorMessage("Passwords entered do not match");
-                            return false;
-                        }
+                    try {
+                        user = login(username, password, password2);
+                    }catch (Exception ex){
+                        addErrorMessage(ex.getMessage());
+                        return false;
                     }
                 }else {
                     FormatHelper<T> helper = null ;
@@ -784,6 +855,14 @@ public class Path implements _IPath{
                                 Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
                                 username = input.get(0).getName();
                                 password = input.get(0).getPassword();
+                                password2 = input.get(0).getPassword2();
+                                user = login(username,password,password2,false);
+                                if (user.getRawRecord().isNewRecord()) {
+                                    //signedup!
+                                    user.getRawRecord().load(input.get(0).getRawRecord());
+                                    saveUserInNewTxn(user);
+                                }
+
                             }
                         }
                     }catch (Exception ex){
@@ -792,14 +871,18 @@ public class Path implements _IPath{
                 }
                 if (!ObjectUtil.isVoid(username)){
                     Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
-                    user = getUser("name",username);
+                    //user = getUser("name",username);
                     Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    if (user != null && user.authenticate(password)){
+                    if (user != null ){
                         createUserSession(user,autoInvalidate);
                     }else {
                         createUserSession(null,true);
-                        addErrorMessage("Login Failed");
                         Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                        if (adaptor == null) {
+                            addErrorMessage("Login Failed");
+                        }else {
+                            throw new RuntimeException("Login failed");
+                        }
                     }
                 }
             }
@@ -813,13 +896,19 @@ public class Path implements _IPath{
     public boolean redirectOnException(){
         return getReturnProtocol().equals(MimeType.TEXT_HTML);
     }
-    
+
+    public String getContentType(){
+        return getProtocol().toString();
+    }
     public MimeType getProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)) {
             apiprotocol = getRequest().getHeader("content-type");
         }
         return Path.getProtocol(apiprotocol);
+    }
+    public String getAccept(){
+        return getReturnProtocol().toString();
     }
     public MimeType getReturnProtocol(){
         String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
@@ -1189,9 +1278,13 @@ public class Path implements _IPath{
                     if (join == null){
                         for (Method referredModelGetter: referredModelGetters){ 
                             String referredModelIdFieldName =  reflector.getReferenceField(referredModelGetter);
-                            String referredModelIdColumnName = reflector.getColumnDescriptor(referredModelIdFieldName).getName();
+                            ColumnDescriptor columnDescriptor = reflector.getColumnDescriptor(referredModelIdFieldName);
+
+                            String referredModelIdColumnName = columnDescriptor.getName();
                             reflector.set(partiallyFilledModel,referredModelIdFieldName,controllerInfo.getId());
-                            referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ,new BindVariable(referredModelReflector.getPool(),controllerInfo.getId())));
+                            if (!columnDescriptor.isVirtual()) {
+                                referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(), referredModelIdColumnName, Operator.EQ, new BindVariable(referredModelReflector.getPool(), controllerInfo.getId())));
+                            }
                             /*
                             if (reflector.getColumnDescriptor(referredModelIdFieldName).isNullable()){
                                 referredModelWhereChoices.add(new Expression(referredModelReflector.getPool(),referredModelIdColumnName,Operator.EQ));

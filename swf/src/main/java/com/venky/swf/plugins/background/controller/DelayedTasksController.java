@@ -15,11 +15,12 @@ import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.integration.JSON;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.CoreTask;
 import com.venky.swf.plugins.background.core.SerializationHelper;
+import com.venky.swf.plugins.background.core.IOTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
-import com.venky.swf.plugins.background.core.agent.AgentSeederTask;
-import com.venky.swf.plugins.background.core.agent.PersistedTaskPollingAgent.PersistedTaskPoller;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
@@ -76,9 +77,9 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
         int batch = Database.getJdbcTypeHelper("").getTypeRef(Integer.class).getTypeConverter().valueOf(criteria.getAttribute("BatchSize"));
 
         batch = Math.max(batch,1);
-        Task task = null;
-        List<Task> tasks = new ArrayList<>();
-		while (((task = AsyncTaskManager.getInstance().next(false, false)) != null) && tasks.size() <= batch ){
+        CoreTask task = null;
+        List<CoreTask> tasks = new ArrayList<>();
+		while (((task = AsyncTaskManagerFactory.getInstance().get(AsyncTaskManager.class).next(false, false)) != null) && tasks.size() <= batch ){
 		    tasks.add(task);
         }
 
@@ -107,14 +108,14 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	@RequireLogin
 	public View addWorker(long incrementBy){
 		for (int i = 0 ; i< incrementBy ; i ++){
-			AsyncTaskManager.getInstance().addWorker();
+			AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).addWorker();
 		}
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 
 	@RequireLogin
 	public View evict(int numWorkers){
-		AsyncTaskManager.getInstance().evictWorker(numWorkers);
+		AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).evictWorker(numWorkers);
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 }

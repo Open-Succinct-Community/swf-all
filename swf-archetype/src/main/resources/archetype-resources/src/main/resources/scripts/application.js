@@ -117,3 +117,16 @@ function subscribeUser(swRegistration, updateSubscriptionOnServer) {
     });
 }
 
+/* Focus on first editable field. */
+$(function() {
+  $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
+
+
+  $("a[name='_SUBMIT_NO_MORE']").click(function (){
+                            $(":submit[name='_SUBMIT_NO_MORE']").trigger('click');
+                        });
+  $("a[name='_SUBMIT_MORE']").click(function (){
+                            $(":submit[name='_SUBMIT_MORE']").trigger('click');
+                        });
+});
+

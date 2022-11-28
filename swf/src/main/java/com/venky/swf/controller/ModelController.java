@@ -64,6 +64,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -475,7 +476,7 @@ public class ModelController<M extends Model> extends Controller {
     @Depends("index")
     public View show(long id) {
         if (returnIntegrationAdaptor ==  null && TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/show.html")){
-            return redirectTo("html/show?id="+id);
+            return redirectTo("html/show?id="+id);//+"&"+ Encode.forUri(getPath().getRequest().getQueryString()));
         }
 
         M record = Database.getTable(modelClass).get(id);
@@ -605,6 +606,9 @@ public class ModelController<M extends Model> extends Controller {
                         } else {
                             return new BytesView(getPath(), StringUtil.readBytes((InputStream) getter.invoke(record)), mimeType);
                         }
+                    }else if (Reader.class.isAssignableFrom(getter.getReturnType())){
+                        String fieldName = ref.getFieldName(getter);
+                        return new BytesView(getPath(),StringUtil.read((Reader) ref.get(record,fieldName)).getBytes(StandardCharsets.UTF_8));
                     }
                 }
             } catch (IllegalAccessException e) {
@@ -700,7 +704,7 @@ public class ModelController<M extends Model> extends Controller {
     protected View blank(M record) {
         defaultFields(record);
         if (returnIntegrationAdaptor != null) {
-            return returnIntegrationAdaptor.createResponse(getPath(), record);
+            return returnIntegrationAdaptor.createResponse(getPath(), record, true,null, new HashSet<>(),new HashMap<>(), new HashMap<>(),true);
         } else {
             return dashboard(createBlankView(record, "save"));
         }
@@ -783,7 +787,7 @@ public class ModelController<M extends Model> extends Controller {
 
         public <C extends Model> void actOnChild(M parent, Class<C> childModelClass, Model c);
 
-        public View error(M m);
+        public View error(M m,boolean isNew);
     }
 
     public class SaveAction implements Action<M> {
@@ -812,9 +816,9 @@ public class ModelController<M extends Model> extends Controller {
         }
 
         @Override
-        public View error(M m) {
+        public View error(M m,boolean isNew) {
             HtmlView errorView = null;
-            if (m.getRawRecord().isNewRecord()) {
+            if (isNew) {
                 errorView = createBlankView(getPath().createRelativePath("blank"), m, "save");
             } else {
                 errorView = createModelEditView(getPath().createRelativePath("edit/" + m.getId()), m, "save");
@@ -927,7 +931,7 @@ public class ModelController<M extends Model> extends Controller {
                     if (getReturnIntegrationAdaptor() != null){
                         throw ex;
                     }else {
-                        eView = action.error(record);
+                        eView = action.error(record,isNew);
                     }
                     if (eView instanceof HtmlView) {
                         getPath().addMessage(StatusType.ERROR, message);
@@ -1203,6 +1207,10 @@ public class ModelController<M extends Model> extends Controller {
                 autoCompleteFieldName = fieldName.split("_AUTO_COMPLETE_")[1];
             }
         }
+        List<String> fieldsToSet = new ArrayList<>();
+        Record record = model.getRawRecord();
+        fieldsToSet.addAll(reflector.getVirtualFields());
+        fieldsToSet.addAll(record.getDirtyFields());
 
         Method autoCompleteFieldGetter = reflector.getFieldGetter(autoCompleteFieldName);
         OnLookupSelect onlookup = reflector.getAnnotation(autoCompleteFieldGetter, OnLookupSelect.class);
@@ -1214,17 +1222,15 @@ public class ModelController<M extends Model> extends Controller {
                 //
             }
         }
-        TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
 
-        JSONObject obj = new JSONObject();
-        Record record = model.getRawRecord();
-        List<String> fieldsToSet = new ArrayList<>();
-        fieldsToSet.addAll(reflector.getVirtualFields());
         fieldsToSet.addAll(record.getDirtyFields());
 
+        TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
+        JSONObject obj = new JSONObject();
         for (String f : fieldsToSet) {
             Object value = reflector.get(record, f);
-            obj.put(f, value);
+            Class<?>  type =  reflector.getFieldGetter(f).getReturnType();
+            obj.put(f, reflector.getJdbcTypeHelper().getTypeRef(type).getTypeConverter().toString(value));
 
             Method fieldGetter = reflector.getFieldGetter(f);
             Method referredModelGetter = reflector.getReferredModelGetterFor(fieldGetter);
@@ -1239,7 +1245,7 @@ public class ModelController<M extends Model> extends Controller {
                 obj.put("_AUTO_COMPLETE_" + f, referredModelReflector.get(referredModel, referredModelDescriptionField));
             }
         }
-        return new BytesView(getPath(), obj.toString().getBytes());
+        return new BytesView(getPath(), obj.toString().getBytes(), MimeType.APPLICATION_JSON);
     }
 
     public View autocomplete() {
@@ -1269,7 +1275,6 @@ public class ModelController<M extends Model> extends Controller {
         }
         Config.instance().getLogger(getClass().getName()).info(autoCompleteFieldName + "=" + value);
         model.getRawRecord().remove(autoCompleteFieldName);
-
         Expression where = getAutoCompleteBaseWhere(reflector, model, autoCompleteFieldName);
         ModelReflector<? extends Model> autoCompleteModelReflector = getAutoCompleteModelReflector(reflector, autoCompleteFieldName);
         return super.autocomplete(autoCompleteModelReflector.getModelClass(), where, autoCompleteModelReflector.getDescriptionField(), value);

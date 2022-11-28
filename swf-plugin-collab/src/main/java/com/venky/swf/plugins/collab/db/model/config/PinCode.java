@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
@@ -13,6 +14,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
+import javax.xml.crypto.Data;
 import java.util.List;
 
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
@@ -28,6 +30,10 @@ public interface PinCode extends Model {
         List<PinCode> pinCodeList =new Select().from(PinCode.class).where(new Expression(ModelReflector.instance(PinCode.class).getPool(),"PIN_CODE", Operator.EQ, pincode)).execute();
         if (!pinCodeList.isEmpty()){
             return pinCodeList.get(0);
+        }else {
+            PinCode pinCode = Database.getTable(PinCode.class).newRecord();
+            pinCode.setPinCode(pincode);
+            pinCode.save();
         }
         return null;
     }

@@ -81,7 +81,13 @@ public interface User extends Model {
     @PROTECTION
     public String getPassword();
     public void setPassword(String password);
-    
+
+    @HIDDEN
+    @PROTECTION
+    @IS_VIRTUAL
+    public String getPassword2();
+    public void setPassword2(String password2); // Used for signup. !!
+
     public boolean authenticate(String password);
     public static final String USER_AUTHENTICATE = "user.authenticate" ;
    
@@ -132,5 +138,6 @@ public interface User extends Model {
     @IS_VIRTUAL
     public BigDecimal getCurrentLng();
     public void setCurrentLng(BigDecimal lng);
+
 
 }

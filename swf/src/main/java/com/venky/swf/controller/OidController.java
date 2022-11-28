@@ -1,18 +1,20 @@
 package com.venky.swf.controller;
 
+import com.venky.core.security.Crypt;
+import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
+import com.venky.swf.extensions.DefaultSocialLoginInfoExtractor;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import com.venky.swf.util.TemplateProcessor;
-import com.venky.swf.views.DashboardView;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
@@ -28,14 +30,11 @@ import org.apache.oltu.oauth2.client.response.OAuthClientResponseFactory;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.client.response.OAuthResourceResponse;
 import org.apache.oltu.oauth2.common.OAuth;
-import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,13 +45,11 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
@@ -61,11 +58,49 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 
 public class OidController extends Controller{
+	public enum OAuthProviderType {
+		FACEBOOK("facebook", "https://graph.facebook.com/oauth/authorize", "https://graph.facebook.com/oauth/access_token"),
+		FOURSQUARE("foursquare", "https://foursquare.com/oauth2/authenticate", "https://foursquare.com/oauth2/access_token"),
+		GITHUB("GitHub", "https://github.com/login/oauth/authorize", "https://github.com/login/oauth/access_token"),
+		GOOGLE("Google", "https://accounts.google.com/o/oauth2/auth", "https://accounts.google.com/o/oauth2/token"),
+		INSTAGRAM("Instagram", "https://api.instagram.com/oauth/authorize", "https://api.instagram.com/oauth/access_token"),
+		LINKEDIN("LinkedIn", "https://www.linkedin.com/uas/oauth2/authorization", "https://www.linkedin.com/uas/oauth2/accessToken"),
+		MICROSOFT("Microsoft", "https://login.live.com/oauth20_authorize.srf", "https://login.live.com/oauth20_token.srf"),
+		PAYPAL("PayPal", "https://identity.x.com/xidentity/resources/authorize", "https://identity.x.com/xidentity/oauthtokenservice"),
+		REDDIT("reddit", "https://ssl.reddit.com/api/v1/authorize", "https://ssl.reddit.com/api/v1/access_token"),
+		SALESFORCE("salesforce", "https://login.salesforce.com/services/oauth2/authorize", "https://login.salesforce.com/services/oauth2/token"),
+		YAMMER("Yammer", "https://www.yammer.com/dialog/oauth", "https://www.yammer.com/oauth2/access_token.json"),
+		HUMBOL("HumBhiOnline","https://id.humbhionline.in/oauth/authorize","https://id.humbhionline.in/oauth/token");
+
+		private String providerName;
+		private String authzEndpoint;
+		private String tokenEndpoint;
+
+		public String getProviderName() {
+			return this.providerName;
+		}
+
+		public String getAuthzEndpoint() {
+			return this.authzEndpoint;
+		}
+
+		public String getTokenEndpoint() {
+			return this.tokenEndpoint;
+		}
+
+		OAuthProviderType(String providerName, String authzEndpoint, String tokenEndpoint) {
+			this.providerName = providerName;
+			this.authzEndpoint = authzEndpoint;
+			this.tokenEndpoint = tokenEndpoint;
+		}
+	}
+
+
 
 	public OidController(Path path) {
 		super(path);
 	}
-	static class OIDProvider {
+	public static class OIDProvider {
 		public String getRedirectUrl(String openIdProvider){
 			if (!openIdProvider.equals("LINKEDIN")){
 				return Config.instance().getServerBaseUrl() + "/oid/verify?SELECTED_OPEN_ID="+ openIdProvider;
@@ -95,6 +130,9 @@ public class OidController extends Controller{
 		String openIdProvider;
 		OAuthProviderType providerType;
 		String clientId;
+		public String clientId(){
+			return clientId;
+		}
 		String clientSecret;
 		String iss;
 		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
@@ -104,18 +142,18 @@ public class OidController extends Controller{
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" )+ _redirect_to );
-				return OAuthClientRequest.authorizationProvider(providerType).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
+				return OAuthClientRequest.authorizationLocation(providerType.authzEndpoint).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope(scope).
 						setRedirectURI(redirectTo).buildQueryMessage();
 			} catch (OAuthSystemException e) {
 				throw new RuntimeException(e);
 			}
 		}
-		public String authorize(String code,String _redirect_to){
+		public JSONObject authorize(String code,String _redirect_to){
 			try {
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" ) +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
-				        .tokenProvider(providerType)
+				        .tokenLocation(providerType.getTokenEndpoint())
 				        .setGrantType(grantType)
 				        .setClientId(clientId)
 				        .setClientSecret(clientSecret)
@@ -123,13 +161,15 @@ public class OidController extends Controller{
 				        .setCode(code)
 				        .setScope(scope)
 				        .buildBodyMessage();
+				oauthRequest.addHeader("Authorization" , "Basic " + Crypt.getInstance().toBase64(String.format("%s:%s",clientId,clientSecret).getBytes(StandardCharsets.UTF_8)));
 
 				OAuthClient oAuthClient = new OAuthClient(new OidHttpClient());
 
 		        OAuthAccessTokenResponse oAuthResponse = oAuthClient.accessToken(oauthRequest, tokenResponseClass);
-		        
+
+				ObjectHolder<JSONObject> userJsonHolder = new ObjectHolder<>(null);
 		        if (ObjectUtil.isVoid(resourceUrl)){
-					return extractEmail(oAuthResponse);
+					Registry.instance().callExtensions(DefaultSocialLoginInfoExtractor.class.getName(),this,oAuthResponse,userJsonHolder);
 		        }else {
 		        	String accessToken = oAuthResponse.getAccessToken();
 
@@ -142,42 +182,23 @@ public class OidController extends Controller{
 					}else{
 			    		bearerClientRequest = oAuthBearerClientRequest.buildHeaderMessage();
 					}
+					bearerClientRequest.addHeader("accept","application/json");
+
 					OAuthResourceResponse resourceResponse = oAuthClient.resource(bearerClientRequest, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
-					
-					return extractEmail(resourceResponse);
+					Registry.instance().callExtensions(DefaultSocialLoginInfoExtractor.class.getName(),this,resourceResponse,userJsonHolder);
+					//return extractEmail(resourceResponse);
 		        }
+				return userJsonHolder.get();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
-			}		
-		}
-		public String extractEmail(OAuthResourceResponse oAuthResponse) throws Exception{
-			JSONObject body = (JSONObject) new JSONParser().parse(oAuthResponse.getBody());
-			String email =  (String) body.get("email");
-			if (ObjectUtil.isVoid(email)){
-				email =  (String) ((JSONObject)(((JSONObject)((JSONArray)body.get("elements")).get(0)).get("handle~"))).get("emailAddress");
 			}
-			return email;
-		}
-		public String extractEmail(OAuthAccessTokenResponse oAuthResponse) throws Exception{
-	        if (oAuthResponse instanceof OAuthJSONAccessTokenResponse){
-		        String idToken = oAuthResponse.getParam("id_token");
-		        StringTokenizer tk = new StringTokenizer(idToken,".");
-		        String headerBuf = new String(Base64.getDecoder().decode(tk.nextToken()));
-		        String bodyBuf = new String(Base64.getDecoder().decode(tk.nextToken()));
-		        JSONObject header = (JSONObject) new JSONParser().parse(headerBuf);
-		        JSONObject body = (JSONObject) new JSONParser().parse(bodyBuf);
-		        
-		        String emailId = (String) body.get("email");
-		        String[] issuers = new String[] {iss, "http://" + iss , "https://" + iss };
-		        
-		        if (body.get("aud").equals(clientId) && Arrays.asList(issuers).contains(body.get("iss"))) {
-		        	  return emailId;
-		    	}
-			}
-	        throw new RuntimeException("OAuth Failed");
 
 		}
-	 
+
+
+		public String iss() {
+			return iss;
+		}
 	}
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
@@ -190,6 +211,9 @@ public class OidController extends Controller{
 		oidproviderMap.put("LINKEDIN", new OIDProvider("LINKEDIN",OAuthProviderType.LINKEDIN,"",
 				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",GrantType.AUTHORIZATION_CODE, true,false));
 
+		oidproviderMap.put("HUMBOL", new OIDProvider("HUMBOL",OAuthProviderType.HUMBOL,"",
+				OAuthJSONAccessTokenResponse.class,"https://id.humbhionline.in/users/current","all",GrantType.AUTHORIZATION_CODE, true,
+				true));
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -234,7 +258,8 @@ public class OidController extends Controller{
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
 		try {
-	        String email = provider.authorize(code,redirectedTo);
+	        JSONObject userObject = provider.authorize(code,redirectedTo);
+			String email = (String)userObject.get("email");
     		User u = null;
 			Select select = new Select().from(UserEmail.class);
 			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
@@ -250,13 +275,12 @@ public class OidController extends Controller{
     				return createLoginView(StatusType.ERROR, "Multiple users associated with same email id");
     			}
 				u = Database.getTable(User.class).get(numUsers.first());
+				//initializeUser(u,selectedOpenId,userObject);
 			}
 			if (u == null){
     			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
 				u = Database.getTable(User.class).newRecord();
-    			u.setName(email);
-    			u.setPassword(null);
-    			u.save();
+				initializeUser(u,selectedOpenId,userObject);
 				List<UserEmail> emails = u.getUserEmails();
 				if (emails.isEmpty()){
 					UserEmail oid = Database.getTable(UserEmail.class).newRecord();
@@ -274,6 +298,13 @@ public class OidController extends Controller{
 			return createLoginView(StatusType.ERROR, e.getMessage());
 		}
 	}
+
+	private void initializeUser(User u, String selectedOpenId , JSONObject userObject) {
+		u.setName((String)userObject.get("email"));
+		u.setPassword(null);
+		u.save();
+	}
+
 	protected RedirectorView redirectSuccess(String redirectedTo){
 		return new RedirectorView(getPath(),"",loginSuccessful(redirectedTo));
 	}
@@ -295,8 +326,8 @@ public class OidController extends Controller{
 	            URL url = new URL(request.getLocationUri());
 
 	            c = url.openConnection();
-	            c.setConnectTimeout(5000);
-	            c.setReadTimeout(5000);
+	            c.setConnectTimeout(20000);
+	            c.setReadTimeout(20000);
 	            responseCode = -1;
 	            if (c instanceof HttpURLConnection) {
 	                HttpURLConnection httpURLConnection = (HttpURLConnection) c;

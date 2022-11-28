@@ -204,7 +204,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
         	Submit sbm = new Submit(label);
 	        sbm.setName("_SUBMIT_NO_MORE");
 	        column = table.addControl(sbm,true,0,2);
-	        column.addClass("text-center");
+	        column.addClass("text-right");
 	    	List<Class<? extends Model>> childModels = reflector.getChildModels(true, true);
 
 	    	

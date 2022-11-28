@@ -94,11 +94,21 @@ $(function(){
                                     if ( bIsNameIndexed ) {
                                       $(':input[name="' + modelName + '[' + rowIndex + '].' + i +  '"]').attr("value",jsonresponse[i]);
                                     }else {
-                                      $(':input[name="' + i +  '"]').attr("value",jsonresponse[i]);
+                                      var jq = $(':input[name="' + i +  '"]');
+                                      if (jq && jq.prop("tagName")){
+                                          if (jq.prop("tagName") === "TEXTAREA"){
+                                            jq.val(jsonresponse[i]);
+                                          }else {
+                                            jq.attr("value",jsonresponse[i]);
+                                          }
+                                      }
                                     }
                                     setConfirmUnload(true)
                                 }
-                              }
+                              },
+                              error: function(e){
+                                 console.error(e.statusText);
+                              },
                             });
 
                     }
@@ -135,9 +145,10 @@ $(function(){
     });
 });
 
-/* Focus on first editable field. */
 $(function() {
+/* Focus on first editable field. 
   $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
+*/
 
 
   $("a[name='_SUBMIT_NO_MORE']").click(function (){
@@ -326,7 +337,6 @@ function api() {
             return axios.create({
                 baseURL : "/",
                 timeout : 120000 ,
-                auth : { username : "web"  , password : "venky12" },
                 headers : { 'Content-Type': 'application/json' , 'Cache-Control': 'no-cache' },
                 withCredentials: false,
             });

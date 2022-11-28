@@ -1,5 +1,13 @@
 package com.venky.swf.plugins.background.core;
 
+import com.venky.cache.Cache;
+import com.venky.core.util.Bucket;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.plugins.background.core.CoreTask.NormalizedWeightScheme;
+import com.venky.swf.plugins.background.core.CoreTask.Priority;
+import com.venky.swf.plugins.background.core.CoreTask.PriorityWeightScheme;
+import com.venky.swf.routing.Config;
+
 import java.util.AbstractQueue;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,15 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import com.venky.cache.Cache;
-import com.venky.core.util.Bucket;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.plugins.background.core.Task.NormalizedWeightScheme;
-import com.venky.swf.plugins.background.core.Task.Priority;
-import com.venky.swf.plugins.background.core.Task.PriorityWeightScheme;
-import com.venky.swf.routing.Config;
-
-public class WeightedPriorityQueue extends AbstractQueue<Task> {
+public class WeightedPriorityQueue extends AbstractQueue<CoreTask> {
 
 	private static PriorityWeightScheme getPriorityWeightScheme(){
 		String className = Config.instance().getProperty("com.venky.swf.plugins.background.core.priorityWeightScheme.class");
@@ -53,17 +53,17 @@ public class WeightedPriorityQueue extends AbstractQueue<Task> {
 			return new Bucket();
 		}
 	};
-	private Cache<Priority, Queue<Task>> cache = new Cache<Task.Priority, Queue<Task>>(0,0) {
+	private Cache<Priority, Queue<CoreTask>> cache = new Cache<Task.Priority, Queue<CoreTask>>(0,0) {
 
 		private static final long serialVersionUID = 1L;
 
 		@Override
-		protected Queue<Task> getValue(Priority k) {
+		protected Queue<CoreTask> getValue(Priority k) {
 			return new LinkedList<>();
 		}
 	};
 	@Override
-	public boolean offer(Task e) {
+	public boolean offer(CoreTask e) {
 		return cache.get(e.getTaskPriority()).offer(e);
 	}
 	private Priority getNextPriorityToPoll(){
@@ -91,11 +91,11 @@ public class WeightedPriorityQueue extends AbstractQueue<Task> {
 		return ret;
 	}
 	@Override
-	public Task poll() {
+	public CoreTask poll() {
 		synchronized (cache) {
-			Task polled = null;
+			CoreTask polled = null;
 			Priority p = getNextPriorityToPoll();
-			Queue<Task> q = cache.get(p);
+			Queue<CoreTask> q = cache.get(p);
 			polled = q.poll();
 			if (polled != null) {
 				priorityPollingStatistics.get(p).increment();
@@ -104,16 +104,16 @@ public class WeightedPriorityQueue extends AbstractQueue<Task> {
 		}
 	}
 	@Override
-	public Task peek() {
+	public CoreTask peek() {
 		synchronized (cache) {
 			Priority p = getNextPriorityToPoll();
-			Queue<Task> q = cache.get(p);
+			Queue<CoreTask> q = cache.get(p);
 			return q.peek();
 		}
 	}
 	@Override
-	public Iterator<Task> iterator() {
-		return new Iterator<Task>() {
+	public Iterator<CoreTask> iterator() {
+		return new Iterator<>() {
 
 			@Override
 			public boolean hasNext() {
@@ -121,7 +121,7 @@ public class WeightedPriorityQueue extends AbstractQueue<Task> {
 			}
 
 			@Override
-			public Task next() {
+			public CoreTask next() {
 				return WeightedPriorityQueue.this.poll() ;
 			}
 		};

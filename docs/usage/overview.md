@@ -57,7 +57,7 @@ Web Applications in most domains have similar requirements and developers often 
 | | swf-plugin-beckn|Beckn protocol support|plugin
 | | swf-plugin-wiki |Wiki | plugin
 |Support |swf-plugin-bugs| Issue  tracker |plugin
-| | swf-plugin-audit|Database Audits| plugin
+| | [swf-plugin-audit](https://swf-plugin-audit.readthedocs.io/en/latest/usage/audit.html)|Database Audits| plugin
 |Presentations | swf-plugin-slideshow|Slide show.| plugin
 | | swf(attachment)|Attachments |bundled
 |ETL |swf-plugin-datamart|Datamart	| plugin

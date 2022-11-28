@@ -17,7 +17,8 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import org.codemonkey.simplejavamail.Email;
+import org.codemonkey.simplejavamail.email.Email;
+
 
 import javax.mail.Message.RecipientType;
 import java.io.Serializable;

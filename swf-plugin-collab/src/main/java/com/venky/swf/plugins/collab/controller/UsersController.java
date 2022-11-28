@@ -10,6 +10,7 @@ import com.venky.swf.plugins.collab.db.model.user.UserEmail;
 import com.venky.swf.plugins.collab.db.model.user.UserPhone;
 import com.venky.swf.views.View;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -55,17 +56,31 @@ public class UsersController extends com.venky.swf.controller.UsersController {
 
         return getIntegrationAdaptor().createResponse(getPath(),user, getIncludedModelFields().get(User.class), new HashSet<>(),getIncludedModelFields());
     }
+
+    @Override
+    protected String[] getIncludedFields() {
+        Map<Class<? extends Model>, List<String>> map  = getIncludedModelFields();
+        if (map.containsKey(User.class)){
+            return map.get(User.class).toArray(new String[]{});
+        }else {
+            return null;
+        }
+    }
+
     @Override
     protected Map<Class<? extends Model>, List<String>> getIncludedModelFields() {
         Map<Class<? extends Model>,List<String>> map = super.getIncludedModelFields();
+        if( getReturnIntegrationAdaptor() == null ){
+            return map ;
+        }
         if (!map.containsKey(User.class)) {
-            map.put(User.class, Arrays.asList("ID", "NAME"));
+            map.put(User.class, new ArrayList<>(Arrays.asList("ID", "NAME")));
         }
         if (!map.containsKey(UserPhone.class)) {
-            map.put(UserPhone.class, Arrays.asList("ID", "PHONE_NUMBER", "VALIDATED"));
+            map.put(UserPhone.class, new ArrayList<>(Arrays.asList("ID", "PHONE_NUMBER", "VALIDATED")));
         }
         if (!map.containsKey(UserEmail.class)){
-            map.put(UserEmail.class, Arrays.asList("ID", "EMAIL", "VALIDATED"));
+            map.put(UserEmail.class, new ArrayList<>(Arrays.asList("ID", "EMAIL", "VALIDATED")));
         }
         return map;
     }

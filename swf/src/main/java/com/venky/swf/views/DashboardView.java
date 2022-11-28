@@ -21,15 +21,23 @@ import com.venky.swf.views.controls.page.layout.Nav;
 import com.venky.swf.views.controls.page.layout.Span;
 import com.venky.swf.views.controls.page.text.Label;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author venky
  */
 public class DashboardView extends HtmlView{
 	RuntimeException ex = null;
+    SequenceSet<HotLink> excludeLinks = new SequenceSet<>();
     public DashboardView(Path path){
         super(path);
         ex = new RuntimeException();
+    }
+
+    public void addExcludeLinks(HotLink hotLink){
+        excludeLinks.add(hotLink);
     }
     
     HtmlView child = null;
@@ -56,7 +64,7 @@ public class DashboardView extends HtmlView{
     	createBody(b,false, true);
     }
     public void createBody(_IControl b, boolean includeStatusMessage, boolean includeMenu) {
-    	createBody(b, includeStatusMessage , includeMenu, new SequenceSet<HotLink>());
+    	createBody(b, includeStatusMessage , includeMenu, excludeLinks);
     }
     public void createBody(_IControl b, boolean includeStatusMessage,boolean includeMenu,SequenceSet<HotLink> excludeLinks) {
     	if (includeMenu){

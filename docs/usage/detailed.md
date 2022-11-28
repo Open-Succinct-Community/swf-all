@@ -21,7 +21,7 @@ Models are usually English nouns, and are named in the singular form. Their name
 
 Tables are plural form of the model's names and their names in the database are expressed in SNAKE_CASE. 
 
-for e.g. When the name of  a Model is Sample, The corresponding table would be named as SAMPLES. 
+for e.g. When the name of  a Model is SampleHeader, The corresponding table would be named as SAMPLE_HEADERS. 
 
 ### Simple Fields
 Fields added to models are expressed as getters and setters with  appropriate datatypes.  
@@ -38,7 +38,7 @@ Based on the return value of the getter, an appropriate db type would be automat
 
 The mappings from java type to db type are defined by a JdbcTypeHelper class that is chosen based on the dbdriver class . 
 
-Succinct 2.8 supports the derby,mysql,postgres,sqlite,sqldroid and h2 for databases to be used with succinct applications.
+Since 2.8 Succinct supports the derby,mysql,postgres,sqlite,sqldroid and h2 for databases to be used with succinct applications. 
 
 **On Field/Column Naming conventions**
 1. Field Getters and Setters are named in Camel case.
@@ -122,12 +122,71 @@ public interface Contact extends Model {
 ```
 
 ### Annotations.
-Succinct uses java runtime Annotations to effective derive 
-#### Field Annotations.
+Succinct uses java runtime Annotations to effectively derive meta information  about models and fields. 
 #### Model Annotations
+|Annotation|Usage|
+|-|-
+|@IS_VIRTUAL|Indicates if a model is backed by a database table or not.
+|@CONFIGURATION|If the data in this table/model does not change frequently, You may mark it with this annotation. Succinct would cache this information as it would change frequently.
+|@DBPOOL("some_pool") | Entities in an application may be backed by tables in diffent databases. In such situations, A DBPool may point to the appropriate jdbc connection configuration in swf.properties file.<br/>swf.jdbc.some_pool.driver=org.h2.Driver<br/>swf.jdbc.some_pool.url=jdbc:h2:./database/some_db;AUTO_SERVER=TRUE;NON_KEYWORDS=VALUE;<br/>swf.jdbc.some_pool.userid=some_user<br/>swf.jdbc.some_pool.password=some_password<br/>swf.jdbc.some_pool.validationQuery=values(1)<br/>swf.jdbc.some_pool.dbschema=PUBLIC<br/>swf.jdbc.some_pool.dbschema.setonconnection=true<br/>swf.jdbc.some_pool.set.dbschema.command=set schema public<br/>swf.jdbc.some_pool.readOnly=false
+|@EXPORTABLE(true\|false)|Default is @EXPORTABLE(true).<br/>Models that are not annotated are considered EXPORTABLE(true)
+|@HAS_DESCRIPTION_FIELD("SOME_FIELD")| Indicates that  the field with name SOME_FIELD, corresponding to getSomeField() is treated as description column for records in this entity. It is typically used in lookups.   
+|@MENU("MAIN_MENU")| Indicates the Main menu in which this entity will be  shown for management of  this entity.
+|@TABLE_NAME("SOME_NAME")| Model names and table names follow a naming convention but if you want to make them different, you can use this to do so.
+|@ORDER_BY("F1,F2,F3")| Indicates the default ordering by field names while listing records of this entity.
+
+
+#### Field Annotations.
+Annotation|Usage
+-|-
+@IS_VIRTUAL| Indicates if a field is backed by a table column or not. The default meaning in absence of the annotation is the same as @IS_VIRTUAL(false)
+@COLUMN_NAME("SOME_COLUMN_NAME")| Name of the table column this field is backed by
+@COLUMN_SIZE(some_integer)|Size of the table column 
+@DATA_TYPE(some_integer) | Type of the table column as defined in java.sql.Types class
+@DECIMAL_DIGITS(some_integer) | Indicate the precision of a numeric field in the database.
+@COLUMN_DEF(StandardDefault[,String])|Used to assign a default value to the column if not specified during an insertion of a record in the table.
+@IS_AUTOINCREMENT|To mark an auto incremented primary key
+@IS_NULLABLE| If the field can be null. 
+@PASSWORD|To display **** and not show the data on the screen.
+@CLONING_PROTECT|When you duplicate a database record, field marked as CLONING_PROTECT is not copied over. 
+@HOUSE_KEEPING|Are fields managed by the framework. 
+@ENCRYPTED|Field marked thus will be encrypted at rest. These Properties have to be set accordingly if you need this feature for sensitive fields stored in the database.<br/>swf.encryption.support=true\|false <br/>swf.key.store.directory=a_key_store_directory_name<br/>swf.key.store.password=a_key_store_password<br/>swf.key.entry.succinct.password=some_other_password_for_key_entry
+@UNIQUE_KEY("comma separated key names")<br/> e.g @UNIQUE_KEY("K1,K2,K3")| All fields marked with same key names are considered to be composite unique keys of the table that backs the entity.
+@Index|Lucene Index for the model would include this field.
+@PARTICIPANT|The value stored in the columns  marked this are used to indentify if the logged in user has access to a table record. How it is determined is by application programmer implementing a ParticipantExtension for this Entity where the programmer can describe the values that are allowed for the column for the logged in user.
+
+
+UI Annotation|Description
+-|-
+@CONTENT_TYPE|Fields that are binary streams can be annotated with @CONTENT_TYPE(some_mime_type)
+@HIDDEN|Fields marked as @HIDDEN are not returned by default in default UI/API for the entity unless specifically asked for.
+@PROTECTION |Used to denote if a field is enabled/disabled/editable/non-editable on the default ui.
+@WATER_MARK(Some text) |This text is shown as a water mark in the input control for the field on the default ui.
+@TOOLTIP(Some Tool tip text)| This text will show as a tool tip on the ui control on the default ui
+
+Validation | Description
+-|-
+@MaxLength(number)|ensures the data in the field is limited to this length.
+@MinLength(number)|ensures the data in this field is of atleast this length.
+@NumericRange(min,max)|ensures that data value is between this numeric range.
+@IntegerRange(min,max)|ensures that data value is between this integer range.
+@ExactLength(number)|ensures that the data in the field is exactly of this length.
+@Regex(a regexp)|Ensures that the data in the field satisfies the mentioned regular expression.
+
+
+
+
 #### Relationship/Children Annotations
+Annotation|Description
+-|-
+@CONNECTED_VIA|child getters marked with @CONNECTED_VIA("PARENT_ID") would return child models whose column, "PARENT_ID" is treated as the reference column to the current entity as parent. These are only needed when child models have multiple reference fields to the current entity as parent.
+
+
 ### Dynamic Proxy and ModelInvocationHandler 
+
+
 ### Model Implementation(s)
+
 #### Method resolution 
 
 ## Persistence 

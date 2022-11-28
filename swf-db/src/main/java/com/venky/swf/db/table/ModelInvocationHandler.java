@@ -177,7 +177,11 @@ public class ModelInvocationHandler implements InvocationHandler {
         	if (!getReflector().isAnnotationPresent(method,IS_VIRTUAL.class)){
 	        	CONNECTED_VIA join = getReflector().getAnnotation(method,CONNECTED_VIA.class);
 	        	if (join != null){
-	        		return getChildren(getReflector().getChildModelClass(method),join.value(),join.additional_join());
+					ModelReflector<? extends Model> cReflector = ModelReflector.instance(getReflector().getChildModelClass(method));
+					String columName = join.value();
+					String fieldName = cReflector.getFieldName(columName);
+
+					return getChildren(getReflector().getChildModelClass(method),fieldName,join.additional_join());
 	        	}else {
 	        		return getChildren(getReflector().getChildModelClass(method));
 	        	}
@@ -266,8 +270,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 		}
         return parent;
     }
+	public <C extends Model> List<C> getChildren(Class<C> childClass){
+		return getChildren(childClass,Select.MAX_RECORDS_ALL_RECORDS);
+	}
     
-    public <C extends Model> List<C> getChildren(Class<C> childClass){
+    public <C extends Model> List<C> getChildren(Class<C> childClass, int maxRecords){
     	Class<? extends Model> modelClass = getReflector().getModelClass();
     	ModelReflector<?> childReflector = ModelReflector.instance(childClass);
     	Expression expression = new Expression(childReflector.getPool(),Conjunction.OR);
@@ -285,12 +292,15 @@ public class ModelInvocationHandler implements InvocationHandler {
         	throw new RuntimeException("Don;t know how to getChildren of kind " + childClass.getSimpleName() + " for " + modelClass.getSimpleName());
         }
 
-    	return getChildren(childClass,expression);
+    	return getChildren(childClass,expression,maxRecords);
     }
     public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName){
     	return getChildren(childClass,parentIdFieldName,null);
     }
-    public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName, String addnl_condition){
+	public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName, String addnl_condition){
+		return getChildren(childClass,parentIdFieldName,addnl_condition,Select.MAX_RECORDS_ALL_RECORDS);
+	}
+    public <C extends Model> List<C> getChildren(Class<C> childClass, String parentIdFieldName, String addnl_condition,int maxRecords){
     	long parentId = proxy.getId();
     	ModelReflector<C> childReflector = ModelReflector.instance(childClass);
     	String parentIdColumnName = childReflector.getColumnDescriptor(parentIdFieldName).getName();
@@ -300,15 +310,17 @@ public class ModelInvocationHandler implements InvocationHandler {
     		Expression addnl = new SQLExpressionParser(childClass).parse(addnl_condition);
         	where.add(addnl);
     	}
-    	return getChildren(childClass, where);
+    	return getChildren(childClass, where,maxRecords);
     }
-    
-    public <C extends Model> List<C> getChildren(Class<C> childClass, Expression expression){
+	public <C extends Model> List<C> getChildren(Class<C> childClass, Expression expression) {
+		return getChildren(childClass,expression,Select.MAX_RECORDS_ALL_RECORDS);
+	}
+	public <C extends Model> List<C> getChildren(Class<C> childClass, Expression expression, int maxRecords){
     	Select  q = new Select();
     	q.from(childClass);
     	q.where(expression);
     	q.orderBy(ModelReflector.instance(childClass).getOrderBy());
-    	return q.execute(childClass);
+    	return q.execute(childClass,maxRecords);
     }
     
     public <M extends Model> void setProxy(M proxy) {

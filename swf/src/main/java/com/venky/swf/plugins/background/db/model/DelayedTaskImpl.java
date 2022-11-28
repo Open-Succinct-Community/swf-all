@@ -1,19 +1,20 @@
 package com.venky.swf.plugins.background.db.model;
 
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import com.venky.core.io.StringReader;
-import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.CoreTask.Priority;
+import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.background.core.Task.Priority;
 import com.venky.swf.routing.Config;
+
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	public DelayedTaskImpl(){
@@ -24,8 +25,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 		super(proxy);
 	}
 	
-	public Priority getTaskPriority(){ 
-		return Task.getPriority(getProxy().getPriority());
+	public Priority getTaskPriority(){
+		return CoreTask.getPriority(getProxy().getPriority());
 	}
 	public long getTaskId(){
 		return getProxy().getId();
@@ -82,6 +83,25 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 		}catch (Exception ex){
 			parentTxn.rollback(ex);
 		}
+	}
+	public DbTaskManager getAsyncTaskManager(){
+		return AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class);
+	}
+
+	public void onStart() {
+		Database.getInstance().getCurrentTransaction();
+	}
+
+	public void onException(Throwable ex) {
+		Database.getInstance().getCurrentTransaction().rollback(ex);
+	}
+
+	public void onSuccess() {
+		Database.getInstance().getCurrentTransaction().commit();
+	}
+
+	public void onComplete() {
+		Database.getInstance().close();
 	}
 
 	public boolean canExecuteRemotely() {

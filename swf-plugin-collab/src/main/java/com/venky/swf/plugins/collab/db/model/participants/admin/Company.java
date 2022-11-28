@@ -17,6 +17,7 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.plugins.collab.db.model.participants.Application;
 import com.venky.swf.plugins.collab.db.model.user.User;
 
 import java.io.InputStream;
@@ -26,6 +27,7 @@ import java.util.List;
 public interface Company extends Model{
 	@IS_VIRTUAL
 	@PARTICIPANT
+	@HIDDEN
 	public Long getAnyUserId();
 	public void setAnyUserId(Long anyUserId);
 	public User getAnyUser();
@@ -73,6 +75,7 @@ public interface Company extends Model{
 	public void setName(String name);
 
 	@Index
+	@UNIQUE_KEY("DOMAIN_NAME")
 	public String getDomainName();
 	public void setDomainName(String domainName);
 
@@ -109,10 +112,10 @@ public interface Company extends Model{
 
 
 	@CONNECTED_VIA("CUSTOMER_ID")
-	public List<CompanyRelationShip> getVendors();
+	public List<CompanyRelationship> getVendors();
 
 	@CONNECTED_VIA("VENDOR_ID")
-	public List<CompanyRelationShip> getCustomers();
+	public List<CompanyRelationship> getCustomers();
 
 	@PARTICIPANT
 	public Long getCreatorCompanyId();
@@ -123,4 +126,5 @@ public interface Company extends Model{
 	@CONNECTED_VIA("CREATOR_COMPANY_ID")
 	public List<Company> getCreatedCompanies();
 
+	public List<Application> getApplications();
 }

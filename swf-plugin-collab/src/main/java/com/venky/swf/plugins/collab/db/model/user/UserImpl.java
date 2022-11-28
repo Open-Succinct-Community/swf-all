@@ -67,6 +67,9 @@ public class UserImpl extends ModelImpl<User> {
                 }
             }
         }
+        ModelReflector<Company> ref = ModelReflector.instance(Company.class);
+        List<Company> companies = new Select("ID").from(Company.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("CREATOR_USER_ID").getName(), Operator.EQ, u.getId())).execute();
+        ret.addAll(DataSecurityFilter.getIds(companies));
         return ret;
     }
 
