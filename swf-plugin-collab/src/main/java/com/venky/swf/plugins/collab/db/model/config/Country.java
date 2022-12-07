@@ -8,6 +8,7 @@ import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -24,6 +25,13 @@ public interface Country extends Model{
 	@Index
 	public String getIsoCode();
 	public void setIsoCode(String isoCode);
+
+	@UNIQUE_KEY("ISO2")
+	@Index
+	public String getIsoCode2();
+	public void setIsoCode2(String isoCode);
+
+
 	public List<State> getStates(); 
 	
 	public static Country findByName(String name) { 
@@ -38,7 +46,8 @@ public interface Country extends Model{
 	}
 	public static Country findByISO(String isoCode) { 
 		Select s = new Select().from(Country.class); 
-		s.where(new Expression(s.getPool(),"ISO_CODE",Operator.EQ,isoCode));
+		s.where(new Expression(s.getPool(), Conjunction.OR).
+				add(new Expression(s.getPool(),"ISO_CODE",Operator.EQ,isoCode)).add(new Expression(s.getPool(),"ISO_CODE_2",Operator.EQ,isoCode)));
 		List<Country> country = s.execute(); 
 		if (country.size() == 1) {
 			return country.get(0);
