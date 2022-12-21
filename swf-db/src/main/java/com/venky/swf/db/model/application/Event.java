@@ -11,7 +11,7 @@ import java.util.List;
 public interface Event extends Model {
 
     @UNIQUE_KEY
-    @RegEx("[a-z]*")
+    @RegEx("[a-z,_]*")
     public String getName();
     public void setName(String name);
 

@@ -25,14 +25,19 @@
     <fileSet filtered="true" encoding="UTF-8">
       <directory></directory>
       <includes>
-        <include>.classpath</include>
-        <include>.project</include>
-        <include>.gitignore</include>
+        <include>**/.classpath</include>
+        <include>**/.project</include>
+        <include>**/gitignore.sample</include>
       </includes>
     </fileSet>
   </fileSets>
   <requiredProperties>
+    
     <requiredProperty key="archetypeVersion"/>
+    <requiredProperty key="package">
+      <defaultValue>${groupId}.${artifactId}</defaultValue>
+    </requiredProperty>
+
     <requiredProperty key="pluginName"/>
 
     <requiredProperty key="groupId">
@@ -44,11 +49,8 @@
     </requiredProperty>
 
     <requiredProperty key="version">
-      <defaultValue>${archetypeVersion}</defaultValue>
+      <defaultValue>1.0-SNAPSHOT</defaultValue>
     </requiredProperty>
-
-    <requiredProperty key="package">
-      <defaultValue>com.venky.swf.plugins.${pluginName}</defaultValue>
-    </requiredProperty>
+    
   </requiredProperties>
 </archetype-descriptor>

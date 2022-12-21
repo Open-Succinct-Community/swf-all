@@ -63,11 +63,11 @@
         <version>LATEST</version>
         <scope>test</scope>
     </dependency>
-      <dependency>
-          <groupId>com.github.venkatramanm.swf-all</groupId>
-          <artifactId>swf</artifactId>
-          <version>${symbol_dollar}{revision}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.github.venkatramanm.swf-all</groupId>
+      <artifactId>swf</artifactId>
+      <version>[${symbol_dollar}{revision},)</version>
+    </dependency>
       <dependency>
           <groupId>com.github.venkatramanm.swf-all</groupId>
           <artifactId>swf-plugin-bootstrap</artifactId>

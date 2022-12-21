@@ -9,6 +9,7 @@ import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.api.EventHandler;
 import com.venky.swf.db.model.application.api.EndPoint;
@@ -16,6 +17,7 @@ import com.venky.swf.db.model.application.api.EndPoint;
 import java.io.Reader;
 import java.util.List;
 
+@HAS_DESCRIPTION_FIELD("APP_ID")
 public interface Application extends Model {
     @UNIQUE_KEY
     @IS_NULLABLE(false)

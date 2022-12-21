@@ -88,6 +88,8 @@ public interface Contact extends Model {
 13. Oh oh I am able to create duplicate records!!
 	* I need to make some of the columns as unique key to avoid duplicates. 
 ``` java
+package my.group.contacts.db.model;
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 ...
 public interface Contact extends Model {
     ...
