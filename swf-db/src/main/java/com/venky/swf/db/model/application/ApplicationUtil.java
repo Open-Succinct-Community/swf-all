@@ -6,12 +6,14 @@ import com.venky.core.security.Crypt;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
+import com.venky.swf.db.model.application.api.EndPoint;
 import com.venky.swf.db.model.application.api.EventHandler;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.List;
 import java.util.Map;
@@ -84,10 +86,18 @@ public class ApplicationUtil {
     }
 
     public static void addAuthorizationHeader(EventHandler event, Map<String,String> headers, String payload){
+        EndPoint endPoint = event.getEndPoint();
 
-        Application app = event.getEndPoint().getApplication();
+
+        Application app = event.getApplication();
         String  sPrivateKey = getPrivateKey(app.getSigningAlgorithm());
         if (sPrivateKey == null){
+            if (!ObjectUtil.isVoid(endPoint.getClientId()) && !ObjectUtil.isVoid(endPoint.getSecret())){
+                headers.put("Authorization" ,
+                        String.format("Basic %s", Crypt.getInstance().toBase64(String.format("%s:%s",endPoint.getClientId(),endPoint.getSecret()).getBytes(StandardCharsets.UTF_8))));
+            }else if (ObjectUtil.isVoid(endPoint.getTokenName())){
+                headers.put(endPoint.getTokenName(),endPoint.getTokenValue());
+            }
             return;
         }
         String[] parts = sPrivateKey.split(":");
@@ -124,6 +134,9 @@ public class ApplicationUtil {
     }
 
     private static String getPrivateKey(String signingAlgorithm) {
+        if (ObjectUtil.isVoid(signingAlgorithm)){
+            return null;
+        }
         ObjectHolder<String> keyHolder = new ObjectHolder<>(null);
         Registry.instance().callExtensions(String.format("private.key.get.%s" ,signingAlgorithm),keyHolder);
         return keyHolder.get();

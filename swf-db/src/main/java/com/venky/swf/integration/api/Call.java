@@ -222,8 +222,8 @@ public class Call<T> implements Serializable {
             if (responseStream.available()> 0){
                 fakeCurlRequest.append("\n Response:\n");
                 String contentType = responseHeaders.get("content-type").isEmpty() ? MimeType.TEXT_PLAIN.toString() : responseHeaders.get("content-type").get(0);
-                if (contentType.equals(MimeType.APPLICATION_JSON.toString()) ||
-                        contentType.contains(MimeType.APPLICATION_XML.toString()) ||
+                if (contentType.startsWith(MimeType.APPLICATION_JSON.toString()) ||
+                        contentType.startsWith(MimeType.APPLICATION_XML.toString()) ||
                         contentType.startsWith("text")){
                     fakeCurlRequest.append(StringUtil.read(responseStream,true));
                 }else {
