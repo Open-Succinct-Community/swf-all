@@ -13,6 +13,7 @@ import com.venky.swf.db.model.application.Application;
 public interface EndPoint extends Model {
     @HIDDEN
     @UNIQUE_KEY
+    @IS_NULLABLE(false)
     public Long getApplicationId();
     public void setApplicationId(Long id);
     public Application getApplication();

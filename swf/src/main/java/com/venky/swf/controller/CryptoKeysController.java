@@ -1,23 +1,15 @@
-package com.venky.swf.plugins.collab.controller;
+package com.venky.swf.controller;
 
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.ModelController;
-import com.venky.swf.controller.VirtualModelController;
+import com.venky.core.security.Crypt;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.CryptoKey;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
-import com.venky.swf.plugins.collab.db.model.CryptoKey;
 import com.venky.swf.views.View;
-import com.venky.core.security.Crypt;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
-import java.io.InputStreamReader;
-import java.security.KeyPair;
 import java.util.Arrays;
 
 public class CryptoKeysController extends ModelController<CryptoKey> {

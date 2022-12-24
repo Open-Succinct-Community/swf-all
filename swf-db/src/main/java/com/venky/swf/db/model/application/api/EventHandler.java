@@ -1,5 +1,6 @@
 package com.venky.swf.db.model.application.api;
 
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -9,6 +10,7 @@ import com.venky.swf.db.model.application.Event;
 
 public interface EventHandler extends Model {
     @PARTICIPANT
+    @IS_NULLABLE(false)
     public Long getApplicationId();
     public void setApplicationId(Long id);
     public Application getApplication();

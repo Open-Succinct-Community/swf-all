@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 
 public interface ApplicationPublicKey extends Model {
 
+    @IS_NULLABLE(false)
     public Long getApplicationId();
     public void setApplicationId(Long id);
     public Application getApplication();
