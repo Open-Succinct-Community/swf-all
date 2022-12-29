@@ -95,7 +95,7 @@ public class ApplicationUtil {
             if (!ObjectUtil.isVoid(endPoint.getClientId()) && !ObjectUtil.isVoid(endPoint.getSecret())){
                 headers.put("Authorization" ,
                         String.format("Basic %s", Crypt.getInstance().toBase64(String.format("%s:%s",endPoint.getClientId(),endPoint.getSecret()).getBytes(StandardCharsets.UTF_8))));
-            }else if (ObjectUtil.isVoid(endPoint.getTokenName())){
+            }else if (!ObjectUtil.isVoid(endPoint.getTokenName())){
                 headers.put(endPoint.getTokenName(),endPoint.getTokenValue());
             }
             return;
