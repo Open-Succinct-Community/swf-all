@@ -183,9 +183,11 @@ Annotation|Description
 
 
 ### Dynamic Proxy and ModelInvocationHandler 
-
+You may have noticed that all models defined in succinct are interfaces. So where is the meat?  Succinct implements these models in the framework as a generic dynamic proxy that is backed by a map of field_name and values. Getter setters declared are served in a consistent manner by this Proxy. 
+ 
 
 ### Model Implementation(s)
+While the generic 
 
 #### Method resolution 
 
