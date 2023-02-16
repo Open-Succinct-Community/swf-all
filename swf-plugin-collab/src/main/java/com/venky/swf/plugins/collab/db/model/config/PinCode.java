@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
@@ -20,7 +21,7 @@ import java.util.List;
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
 @ORDER_BY("PIN_CODE")
 @EXPORTABLE(false)
-public interface PinCode extends Model {
+public interface PinCode extends Model, GeoLocation {
     @UNIQUE_KEY
     @Index
     public String getPinCode();
