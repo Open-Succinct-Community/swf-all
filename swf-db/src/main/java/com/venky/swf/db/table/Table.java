@@ -622,11 +622,11 @@ public class Table<M extends Model> {
             }
             boolean isReservedName = ConnectionManager.instance().getReservedWordsInColumnNames(getPool()).contains(columnName);
             if (isReservedName){
-                buff.append("'");
+                buff.append("\"");
             }
             buff.append(columnName);
             if (isReservedName){
-                buff.append("'");
+                buff.append("\"");
             }
 
             if (isAutoIncrement()) {
