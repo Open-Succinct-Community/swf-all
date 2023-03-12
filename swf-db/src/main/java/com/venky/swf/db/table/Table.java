@@ -616,11 +616,19 @@ public class Table<M extends Model> {
             if (ref == null) {
                 throw new RuntimeException("Unknown JDBCType:" + getJDBCType() + " for column " + getName());
             }
+            String columnName = getName();
             if (helper.isColumnNameAutoLowerCasedInDB()) {
-                buff.append(LowerCaseStringCache.instance().get(getName()));
-            } else {
-                buff.append(getName());
+                columnName = LowerCaseStringCache.instance().get(columnName);
             }
+            boolean isReservedName = ConnectionManager.instance().getReservedWordsInColumnNames(getPool()).contains(columnName);
+            if (isReservedName){
+                buff.append("'");
+            }
+            buff.append(columnName);
+            if (isReservedName){
+                buff.append("'");
+            }
+
             if (isAutoIncrement()) {
                 buff.append(helper.getAutoIncrementInstruction());
             } else {

@@ -5,13 +5,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.sql.DataSource;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
@@ -206,4 +209,22 @@ public class ConnectionManager {
             }
         }
     }
+
+	private Cache<String,Set<String>> reservedWordsToEscape =  new Cache<String, Set<String>>(0,0) {
+		@Override
+		protected Set<String> getValue(String pool) {
+			Set<String> value = new IgnoreCaseSet();
+			String reservedWords = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".reservedWordsInColumns"));
+			if (!ObjectUtil.isVoid(reservedWords)) {
+				StringTokenizer tokenizer = new StringTokenizer(reservedWords, ",");
+				while (tokenizer.hasMoreTokens()) {
+					value.add(tokenizer.nextToken());
+				}
+			}
+			return value;
+		}
+	};
+	public Set<String> getReservedWordsInColumnNames(String pool){
+		return reservedWordsToEscape.get(pool);
+	}
 }
