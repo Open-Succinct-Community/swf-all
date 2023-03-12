@@ -1,16 +1,10 @@
 package com.venky.swf.plugins.lucene.configuration;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
-import com.venky.swf.plugins.background.core.CompositeBatchTask;
-import com.venky.swf.plugins.background.core.CompositeTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
@@ -20,6 +14,10 @@ import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppInstaller implements Installer{
 	
@@ -69,8 +67,34 @@ public class AppInstaller implements Installer{
 	}
     private static <M extends Model> void mkdir(Table<M> currentTable){
         if (mkdir(currentTable.getTableName())){
-            List<Model> records = new Select().from(currentTable.getModelClass()).execute();
-            for (Model m:records){
+            //Initialize emtpy index.
+            IndexTask task = new IndexTask();
+            task.setDirectory(currentTable.getTableName());
+            task.setDocuments(new ArrayList<>());
+            task.setOperation(Operation.ADD);
+            TaskManager.instance().execute(task);
+            TaskManager.instance().executeAsync(new TableIndexer<>(currentTable),false);
+
+
+        }
+    }
+    public static class TableIndexer<M extends Model> implements Task {
+        long startId;
+        Table<M> currentTable;
+        public TableIndexer(Table<M> table){
+            this(table,0);
+        }
+        public TableIndexer(Table<M> table,long startId){
+            this.currentTable = table;
+            this.startId = startId;
+        }
+
+        @Override
+        public void execute() {
+            int BATCH = 5000;
+            List<M> records = new Select().from(currentTable.getModelClass()).where(new Expression(currentTable.getPool(),"ID",Operator.GT,startId)).orderBy("ID").execute(BATCH);
+
+            for (M m:records){
                 try {
                     LuceneIndexer.instance(currentTable.getModelClass()).addDocument(m.getRawRecord());
                 } catch (IOException e) {
@@ -78,13 +102,9 @@ public class AppInstaller implements Installer{
                     break;
                 }
             }
-            if (records.isEmpty()){
-                //Initialize emtpy index.
-                IndexTask task = new IndexTask();
-                task.setDirectory(currentTable.getTableName());
-                task.setDocuments(new ArrayList<>());
-                task.setOperation(Operation.ADD);
-                TaskManager.instance().executeAsync(task,false);
+            if (records.size() >= BATCH){
+                M last = records.get(records.size()-1);
+                TaskManager.instance().executeAsync(new TableIndexer<>(currentTable,last.getId()),false);
             }
         }
     }
