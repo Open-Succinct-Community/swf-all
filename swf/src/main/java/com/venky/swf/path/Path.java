@@ -472,6 +472,9 @@ public class Path implements _IPath{
         Map<String,String> headers = getHeaders();
         headers.put("request-target", request.getMethod().toLowerCase() + " " + getTarget());
         headers.putIfAbsent("host",Config.instance().getHostName());
+        headers.putIfAbsent("X-ControllerPath",controllerPath());
+        headers.putIfAbsent("X-ControllerAction",action());
+
         //headers.putIfAbsent("X-Real-IP",getRequest().getRemoteAddr());
         try {
             application = ApplicationUtil.find(getInputStream(),headers);

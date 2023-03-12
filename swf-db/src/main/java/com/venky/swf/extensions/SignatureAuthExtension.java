@@ -20,6 +20,9 @@ public class SignatureAuthExtension extends ApplicationAuthenticator{
         if (!scheme.equals("signature")) {
             return;
         }
+        if (applicationObjectHolder.get() != null){
+            return;
+        }
         Map<String,String> params = ApplicationUtil.extractAuthorizationParams(schemeDetails);
 
         ApplicationPublicKey applicationPublicKey = ApplicationPublicKey.find(ApplicationPublicKey.PURPOSE_SIGNING,params.get("keyId"));

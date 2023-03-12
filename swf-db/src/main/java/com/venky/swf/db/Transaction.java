@@ -2,7 +2,9 @@ package com.venky.swf.db;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.venky.core.checkpoint.Checkpoint;
@@ -118,6 +120,13 @@ public class Transaction implements _IDatabase._ITransaction {
     @SuppressWarnings("unchecked")
     public <A> A getAttribute(String name){
         return (A)checkpoint.getValue().get(name);
+    }
+
+    public Map<String,Object> getAttributes(){
+        return checkpoint.getValue();
+    }
+    public void setAttributes(Map<String,Object> values){
+        values.forEach(this::setAttribute);
     }
 
     public Set<String> getActivePools(){

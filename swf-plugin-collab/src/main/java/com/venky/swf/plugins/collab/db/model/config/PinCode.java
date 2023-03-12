@@ -35,8 +35,8 @@ public interface PinCode extends Model, GeoLocation {
             PinCode pinCode = Database.getTable(PinCode.class).newRecord();
             pinCode.setPinCode(pincode);
             pinCode.save();
+            return pinCode;
         }
-        return null;
     }
 
     @IS_NULLABLE
