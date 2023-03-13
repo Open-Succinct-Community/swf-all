@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -39,7 +40,8 @@ public class Insert extends DataManupulationStatement{
 		StringBuilder valueList = new StringBuilder();
 		while (ki.hasNext()){
 			String key = ki.next();
-			q.append(key);
+			q.append(ConnectionManager.instance().getEscapedWord(getPool(),key));
+
 			valueList.append("?");
 			getValues().add(values.get(key));
 			if (ki.hasNext()){

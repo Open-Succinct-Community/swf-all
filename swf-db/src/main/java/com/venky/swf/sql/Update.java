@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -52,10 +53,11 @@ public class Update extends DataManupulationStatement{
 		Iterator<String> ki = keys.iterator();
 		while (ki.hasNext()){
 			String key = ki.next();
+			String escapedKey = ConnectionManager.instance().getEscapedWord(getPool(),key);
 			if (unBoundedValues.containsKey(key)){
-				builder.append(key).append(" = ").append(unBoundedValues.get(key));
+				builder.append(escapedKey).append(" = ").append(unBoundedValues.get(key));
 			}else {
-				builder.append(key).append(" = ? " );
+				builder.append(escapedKey).append(" = ? " );
 				getValues().add(values.get(key));
 			}
 			if (ki.hasNext()){

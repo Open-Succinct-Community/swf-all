@@ -4,8 +4,8 @@
  */
 package com.venky.swf.db.table;
 
-import java.sql.Types;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -501,10 +501,8 @@ public class Table<M extends Model> {
     }*/
 
     public static class ColumnDescriptor extends Record {
-
         public ColumnDescriptor(String pool) {
             super(pool);
-
         }
 
         public int getOrdinalPosition() {
@@ -516,6 +514,9 @@ public class Table<M extends Model> {
             return ((String) get("COLUMN_NAME"));
         }
 
+        public String getEscapedName(){
+            return ConnectionManager.instance().getEscapedWord(getPool(),getName());
+        }
         public int getJDBCType() {
             Object dataType = get("DATA_TYPE");
             return ic.valueOf(dataType);
@@ -616,18 +617,11 @@ public class Table<M extends Model> {
             if (ref == null) {
                 throw new RuntimeException("Unknown JDBCType:" + getJDBCType() + " for column " + getName());
             }
-            String columnName = getName();
+            String columnName = getEscapedName();
             if (helper.isColumnNameAutoLowerCasedInDB()) {
                 columnName = LowerCaseStringCache.instance().get(columnName);
             }
-            boolean isReservedName = ConnectionManager.instance().getReservedWordsInColumnNames(getPool()).contains(columnName);
-            if (isReservedName){
-                buff.append("\"");
-            }
             buff.append(columnName);
-            if (isReservedName){
-                buff.append("\"");
-            }
 
             if (isAutoIncrement()) {
                 buff.append(helper.getAutoIncrementInstruction());

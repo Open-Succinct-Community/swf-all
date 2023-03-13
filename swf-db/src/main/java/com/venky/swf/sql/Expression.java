@@ -12,6 +12,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.BindVariable;
@@ -219,7 +220,7 @@ public class Expression {
 		
 		StringBuilder builder = new StringBuilder();
 		if (conjunction == null){
-			builder.append(columnName);
+			builder.append(ConnectionManager.instance().getEscapedWord(pool,columnName));
 			builder.append(" ");
 			if (values == null || values.isEmpty()){
 				if (op == Operator.EQ || op == Operator.IN){

@@ -5,8 +5,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -14,6 +14,7 @@ import java.util.StringTokenizer;
 import javax.sql.DataSource;
 
 import com.venky.cache.Cache;
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.IgnoreCaseSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.MultiException;
@@ -210,21 +211,25 @@ public class ConnectionManager {
         }
     }
 
-	private Cache<String,Set<String>> reservedWordsToEscape =  new Cache<String, Set<String>>(0,0) {
+	private Cache<String, Map<String,String>> reservedWordsToEscape =  new Cache<>(0,0) {
 		@Override
-		protected Set<String> getValue(String pool) {
-			Set<String> value = new IgnoreCaseSet();
-			String reservedWords = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".reservedWordsInColumns"));
+		protected Map<String,String> getValue(String pool) {
+			IgnoreCaseMap<String> value = new IgnoreCaseMap<>();
+
+			String reservedWords = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".reservedWordsToEscape"));
 			if (!ObjectUtil.isVoid(reservedWords)) {
 				StringTokenizer tokenizer = new StringTokenizer(reservedWords, ",");
 				while (tokenizer.hasMoreTokens()) {
-					value.add(tokenizer.nextToken());
+					String token = tokenizer.nextToken();
+					value.put(token,"\"" + token + "\"");
 				}
 			}
 			return value;
 		}
 	};
-	public Set<String> getReservedWordsInColumnNames(String pool){
-		return reservedWordsToEscape.get(pool);
+
+	public String getEscapedWord(String pool,String word){
+		String reservedWord = reservedWordsToEscape.get(pool).get(word);
+		return  (reservedWord != null ? reservedWord : word);
 	}
 }

@@ -25,6 +25,7 @@ import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
@@ -58,13 +59,11 @@ import com.venky.swf.views.model.ModelShowView;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.TableStyle;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
@@ -81,7 +80,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -355,7 +353,7 @@ public class ModelController<M extends Model> extends Controller {
         for (String field : reflector.getRealFields()){
             if (!InputStream.class.isAssignableFrom(reflector.getFieldGetter(field).getReturnType())){
                 ColumnDescriptor cd = reflector.getColumnDescriptor(field);
-                columns.add(cd.getName());
+                columns.add(cd.getEscapedName());
             }
         }
         return columns.toArray(new String[]{});
