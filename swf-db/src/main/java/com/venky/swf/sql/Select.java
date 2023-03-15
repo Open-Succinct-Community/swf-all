@@ -17,6 +17,7 @@ import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -188,7 +189,7 @@ public class Select extends SqlStatement{
 			if (i != 0){
 				builder.append(", ");
 			}
-			builder.append(strings[i]);
+			builder.append(ConnectionManager.instance().getEscapedWord(getPool(),strings[i]));
 		}
 		
 	}
