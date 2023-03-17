@@ -16,7 +16,7 @@ Find your project in a subdirectory by the name of your artifactId.
 
 cd your\_artifact\_id
 
-Modify src/main/resources/config/swf.properties and set appropriate jdbc connection parameters. The Default properties would connect to an embedded derby instance that would be automatically created on application deployment.
+Modify overrideProperties/config/swf.properties and set appropriate jdbc connection parameters. The Default properties would connect to an embedded derby instance that would be automatically created on application deployment.
 
 mvn compile exec:java -Dexec.mainClass="com.venky.swf.JettyServer"
 
