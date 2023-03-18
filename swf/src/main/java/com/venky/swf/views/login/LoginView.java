@@ -74,7 +74,7 @@ public class LoginView extends HtmlView{
 		addProgressiveWebAppLinks(applicationDescPannel);
 
 		Column extLinks = loginPanel.createRow().createColumn(3,6);
-		extLinks.addClass("justify-center flex");
+		extLinks.addClass("text-center flex");
 
 		addExternalLoginLinks(extLinks,_redirect_to);
 
