@@ -237,6 +237,18 @@ public enum MimeType {
 		}
 
 	},
+	APPLICATION_GRAPHQL() {
+		public String toString(){
+			return "application/graphql";
+		}
+		public boolean isImage(){
+			return false;
+		}
+		@Override
+		public String getDefaultFileExtension() {
+			return "gql";
+		}
+	}
 	;
 
 	public abstract boolean isImage();
