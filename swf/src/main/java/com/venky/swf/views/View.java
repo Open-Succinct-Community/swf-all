@@ -4,6 +4,7 @@
  */
 package com.venky.swf.views;
 
+import com.venky.swf.db.Database;
 import com.venky.swf.path._IPath;
 
 import javax.servlet.http.HttpServletResponse;
@@ -20,6 +21,9 @@ public abstract class View implements _IView{
     }
 
     public _IPath getPath() {
+        if (path == null){
+            return Database.getInstance().getContext(_IPath.class.getName());
+        }
         return path;
     }
     public boolean isBeingRedirected(){
@@ -27,7 +31,9 @@ public abstract class View implements _IView{
     }
 
     public void setPath(_IPath path){
-        this.path = path;
+        synchronized (this) {
+            this.path = path;
+        }
     }
 
     public void write() throws IOException {

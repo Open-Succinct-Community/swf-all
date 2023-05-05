@@ -291,6 +291,14 @@ public class Controller implements TemplateLoader{
 
         ByteArrayInputStream is = p.getResourceAsStream(name);
         if (is == null){
+            String resource = String.format("%s/%s",Config.instance().getHostName(),name);
+            View cached = getCachedResult(getPath().constructNewPath(String.format("/resources/%s",resource)));
+            if (cached != null) {
+                return cached;
+            }
+            is = p.getResourceAsStream(resource);
+        }
+        if (is == null){
             throw new AccessDeniedException("No such resource!");
         }
 
@@ -667,9 +675,16 @@ public class Controller implements TemplateLoader{
     }
     public static final String GET_CACHED_RESULT_EXTENSION = "get.cached.result";
     public View getCachedResult(){
+        return getCachedResult(getPath());
+    }
+    public View getCachedResult(Path path){
         ObjectHolder<View> holder = new ObjectHolder<>(null);
-        Registry.instance().callExtensions(GET_CACHED_RESULT_EXTENSION,CacheOperation.GET,getPath(),holder);
-        return holder.get();
+        Registry.instance().callExtensions(GET_CACHED_RESULT_EXTENSION,CacheOperation.GET,path,holder);
+        View v = holder.get();
+        if (v != null) {
+            v.setPath(null);
+        }
+        return v;
     }
 
     public static final String SET_CACHED_RESULT_EXTENSION = "set.cached.result";

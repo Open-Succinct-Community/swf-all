@@ -983,8 +983,7 @@ public class Path implements _IPath{
         return false;
     }
 
-    private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
-    public _IView invoke() throws AccessDeniedException{
+    private void setCustomCnameProcessing(){
         String[] hostParams = new String[]{null,null};
         String host = getHeader("Host");
         if (host != null){
@@ -1001,6 +1000,11 @@ public class Path implements _IPath{
             extScheme = request.getScheme();
         }
         Config.instance().setExternalURIScheme(extScheme);
+    }
+
+    private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
+    public _IView invoke() throws AccessDeniedException{
+        setCustomCnameProcessing();
 
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());
@@ -1030,7 +1034,6 @@ public class Path implements _IPath{
                 try {
                     View result = controller.getCachedResult();
                     if (result != null){
-                        result.setPath(this);
                         return result;
                     }else if (m.getParameterTypes().length == 0 && parameter() == null){
                         result = (View)m.invoke(controller);

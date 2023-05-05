@@ -43,7 +43,12 @@ public interface City extends Model , GeoLocation {
 	public static City findByStateAndName(long stateId, String cityName) {
 		Select s = new Select().from(City.class); 
 		Expression where = new Expression(s.getPool(),Conjunction.AND);
-		where.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,cityName.toLowerCase()));
+
+		Expression cityClause = new Expression(s.getPool(),Conjunction.OR);
+		cityClause.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,cityName.toLowerCase()));
+		cityClause.add(new Expression(s.getPool(),"CODE",Operator.EQ,cityName.toLowerCase()));
+
+		where.add(cityClause);
 		where.add(new Expression(s.getPool(),"STATE_ID",Operator.EQ,stateId));
 		
 		List<City> cities = s.where(where).execute(); 

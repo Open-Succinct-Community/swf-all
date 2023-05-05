@@ -40,6 +40,9 @@ public interface State extends Model{
 	}
 
 	public static State findByCountryAndName(Long countryId , String stateName) {
+		if (stateName == null || countryId == null){
+			return null;
+		}
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
 		where.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,stateName.toLowerCase()));
