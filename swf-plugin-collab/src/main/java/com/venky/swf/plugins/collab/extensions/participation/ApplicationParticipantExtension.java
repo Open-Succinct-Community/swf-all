@@ -22,6 +22,8 @@ public class ApplicationParticipantExtension extends CompanyNonSpecificParticipa
                 } else {
                     return Arrays.asList(u.getId());
                 }
+            }else {
+                return super.getAllowedFieldValues(user,partiallyFilledModel,fieldName);
             }
         }
         return new ArrayList<>();

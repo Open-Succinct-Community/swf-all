@@ -386,11 +386,23 @@ public class Database implements _IDatabase{
 		}
 		context.put(name,value);
 	}
+	public void setContext(Map<String,Object> ctx){
+		if (context == null){
+			context = new HashMap<>();
+		}
+		context.putAll(ctx);
+	}
 	public <T> T getContext(String name){
     	if (context == null){
     		return  null;
 		}
 		return (T)context.get(name);
+	}
+	public Map<String,Object> getContext(){
+		if (context == null){
+			return null;
+		}
+		return new HashMap<>(context);
 	}
 
     public static Database getInstance(boolean migrate) {
