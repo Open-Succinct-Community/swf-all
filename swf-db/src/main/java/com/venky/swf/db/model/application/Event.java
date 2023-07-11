@@ -26,4 +26,5 @@ public interface Event extends Model {
 
     }
     public void raise(Object payload);
+    public void raise(Application application, Object payload);
 }

@@ -149,7 +149,10 @@ public class Path implements _IPath{
             Enumeration<String> parameterNames = request.getParameterNames();
             while (parameterNames.hasMoreElements()){
                 String name =parameterNames.nextElement();
-                formInput.put(name,request.getParameter(name));
+                if (name.matches("[^\",:]+")) {
+                    //To avoid considering json posts as parameters.
+                    formInput.put(name, request.getParameter(name));
+                }
             }
         }
         

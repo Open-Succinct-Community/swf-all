@@ -7,7 +7,9 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.venky.core.collections.IgnoreCaseList;
@@ -168,11 +170,28 @@ public class ModelAwareness implements FieldUIMetaProvider{
                 }else {
                 	select = new RadioGroup();
                 }
-                StringTokenizer allowedValues = new StringTokenizer(enumeration.value(),",");
-                
-                while (allowedValues.hasMoreTokens()){
-                	String nextAllowedValue = allowedValues.nextToken();
-                	select.createOption(nextAllowedValue, nextAllowedValue);
+				Set<String> allowedValues = new HashSet<>();
+				if (!ObjectUtil.isVoid(enumeration.value())) {
+					StringTokenizer tokens = new StringTokenizer(enumeration.value(), ",");
+					while (tokens.hasMoreElements()) {
+						allowedValues.add(tokens.nextToken());
+					}
+				}else if (!ObjectUtil.isVoid(enumeration.enumClass())){
+					try {
+						if (reflector.getColumnDescriptor(fieldName).isNullable()){
+							allowedValues.add("");
+						}
+						Class<Enum> c = (Class<Enum>)Class.forName(enumeration.enumClass());
+						for (Enum enumConstant : c.getEnumConstants()) {
+							allowedValues.add(enumConstant.name());
+						}
+					}catch (Exception cce){
+						throw new RuntimeException(cce);
+					}
+				}
+
+                for (String allowedValue : allowedValues){
+                	select.createOption(allowedValue, allowedValue);
                 }
                 control = select;
             }else{
