@@ -33,6 +33,11 @@ public class EventEmitter{
 
 
     public void emit(String eventName, Object payload ){
-        TaskManager.instance().executeAsync((DbTask)()-> Event.find(eventName).raise(payload),false);
+        TaskManager.instance().executeAsync((DbTask)()-> {
+            Event event = Event.find(eventName);
+            if (event != null){
+                event.raise(payload);
+            }
+        },false);
     }
 }
