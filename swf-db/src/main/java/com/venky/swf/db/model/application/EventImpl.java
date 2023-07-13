@@ -26,7 +26,6 @@ public class EventImpl extends ModelImpl<Event> {
 
     public void raise(Object payload){
         raise(getProxy().getEventHandlers(),payload);
-
     }
     public void raise(Application application, Object payload){
         ModelReflector<EventHandler> reflector = ModelReflector.instance(EventHandler.class);
