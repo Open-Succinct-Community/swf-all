@@ -234,10 +234,11 @@ public class Call<T> implements Serializable {
                 fakeCurlRequest.append("\n Error:\n");
                 fakeCurlRequest.append(StringUtil.read(errorStream,true));
             }
-            Config.instance().getLogger(getClass().getName()).info(fakeCurlRequest.toString());
             return this;
         } catch (Exception e) {
             throw new RuntimeException(e); //Soften the exception.
+        }finally {
+            Config.instance().getLogger(getClass().getName()).info(fakeCurlRequest.toString());
         }
     }
 
