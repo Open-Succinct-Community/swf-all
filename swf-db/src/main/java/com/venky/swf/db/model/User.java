@@ -140,4 +140,18 @@ public interface User extends Model {
     public void setCurrentLng(BigDecimal lng);
 
 
+
+    @IS_NULLABLE(false)
+    @COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
+    @PROTECTION
+    public boolean isAccountClosureInitiated();
+    public void setAccountClosureInitiated(boolean accountClosureInitiated);
+
+    @IS_NULLABLE(false)
+    @COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
+    @PROTECTION
+    public boolean isAccountClosed();
+    public void setAccountClosed(boolean accountClosed);
+
+
 }
