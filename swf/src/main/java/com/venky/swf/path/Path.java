@@ -726,10 +726,11 @@ public class Path implements _IPath{
 
     public void createUserSession(User user,boolean autoInvalidate){
         invalidateSession();
+
         jakarta.servlet.http.HttpSession jaksession = getRequest().getSession(true);
         HttpSession session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
                 (proxy, method, args) -> method.invoke(jaksession,args));
-        if (user != null){
+        if (user != null && !user.isAccountClosed()){
             session.setAttribute("user.id",user.getId());
             Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
         }

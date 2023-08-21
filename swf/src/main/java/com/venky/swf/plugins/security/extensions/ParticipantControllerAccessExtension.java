@@ -388,9 +388,6 @@ public class ParticipantControllerAccessExtension implements Extension{
 		if (user != null && user.isAdmin()){
 			return;
 		}
-		if (user != null && user.isAccountClosed()){
-			throw  new AccessDeniedException("Account is closed!");
-		}
 		String controllerPathElementName = (String)context[1];
 		String actionPathElementName = (String)context[2];
 		String parameterValue = (String)context[3];
