@@ -22,7 +22,10 @@ import com.venky.swf.plugins.collab.db.model.user.User;
 
 import java.io.InputStream;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public interface Company extends Model{
 	@IS_VIRTUAL
