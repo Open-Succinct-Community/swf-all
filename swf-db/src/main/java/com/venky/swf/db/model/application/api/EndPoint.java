@@ -1,5 +1,6 @@
 package com.venky.swf.db.model.application.api;
 
+import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
@@ -36,6 +37,7 @@ public interface EndPoint extends Model {
     public void setTokenName(String tokenName);
 
     @ENCRYPTED
+    @COLUMN_SIZE(2048)
     public String getTokenValue();
     public void setTokenValue(String tokenValue);
 

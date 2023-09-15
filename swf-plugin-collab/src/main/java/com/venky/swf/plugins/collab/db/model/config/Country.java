@@ -49,7 +49,7 @@ public interface Country extends Model{
 		}
         return country;
 	}
-	public static Country findByISO(String isoCode) { 
+	public static Country findByISO(String isoCode) {
 		Select s = new Select().from(Country.class); 
 		s.where(new Expression(s.getPool(), Conjunction.OR).
 				add(new Expression(s.getPool(),"ISO_CODE",Operator.EQ,isoCode)).add(new Expression(s.getPool(),"ISO_CODE_2",Operator.EQ,isoCode)));

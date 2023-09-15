@@ -25,7 +25,7 @@ public class DefaultCompanyFinder implements Extension {
 
         Company company = Database.getTable(Company.class).newRecord();
         company.setDomainName(domainName);
-        Database.getTable(Company.class).getRefreshed(company);
+        company = Database.getTable(Company.class).getRefreshed(company);
         if (company.getRawRecord().isNewRecord()){
             company.setName(company.getDomainName());
         }
