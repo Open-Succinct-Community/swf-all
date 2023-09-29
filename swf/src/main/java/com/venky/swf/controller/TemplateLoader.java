@@ -136,6 +136,10 @@ public interface TemplateLoader {
 
              */
             File template = new File(getTemplateDirectory(),templateName);
+            if (!template.exists() && !file.endsWith(subDirectory.fileExtension())){
+                templateName = String.format("/%s/%s/index%s",subDirectory.dir(),file,subDirectory.fileExtension());
+                template = new File(getTemplateDirectory(),templateName);
+            }
             FileInputStream inputStream = new FileInputStream(template);
             String p = StringUtil.read(inputStream);
             if (subDirectory == TemplateSubDirectory.MARKDOWN){
