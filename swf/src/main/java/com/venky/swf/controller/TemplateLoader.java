@@ -1,6 +1,7 @@
 package com.venky.swf.controller;
 
 import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
@@ -119,34 +120,41 @@ public interface TemplateLoader {
     }
 
     default View publish(TemplateSubDirectory subDirectory, String file, boolean includeMenu, boolean fragment){
-        String templateName = String.format("/%s/%s%s",subDirectory.dir(),file,file.endsWith(subDirectory.fileExtension())?"":subDirectory.fileExtension());
+        SequenceSet<String> filesToCheck = new SequenceSet<>();
+        // dir/file or dir/file.html
+        if (file.lastIndexOf(".") > file.lastIndexOf("/")) {
+            filesToCheck.add(String.format("/%s/%s",subDirectory.dir(),file));
+        }
+        filesToCheck.add(String.format("/%s/%s/index%s", subDirectory.dir(), file, subDirectory.fileExtension()));
+        filesToCheck.add(String.format("/%s/%s/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
+        filesToCheck.add(String.format("/%s/%s/server/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
+        filesToCheck.add(String.format("/%s/%s/_next/server/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
+        filesToCheck.add(String.format("/%s/%s%s", subDirectory.dir(), file, subDirectory.fileExtension()));
+
+
+
+        File template = null;
+        boolean treatAsFragment = fragment;
+        for (String templateName : filesToCheck){
+            template = new File(getTemplateDirectory(),templateName);
+            if (template.exists() && template.isFile()){
+                if (!templateName.endsWith(subDirectory.fileExtension()) && !treatAsFragment){
+                    treatAsFragment = true;
+                }
+                break;
+            }
+        }
+
         View ret = null;
         try {
-            /*
-            ret = new TemplateView(getPath(),getTemplateDirectory(),templateName,fragment) {
-                @Override
-                protected String publish() {
-                    String p =  super.publish();
-                    if (subDirectory == TemplateSubDirectory.MARKDOWN){
-                        p = pegDownProcessor.markdownToHtml(p);
-                    }
-                    return p;
-                }
-            };
-
-             */
-            File template = new File(getTemplateDirectory(),templateName);
-            if (!template.exists() && !file.endsWith(subDirectory.fileExtension())){
-                templateName = String.format("/%s/%s/index%s",subDirectory.dir(),file,subDirectory.fileExtension());
-                template = new File(getTemplateDirectory(),templateName);
-            }
             FileInputStream inputStream = new FileInputStream(template);
-            String p = StringUtil.read(inputStream);
+            byte [] bytes = StringUtil.readBytes(inputStream);
+
             if (subDirectory == TemplateSubDirectory.MARKDOWN){
-                p = pegDownProcessor.markdownToHtml(p);
+                bytes = pegDownProcessor.markdownToHtml(new String(bytes)).getBytes(StandardCharsets.UTF_8);
             }
-            if (!fragment){
-                final String processed = p;
+            if (!treatAsFragment){
+                final String processed = new String(bytes);
                 ret = new HtmlView(getPath()) {
                     @Override
                     protected void createBody(_IControl b) {
@@ -155,14 +163,18 @@ public interface TemplateLoader {
 
                     @Override
                     public String toString() {
-                        return super.toString();
+                        if (processed.startsWith("<html") || processed.startsWith("<!DOCTYPE html>")){
+                            return processed;
+                        }else {
+                            return super.toString();
+                        }
                     }
                 };
                 if (includeMenu){
                     ret = dashboard((HtmlView) ret);
                 }
             }else {
-                ret = new BytesView(getPath(), p.getBytes(StandardCharsets.UTF_8), subDirectory.contentType(templateName));
+                ret = new BytesView(getPath(), bytes, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(template.getName()));
             }
 
         }catch (Exception ex){
