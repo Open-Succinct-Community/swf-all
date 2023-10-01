@@ -163,11 +163,7 @@ public interface TemplateLoader {
 
                     @Override
                     public String toString() {
-                        if (processed.startsWith("<html") || processed.startsWith("<!DOCTYPE html>")){
-                            return processed;
-                        }else {
-                            return super.toString();
-                        }
+                        return super.toString();
                     }
                 };
                 if (includeMenu){
