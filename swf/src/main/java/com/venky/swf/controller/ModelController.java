@@ -15,18 +15,30 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
+import com.venky.reflection.Reflector;
+import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
+import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.entity.Action;
+import com.venky.swf.db.model.entity.Actions;
+import com.venky.swf.db.model.entity.ChildEntity;
+import com.venky.swf.db.model.entity.ChildEntity.ChildEntities;
+import com.venky.swf.db.model.entity.Entity;
+import com.venky.swf.db.model.entity.Field;
+import com.venky.swf.db.model.entity.Fields;
+import com.venky.swf.db.model.entity.Strings;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.RecordNotFoundException;
@@ -74,6 +86,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -689,6 +702,114 @@ public class ModelController<M extends Model> extends Controller {
         }
         M record = Database.getTable(modelClass).newRecord();
         return blank(record);
+    }
+    public Entity meta(Long id){
+        ModelReflector<M> ref = getReflector();
+        Entity entity = new Entity();
+        entity.setName(ref.getModelClass().getSimpleName());
+        entity.setVirtual(ref.isVirtual());
+        entity.setFields(new Fields());
+        entity.setActions(new Actions());
+        entity.setChildren(new ChildEntities());
+
+        List<String> referenceFields = ref.getReferenceFields();
+
+        for (String f : ref.getFields()){
+            Method fieldGetter = ref.getFieldGetter(f);
+            ColumnDescriptor descriptor = ref.getColumnDescriptor(f);
+            Field field = new Field();
+            field.setName(StringUtil.camelize(f));
+            field.setJavaClass(fieldGetter.getReturnType().getName());
+            field.setNullable(descriptor.isNullable());
+            field.setVirtual(descriptor.isVirtual());
+            if (referenceFields.contains(f)){
+                Method referredModelGetter = ref.getReferredModelGetterFor(fieldGetter);
+                field.setReferenceEntityName(referredModelGetter.getReturnType().getSimpleName());
+            }
+            if (ref.isFieldEnumeration(f)){
+                Strings values = new Strings();
+                for (String allowedValue : ref.getAllowedValues(f)) {
+                    values.add(allowedValue);
+                }
+                field.setValues(values);
+            }
+            entity.getFields().add(field);
+        }
+        for (Method childGetter : ref.getChildGetters()) {
+            IS_VIRTUAL isVirtual= childGetter.getAnnotation(IS_VIRTUAL.class);
+
+            Class<? extends Model> childClass = ref.getChildModelClass(childGetter);
+            ModelReflector<? extends Model> childRef = ModelReflector.instance(childClass);
+            if (childRef.isVirtual()){
+                continue;
+            }
+
+            CONNECTED_VIA via = ref.getAnnotation(childGetter, CONNECTED_VIA.class);
+            String referenceFieldName = null;
+            if (via != null){
+                referenceFieldName = ref.getFieldName(via.value());
+            }else {
+                List<Method> referredModelGetters = childRef.getReferredModelGetters(ref.getModelClass());
+                if (!referredModelGetters.isEmpty()){
+                    referenceFieldName = childRef.getReferenceField(referredModelGetters.get(0));
+                }
+            }
+            if (referenceFieldName != null && !childRef.isFieldVirtual(referenceFieldName)) {
+                ChildEntity childEntity = new ChildEntity();
+                childEntity.setVirtual(isVirtual != null && isVirtual.value());
+                childEntity.setName(childClass.getSimpleName());
+                childEntity.setReferenceFields(new Fields());
+                Field referenceField = new Field();
+                referenceField.setName(StringUtil.camelize(referenceFieldName));
+                childEntity.getReferenceFields().add(referenceField);
+                entity.getChildren().add(childEntity);
+            }
+        }
+
+        List<Method> actionMethods = ControllerReflector.instance(getClass()).getMethods(new MethodMatcher() {
+            @Override
+            public boolean matches(Method method) {
+                Class<?>[] parameterTypes = method.getParameterTypes();
+
+                boolean matches = (method.getModifiers() & Modifier.PUBLIC) > 0;
+                if (parameterTypes.length <= 1 && matches){
+                    matches = View.class.isAssignableFrom(method.getReturnType());
+                    if (matches && parameterTypes.length == 1){
+                        matches = Path.isNumberClass(parameterTypes[0]);
+                    }
+                }
+                return matches;
+            }
+        });
+
+        for (Method actionMethod : actionMethods) {
+            com.venky.swf.db.model.entity.Action action = new com.venky.swf.db.model.entity.Action();
+            action.setName(actionMethod.getName());
+            action.setRequireLogin(ControllerReflector.instance(getClass()).isSecuredActionMethod(actionMethod));
+
+            SingleRecordAction singleRecordAction = ControllerReflector.instance(getClass()).getAnnotation(actionMethod, SingleRecordAction.class);
+            if (singleRecordAction != null){
+                if (id == null) {
+                    if (!getPath().canAccessControllerAction(actionMethod.getName())){
+                        action.setAllowed(false);
+                    }
+                }else {
+                    action.setAllowed(getPath().canAccessControllerAction(actionMethod.getName(),id.toString()));
+                }
+                action.setIcon(singleRecordAction.icon());
+                action.setToolTip(singleRecordAction.tooltip());
+            }
+            entity.getActions().add(action);
+        }
+        return entity;
+    }
+    @RequireLogin(false)
+    public View describe(){
+        return new BytesView(getPath(),meta(null).toString().getBytes(StandardCharsets.UTF_8),MimeType.APPLICATION_JSON);
+    }
+    @RequireLogin(false)
+    public View describe(long id){
+        return new BytesView(getPath(),meta(id).toString().getBytes(StandardCharsets.UTF_8),MimeType.APPLICATION_JSON);
     }
 
     protected void defaultFields(M record){
