@@ -5,6 +5,7 @@ import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.util.Bucket;
 import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db._IDatabase;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.IOTask;
@@ -54,6 +55,8 @@ public class HttpCoreEvent extends CoreEvent implements _HttpCoreEvent, IOTask {
 
         AsyncContext context = (javax.servlet.AsyncContext)  Proxy.newProxyInstance(router.getLoader(),  new Class[]{javax.servlet.AsyncContext.class},
                 (proxy, method, args) -> method.invoke(_context,args));
+
+        setCustomCnameProcessing(request);
 
         iPath = router.createPath(target);
 
@@ -155,6 +158,33 @@ public class HttpCoreEvent extends CoreEvent implements _HttpCoreEvent, IOTask {
                 return beingForwarded;
             }
         };
+    }
+
+    private void setCustomCnameProcessing(HttpServletRequest request){
+        String[] hostParams = new String[]{null,null};
+        String host = getHeader(request,"Host");
+        if (host != null){
+            String[] parts = host.split(":");
+            for (int i = 0 ; i < Math.min(parts.length,2) ; i ++){
+                hostParams[i] = parts[i];
+            }
+        }
+        //Set request based host,port and scheme for this thread.
+        Config.instance().setHostName(hostParams[0]);
+        Config.instance().setExternalPort(hostParams[1]);
+        String extScheme = getHeader(request,"URIScheme");
+        if (extScheme == null){
+            extScheme = request.getScheme();
+        }
+        Config.instance().setExternalURIScheme(extScheme);
+    }
+    private String getHeader(HttpServletRequest request,String key) {
+        String value = request.getHeader("X-" + key);
+
+        if (ObjectUtil.isVoid(value)) {
+            value = request.getHeader(key);
+        }
+        return value;
     }
 
     @Override

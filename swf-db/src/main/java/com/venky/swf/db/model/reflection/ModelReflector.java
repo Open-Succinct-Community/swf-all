@@ -230,6 +230,9 @@ public class ModelReflector<M extends Model> {
     }
 
     public void set(Model record, String fieldName, Object value) {
+        if (!isFieldSettable(fieldName)){
+            return;
+        }
         Timer timer = cat.startTimer();
         try {
             Method getter = getFieldGetter(fieldName);

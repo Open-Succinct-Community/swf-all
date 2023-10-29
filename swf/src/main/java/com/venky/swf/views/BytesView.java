@@ -20,6 +20,11 @@ import com.venky.swf.path.Path;
 public class BytesView extends View{
     private byte[] bytes;
     private String contentType;
+
+    public String getContentType() {
+        return contentType;
+    }
+
     Map<String,String> addnlResponseHeaders = new HashMap<String, String>();
     public BytesView(Path path,byte[] bytes){
         this(path,bytes,MimeType.TEXT_PLAIN);

@@ -28,4 +28,7 @@ public class UserEmailImpl extends EmailImpl<UserEmail> {
         }
         return companyId;
     }
+    public void setCompanyId(Long companyId){
+        // Do nothing
+    }
 }

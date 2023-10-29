@@ -17,6 +17,7 @@ import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
+import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.background.core.IOTaskManager;
 import com.venky.swf.plugins.background.core.Task;
@@ -109,6 +110,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	public View addWorker(long incrementBy){
 		for (int i = 0 ; i< incrementBy ; i ++){
 			AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).addWorker();
+			AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class).addWorker();
 		}
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
@@ -116,6 +118,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	@RequireLogin
 	public View evict(int numWorkers){
 		AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).evictWorker(numWorkers);
+		AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class).evictWorker(numWorkers);
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 }
