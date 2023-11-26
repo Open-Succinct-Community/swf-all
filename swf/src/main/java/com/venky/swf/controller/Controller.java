@@ -354,8 +354,8 @@ public class Controller implements TemplateLoader{
                 if (!ObjectUtil.isVoid(value) ) {
                     StringTokenizer tokenizer = new StringTokenizer(value);
                     boolean pass = true;
-                    while (tokenizer.hasMoreElements()){
-                        pass = pass && fieldValue.toLowerCase().contains(tokenizer.nextToken().toLowerCase());
+                    while (pass && tokenizer.hasMoreElements()){
+                        pass = fieldValue.toLowerCase().contains(tokenizer.nextToken().toLowerCase());
                     }
                     if (!pass) {
                         i.remove();

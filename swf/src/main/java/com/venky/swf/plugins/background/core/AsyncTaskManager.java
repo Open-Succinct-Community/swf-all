@@ -39,6 +39,12 @@ public class AsyncTaskManager  {
 			addWorker();
 		}
 	}
+
+	public void addWorker(int incrementBy){
+		for (int i = 0 ; i< incrementBy ; i ++){
+			addWorker();
+		}
+	}
 	
 	public void addWorker(){
 		AsyncTaskWorker worker = null;
@@ -59,7 +65,7 @@ public class AsyncTaskManager  {
 		wakeUp();
 	}
 
-	Bucket numWorkersToEvict = new Bucket();
+	final Bucket numWorkersToEvict = new Bucket();
 	public boolean evicted(){
 		synchronized (numWorkersToEvict) {
 			if (numWorkersToEvict.intValue() > 0 && Thread.currentThread() instanceof AsyncTaskWorker){
@@ -197,7 +203,7 @@ public class AsyncTaskManager  {
 					queue.notifyAll();
 				}
 				Config.instance().getLogger(getClass().getName())
-						.finest("Number of Tasks remaining in Queue pending workers:" + queue.size());
+						.finest(String.format("Number of Tasks remaining in %s Queue : %d" , getClass().getSimpleName() , queue.size()));
 			}
 		}
 
@@ -264,7 +270,7 @@ public class AsyncTaskManager  {
 		return task;
 	}
 
-	private Bucket numWorkersWorking = new Bucket();
+	private final Bucket numWorkersWorking = new Bucket();
 
 	public int workerCount(){
 		synchronized (numWorkersWorking){
@@ -277,7 +283,7 @@ public class AsyncTaskManager  {
 			numWorkersWorking.decrement();
 			numWorkersWorking.notifyAll();
 			Config.instance().getLogger(getClass().getName())
-					.info("Number of workers working " + numWorkersWorking.intValue());
+					.info(String.format("Number of %s workers working %d" , getClass().getSimpleName() ,numWorkersWorking.intValue()));
 		}
 	}
 
@@ -286,7 +292,7 @@ public class AsyncTaskManager  {
 			numWorkersWorking.increment();
 			numWorkersWorking.notifyAll();
 			Config.instance().getLogger(getClass().getName())
-					.info("Number of workers working " + numWorkersWorking.intValue());
+					.info(String.format("Number of %s workers working %d" , getClass().getSimpleName() ,numWorkersWorking.intValue()));
 		}
 	}
 
@@ -295,10 +301,10 @@ public class AsyncTaskManager  {
 			while (numWorkersWorking.intValue() != 0) {
 				try {
 					Config.instance().getLogger(getClass().getName())
-							.info("Number of workers working " + numWorkersWorking.intValue());
+							.info(String.format("Number of %s workers working %d" , getClass().getSimpleName() ,numWorkersWorking.intValue()));
 					numWorkersWorking.wait();
 				} catch (InterruptedException ex) {
-
+					//do nothing
 				}
 			}
 		}
@@ -309,7 +315,7 @@ public class AsyncTaskManager  {
 				try {
 					numWorkersToEvict.wait(5000);
 				} catch (InterruptedException e) {
-					
+					//do nothing
 				}
 			}
 		}

@@ -74,13 +74,13 @@ public class IndexManager {
 
         createIndexTasks(tableName, documents, operation);
     }
-    public void createIndexTasks(String tableName, List<Document> documents, Operation operation) {
+    private void createIndexTasks(String tableName, List<Document> documents, Operation operation) {
         List<IndexTask> tasks = new ArrayList<>();
-        int batchSize = 50;
+        int batchSize = Integer.MAX_VALUE ; //Disable batching
         for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
             Document document = i.next();
             IndexTask task ;
-            if (tasks.isEmpty() || tasks.get(tasks.size() - 1).getDocuments().size() >= batchSize) {
+            if (tasks.isEmpty() || tasks.get(tasks.size() - 1).getDocuments().size() == batchSize) {
                 task = new IndexTask();
                 task.setDirectory(tableName);
                 task.setDocuments(new ArrayList<>());

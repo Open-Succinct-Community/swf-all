@@ -5,11 +5,8 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
-import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
-import com.venky.swf.plugins.background.core.Task;
-import com.venky.swf.plugins.background.core.TaskManager;
 
 import java.util.Set;
 

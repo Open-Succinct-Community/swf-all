@@ -36,7 +36,15 @@ public class AsyncTaskManagerFactory {
     }
 
     private final Map<Class<? extends AsyncTaskManager>, AsyncTaskManager> taskManagerCache = new HashMap<>();
-
+    @SuppressWarnings("unchecked")
+    public <T extends AsyncTaskManager> T get(String clazzName){
+        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> classAsyncTaskManagerEntry : taskManagerCache.entrySet()) {
+            if (classAsyncTaskManagerEntry.getKey().getSimpleName().equals(clazzName)){
+                return (T)classAsyncTaskManagerEntry.getValue();
+            }
+        }
+        return null;
+    }
     @SuppressWarnings("unchecked")
     public <T extends AsyncTaskManager> T get(Class<T> asyncTaskManagerClazz){
         T t = (T)taskManagerCache.get(asyncTaskManagerClazz);
@@ -73,8 +81,35 @@ public class AsyncTaskManagerFactory {
             atm.wakeUp();
         }
     }
+    public CoreTask next(boolean local,boolean wait) {
+        CoreTask task = null;
+        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
+            task  = entry.getValue().next(local,wait);
+            if (task != null ){
+                break;
+            }
+        }
+        return task;
+    }
 
     public <T extends CoreTask> void addAll(Collection<T> tasks) {
+        Map<AsyncTaskManager,List<CoreTask>> tasksMap = group(tasks);
+        tasksMap.forEach((atm,l)->atm.addAll(l));
+
+    }
+
+    public void evictWorker(int numWorkers){
+        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
+            entry.getValue().evictWorker(numWorkers);
+        }
+    }
+    public void addWorker(int numWorkers){
+        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
+            entry.getValue().addWorker(numWorkers);
+        }
+
+    }
+    private <T extends CoreTask> Map<AsyncTaskManager,List<CoreTask>> group(Collection<T> tasks){
         Map<AsyncTaskManager,List<CoreTask>> tasksMap = new Cache<AsyncTaskManager, List<CoreTask>>() {
             @Override
             protected List<CoreTask> getValue(AsyncTaskManager asyncTaskManager) {
@@ -85,7 +120,12 @@ public class AsyncTaskManagerFactory {
         for (T task: tasks){
             tasksMap.get(task.getAsyncTaskManager()).add(task);
         }
-        tasksMap.forEach((atm,l)->atm.addAll(l));
 
+        return tasksMap;
+    }
+
+    public <T extends CoreTask> void executeAsync(Collection<T> tasks, boolean persistTaskQueue) {
+        Map<AsyncTaskManager,List<CoreTask>> group = group(tasks);
+        group.forEach((atm,l)->atm.execute(l,persistTaskQueue));
     }
 }

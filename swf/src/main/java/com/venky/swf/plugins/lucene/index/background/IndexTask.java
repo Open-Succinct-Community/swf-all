@@ -1,10 +1,8 @@
 package com.venky.swf.plugins.lucene.index.background;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.IndexTaskManager;
+import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -16,7 +14,9 @@ import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.store.LockObtainFailedException;
 
-import com.venky.swf.plugins.background.core.Task;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndexTask implements Task{
 	/**
@@ -94,5 +94,10 @@ public class IndexTask implements Task{
 	@Override
 	public Priority getTaskPriority() {
 		return Priority.LOW;
+	}
+
+	@Override
+	public IndexTaskManager getAsyncTaskManager() {
+		return AsyncTaskManagerFactory.getInstance().get(IndexTaskManager.class);
 	}
 }

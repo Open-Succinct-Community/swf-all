@@ -1,12 +1,7 @@
 package com.venky.swf.plugins.background.controller;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.venky.core.io.SeekableByteArrayOutputStream;
+import com.venky.core.string.StringUtil;
 import com.venky.swf.controller.ModelController;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
@@ -17,16 +12,20 @@ import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
-import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.SerializationHelper;
-import com.venky.swf.plugins.background.core.IOTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
+import in.succinct.json.JSONObjectWrapper;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DelayedTasksController extends ModelController<DelayedTask> {
 
@@ -55,8 +54,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 	private JSON getCriteria() {
         try {
             InputStream is = getPath().getInputStream();
-            JSON criteria = new JSON(is);
-            return criteria;
+            return new JSON(is);
         }catch (IOException ex){
             throw new RuntimeException(ex);
         }
@@ -78,9 +76,9 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
         int batch = Database.getJdbcTypeHelper("").getTypeRef(Integer.class).getTypeConverter().valueOf(criteria.getAttribute("BatchSize"));
 
         batch = Math.max(batch,1);
-        CoreTask task = null;
+        CoreTask task ;
         List<CoreTask> tasks = new ArrayList<>();
-		while (((task = AsyncTaskManagerFactory.getInstance().get(AsyncTaskManager.class).next(false, false)) != null) && tasks.size() <= batch ){
+		while (((task = TaskManager.instance().next(false, false)) != null) && tasks.size() <= batch ){
 		    tasks.add(task);
         }
 
@@ -106,19 +104,64 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 
-	@RequireLogin
-	public View addWorker(long incrementBy){
-		for (int i = 0 ; i< incrementBy ; i ++){
-			AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).addWorker();
-			AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class).addWorker();
+	public static class Command extends JSONObjectWrapper {
+		public Command(){
+			super();
 		}
+
+		public int getNumWorkers(){
+		    return getInteger("num_workers");
+		}
+		public void setNumWorkers(int num_workers){
+		    set("num_workers",num_workers);
+		}
+
+		public String getCategory(){
+		    return get("category");
+		}
+		public void setCategory(String category){
+		    set("category",category);
+		}
+
+
+
+	}
+	@SuppressWarnings("unchecked")
+	@RequireLogin
+	public View addWorker(){
+		try {
+			Command command = new Command();
+			String payload  = StringUtil.read(getPath().getInputStream());
+			command.setPayload(payload);
+			String clazz = String.format("%sTaskManager",
+					command.getCategory());
+
+
+			AsyncTaskManagerFactory.getInstance().get(clazz).addWorker(command.getNumWorkers());
+		}catch (Exception ex){
+			throw new RuntimeException(ex);
+		}
+
+
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 
 	@RequireLogin
-	public View evict(int numWorkers){
-		AsyncTaskManagerFactory.getInstance().get(IOTaskManager.class).evictWorker(numWorkers);
-		AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class).evictWorker(numWorkers);
+	@SuppressWarnings("ALL")
+	public View evict(){
+		Command command = new Command();
+		String payload = "{}" ;
+		try {
+			payload = StringUtil.read(getPath().getInputStream());
+			command.setPayload(payload);
+			String clazz = String.format("%s.%sTaskManager",AsyncTaskManager.class.getPackageName(),
+					command.getCategory());
+
+
+			AsyncTaskManagerFactory.getInstance().get((Class <? extends AsyncTaskManager>)Class.forName(clazz)).evictWorker(command.getNumWorkers());
+		}catch (Exception ex){
+			throw new RuntimeException(ex);
+		}
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
 	}
 }

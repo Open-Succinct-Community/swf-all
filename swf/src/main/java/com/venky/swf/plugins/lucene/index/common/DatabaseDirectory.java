@@ -32,7 +32,7 @@ public class DatabaseDirectory extends BaseDirectory {
     }
 
     public static IndexDirectory getIndexDirectory(String tableName) throws FileNotFoundException {
-        return getIndexDirectory(tableName, true);
+        return getIndexDirectory(tableName, false);
     }
 
     public static IndexDirectory getIndexDirectory(String tableName, boolean aggressivelyLock) throws FileNotFoundException {

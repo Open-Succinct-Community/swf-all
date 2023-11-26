@@ -43,7 +43,7 @@ public class TaskManager{
 	}
 
 	public <T extends CoreTask> void executeAsync(Collection<T> tasks, boolean persistTaskQueue){
-		AsyncTaskManagerFactory.getInstance().get(AsyncTaskManager.class).execute(tasks, persistTaskQueue);
+		AsyncTaskManagerFactory.getInstance().executeAsync(tasks,persistTaskQueue);
 	}
 	
 	public void shutdown(){
@@ -52,4 +52,11 @@ public class TaskManager{
 	public void wakeUp(){
 		AsyncTaskManagerFactory.getInstance().wakeUp();
 	}
+
+	public CoreTask next(boolean local,boolean wait) {
+		return AsyncTaskManagerFactory.getInstance().next(local,wait);
+	}
+
+
+
 }
