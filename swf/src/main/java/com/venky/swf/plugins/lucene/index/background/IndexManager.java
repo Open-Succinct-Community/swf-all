@@ -2,13 +2,6 @@ package com.venky.swf.plugins.lucene.index.background;
 
 import com.venky.cache.Cache;
 import com.venky.core.util.Bucket;
-import com.venky.core.util.ChangeListener;
-import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper;
-import com.venky.swf.db.table.Record;
-import com.venky.swf.plugins.background.core.TaskManager;
-import com.venky.swf.plugins.lucene.index.LuceneIndexer;
-import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
 import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.DatabaseDirectory;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
@@ -20,12 +13,8 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class IndexManager {
 
@@ -60,57 +49,7 @@ public class IndexManager {
         return directoryCache.get(name);
     }
 
-    private void _createIndexTasks(String tableName, List<Record> records, Operation operation) {
-        List<Document> documents = records.stream().map((Record r)->{
-            try {
-                Document document = LuceneIndexer.instance(Database.getTable(tableName).getModelClass()).getDocument(r);
-                return document;
-            }catch(IOException ex){
-                throw new RuntimeException(ex);
-            }
-        }).collect(Collectors.toList());
-        
-        records.clear();
 
-        createIndexTasks(tableName, documents, operation);
-    }
-    private void createIndexTasks(String tableName, List<Document> documents, Operation operation) {
-        List<IndexTask> tasks = new ArrayList<>();
-        int batchSize = Integer.MAX_VALUE ; //Disable batching
-        for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
-            Document document = i.next();
-            IndexTask task ;
-            if (tasks.isEmpty() || tasks.get(tasks.size() - 1).getDocuments().size() == batchSize) {
-                task = new IndexTask();
-                task.setDirectory(tableName);
-                task.setDocuments(new ArrayList<>());
-                task.setOperation(operation);
-                tasks.add(task);
-            } else {
-                task = tasks.get(tasks.size() - 1);
-            }
-            task.getDocuments().add(document);
-            i.remove();
-        }
-
-        executeDelayed(tasks);
-    }
-
-    public void addDocuments(String tableName, List<Record> documents) {
-        _createIndexTasks(tableName, documents, Operation.ADD);
-    }
-
-    public void updateDocuments(String tableName, List<Record> documents) {
-        _createIndexTasks(tableName, documents, Operation.MODIFY);
-    }
-
-    public void removeDocuments(String tableName, List<Record> documents) {
-        _createIndexTasks(tableName, documents, Operation.DELETE);
-    }
-
-    private void executeDelayed(List<IndexTask> tasks) {
-        TaskManager.instance().executeAsync(tasks, false);
-    }
 
     private Map<IndexSearcher, Bucket> searcherReferenceCount = new HashMap<>();
 

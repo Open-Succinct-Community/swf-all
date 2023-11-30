@@ -8,9 +8,9 @@ import com.venky.swf.db.table.Table;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
+import com.venky.swf.plugins.lucene.extensions.LuceneBeforeCommitExtension.TableRecordSetIndexer;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
-import com.venky.swf.plugins.lucene.index.background.IndexTask;
-import com.venky.swf.plugins.lucene.index.background.IndexTask.Operation;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -18,6 +18,8 @@ import com.venky.swf.sql.Select;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.logging.Level;
 
 public class AppInstaller implements Installer{
 	
@@ -32,6 +34,9 @@ public class AppInstaller implements Installer{
 			}
 			
 			Table<? extends Model> currentTable = Database.getTable(tableName);
+            if (currentTable == null){
+                return;
+            }
 			if (!tableName.equals(currentTable.getRealTableName())){
 				continue;
 			}
@@ -61,21 +66,14 @@ public class AppInstaller implements Installer{
         }
         @Override
         public void execute() {
-            mkdir(Database.getTable(this.tableName));
+            mkdir(Objects.requireNonNull(Database.getTable(this.tableName)));
         }
 
 	}
     private static <M extends Model> void mkdir(Table<M> currentTable){
         if (mkdir(currentTable.getTableName())){
-            //Initialize emtpy index.
-            IndexTask task = new IndexTask();
-            task.setDirectory(currentTable.getTableName());
-            task.setDocuments(new ArrayList<>());
-            task.setOperation(Operation.ADD);
-            TaskManager.instance().execute(task);
+            TaskManager.instance().execute(new TableRecordSetIndexer(currentTable.getTableName(),new ArrayList<>()));
             TaskManager.instance().executeAsync(new TableIndexer<>(currentTable),false);
-
-
         }
     }
     public static class TableIndexer<M extends Model> implements Task {
@@ -98,7 +96,7 @@ public class AppInstaller implements Installer{
                 try {
                     LuceneIndexer.instance(currentTable.getModelClass()).addDocument(m.getRawRecord());
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Config.instance().getLogger(getClass().getName()).log(Level.WARNING,String.format("Indexing failed for id = %d" , m.getId()),e);
                     break;
                 }
             }

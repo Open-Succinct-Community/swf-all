@@ -130,6 +130,9 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
         return fieldValues.remove(fieldName);
     }
     public void merge(Record record){
+		if (this == record){
+			return; //Already in sync
+		}
     	if (ObjectUtil.equals(getId(),record.getId())){
 			this.fieldValues.clear(); 
 	    	this.fieldValues.putAll(record.fieldValues);

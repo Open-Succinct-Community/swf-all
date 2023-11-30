@@ -16,6 +16,8 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.plugins.lucene.index.background.IndexManager;
+import com.venky.swf.plugins.lucene.index.common.IndexUpdateTracker;
+import com.venky.swf.plugins.lucene.index.common.IndexUpdateTracker.IndexOperation;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CharArraySet;
@@ -71,7 +73,10 @@ public class LuceneIndexer {
     }
 
     public static <M extends Model> LuceneIndexer instance(ModelReflector<? extends Model> modelReflector) {
-        return (LuceneIndexer) indexerCache.get(modelReflector.getTableName());
+        return indexerCache.get(modelReflector.getTableName());
+    }
+    public static LuceneIndexer instance(String tableName) {
+        return indexerCache.get(tableName);
     }
 
 
@@ -229,46 +234,35 @@ public class LuceneIndexer {
         return value.replaceAll("[- :]", "");
     }
 
-    @SuppressWarnings("unchecked")
-    public List<Record> getDocuments(String luceneOperation) {
-        Cache<String, List<Record>> documentsByTable = (Cache<String, List<Record>>) Database.getInstance().getCurrentTransaction().getAttribute(luceneOperation);
-        if (documentsByTable == null) {
-            documentsByTable = new Cache<String, List<Record>>() {
-                /**
-                 *
-                 */
-                private static final long serialVersionUID = 3445427618501574899L;
-
-                @Override
-                protected List<Record> getValue(String k) {
-                    return new ArrayList<Record>();
-                }
-
-            };
-            Database.getInstance().getCurrentTransaction().setAttribute(luceneOperation, documentsByTable);
+    public void update(Record record, IndexOperation operation){
+        IndexUpdateTracker tracker = Database.getInstance().getCurrentTransaction().getAttribute(IndexUpdateTracker.class.getName());
+        if (tracker == null){
+            tracker = new IndexUpdateTracker();
+            Database.getInstance().getCurrentTransaction().setAttribute(IndexUpdateTracker.class.getName(),tracker);
         }
-        return documentsByTable.get(tableName);
+        tracker.update(tableName,record,operation);
     }
+
 
     public void addDocument(Record r) throws IOException {
         if (!hasIndexedFields() || r == null) {
             return;
         }
-        getDocuments("lucene.added").add(r);
+        update(r,IndexOperation.added);
     }
 
     public void updateDocument(Record r) throws IOException {
         if (!hasIndexedFields() || r == null) {
             return;
         }
-        getDocuments("lucene.updated").add(r);
+        update(r,IndexOperation.updated);
     }
 
     public void removeDocument(Record r) throws IOException {
         if (!hasIndexedFields() || r == null) {
             return;
         }
-        getDocuments("lucene.removed").add(r);
+        update(r,IndexOperation.removed);
     }
 
     public List<Long> findIds(Query q, int numHits) {

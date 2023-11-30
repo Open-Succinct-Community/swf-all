@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.lucene.index.common;
 
+import com.venky.core.io.Locker;
 import com.venky.swf.db.Database;
 import com.venky.swf.exceptions.SWFTimeoutException;
 import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
