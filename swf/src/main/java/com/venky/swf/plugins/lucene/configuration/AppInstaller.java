@@ -3,11 +3,9 @@ package com.venky.swf.plugins.lucene.configuration;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
-import com.venky.swf.plugins.lucene.db.model.IndexDirectory;
 import com.venky.swf.plugins.lucene.extensions.LuceneBeforeCommitExtension.TableRecordSetIndexer;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
@@ -15,6 +13,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,14 +24,10 @@ public class AppInstaller implements Installer{
 	
 	public void install(){
 		
-		Table<IndexDirectory> table = Database.getTable(IndexDirectory.class);
 		List<Task> tasks = new ArrayList<>();
 		for (String tableName: Database.getTableNames()){
 			
-			if (tableName.equals(table.getTableName())){
-				continue;
-			}
-			
+
 			Table<? extends Model> currentTable = Database.getTable(tableName);
             if (currentTable == null){
                 return;
@@ -108,13 +103,10 @@ public class AppInstaller implements Installer{
     }
     private static boolean mkdir(String tableName){
         boolean created = false;
-        ModelReflector<IndexDirectory> ref = ModelReflector.instance(IndexDirectory.class);
-        List<IndexDirectory> dirs = new Select().from(IndexDirectory.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("NAME").getName(),Operator.EQ,tableName)).execute();
-        if (dirs.isEmpty()){
-            IndexDirectory rec = Database.getTable(IndexDirectory.class).newRecord();
-            rec.setName(tableName);
-            rec.save();
-            created = true;
+        File baseDir = new File(Config.instance().getProperty("swf.index.dir",".index"));
+        File dir = new File(baseDir,tableName);
+        if (!dir.exists()){
+            created = dir.mkdirs();
         }
         return created;
     }

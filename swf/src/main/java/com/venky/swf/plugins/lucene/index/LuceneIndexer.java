@@ -305,7 +305,7 @@ public class LuceneIndexer {
             if (!hasIndexedFields()) {
                 return;
             }
-            IndexManager.instance().fire(tableName, q, numHits, callback);
+            IndexManager.getInstance().fire(tableName, q, numHits, callback);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
