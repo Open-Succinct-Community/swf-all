@@ -1,0 +1,1 @@
+mvn dependency:tree |grep swf.*jar  |sed -e 's@^.*swf@target/dependency/swf@g'  -e 's/:jar:/-/' -e "s/:compile/.jar${separator}/" |tr -d '\n' 

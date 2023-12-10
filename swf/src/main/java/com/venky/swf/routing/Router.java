@@ -53,6 +53,7 @@ public class Router extends AbstractHandler {
     	synchronized (mutex){
     		if (router == null){
     			router = new Router();
+				Runtime.getRuntime().addShutdownHook(new Thread(() -> router.shutDown()));
 			}
 		}
     	return router;

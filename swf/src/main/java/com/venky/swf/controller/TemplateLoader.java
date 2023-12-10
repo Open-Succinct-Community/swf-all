@@ -42,7 +42,13 @@ public interface TemplateLoader {
         if (!ObjectUtil.isVoid(templateDirectory)){
             dir.append(templateDirectory);
         }
+        File checkOverride= new File(dir.toString(),Config.instance().getHostName());
+        if ( checkOverride.exists() && checkOverride.isDirectory()) {
+            dir.append("/").append(Config.instance().getHostName());
+        }
         dir.append("/").append(subdirectory);
+
+
         return dir.toString();
     }
 
