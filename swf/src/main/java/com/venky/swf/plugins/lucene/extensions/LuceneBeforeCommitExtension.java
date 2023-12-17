@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.lucene.extensions;
 
+import com.venky.core.util.MultiException;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -85,8 +86,8 @@ public class LuceneBeforeCommitExtension implements Extension{
 		@Override
 		public void execute() {
 			LuceneIndexer indexer = LuceneIndexer.instance(Objects.requireNonNull(Database.getTable(tableName)).getModelClass());
+			IndexWriter w = getIndexWriter();
 			try {
-				IndexWriter w = getIndexWriter();
 				Object writerLock = getWriterLock();
 
 				synchronized (writerLock) {
@@ -107,10 +108,18 @@ public class LuceneBeforeCommitExtension implements Extension{
 					}
 					w.prepareCommit();
 					w.commit();
-
 				}
 			}catch (Exception ex){
-				throw new RuntimeException(ex);
+				MultiException mex = new MultiException();
+				mex.add(ex);
+				if (w != null){
+					try {
+						w.rollback();
+					}catch (Exception e){
+						mex.add(e);
+					}
+				}
+				throw mex;
 			}
 
 		}

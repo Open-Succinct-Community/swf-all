@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
+import java.util.logging.Level;
 
 public class SWFIndexDirectoryCache  {
     private static volatile SWFIndexDirectoryCache sSoleInstance;
@@ -73,6 +74,7 @@ public class SWFIndexDirectoryCache  {
         final ArrayList<TrackedReader> readers = new ArrayList<>();
 
         private SWFIndexDirectory(String tableName) throws IOException {
+            Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Index Directory " + tableName + " opened by ... ",new RuntimeException("This stack trace"));
             this.tableName = tableName;
             this.directory = initializeDirectory(tableName);
             this.writer = new IndexWriter(directory, newConfig());

@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.lucene.configuration;
 
+import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;

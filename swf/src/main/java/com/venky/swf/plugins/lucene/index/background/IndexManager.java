@@ -64,7 +64,7 @@ public class IndexManager {
 
                 ScoreDoc[] hits = tDocs.scoreDocs;
                 
-                while (numRecordsFound < numHits && tDocs.totalHits > 0) {
+                while (numRecordsFound < numHits && tDocs.totalHits.value > 0) {
                     for (ScoreDoc hit : hits) {
                         int docId = hit.doc;
                         Document d = searcher.doc(docId);
@@ -72,7 +72,7 @@ public class IndexManager {
                             numRecordsFound++;
                         }
                     }
-                    if (numRecordsFound < numHits && tDocs.totalHits > numHits) {
+                    if (numRecordsFound < numHits && tDocs.totalHits.value > numHits) {
                         tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
                     }else {
                         break;

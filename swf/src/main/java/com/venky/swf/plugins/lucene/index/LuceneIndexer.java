@@ -27,20 +27,15 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.queryparser.classic.CharStream;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserTokenManager;
 import org.apache.lucene.search.Query;
 
-import javax.print.Doc;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -322,9 +317,6 @@ public class LuceneIndexer {
             super(f, a);
         }
 
-        protected IntelligentQueryParser(CharStream stream) {
-            super(stream);
-        }
 
         protected IntelligentQueryParser(QueryParserTokenManager tm) {
             super(tm);
@@ -340,13 +332,15 @@ public class LuceneIndexer {
             return super.newRangeQuery(field, part1, part2, part1Inclusive, part2Inclusive);
         }
 
+
+
         @Override
         protected org.apache.lucene.search.Query newTermQuery(
-                org.apache.lucene.index.Term term) {
+                org.apache.lucene.index.Term term,float boost) {
             if ("_ID".equals(term.field())) {
                 return LongPoint.newExactQuery(term.field(), Long.parseLong(term.text()));
             }
-            return super.newTermQuery(term);
+            return super.newTermQuery(term,boost);
         }
     }
 
