@@ -47,7 +47,7 @@ public class SWFIndexDirectoryCache  {
         return getInstance();
     }
 
-    private final UnboundedCache<String,SWFIndexDirectory> indexDirectoryCache = new UnboundedCache<>() {
+    private final UnboundedCache<String,SWFIndexDirectory> indexDirectoryCache = new UnboundedCache<>(true) {
         @Override
         protected SWFIndexDirectory getValue(String tableName) {
             try {
