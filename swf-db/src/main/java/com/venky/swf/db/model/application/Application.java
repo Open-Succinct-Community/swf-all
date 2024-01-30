@@ -49,8 +49,12 @@ public interface Application extends Model {
     public String getHashingAlgorithm();
     public void setHashingAlgorithm(String hashingAlgorithm);
 
+
+    /*
+    Not used.
     public String getHashingAlgorithmCommonName();
     public void setHashingAlgorithmCommonName(String hashingAlgorithm);
+    */
 
     public String getSigningAlgorithm();
     public void setSigningAlgorithm(String signingAlgorithm);

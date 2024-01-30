@@ -112,7 +112,7 @@ public class ApplicationUtil {
         dummy.put("headers",h);
         dummy.put("keyId",keyId);
         String digest =  Crypt.getInstance().toBase64(Crypt.getInstance().digest(app.getHashingAlgorithm(),payload));
-        dummy.put("digest",String.format("%s=%s",app.getHashingAlgorithmCommonName(),digest));
+        dummy.put("digest",String.format("%s=%s",app.getHashingAlgorithm(),digest));
         dummy.put("created",Long.toString(now));
         if (app.getSignatureLifeMillis()>0) {
             dummy.put("expires", Long.toString(now + app.getSignatureLifeMillis()));

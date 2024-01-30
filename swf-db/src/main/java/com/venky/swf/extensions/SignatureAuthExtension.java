@@ -51,7 +51,7 @@ public class SignatureAuthExtension extends ApplicationAuthenticator{
             params.putIfAbsent("digest",headers.get("digest"));
         }
         if (!params.containsKey("digest")) {
-            params.put("digest", String.format("%s=%s", application.getHashingAlgorithmCommonName(), digest));
+            params.put("digest", String.format("%s=%s", application.getHashingAlgorithm(), digest));
         }
 
         String signingString = ApplicationUtil.getSigningString(params);
