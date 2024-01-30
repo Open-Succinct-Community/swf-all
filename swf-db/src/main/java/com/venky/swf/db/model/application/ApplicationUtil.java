@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ApplicationUtil {
     public static final String APPLICATION_AUTHENTICATOR_EXTENSION = "swf.application.authenticator";
@@ -36,7 +37,7 @@ public class ApplicationUtil {
     public static Map<String, String> extractAuthorizationParams(String authorization) {
         Map<String,String> params = new IgnoreCaseMap<>();
 
-        Matcher matcher = Pattern.compile("([A-z]+)(=)[\"]*([^\",]*)[\"]*[, ]*").matcher(authorization);
+        Matcher matcher = Pattern.compile("([A-z]+)(=)\"*([^\",]*)\"*[, ]*").matcher(authorization);
         matcher.results().forEach(mr-> params.put(mr.group(1),mr.group(3)));
 
         return params;
@@ -104,7 +105,10 @@ public class ApplicationUtil {
         String keyId = parts[0];
         sPrivateKey = parts[1];
         PrivateKey privateKey = Crypt.getInstance().getPrivateKey(app.getSigningAlgorithm(),sPrivateKey);
-
+        List<ApplicationPublicKey> applicationPublicKeys = app.getApplicationPublicKeys().stream().filter(applicationPublicKey -> ObjectUtil.equals(applicationPublicKey.getAlgorithm(),app.getSigningAlgorithm())).collect(Collectors.toList());
+        if (applicationPublicKeys.size() == 1){
+            keyId = applicationPublicKeys.get(0).getKeyId();
+        }
 
         Map<String,String> dummy = new IgnoreCaseMap<>();
         long now = System.currentTimeMillis();
@@ -112,7 +116,7 @@ public class ApplicationUtil {
         dummy.put("headers",h);
         dummy.put("keyId",keyId);
         String digest =  Crypt.getInstance().toBase64(Crypt.getInstance().digest(app.getHashingAlgorithm(),payload));
-        dummy.put("digest",String.format("%s=%s",app.getHashingAlgorithm(),digest));
+        dummy.put("digest",String.format("%s=%s",hashingAlgoCommonName(app.getHashingAlgorithm()),digest));
         dummy.put("created",Long.toString(now));
         if (app.getSignatureLifeMillis()>0) {
             dummy.put("expires", Long.toString(now + app.getSignatureLifeMillis()));
@@ -131,6 +135,12 @@ public class ApplicationUtil {
 
         headers.put("Authorization",String.format("Signature %s",signingHeaders));
 
+    }
+    public static String hashingAlgoCommonName(String hashAlgoName){
+        if (hashAlgoName.equals("BLAKE2B-512")){
+            return "BLAKE-512";
+        }
+        return hashAlgoName;
     }
 
     private static String getPrivateKey(String signingAlgorithm) {

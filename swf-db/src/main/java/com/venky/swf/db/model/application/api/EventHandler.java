@@ -1,7 +1,9 @@
 package com.venky.swf.db.model.application.api;
 
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
@@ -33,4 +35,7 @@ public interface EventHandler extends Model {
     public String getContentType();
     public void setContentType(String contentType);
 
+    @COLUMN_DEF(StandardDefault.BOOLEAN_TRUE)
+    public boolean isEnabled();
+    public void setEnabled(boolean enabled);
 }

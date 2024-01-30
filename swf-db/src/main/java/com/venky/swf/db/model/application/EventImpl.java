@@ -39,8 +39,10 @@ public class EventImpl extends ModelImpl<Event> {
     private void raise(List<EventHandler> handlers, Object payload){
         String sPayLoad = payload.toString();
         for (EventHandler eventHandler : handlers) {
-            EndPoint endPoint = eventHandler.getEndPoint();
-
+            if (!eventHandler.isEnabled()){
+                return;
+            }
+            
             if (!ObjectUtil.isVoid(eventHandler.getRelativeUrl())){
                 Map<String,String> headers = new IgnoreCaseMap<>();
                 headers.put("content-type",eventHandler.getContentType());
