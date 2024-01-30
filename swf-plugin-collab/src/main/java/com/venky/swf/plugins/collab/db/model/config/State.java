@@ -38,28 +38,40 @@ public interface State extends Model{
 	public static State findByCountryAndName(String  countryName , String stateName) { 
 		return findByCountryAndName(Country.findByName(countryName).getId(), stateName);
 	}
-
 	public static State findByCountryAndName(Long countryId , String stateName) {
+		return findByCountryAndName(countryId,stateName,true);
+	}
+	public static State findByCountryAndName(Long countryId , String stateName,boolean createIfAbsent) {
 		if (stateName == null || countryId == null){
 			return null;
 		}
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
-		where.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,stateName.toLowerCase()));
 		where.add(new Expression(s.getPool(),"COUNTRY_ID",Operator.EQ,countryId));
-		
+
+		Expression nameWhere = new Expression(s.getPool(),Conjunction.OR);
+		nameWhere.add(new Expression(s.getPool(),"lower(NAME)",Operator.EQ,stateName.toLowerCase()));
+		nameWhere.add(new Expression(s.getPool(),"CODE",Operator.EQ,stateName));
+
+
+		where.add(nameWhere);
 		List<State> states = s.where(where).execute(); 
 		if (states.size() == 1) {
 			return states.get(0);
-		}else {
+		}else if (createIfAbsent){
 			State state = Database.getTable(State.class).newRecord(); 
 			state.setCountryId(countryId);
 			state.setName(stateName);
 			state.save();
 			return state;
+		}else {
+			return null;
 		}
 	}
-	public static State findByCountryAndCode(Long countryId , String stateCode) {
+	public static State findByCountryAndCode(Long countryId , String stateCode)  {
+		return findByCountryAndCode(countryId,stateCode,true);
+	}
+	public static State findByCountryAndCode(Long countryId , String stateCode, boolean createIfAbsent) {
 		Select s = new Select().from(State.class);
 		Expression where = new Expression(s.getPool(), Conjunction.AND);
 		where.add(new Expression(s.getPool(),"CODE",Operator.EQ,stateCode));
@@ -68,13 +80,15 @@ public interface State extends Model{
 		List<State> states = s.where(where).execute();
 		if (states.size() == 1) {
 			return states.get(0);
-		}else {
+		}else if ( createIfAbsent ){
 			State state = Database.getTable(State.class).newRecord();
 			state.setCountryId(countryId);
 			state.setName(stateCode);
 			state.setCode(stateCode);
 			state.save();
 			return state;
+		}else {
+			return null;
 		}
 	}
 

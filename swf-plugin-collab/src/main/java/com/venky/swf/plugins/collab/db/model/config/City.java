@@ -41,6 +41,9 @@ public interface City extends Model , GeoLocation {
 		return findByStateAndName(State.findByCountryAndName(countryName, stateName).getId(), cityName);
 	}
 	public static City findByStateAndName(long stateId, String cityName) {
+		return findByStateAndName(stateId,cityName,true);
+	}
+	public static City findByStateAndName(long stateId, String cityName,boolean createIfAbsent) {
 		Select s = new Select().from(City.class); 
 		Expression where = new Expression(s.getPool(),Conjunction.AND);
 
@@ -54,12 +57,14 @@ public interface City extends Model , GeoLocation {
 		List<City> cities = s.where(where).execute(); 
 		if (cities.size() == 1) {
 			return cities.get(0);
-		}else {
+		}else if (createIfAbsent) {
 			City city = Database.getTable(City.class).newRecord(); 
 			city.setStateId(stateId);
 			city.setName(cityName);
 			city.save();
 			return city;
+		}else {
+			return null;
 		}
 	}
 

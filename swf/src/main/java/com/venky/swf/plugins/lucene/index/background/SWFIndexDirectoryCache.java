@@ -74,7 +74,7 @@ public class SWFIndexDirectoryCache  {
         final ArrayList<TrackedReader> readers = new ArrayList<>();
 
         private SWFIndexDirectory(String tableName) throws IOException {
-            Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Index Directory " + tableName + " opened by ... ",new RuntimeException("This stack trace"));
+            //Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Index Directory " + tableName + " opened by ... ",new RuntimeException("This stack trace"));
             this.tableName = tableName;
             this.directory = initializeDirectory(tableName);
             this.writer = new IndexWriter(directory, newConfig());

@@ -3,13 +3,16 @@ package com.venky.swf.extensions;
 import com.venky.core.security.Crypt;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectHolder;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.db.model.application.ApplicationPublicKey;
 import com.venky.swf.db.model.application.ApplicationUtil;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 public class SignatureAuthExtension extends ApplicationAuthenticator{
     static {
@@ -24,12 +27,24 @@ public class SignatureAuthExtension extends ApplicationAuthenticator{
             return;
         }
         Map<String,String> params = ApplicationUtil.extractAuthorizationParams(schemeDetails);
+        String keyId = params.get("keyId");
+        String appId = null;
+        if (keyId.contains("|")) {
+            StringTokenizer tokenizer = new StringTokenizer(keyId, "|");
+            appId = tokenizer.nextToken();
+            keyId = tokenizer.nextToken();
+        }
 
-        ApplicationPublicKey applicationPublicKey = ApplicationPublicKey.find(ApplicationPublicKey.PURPOSE_SIGNING,params.get("keyId"));
+        ApplicationPublicKey applicationPublicKey = ApplicationPublicKey.find(ApplicationPublicKey.PURPOSE_SIGNING,keyId);
+
+
         if (applicationPublicKey == null){
             return ;
         }
         Application application = applicationPublicKey.getApplication();
+        if (appId != null && !ObjectUtil.equals(appId,application.getAppId())){
+            throw new RuntimeException("Cannot sign for a different application");
+        }
 
         String digest = Crypt.getInstance().toBase64(Crypt.getInstance().digest(application.getHashingAlgorithm(), StringUtil.read(payload)));
         if (headers.containsKey("digest")){
