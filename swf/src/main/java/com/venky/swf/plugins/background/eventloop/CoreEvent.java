@@ -85,9 +85,13 @@ public  class CoreEvent implements CoreTask {
 
     @Override
     public void execute() {
-        CoreEvent.setCurrentEvent(this);
-        if (proxy != null) {
-            proxy.execute();
+        CoreEvent.setCurrentEvent(this); //Thread local global needed for spawning child events
+        try {
+            if (proxy != null) {
+                proxy.execute();
+            }
+        }finally {
+            CoreEvent.setCurrentEvent(null); //gc kicks in.
         }
     }
 
@@ -172,6 +176,9 @@ public  class CoreEvent implements CoreTask {
     private static ThreadLocal<CoreEvent> currentEvent = new ThreadLocal<>();
     public static void setCurrentEvent(CoreEvent event){
         currentEvent.set(event);
+    }
+    public static CoreEvent getCurrentEvent(){
+        return currentEvent.get();
     }
     public static void spawnOff(CoreFuture... children){
 

@@ -4,6 +4,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum MimeType {
+	TEXT_EVENT_STREAM() {
+		@Override
+		public String toString() {
+			return "text/event-stream";
+		}
+
+		@Override
+		public boolean isImage() {
+			return false;
+		}
+
+		@Override
+		public String getDefaultFileExtension() {
+			return "evt";
+		}
+	},
 	TEXT_JAVASCRIPT() {
 		public String toString(){
 			return "text/javascript";

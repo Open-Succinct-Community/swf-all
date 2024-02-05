@@ -25,6 +25,10 @@ public class BytesView extends View{
         return contentType;
     }
 
+    public byte[] getBytes() {
+        return bytes;
+    }
+
     Map<String,String> addnlResponseHeaders = new HashMap<String, String>();
     public BytesView(Path path,byte[] bytes){
         this(path,bytes,MimeType.TEXT_PLAIN);

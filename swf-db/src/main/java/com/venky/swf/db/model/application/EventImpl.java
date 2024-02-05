@@ -42,7 +42,7 @@ public class EventImpl extends ModelImpl<Event> {
             if (!eventHandler.isEnabled()){
                 return;
             }
-            
+
             if (!ObjectUtil.isVoid(eventHandler.getRelativeUrl())){
                 Map<String,String> headers = new IgnoreCaseMap<>();
                 headers.put("content-type",eventHandler.getContentType());
