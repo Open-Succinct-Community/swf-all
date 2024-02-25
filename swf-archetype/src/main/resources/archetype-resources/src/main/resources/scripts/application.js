@@ -116,8 +116,124 @@ function subscribeUser(swRegistration, updateSubscriptionOnServer) {
         handlePermission(updateSubscriptionOnServer);
     });
 }
-
+sw_start();
+function clearLocalStorage(){
+    //Lockr.rm("User");
+}
+$(function(){
+    const tabs = document.querySelectorAll("div.nav-tabs a.nav-link");
+    tabs.forEach((el)=>{
+        el.addEventListener("click",(ev)=>{
+            ev.preventDefault();
+            tabs.forEach((e)=>{
+                if (e != el){
+                    document.querySelector(e.getAttribute("href")).classList.remove("active");
+                    e.classList.remove("active");
 /* Focus on first editable field. */
+                }else {
+                    document.querySelector(e.getAttribute("href")).classList.add("active");
+                    e.classList.add("active");
+                }
+            });
+        })
+    });
+    $("[href='/logout']").on("click",function(ev){
+        clearLocalStorage();
+    })
+/* Focus on first editable field. */
+    let menu = $(".navbar-collapse");
+    menu.addClass("hidden");
+
+    let navbutton  =  $("button.navbar-toggler");
+    navbutton.on("click",function(ev){
+        ev.stopPropagation();
+        menu.toggleClass("hidden");
+    })
+
+    
+    const succinctSubmenuItems = document.querySelectorAll(".sub-menu");
+    succinctSubmenuItems.forEach((el) => {
+        el.addEventListener("click", () => {
+            succinctSubmenuItems.forEach((e)=>{
+                if (e != el){
+                    e.querySelector(".dropdown-menu").classList.add("hidden");
+                }
+            });
+            el.querySelector(".dropdown-menu").classList.toggle("hidden");  
+        });
+    });
+    $("html").on("click",function(ev){
+        if ($(ev.target).parents(".navbar-collapse").length == 0){
+            if (navbutton.is(":visible") && menu.is(":visible")){
+                menu.toggleClass("hidden");
+            }else {
+                succinctSubmenuItems.forEach((e)=>{
+                    e.querySelector(".dropdown-menu").classList.add("hidden");
+                });
+
+            }
+        }
+    });
+
+    document.querySelectorAll(".dropdown-menu").forEach((el)=>{
+        el.classList.add("hidden");
+    });
+    document.querySelectorAll('.code').forEach(el => {
+      // then highlight each
+      hljs.highlightElement(el);
+    });
+
+
+    
+})
+function showError(err){
+    if (err.response ){
+        if (err.response.status === 401){
+            if (Lockr.get("SignUp") || Lockr.get("User")){
+                window.location.replace("/login");
+            }else {
+                logout();
+            }
+        }else if (err.response.status === 413){
+             showErrorMessage("Size Uploaded Too Big");
+        }else if (err.response.data && err.response.data.SWFHttpResponse.Error) {
+            showErrorMessage(err.response.data.SWFHttpResponse.Error)
+        }else {
+            showErrorMessage(err.response.toString());
+        }
+    }else {
+        showErrorMessage(err.toString());
+    }
+}
+var errorTimeOut = undefined;
+function showErrorMessage(msg,duration){
+    let time = duration || 1500;
+    $("#msg").removeClass("hidden");
+    $("#msg").html(msg);
+    if (errorTimeOut){
+        clearTimeout(errorTimeOut);
+        errorTimeOut = undefined;
+    }
+    return new Promise(function(resolve,reject){
+        errorTimeOut = setTimeout(function(){
+            $("#msg").addClass("hidden");
+            resolve();
+        },time);
+    });
+
+}
+function blank(s){
+    return !s || s.length === 0;
+}
+
+function logout(ev){
+    Lockr.rm("User");
+    window.location.replace("/logout"); //Remove session cookie
+}
+
+
+
+/* Focus on first editable field. 
 $(function() {
   $('form:first *:input[type!=hidden]:not([disabled]):not([readonly]):not(.btn):first').focus();
 
@@ -129,4 +245,4 @@ $(function() {
                             $(":submit[name='_SUBMIT_MORE']").trigger('click');
                         });
 });
-
+*/

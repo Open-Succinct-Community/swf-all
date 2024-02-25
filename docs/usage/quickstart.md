@@ -206,9 +206,8 @@ public interface Contact extends Model {
 
 ```
 #### You need to rebuild indexes after adding new indexed columns.
-1.	[Login as root](http://localhost:30030/login)
-2.	goto url [/index_directories](http://localhost:30030/index_directories)
-3.	Delete the record marked as CONTACTS 
+1.	delete .index/CONTACTS directory under the contacts application folder
+
 
 #### Restart the application and open in [Browser](http://localhost:30030/)
 1. login and goto /contacts
@@ -478,5 +477,38 @@ $ curl -H 'content-type:application/xml' -H 'ApiKey:9927ae0bcd45f32ad0af1205c11b
 <Contact Id="0" LockId="0" Name="Venky"/>
 ````
 
+### Iteration 6
+How can I restrict the fields I want to see in a model while calling the apis. 
+
+#### IncludedModelFields
+
+1. An http header "IncludedModelFields" may be passed to restrict fields needed in response to an api for each model that the api returns.
+
+2. The value of IncludedModelFields is a Base64 encoded json whose structure is as follows. 
+{ 
+	"Model1" : ["FieldName1","FieldName2"]
+	"Model2" : [ "FieldName3"]
+ }
+
+e.g If you wanted to see only "Name", "PhoneNumber"  from the call to /contacts 
+
+Convert the json string  '{ "Contact" : ["Name","PhoneNumber"] }' to base64 encoding ( eyAiQ29udGFjdCIgOiBbIk5hbWUiLCJQaG9uZU51bWJlciJdIH0K ) and pass this as value of the header field "IncludedModelFields' 
+
+```` shell
+
+$ curl -L -H 'content-type:application/json' -H 'IncludedModelFields:eyAiQ29udGFjdCIgOiBbIk5hbWUiLCJQaG9uZU51bWJlciJdIH0K' -H "ApiKey:2fb0340cc8cce98fe75a4c38c0d7846d4cf731b4" http://localhost:3030/contacts  
+
+{
+  "Contacts" : [{
+    "Name" : "Venky"
+    ,"PhoneNumber" : "+919845114558"
+  }]
+}
+
+
+````	
+
+
+**Note, If a model appears in multiple xml/json paths for an api, the attributes in them would be the same at all such paths.**
 
 

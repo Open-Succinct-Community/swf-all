@@ -69,14 +69,14 @@
       <version>[${symbol_dollar}{revision},)</version>
     </dependency>
       <dependency>
-          <groupId>com.github.venkatramanm.swf-all</groupId>
-          <artifactId>swf-plugin-bootstrap</artifactId>
-          <version>1.0</version>
+          <groupId>in.succinct</groupId>
+          <artifactId>swf-plugin-tailwind</artifactId>
+          <version>[1.0-SNAPSHOT,)</version>
       </dependency>
         <dependency>
           <groupId>com.h2database</groupId>
           <artifactId>h2</artifactId>
-          <version>2.1.210</version>
+          <version>2.2.224</version>
         </dependency>
         <!--
         <dependency>

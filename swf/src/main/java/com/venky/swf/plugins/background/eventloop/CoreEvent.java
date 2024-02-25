@@ -86,12 +86,8 @@ public  class CoreEvent implements CoreTask {
     @Override
     public void execute() {
         CoreEvent.setCurrentEvent(this); //Thread local global needed for spawning child events
-        try {
-            if (proxy != null) {
-                proxy.execute();
-            }
-        }finally {
-            CoreEvent.setCurrentEvent(null); //gc kicks in.
+        if (proxy != null) {
+            proxy.execute();
         }
     }
 
@@ -151,14 +147,20 @@ public  class CoreEvent implements CoreTask {
     final Map<Long,Throwable> exceptionMap = new HashMap<>();
     final Map<Long,CoreEvent> childEvents = new HashMap<>();
     public void spawn(CoreFuture... children){
+        spawn(true,children);
+    }
+    public void spawn(CoreEvent... childrenEvent){
+        spawn(true,childrenEvent);
+    }
+    public void spawn(boolean immediate,CoreFuture... children){
         List<CoreEvent> events = new ArrayList<>();
         for (CoreFuture child : children){
             CoreEvent childEvent = createChild(child);
             events.add(childEvent);
         }
-        spawn(events.toArray(new CoreEvent[]{}));
+        spawn(immediate,events.toArray(new CoreEvent[]{}));
     }
-    public void spawn(CoreEvent... childrenEvent){
+    public void spawn(boolean immediate, CoreEvent... childrenEvent){
         synchronized (this){
             for (CoreEvent childEvent: childrenEvent){
                 if (childEvent.parent == null){
@@ -170,36 +172,49 @@ public  class CoreEvent implements CoreTask {
                 childEvents.put(childEvent.getTaskId(),childEvent);
             }
         }
-        AsyncTaskManagerFactory.getInstance().addAll(Arrays.asList(childrenEvent));
+        if (immediate){
+            AsyncTaskManagerFactory.getInstance().addAll(Arrays.asList(childrenEvent));
+        }else {
+            TaskManager.instance().executeAsync(Arrays.asList(childrenEvent), false);
+        }
     }
 
-    private static ThreadLocal<CoreEvent> currentEvent = new ThreadLocal<>();
+    private static final ThreadLocal<CoreEvent> currentEvent = new ThreadLocal<>();
     public static void setCurrentEvent(CoreEvent event){
         currentEvent.set(event);
     }
     public static CoreEvent getCurrentEvent(){
         return currentEvent.get();
     }
+    /*
     public static void spawnOff(CoreFuture... children){
 
         CoreEvent parent = currentEvent.get();
+        List<CoreEvent> childEvents = new ArrayList<>();
         for (CoreFuture child: children){
             if (parent != null){
-                parent.spawn(child);
+                childEvents.add(parent.createChild(child));
             }else {
                 CoreEvent childEvent = new  CoreEvent(null,child);
-                child.getAsyncTaskManager().addAll(Collections.singleton(childEvent));
+                childEvents.add(childEvent);
             }
         }
+        spawnOff(childEvents.toArray(new CoreEvent[]{}));
     }
-    public static void spawnOff(CoreEvent... children){
 
+     */
+    public static void spawnOff(CoreEvent... children){
+        spawnOff(true, children);
+    }
+    public static void spawnOff(boolean immediate,CoreEvent... children){
         CoreEvent parent = currentEvent.get();
-        for (CoreEvent child: children){
-            if (parent != null){
-                parent.spawn(child);
+        if (parent != null){
+            parent.spawn(immediate,children);
+        }else {
+            if (immediate){
+                AsyncTaskManagerFactory.getInstance().addAll(Arrays.asList(children));
             }else {
-                child.getAsyncTaskManager().addAll(Collections.singleton(child));
+                TaskManager.instance().executeAsync(Arrays.asList(children), false);
             }
         }
     }

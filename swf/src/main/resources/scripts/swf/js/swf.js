@@ -286,6 +286,7 @@ function api() {
     var _url ;
     var _parameter;
     var _headers ;
+    var _responseType;
 
     return {
         url : function(url){
@@ -344,15 +345,29 @@ function api() {
         get : function(qryJson){
             let self = this;
             let params = qryJson ? qryJson : {} ;
-            return self.http().get(self.url(),{ data : {} , params : params, "headers": self.headers() }).then(function(response){
+            let config = { data : {} , params : params, "headers": self.headers() };
+            if (_responseType){
+                config.responseType = _responseType;
+            }
+            return self.http().get(self.url(),config).then(function(response){
                 return response.data;
             });
         },
         post : function(){
             let self = this;
-            return self.http().post(self.url(),  _parameter  , { "headers" :  self.headers() } ).then(function(response){
+
+            let config = { "headers": self.headers() };
+            if (_responseType){
+                config.responseType = _responseType;
+            }
+
+            return self.http().post(self.url(),  _parameter  , config ).then(function(response){
                 return response.data;
             });
+        },
+        responseType: function(type){
+            _responseType = type;
+            return this;
         }
     }
 }

@@ -211,7 +211,7 @@ public class HttpCoreEvent extends CoreEvent implements _HttpCoreEvent, IOTask {
     public void execute() {
         super.execute();
         if (calledNumberOfTimes.intValue() <= 0){
-            spawn(requestHandler);
+            spawn(true,requestHandler);
             calledNumberOfTimes.increment();
         }else {
             finalizeRequestHandler();
