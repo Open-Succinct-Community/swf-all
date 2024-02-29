@@ -106,9 +106,9 @@ public interface Model extends _Identifiable {
     public <M extends Model> M cloneProxy();
 
     
-    public Object getTxnProperty(String name);
-    public void setTxnProperty(String name,Object value);
-    public Object removeTxnProperty(String name);
+    public <T> T getTxnProperty(String name);
+    public <T> void setTxnProperty(String name,T value);
+    public <T> T removeTxnProperty(String name);
     
     @IS_VIRTUAL
     @HIDDEN
