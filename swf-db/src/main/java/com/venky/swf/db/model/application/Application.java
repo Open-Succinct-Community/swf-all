@@ -9,6 +9,7 @@ import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.api.EventHandler;
@@ -46,6 +47,8 @@ public interface Application extends Model {
 
 
 
+    @Enumeration(",BLAKE2B-512")
+    @IS_NULLABLE
     public String getHashingAlgorithm();
     public void setHashingAlgorithm(String hashingAlgorithm);
 
@@ -56,11 +59,16 @@ public interface Application extends Model {
     public void setHashingAlgorithmCommonName(String hashingAlgorithm);
     */
 
+    @IS_NULLABLE
+    @Enumeration(",Ed25519")
     public String getSigningAlgorithm();
     public void setSigningAlgorithm(String signingAlgorithm);
 
+    /*
     public String getSigningAlgorithmCommonName();
     public void setSigningAlgorithmCommonName(String signingAlgorithm);
+    */
+
 
     @COLUMN_DEF(value = StandardDefault.SOME_VALUE,args = "60000")
     public long getSignatureLifeMillis();

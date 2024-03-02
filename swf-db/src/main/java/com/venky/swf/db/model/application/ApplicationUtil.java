@@ -16,6 +16,7 @@ import com.venky.swf.sql.Select;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -121,7 +122,7 @@ public class ApplicationUtil {
         if (app.getSignatureLifeMillis()>0) {
             dummy.put("expires", Long.toString(now + app.getSignatureLifeMillis()));
         }
-        dummy.put("algorithm",app.getSigningAlgorithmCommonName());
+        dummy.put("algorithm",signingAlgoCommonName(app.getSigningAlgorithm()));
 
         String signingString = getSigningString(dummy);
         dummy.put("signature",Crypt.getInstance().generateSignature(signingString,app.getSigningAlgorithm(), privateKey));
@@ -142,7 +143,9 @@ public class ApplicationUtil {
         }
         return hashAlgoName;
     }
-
+    public static String signingAlgoCommonName(String signingAlgoName){
+        return signingAlgoName.toLowerCase();
+    }
     private static String getPrivateKey(String signingAlgorithm) {
         if (ObjectUtil.isVoid(signingAlgorithm)){
             return null;
