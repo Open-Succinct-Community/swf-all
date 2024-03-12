@@ -1,5 +1,6 @@
 package com.venky.swf.controller;
 
+import com.venky.cache.Cache;
 import com.venky.core.security.Crypt;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
@@ -19,6 +20,7 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.login.LoginView.LoginContext;
 import org.apache.oltu.oauth2.client.HttpClient;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
@@ -58,40 +60,40 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 
 public class OidController extends Controller{
+
 	public enum OAuthProviderType {
-		FACEBOOK("facebook", "https://graph.facebook.com/oauth/authorize", "https://graph.facebook.com/oauth/access_token"),
-		FOURSQUARE("foursquare", "https://foursquare.com/oauth2/authenticate", "https://foursquare.com/oauth2/access_token"),
-		GITHUB("GitHub", "https://github.com/login/oauth/authorize", "https://github.com/login/oauth/access_token"),
-		GOOGLE("Google", "https://accounts.google.com/o/oauth2/auth", "https://accounts.google.com/o/oauth2/token"),
-		INSTAGRAM("Instagram", "https://api.instagram.com/oauth/authorize", "https://api.instagram.com/oauth/access_token"),
-		LINKEDIN("LinkedIn", "https://www.linkedin.com/uas/oauth2/authorization", "https://www.linkedin.com/uas/oauth2/accessToken"),
-		MICROSOFT("Microsoft", "https://login.live.com/oauth20_authorize.srf", "https://login.live.com/oauth20_token.srf"),
-		PAYPAL("PayPal", "https://identity.x.com/xidentity/resources/authorize", "https://identity.x.com/xidentity/oauthtokenservice"),
-		REDDIT("reddit", "https://ssl.reddit.com/api/v1/authorize", "https://ssl.reddit.com/api/v1/access_token"),
-		SALESFORCE("salesforce", "https://login.salesforce.com/services/oauth2/authorize", "https://login.salesforce.com/services/oauth2/token"),
-		YAMMER("Yammer", "https://www.yammer.com/dialog/oauth", "https://www.yammer.com/oauth2/access_token.json"),
-		HUMBOL("HumBhiOnline","https://id.humbhionline.in/oauth/authorize","https://id.humbhionline.in/oauth/token");
+		FACEBOOK("facebook","https://graph.facebook.com","/oauth/authorize", "/oauth/access_token"),
+		FOURSQUARE("foursquare", "https://foursquare.com","/oauth2/authenticate", "/oauth2/access_token"),
+		GITHUB("GitHub", "https://github.com","/login/oauth/authorize", "/login/oauth/access_token"),
+		GOOGLE("Google", "https://accounts.google.com","/o/oauth2/auth", "/o/oauth2/token"),
+		INSTAGRAM("Instagram", "https://api.instagram.com","/oauth/authorize", "/oauth/access_token"),
+		LINKEDIN("LinkedIn", "https://www.linkedin.com","/uas/oauth2/authorization", "/uas/oauth2/accessToken"),
+		MICROSOFT("Microsoft", "https://login.live.com","/oauth20_authorize.srf", "/oauth20_token.srf"),
+		PAYPAL("PayPal", "https://identity.x.com","/xidentity/resources/authorize", "/xidentity/oauthtokenservice"),
+		REDDIT("reddit", "https://ssl.reddit.com","/api/v1/authorize", "/api/v1/access_token"),
+		SALESFORCE("salesforce", "https://login.salesforce.com","/services/oauth2/authorize", "/services/oauth2/token"),
+		YAMMER("Yammer", "https://www.yammer.com","/dialog/oauth", "/oauth2/access_token.json"),
+		HUMBOL("HumBhiOnline","https://id.humbhionline.in","/oauth/authorize","/oauth/token");
 
 		private String providerName;
 		private String authzEndpoint;
 		private String tokenEndpoint;
+		private String defaultBaseUrl;
 
-		public String getProviderName() {
-			return this.providerName;
-		}
 
-		public String getAuthzEndpoint() {
-			return this.authzEndpoint;
-		}
-
-		public String getTokenEndpoint() {
-			return this.tokenEndpoint;
-		}
-
-		OAuthProviderType(String providerName, String authzEndpoint, String tokenEndpoint) {
+		OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint) {
 			this.providerName = providerName;
 			this.authzEndpoint = authzEndpoint;
 			this.tokenEndpoint = tokenEndpoint;
+			this.defaultBaseUrl = defaultBaseUrl;
+		}
+
+		public String authzEndpoint(String overrideBaseUrl) {
+			return  String.format("%s%s",overrideBaseUrl != null ?overrideBaseUrl : defaultBaseUrl ,authzEndpoint) ;
+		}
+
+		public String tokenEndPoint(String overrideBaseUrl){
+			return  String.format("%s%s",overrideBaseUrl != null ?overrideBaseUrl : defaultBaseUrl ,tokenEndpoint) ;
 		}
 	}
 
@@ -108,9 +110,11 @@ public class OidController extends Controller{
 				return Config.instance().getServerBaseUrl() + "/oid/linkedin";
 			}
 		}
-		public OIDProvider(String opendIdProvider, OAuthProviderType providerType,
-				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,String resourceUrl,String scope,GrantType grantType ,
+		public OIDProvider(String opendIdProvider, String overrideBaseUrl , OAuthProviderType providerType,
+				String issuer , Class< ? extends OAuthAccessTokenResponse> tokenResponseClass,
+						   String resourceUrl,String scope,GrantType grantType ,
 						   boolean resoureUrlNeedsHeaders,boolean redirectUrlSupportsParams) {
+			this.overrideBaseUrl = overrideBaseUrl;
 			this.iss = issuer ; 
 			this.tokenResponseClass = tokenResponseClass;
 			this.resourceUrl = resourceUrl;
@@ -124,6 +128,7 @@ public class OidController extends Controller{
 			this.redirectUrlSupportsParams = redirectUrlSupportsParams;
 
 		}
+		String overrideBaseUrl;
 		boolean redirectUrlSupportsParams;
 		boolean resourceUrlNeedsHeaders;
 		GrantType grantType;
@@ -142,7 +147,8 @@ public class OidController extends Controller{
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" )+ _redirect_to );
-				return OAuthClientRequest.authorizationLocation(providerType.authzEndpoint).setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
+				return OAuthClientRequest.authorizationLocation(providerType.authzEndpoint(overrideBaseUrl)).
+						setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope(scope).
 						setRedirectURI(redirectTo).buildQueryMessage();
 			} catch (OAuthSystemException e) {
@@ -153,7 +159,7 @@ public class OidController extends Controller{
 			try {
 				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" ) +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
-				        .tokenLocation(providerType.getTokenEndpoint())
+				        .tokenLocation(providerType.tokenEndPoint(overrideBaseUrl))
 				        .setGrantType(grantType)
 				        .setClientId(clientId)
 				        .setClientSecret(clientSecret)
@@ -202,26 +208,54 @@ public class OidController extends Controller{
 	}
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
-		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",OAuthProviderType.GOOGLE,"accounts.google.com",
+		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",null, OAuthProviderType.GOOGLE,"accounts.google.com",
 				OAuthJSONAccessTokenResponse.class,"","email",GrantType.AUTHORIZATION_CODE,false,true));
-		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",OAuthProviderType.FACEBOOK,"",
+
+		oidproviderMap.put("FACEBOOK", new OIDProvider("FACEBOOK",null, OAuthProviderType.FACEBOOK,"",
 				OAuthJSONAccessTokenResponse.class,"https://graph.facebook.com/me?fields=email,name","email",
 				GrantType.AUTHORIZATION_CODE,false,true));
 
-		oidproviderMap.put("LINKEDIN", new OIDProvider("LINKEDIN",OAuthProviderType.LINKEDIN,"",
-				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",GrantType.AUTHORIZATION_CODE, true,false));
+		oidproviderMap.put("LINKEDIN", new OIDProvider("LINKEDIN", null ,OAuthProviderType.LINKEDIN,"",
+				OAuthJSONAccessTokenResponse.class,"https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))","r_emailaddress",
+				GrantType.AUTHORIZATION_CODE, true,false));
 
-		oidproviderMap.put("HUMBOL", new OIDProvider("HUMBOL",OAuthProviderType.HUMBOL,"",
-				OAuthJSONAccessTokenResponse.class,"https://id.humbhionline.in/users/current","all",GrantType.AUTHORIZATION_CODE, true,
-				true));
+
+		for (Map.Entry<String,Map<String,String>> group : getHumBolProviders().entrySet()) {
+			oidproviderMap.put(group.getKey(), new OIDProvider(group.getKey(), group.getValue().get(String.format("swf.%s.base.url",group.getKey())) ,
+					OAuthProviderType.HUMBOL, "",
+					OAuthJSONAccessTokenResponse.class, group.getValue().get(String.format("swf.%s.resource.url",group.getKey())), "all",
+					GrantType.AUTHORIZATION_CODE, true,
+					true));
+		}
 	}
-	
+
+	private static Map<String, Map<String,String>>   getHumBolProviders() {
+		Map<String, Map<String,String>> groupMap = new Cache<String, Map<String, String>>() {
+			@Override
+			protected Map<String, String> getValue(String groupKey) {
+				return new Cache<String, String>() {
+					@Override
+					protected String getValue(String key) {
+						return Config.instance().getProperty(String.format("swf.%s.%s",groupKey,key));
+					}
+				};
+			}
+		};
+		for (String humBolKeys : Config.instance().getPropertyKeys("swf\\.HUMBOL.*\\..*")){
+			String[] group = humBolKeys.split("\\.");
+			String groupKey = group[1];
+			groupMap.get(groupKey);
+		}
+		return groupMap;
+
+	}
+
 	@SuppressWarnings("rawtypes")
 	protected View authenticate() {
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
 		
 		if (ObjectUtil.isVoid(selectedOpenId)){
-			HtmlView lv = createLoginView(false);
+			HtmlView lv = createLoginView(LoginContext.LOGIN);
 			lv.setStatus(StatusType.ERROR, "Open id provider not specified");
 			return lv;
 		}

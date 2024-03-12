@@ -19,18 +19,18 @@ public class FacilityParticipantExtension extends CompanySpecificParticipantExte
 	protected List<Long> getAllowedFieldValues(User user,
 			Facility partiallyFilledModel, String fieldName) {
 		if (fieldName.equals("COUNTRY_ID")){
-			return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
+			return  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));
 		}else if (fieldName.equals("STATE_ID")){
 			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getCountryId())){
 				return DataSecurityFilter.getIds(partiallyFilledModel.getCountry().getStates());
 			}else {
-				return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(State.class, user));
+				return null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(State.class, user));
 			}
 		}else if (fieldName.equals("CITY_ID")){
 			if (!Database.getJdbcTypeHelper(getReflector().getPool()).isVoid(partiallyFilledModel.getStateId())){
 				return DataSecurityFilter.getIds(partiallyFilledModel.getState().getCities());
 			}else {
-				return DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(City.class, user));
+				return null;
 			}
 		} 
 		return super.getAllowedFieldValues(user, partiallyFilledModel, fieldName);

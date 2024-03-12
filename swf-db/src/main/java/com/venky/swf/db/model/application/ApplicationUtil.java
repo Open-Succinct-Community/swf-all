@@ -16,19 +16,20 @@ import com.venky.swf.sql.Select;
 import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class ApplicationUtil {
     public static final String APPLICATION_AUTHENTICATOR_EXTENSION = "swf.application.authenticator";
-
     public static Application find(String appId){
-        ModelReflector<Application> ref = ModelReflector.instance(Application.class);
-        List<Application> applications = new Select().from(Application.class).where(new Expression(ref.getPool(),"APP_ID", Operator.EQ, appId)).execute();
+        return find(appId,Application.class);
+    }
+
+    public static <T extends Application> T find(String appId , Class<T> clazz){
+        ModelReflector<T> ref = ModelReflector.instance(clazz);
+        List<T> applications = new Select().from(clazz).where(new Expression(ref.getPool(),"APP_ID", Operator.EQ, appId)).execute();
         if (applications.size() != 1){
             return null;
         }
@@ -106,10 +107,6 @@ public class ApplicationUtil {
         String keyId = parts[0];
         sPrivateKey = parts[1];
         PrivateKey privateKey = Crypt.getInstance().getPrivateKey(app.getSigningAlgorithm(),sPrivateKey);
-        List<ApplicationPublicKey> applicationPublicKeys = app.getApplicationPublicKeys().stream().filter(applicationPublicKey -> ObjectUtil.equals(applicationPublicKey.getAlgorithm(),app.getSigningAlgorithm())).collect(Collectors.toList());
-        if (applicationPublicKeys.size() == 1){
-            keyId = applicationPublicKeys.get(0).getKeyId();
-        }
 
         Map<String,String> dummy = new IgnoreCaseMap<>();
         long now = System.currentTimeMillis();
@@ -135,6 +132,8 @@ public class ApplicationUtil {
         }
 
         headers.put("Authorization",String.format("Signature %s",signingHeaders));
+        headers.put("Signature",Crypt.getInstance().generateSignature(payload,app.getSigningAlgorithm(),privateKey)); //Additionally
+
 
     }
     public static String hashingAlgoCommonName(String hashAlgoName){

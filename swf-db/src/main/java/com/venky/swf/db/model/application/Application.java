@@ -7,6 +7,7 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -22,6 +23,7 @@ import java.util.List;
 public interface Application extends Model {
     @UNIQUE_KEY
     @IS_NULLABLE(false)
+    @Index
     public String getAppId();
     public void setAppId(String id);
 
@@ -41,9 +43,6 @@ public interface Application extends Model {
 
 
     public String getEncryptedSecret(String unEncryptedSecret);
-
-    public List<WhiteListIp> getWhiteListIps();
-    public List<ApplicationPublicKey> getApplicationPublicKeys();
 
 
 
@@ -77,11 +76,15 @@ public interface Application extends Model {
     public String getHeaders();
     public void setHeaders(String headers);
 
+    @Index
     public String getIndustryClassificationCode();
     public void setIndustryClassificationCode(String industryClassificationCode);
 
 
     public List<EventHandler> getEventHandlers(); //
     public List<EndPoint> getEndPoints();
+    public List<WhiteListIp> getWhiteListIps();
+    public List<ApplicationPublicKey> getApplicationPublicKeys();
+
 
 }

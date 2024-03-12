@@ -18,11 +18,13 @@ public interface EventHandler extends Model {
     public Application getApplication();
 
     @UNIQUE_KEY
+    @IS_NULLABLE(value = false)
     public Long getEventId();
     public void setEventId(Long id);
     public Event getEvent();
 
     @UNIQUE_KEY
+    @IS_NULLABLE(value = false)
     public Long getEndPointId();
     public void setEndPointId(Long id);
     public EndPoint getEndPoint();

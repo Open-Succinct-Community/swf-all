@@ -5,19 +5,22 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
 import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
+import com.venky.swf.db.model.application.ApplicationPublicKey;
 
 import java.security.KeyPair;
 
 @HAS_DESCRIPTION_FIELD("ALIAS")
 public interface CryptoKey extends Model {
+    @Index
     @UNIQUE_KEY
     public String getAlias();
     public void setAlias(String alias);
 
-    public static final String PURPOSE_SIGNING = "SIGNING";
-    public static final String PURPOSE_ENCRYPTION = "ENCRYPTION";
+    public static final String PURPOSE_SIGNING = ApplicationPublicKey.PURPOSE_SIGNING;
+    public static final String PURPOSE_ENCRYPTION = ApplicationPublicKey.PURPOSE_ENCRYPTION;
 
     @UNIQUE_KEY
     public String getPurpose();

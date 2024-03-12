@@ -9,6 +9,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.HtmlView;
+import com.venky.swf.views.controls.Control;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.Form;
 import com.venky.swf.views.controls.page.Image;
@@ -18,10 +19,6 @@ import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
-import com.venky.swf.views.controls.page.layout.Glyphicon;
-import com.venky.swf.views.controls.page.layout.Span;
-import com.venky.swf.views.controls.page.text.CheckBox;
-import com.venky.swf.views.controls.page.text.DateBox;
 import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
@@ -32,13 +29,23 @@ import com.venky.swf.views.controls.page.text.TextBox;
  * @author venky
  */
 public class LoginView extends HtmlView{
-	private boolean allowRegistration;
-	private boolean newRegistration;
+	private final boolean allowRegistration;
+	private final LoginContext context;
+	public enum LoginContext {
+		LOGIN,
+		REGISTER,
+		PASSWORD_RESET
+	}
+	protected boolean   isRegistrationRequired() {
+		return Config.instance().getBooleanProperty("swf.application.requires.registration", false);
+	}
 
-    public LoginView(Path path, boolean allowRegistration, boolean newRegistration){
+
+
+	public LoginView(Path path,  LoginContext context){
         super(path);
-        this.newRegistration = newRegistration;
-		this.allowRegistration = allowRegistration || newRegistration;
+        this.allowRegistration = isRegistrationRequired() || context == LoginContext.REGISTER;
+		this.context = context;
 	}
 
 	public void addProgressiveWebAppLinks(Column column) {
@@ -90,21 +97,36 @@ public class LoginView extends HtmlView{
         formHolder.addControl(getStatus());
 
         FormGroup fg = new FormGroup();
-		fg.createTextBox(Config.instance().getProperty("Login.Name.Literal","User"), "name",false);
-    	form.addControl(fg);
 
-        fg = new FormGroup();
-    	fg.createTextBox("Password", "password",true);
-    	form.addControl(fg);
-
-    	if (newRegistration){
-			fg = new FormGroup();
-			fg.createTextBox("Reenter Password", "password2",true);
+		boolean showPasswordFields = true;
+		if (!getPath().getFormFields().containsKey("ApiKey")) {
+			fg.createTextBox(Config.instance().getProperty("Login.Name.Literal", "User"), "name", false);
+			form.addControl(fg);
+		}else {
+			Input apiKey = fg.createTextBox("ApiKey", "ApiKey", false);
+			apiKey.setValue(getPath().getFormFields().get("ApiKey"));
+			apiKey.setVisible(false);
 			form.addControl(fg);
 		}
 
+		showPasswordFields = getPath().getFormFields().containsKey("ApiKey") ||
+				context != LoginContext.PASSWORD_RESET;
+
+		if (showPasswordFields) {
+			fg = new FormGroup();
+			fg.createTextBox("Password", "password", true);
+			form.addControl(fg);
+
+			if (context == LoginContext.REGISTER || context == LoginContext.PASSWORD_RESET) {
+				fg = new FormGroup();
+				fg.createTextBox("Re-enter Password", "password2", true);
+				form.addControl(fg);
+			}
+		}
+
+
 		getPath().getFormFields().forEach((k,v)->{
-			if ( k.equals("_LOGIN") || k.equals("_REGISTER") || k.equals("error")){
+			if ( k.equals("_LOGIN") || k.equals("_REGISTER") || k.equals("error") || k.equals("message") || k.equals("_RESET")){
 				return;
 			}
 			TextBox textBox = new TextBox();
@@ -116,20 +138,24 @@ public class LoginView extends HtmlView{
 
 
         fg = new FormGroup();
-		Submit btn = null;
-        if (allowRegistration){
-        	Submit register = null;
-        	if (newRegistration){
+		Control btn = null;
+		Control register = null;
+		Control resetPassword = null;
+		if (allowRegistration){
+			if (context == LoginContext.PASSWORD_RESET){
+				resetPassword = fg.createSubmit("Reset Password",0,12);
+				btn = fg.createLink("Login","/login",0,12);
+				register = fg.createLink("I'm a new user", "/register", 0,12);
+			}else if (context == LoginContext.REGISTER){
 				register = fg.createSubmit("Register", 0,12);
-				btn = fg.createSubmit("I'm an Existing User",0,12);
-				btn.removeClass("btn-primary");
-				btn.addClass("btn-link");
+				btn = fg.createLink("Login","/login",0,12);
+				resetPassword = fg.createLink("Forgot Password","/users/reset_password" ,0,12);
 			}else {
 				btn = fg.createSubmit("Login",0,12);
-				register = fg.createSubmit("I'm a new user", 0,12);
-				register.removeClass("btn-primary");
-				register.addClass("btn-link");
+				resetPassword = fg.createLink("Forgot Password","/users/reset_password" ,0,12);
+				register = fg.createLink("I'm a new user", "/register" , 0,12);
 			}
+			resetPassword.setName("_RESET");
 			register.setName("_REGISTER");
 		}else {
 			btn = fg.createSubmit("Login",3,12,6);
@@ -178,19 +204,37 @@ public class LoginView extends HtmlView{
     		return box;
     	}
     	
+		public Link createLink (String label, String url, int offset, int ... width){
+			Div div = new Div();
+			div.addClass("offset-"+offset);
+			String[] resp = new String[]{"","sm","lg"};
+			for (int i = 0 ; i < width.length ; i ++){
+				div.addClass(String.format(" col%s%d %scol-%d", resp[i].isEmpty() ? "-" :"-" + resp[i] + "-" ,width[i], resp[i].isEmpty() ? "" : resp[i] + ":",width[i]));
+			}
+			addControl(div);
 
+			Link link = new Link();
+			link.setUrl(url);
+			link.setText(label);
+			link.addClass("w-full text-right block" );
+			link.addClass("btn-link");
+			div.addControl(link);
+
+			return link;
+
+		}
 
     	public Submit createSubmit(String label, int offset, int... width){
     		Div div = new Div();
     		div.addClass("offset-"+offset);
 			String[] resp = new String[]{"","sm","lg"};
 			for (int i = 0 ; i < width.length ; i ++){
-				div.addClass(String.format(" col%s%d %scol-%d",resp[i].length() == 0? "-" :"-" + resp[i] + "-" ,width[i], resp[i].length() == 0? "" : resp[i] + ":",width[i]));
+				div.addClass(String.format(" col%s%d %scol-%d", resp[i].isEmpty() ? "-" :"-" + resp[i] + "-" ,width[i], resp[i].isEmpty() ? "" : resp[i] + ":",width[i]));
 			}
     		addControl(div);
     		
     		Submit submit = new Submit(label);
-    		submit.addClass("w-100");
+    		submit.addClass("w-full p-1");
     		div.addControl(submit);
     		return submit;
     	}

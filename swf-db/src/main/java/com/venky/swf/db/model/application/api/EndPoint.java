@@ -10,6 +10,8 @@ import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.Application;
 
+import java.util.List;
+
 @HAS_DESCRIPTION_FIELD("BASE_URL")
 public interface EndPoint extends Model {
     @HIDDEN
@@ -45,4 +47,6 @@ public interface EndPoint extends Model {
     public Long getOpenApiId();
     public void setOpenApiId(Long id);
     public OpenApi getOpenApi();
+
+    public List<EventHandler> getEventHandlers();
 }

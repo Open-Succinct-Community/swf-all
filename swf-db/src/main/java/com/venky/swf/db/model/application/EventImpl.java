@@ -3,7 +3,7 @@ package com.venky.swf.db.model.application;
 import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.model.application.api.EndPoint;
+import com.venky.swf.db.model.application.Event.EventResult;
 import com.venky.swf.db.model.application.api.EventHandler;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
@@ -16,6 +16,7 @@ import com.venky.swf.sql.Select;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,23 +25,24 @@ public class EventImpl extends ModelImpl<Event> {
         super(event);
     }
 
-    public void raise(Object payload){
-        raise(getProxy().getEventHandlers(),payload);
+    public List<EventResult> raise(Object payload){
+        return raise(getProxy().getEventHandlers(),payload);
     }
-    public void raise(Application application, Object payload){
+    public List<EventResult>  raise(Application application, Object payload){
         ModelReflector<EventHandler> reflector = ModelReflector.instance(EventHandler.class);
 
         Select select = new Select().from(EventHandler.class).where(new Expression(reflector.getPool(), Conjunction.AND).
                 add(new Expression(reflector.getPool(),"APPLICATION_ID", Operator.EQ,application.getId())).
                 add(new Expression(reflector.getPool(),"EVENT_ID", Operator.EQ,getProxy().getId())));
         List<EventHandler> handlerList = select.execute();
-        raise(handlerList,payload);
+        return raise(handlerList,payload);
     }
-    private void raise(List<EventHandler> handlers, Object payload){
+    public List<EventResult>  raise(List<EventHandler> handlers, Object payload){
         String sPayLoad = payload.toString();
+        List<EventResult> results = new ArrayList<>();
         for (EventHandler eventHandler : handlers) {
             if (!eventHandler.isEnabled()){
-                return;
+                continue;
             }
 
             if (!ObjectUtil.isVoid(eventHandler.getRelativeUrl())){
@@ -48,14 +50,16 @@ public class EventImpl extends ModelImpl<Event> {
                 headers.put("content-type",eventHandler.getContentType());
                 ApplicationUtil.addAuthorizationHeader(eventHandler,headers,sPayLoad);
 
-                new Call<InputStream>().url(String.format("%s/%s",
+                Call<InputStream> call = new Call<InputStream>().url(String.format("%s/%s",
                                 eventHandler.getEndPoint().getBaseUrl(),
                                 eventHandler.getRelativeUrl())).headers(headers).
                         inputFormat(InputFormat.INPUT_STREAM).
-                        input(new ByteArrayInputStream(sPayLoad.getBytes(StandardCharsets.UTF_8))).hasErrors();
-
+                        input(new ByteArrayInputStream(sPayLoad.getBytes(StandardCharsets.UTF_8)));
+                EventResult result = new EventResult(eventHandler,call.getResponseStream(),call.getErrorStream());
+                results.add(result);
             }
         }
+        return results;
     }
 
 }

@@ -10,6 +10,18 @@
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Succinct Web Framework</description>
     <url>http://succinct.in</url>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>15</source>
+                    <target>15</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <version>2.15-SNAPSHOT</version>
 
     <licenses>

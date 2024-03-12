@@ -2,7 +2,9 @@ package com.venky.swf.db.model.application;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -13,6 +15,7 @@ import java.sql.Timestamp;
 public interface ApplicationPublicKey extends Model {
 
     @IS_NULLABLE(false)
+    @Index
     public Long getApplicationId();
     public void setApplicationId(Long id);
     public Application getApplication();
@@ -47,11 +50,16 @@ public interface ApplicationPublicKey extends Model {
     public Timestamp getValidUntil();
     public void setValidUntil(Timestamp until);
 
-
     public static ApplicationPublicKey find(String purpose, String keyId){
-        ApplicationPublicKey applicationPublicKey = Database.getTable(ApplicationPublicKey.class).newRecord();
+        return find(purpose,keyId, ApplicationPublicKey.class);
+    }
+    public static <T extends ApplicationPublicKey> T find(String purpose, String keyId, Class<T> clazz){
+        T applicationPublicKey = Database.getTable(clazz).newRecord();
         applicationPublicKey.setPurpose(purpose);
         applicationPublicKey.setKeyId(keyId);
-        return  Database.getTable(ApplicationPublicKey.class).find(applicationPublicKey,false);
+        return  Database.getTable(clazz).find(applicationPublicKey,false);
     }
+
+    @IS_VIRTUAL
+    boolean isExpired();
 }

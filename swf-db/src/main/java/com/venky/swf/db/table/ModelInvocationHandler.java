@@ -657,7 +657,7 @@ public class ModelInvocationHandler implements InvocationHandler {
     
     private <R extends Model> void callExtensions(String extnPointNameSuffix){
     	for (String extnPoint: getExtensionPoints(getReflector().getModelClass(), extnPointNameSuffix)){
-    		Registry.instance().callExtensions(extnPoint, getProxy());
+    		Registry.instance().callExtensions(extnPoint, getProxy(), extnPoint);
     	}
     }
 

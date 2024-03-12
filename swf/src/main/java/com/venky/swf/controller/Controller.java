@@ -48,6 +48,7 @@ import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.login.LoginView;
+import com.venky.swf.views.login.LoginView.LoginContext;
 import com.venky.swf.views.model.FileUploadView;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
@@ -124,7 +125,7 @@ public class Controller implements TemplateLoader{
             }
 
             fields.forEach((k,v)->{
-                if ("name".equals(k) || k.startsWith("password") ||  k.equals("_LOGIN") ){
+                if ("name".equals(k) || k.startsWith("password") ||  k.equals("_LOGIN") || k.equals("_REGISTER") || k.equals("_RESET")){
                     return;
                 }
                 if (msg.length() >0){
@@ -137,6 +138,11 @@ public class Controller implements TemplateLoader{
 
         }
         return msg.toString();
+    }
+
+    @RequireLogin(false)
+    public View register(){
+        return login();
     }
     @RequireLogin(false)
     public View login() {
@@ -152,21 +158,13 @@ public class Controller implements TemplateLoader{
         } else if (getPath().getSession() != null) {
             if (getSessionUser() == null) {
                 String msg = getLoginUrlParams();
-
-                if (msg.length() > 0){
-                    if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        //return createLoginView(StatusType.ERROR,msg.toString());
-                        return new RedirectorView(getPath(), getPath().action()+msg);
-                    }else {
-                        throw new AccessDeniedException(msg);
-                    }
+                if (getPath().getProtocol() == MimeType.TEXT_HTML){
+                    //return createLoginView();
+                    return new RedirectorView(getPath(),getPath().action() + msg);
+                }else if (msg.isEmpty()){
+                    return authenticate();
                 }else {
-                    if (getPath().getProtocol() == MimeType.TEXT_HTML){
-                        //return createLoginView();
-                        return new RedirectorView(getPath(),getPath().action());
-                    }else {
-                        return authenticate();
-                    }
+                    throw new AccessDeniedException(msg);
                 }
             } else {
                 if (getPath().getProtocol() == MimeType.TEXT_HTML){
@@ -200,7 +198,7 @@ public class Controller implements TemplateLoader{
             } else {
                 String msg = getLoginUrlParams();
 
-                return new RedirectorView(getPath(),"/","login"+msg);
+                return new RedirectorView(getPath(),"/",getPath().action()+msg);
                 //return createLoginView(StatusType.ERROR, msg.toString());
             }
         } else {
@@ -228,20 +226,18 @@ public class Controller implements TemplateLoader{
     }
 
     protected HtmlView createLoginView() {
-        if (getPath().getFormFields().containsKey("_REGISTER")) {
-            return createLoginView(true);
-        } else {
-            return createLoginView(false);
+        if (getPath().action().equals("register")) {
+            return createLoginView(LoginContext.REGISTER);
+        } else if (getPath().action().equals("reset_password")){
+            return createLoginView(LoginContext.PASSWORD_RESET);
+        }else {
+            return createLoginView(LoginContext.LOGIN);
         }
     }
 
-    protected boolean   isRegistrationRequired() {
-        return Config.instance().getBooleanProperty("swf.application.requires.registration", false);
-    }
-
-    protected HtmlView createLoginView(boolean registrationInProgress) {
+    protected HtmlView createLoginView(LoginContext context) {
         invalidateSession();
-        return new LoginView(getPath(), isRegistrationRequired(), registrationInProgress);
+        return new LoginView(getPath(), context);
     }
 
     @SuppressWarnings("unchecked")

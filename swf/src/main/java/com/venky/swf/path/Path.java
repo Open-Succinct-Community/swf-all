@@ -778,10 +778,10 @@ public class Path implements _IPath{
                 return user;
             }
         }else if (!ObjectUtil.equals(password,password2)){
-            // Signup request;!
+            // Signup or reset password request;!
             throw new RuntimeException("Passwords don't match!");
-        }else if (user != null){
-                throw new RuntimeException("Username "+ username + " is already registered");
+        }else if (user != null && !getFormFields().containsKey("_RESET")){
+            throw new RuntimeException("Username "+ username + " is already registered");
         }else {
             user = Database.getTable(User.class).newRecord();
             user.setName(username);
@@ -837,68 +837,66 @@ public class Path implements _IPath{
         String username = StringUtil.valueOf(map.get("name"));
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
-        boolean beingSwitched = false;
-        beingSwitched = getProtocol() == MimeType.TEXT_HTML && (
-                ( getFormFields().containsKey("_REGISTER") && !getFormFields().containsKey("password2") ) ||
-                        ( getFormFields().containsKey("_LOGIN") && getFormFields().containsKey("password2") )
-        );
-        
-        if (user == null && !beingSwitched){
-            if (getRequest().getMethod().equalsIgnoreCase("POST")){
-                if (adaptor == null){
-                    try {
-                        user = login(username, password, password2);
-                    }catch (Exception ex){
-                        addErrorMessage(ex.getMessage());
-                        return false;
-                    }
-                }else {
-                    FormatHelper<T> helper = null ;
-                    try {
-                        helper = FormatHelper.instance(this.getProtocol(),getInputStream());
-                        if (helper.getElementAttribute("User") != null){
-                            List<User> input = adaptor.readRequest(this);
-                            if (input.size() == 1){
-                                Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
-                                username = input.get(0).getName();
-                                password = input.get(0).getPassword();
-                                password2 = input.get(0).getPassword2();
-                                user = login(username,password,password2,false);
-                                if (user.getRawRecord().isNewRecord()) {
-                                    //signedup!
-                                    user.getRawRecord().load(input.get(0).getRawRecord());
-                                    saveUserInNewTxn(user);
-                                }
 
-                            }
-                        }
-                    }catch (Exception ex){
-                        throw new RuntimeException(ex);
-                    }
+        if (getRequest().getMethod().equalsIgnoreCase("POST")){
+            if (ObjectUtil.isVoid(username) && user != null ){
+                // logged in with api key or other means
+                username = user.getName();
+            }
+            if (adaptor == null){
+                try {
+                    user = login(username, password, password2);
+                }catch (Exception ex){
+                    addErrorMessage(ex.getMessage());
+                    return false;
                 }
-                if (!ObjectUtil.isVoid(username)){
-                    Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
-                    //user = getUser("name",username);
-                    Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
-                    if (user != null ){
-                        createUserSession(user,autoInvalidate);
-                    }else {
-                        createUserSession(null,true);
-                        Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
-                        if (adaptor == null) {
-                            addErrorMessage("Login Failed");
-                        }else {
-                            throw new RuntimeException("Login failed");
+            }else {
+                FormatHelper<T> helper = null ;
+                try {
+                    helper = FormatHelper.instance(this.getProtocol(),getInputStream());
+                    if (helper.getElementAttribute("User") != null){
+                        List<User> input = adaptor.readRequest(this);
+                        if (input.size() == 1){
+                            Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
+                            username = input.get(0).getName();
+                            if (ObjectUtil.isVoid(username) && user != null){
+                                username = user.getName();
+                            }
+                            password = input.get(0).getPassword();
+                            password2 = input.get(0).getPassword2();
+                            user = login(username,password,password2,false);
+                            if (user.getRawRecord().isNewRecord()) {
+                                //signedup!
+                                user.getRawRecord().load(input.get(0).getRawRecord());
+                            }
+                            saveUserInNewTxn(user);
                         }
+                    }
+                }catch (Exception ex){
+                    throw new RuntimeException(ex);
+                }
+            }
+            if (!ObjectUtil.isVoid(username)){
+                Config.instance().getLogger(Path.class.getName()).fine("Logging in " + username);
+                //user = getUser("name",username);
+                Config.instance().getLogger(Path.class.getName()).fine("User is valid ? " + (user != null));
+                if (user != null ){
+                    createUserSession(user,autoInvalidate);
+                }else {
+                    createUserSession(null,true);
+                    Config.instance().getLogger(Path.class.getName()).fine("Login Failed");
+                    if (adaptor == null) {
+                        addErrorMessage("Login Failed");
+                    }else {
+                        throw new RuntimeException("Login failed");
                     }
                 }
             }
-        }else {
-            createUserSession(user,autoInvalidate);
+        }else if (user != null){
+            createUserSession(user, autoInvalidate);
         }
-        
-        boolean loggedOn= isUserLoggedOn();
-        return loggedOn;
+
+        return isUserLoggedOn();
     }
     public boolean redirectOnException(){
         return getReturnProtocol().equals(MimeType.TEXT_HTML);

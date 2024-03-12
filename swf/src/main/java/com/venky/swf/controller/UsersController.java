@@ -1,5 +1,6 @@
 package com.venky.swf.controller;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
@@ -8,7 +9,9 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.BytesView;
+import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.login.LoginView.LoginContext;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
 import org.json.simple.JSONObject;
@@ -16,6 +19,7 @@ import org.json.simple.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class UsersController extends ModelController<User>{
 
@@ -35,6 +39,36 @@ public class UsersController extends ModelController<User>{
 			return new BytesView(getPath(), u.getApiKey().getBytes());
 		}
 		
+	}
+
+	protected View forgot_password(String userName){
+		throw new RuntimeException("Please ask administrator to reset your password");
+	}
+
+	@RequireLogin(value = false)
+	public View reset_password(){
+		if (getPath().getRequest().getMethod().equals("GET")){
+			return createLoginView(LoginContext.PASSWORD_RESET);
+		}
+		Map<String,Object> formFields = getPath().getFormFields();
+		String name = (String)formFields.get("name");
+		String apiKey = (String)formFields.get("ApiKey");
+		String password = (String)formFields.get("password");
+		String password2 = (String)formFields.get("password2");
+		if (!ObjectUtil.isVoid(name)){
+			return forgot_password(name);
+		}
+		if (!ObjectUtil.equals(password,password2)){
+			return new RedirectorView( getPath(),"reset_password?ApiKey=" + apiKey +"&message=" + "Passwords not matching");
+		}
+		User u = getPath().getUser("API_KEY",apiKey);
+		if (u == null){
+			return new RedirectorView( getPath(),"reset_password?ApiKey=" + apiKey +"&message=" + "Stale Link");
+		}
+		User user = u.getRawRecord().getAsProxy(User.class);
+		user.setChangePassword(password);
+		user.generateApiKey(true);
+		return new RedirectorView( getPath(),"/","login?message=Password Reset");
 	}
 	
     protected View constructModelListView(List<User> records, boolean isCompleteList){

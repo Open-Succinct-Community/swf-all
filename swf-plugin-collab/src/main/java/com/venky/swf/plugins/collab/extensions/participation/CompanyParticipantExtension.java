@@ -23,6 +23,7 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 	}
 
 
+
 	
 	@Override
 	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Company partial , String fieldName) {

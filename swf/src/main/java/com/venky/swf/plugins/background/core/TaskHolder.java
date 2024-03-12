@@ -81,9 +81,23 @@ public class TaskHolder implements CoreTask {
 		return task;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
+		TaskHolder that = (TaskHolder) o;
 
+		if (taskId != that.taskId) return false;
+		if (!task.equals(that.task)) return false;
+        return taskPriority == that.taskPriority;
+    }
 
-
-
+	@Override
+	public int hashCode() {
+		int result = task.hashCode();
+		result = 31 * result + taskPriority.hashCode();
+		result = 31 * result + (int) (taskId ^ (taskId >>> 32));
+		return result;
+	}
 }
