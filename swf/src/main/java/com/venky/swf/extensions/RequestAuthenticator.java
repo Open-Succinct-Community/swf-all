@@ -43,7 +43,7 @@ public class RequestAuthenticator implements Extension {
                 if (!user.getReflector().isVoid(tc.valueOf(lat)) && !user.getReflector().isVoid(tc.valueOf(lng))){
                     user.setCurrentLat(tc.valueOf(lat));
                     user.setCurrentLng(tc.valueOf(lng));
-                    Registry.instance().callExtensions(Path.USER_LOCATION_UPDATED_EXTENSION,user);
+                    Registry.instance().callExtensions(Path.USER_LOCATION_UPDATED_EXTENSION,path,user);
                 }
             }
         }
