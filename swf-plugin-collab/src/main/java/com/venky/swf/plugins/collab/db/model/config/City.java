@@ -61,6 +61,7 @@ public interface City extends Model , GeoLocation {
 			City city = Database.getTable(City.class).newRecord(); 
 			city.setStateId(stateId);
 			city.setName(cityName);
+			city.setCode(cityName);
 			city.save();
 			return city;
 		}else {
