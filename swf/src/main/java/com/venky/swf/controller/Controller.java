@@ -335,6 +335,8 @@ public class Controller implements TemplateLoader{
                 }
             } else if (!reflector.isFieldVirtual(fieldName)) {
                 where.add(new Expression(reflector.getPool(), reflector.getJdbcTypeHelper().getLowerCaseFunction() + "(" + columnName + ")", Operator.LK, new BindVariable(reflector.getPool(), "%" + value.toLowerCase() + "%")));
+            }else {
+                maxRecordsToGet = Select.MAX_RECORDS_ALL_RECORDS;
             }
         }
         Select q = new Select().from(modelClass);
