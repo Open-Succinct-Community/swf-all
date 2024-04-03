@@ -38,4 +38,5 @@ public interface Event extends Model {
     }
     public List<EventResult> raise(Object payload);
     public List<EventResult> raise(Application application, Object payload);
+    public List<EventResult>  raise(List<EventHandler> handlers, Object payload);
 }
