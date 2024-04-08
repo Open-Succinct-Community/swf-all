@@ -22,10 +22,12 @@ import com.venky.swf.db.model.Count;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.exceptions.SWFTimeoutException;
+import com.venky.swf.routing.Config;
 import com.venky.swf.sql.DDL;
 import com.venky.swf.sql.DDL.AlterTable;
 import com.venky.swf.sql.DataManupulationStatement;
 import com.venky.swf.sql.Select;
+import com.venky.swf.sql.parser.SQLExpressionParser.ColumnName;
 
 /**
  *
@@ -186,6 +188,10 @@ public class H2Helper extends JdbcTypeHelper{
     }
     @Override
     protected <M extends Model> void updateSequence(Table<M> table){
+        if (table.getModelClass() == null){
+            Config.instance().getLogger(getClass().getName()).info("Skipping updateSequence for " + table.getTableName() + "(" +table.getRealTableName() +")" );
+            return;
+        }
         List<Count> counts = new Select("MAX(id) AS COUNT").from(table.getModelClass()).execute(Count.class);
         Count count = counts.get(0);
         if (count.getCount() < getPrimaryKeyOffset()){
