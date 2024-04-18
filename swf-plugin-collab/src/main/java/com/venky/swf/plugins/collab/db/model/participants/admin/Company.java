@@ -17,6 +17,7 @@ import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.plugins.calendar.db.model.WorkCalendar;
 import com.venky.swf.plugins.collab.db.model.participants.Application;
 import com.venky.swf.plugins.collab.db.model.user.User;
 
@@ -130,4 +131,11 @@ public interface Company extends Model{
 	public List<Company> getCreatedCompanies();
 
 	public List<Application> getApplications();
+
+	public List<MasterFacilityCategory> getFacilityCategories();
+	@IS_NULLABLE
+	public Long getWorkCalendarId();
+	public void setWorkCalendarId(Long WorkCalendarId);
+	public WorkCalendar getWorkCalendar();
+
 }

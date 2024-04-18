@@ -74,7 +74,8 @@ public class Expression {
 	}
 	@SafeVarargs
 	public <T> Expression(String pool,String columnName,Operator op, T... values){
-		this(pool,true,columnName,op,values);
+		this(pool, true, columnName, op, (values == null || values.length == 0 || (values.length == 1 && values[0] == null)) ? new Object[]{} : values);
+
 	}
 	@SafeVarargs
 	public <T> Expression(String pool,boolean useBindVariables,String columnName,Operator op,  T... values){

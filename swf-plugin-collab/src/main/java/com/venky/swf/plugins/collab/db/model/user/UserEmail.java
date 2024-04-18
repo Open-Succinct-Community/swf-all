@@ -8,6 +8,9 @@ public interface UserEmail extends com.venky.swf.db.model.UserEmail , Email {
     @PARTICIPANT
     @IS_VIRTUAL
     public Long getCompanyId();
-    public Company getCompany();
     public void setCompanyId(Long companyId);
+
+    @IS_VIRTUAL
+    public Company getCompany();
+
 }

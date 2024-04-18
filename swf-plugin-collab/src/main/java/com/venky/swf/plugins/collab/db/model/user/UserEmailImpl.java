@@ -1,7 +1,9 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
 import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.Database;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.plugins.collab.util.CompanyFinder;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -13,22 +15,25 @@ public class UserEmailImpl extends EmailImpl<UserEmail> {
         super(email);
     }
     public Long getCompanyId(){
-        String email = getProxy().getEmail();
-        Long companyId = null;
-        if (!ObjectUtil.isVoid(email)){
-            if (email.indexOf('@')>0){
-                String domain = email.substring(email.indexOf('@')+1);
-                Select select = new Select().from(Company.class);
-                Expression where = new Expression(select.getPool(),"DOMAIN_NAME" , Operator.EQ, domain);
-                List<Company> companies = select.where(where).execute(2);
-                if (companies.size() == 1){
-                    companyId = companies.get(0).getId();
-                }
-            }
+        Company company = getCompany();
+        if (company.getRawRecord().isNewRecord()){
+            return null;
+        }else {
+            return company.getId();
         }
-        return companyId;
     }
     public void setCompanyId(Long companyId){
-        // Do nothing
+
     }
+    public Company getCompany(){
+        String domain = getProxy().getDomain();
+        Company company = Database.getTable(Company.class).newRecord();
+        company.setDomainName(domain);
+        company = Database.getTable(Company.class).getRefreshed(company,false);
+        if (company.getRawRecord().isNewRecord()){
+            company.setName(domain);
+        }
+        return company;
+    }
+
 }

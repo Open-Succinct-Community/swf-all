@@ -35,7 +35,7 @@
     
     <requiredProperty key="archetypeVersion"/>
     <requiredProperty key="package">
-      <defaultValue>${groupId}.${artifactId}</defaultValue>
+      <defaultValue>com.venky.swf.plugins.${pluginName}</defaultValue>
     </requiredProperty>
 
     <requiredProperty key="pluginName"/>

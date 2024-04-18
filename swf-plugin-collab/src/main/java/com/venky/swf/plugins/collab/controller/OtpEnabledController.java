@@ -41,7 +41,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
     public View validateOtp(long id, String otpField) throws  Exception{
         T otpEnabledModel = Database.getTable(getModelClass()).lock(id);
         if (getPath().getRequest().getMethod().equalsIgnoreCase("GET")){
-            return dashboard(new ModelEditView<T>(getPath(),new String[]{"ID","PHONE_NUMBER","OTP"},otpEnabledModel,"validateOtp"){
+            return dashboard(new ModelEditView<T>(getPath(),new String[]{"ID","PHONE_NUMBER", "EMAIL" ,"OTP"},otpEnabledModel,"validateOtp"){
                 @Override
                 public SequenceSet<HotLink> getTabLinks() {
                     return new SequenceSet<>();

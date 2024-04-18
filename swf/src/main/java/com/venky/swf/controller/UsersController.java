@@ -45,30 +45,58 @@ public class UsersController extends ModelController<User>{
 		throw new RuntimeException("Please ask administrator to reset your password");
 	}
 
+
 	@RequireLogin(value = false)
 	public View reset_password(){
 		if (getPath().getRequest().getMethod().equals("GET")){
 			return createLoginView(LoginContext.PASSWORD_RESET);
 		}
-		Map<String,Object> formFields = getPath().getFormFields();
-		String name = (String)formFields.get("name");
-		String apiKey = (String)formFields.get("ApiKey");
-		String password = (String)formFields.get("password");
-		String password2 = (String)formFields.get("password2");
-		if (!ObjectUtil.isVoid(name)){
+
+		User u = null;
+		if (getIntegrationAdaptor() == null) {
+			Map<String, Object> formFields = getPath().getFormFields();
+			String name = (String) formFields.get("name");
+			String apiKey = (String) formFields.get("ApiKey");
+			String password = (String) formFields.get("password");
+			String password2 = (String) formFields.get("password2");
+			return resetPassword(name,password,password2,apiKey);
+		}else {
+			List<User> users = getIntegrationAdaptor().readRequest(getPath());
+			if (users.size() != 1){
+				throw new RuntimeException("Exactly 1 User's detail must be passed");
+			}
+			User user = users.get(0);
+			return resetPassword(user.getName(),user.getPassword(),user.getPassword2(),getPath().getHeader("ApiKey"));
+		}
+
+	}
+	public View resetPassword(String name, String password, String password2,String apiKey){
+		if (!ObjectUtil.isVoid(name)) {
 			return forgot_password(name);
 		}
-		if (!ObjectUtil.equals(password,password2)){
-			return new RedirectorView( getPath(),"reset_password?ApiKey=" + apiKey +"&message=" + "Passwords not matching");
+		if (!ObjectUtil.equals(password, password2)) {
+			if (getIntegrationAdaptor() == null) {
+				return new RedirectorView(getPath(), "reset_password?ApiKey=" + apiKey + "&message=" + "Passwords not matching");
+			}else {
+				throw new RuntimeException("Passwords not matching");
+			}
 		}
-		User u = getPath().getUser("API_KEY",apiKey);
-		if (u == null){
-			return new RedirectorView( getPath(),"reset_password?ApiKey=" + apiKey +"&message=" + "Stale Link");
+		User u = getPath().getUser("API_KEY", apiKey);
+		if (u == null) {
+			if (getIntegrationAdaptor() == null) {
+				return new RedirectorView(getPath(), "reset_password?ApiKey=" + apiKey + "&message=" + "Stale Link");
+			}else {
+				throw new RuntimeException("Stale Link");
+			}
 		}
 		User user = u.getRawRecord().getAsProxy(User.class);
 		user.setChangePassword(password);
 		user.generateApiKey(true);
-		return new RedirectorView( getPath(),"/","login?message=Password Reset");
+		if (getIntegrationAdaptor() == null) {
+			return new RedirectorView(getPath(), "/", "login?message=Password Reset");
+		}else {
+			return getIntegrationAdaptor().createStatusResponse(getPath(),null,"Password Reset");
+		}
 	}
 	
     protected View constructModelListView(List<User> records, boolean isCompleteList){

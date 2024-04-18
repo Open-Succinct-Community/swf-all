@@ -643,6 +643,15 @@ public abstract class JdbcTypeHelper {
             	return new ByteArrayInputStream((byte[])o);
             			
             }
+            if (o instanceof String){
+                try {
+                    String s = (String)o;
+                    byte[] bytes = Base64.getDecoder().decode(s);
+                    return new ByteArrayInputStream(bytes);
+                }catch (IllegalArgumentException ex){ //If Decode fails
+                    //
+                }
+            }
             return new ByteArrayInputStream(StringUtil.valueOf(o).getBytes());
         }
 

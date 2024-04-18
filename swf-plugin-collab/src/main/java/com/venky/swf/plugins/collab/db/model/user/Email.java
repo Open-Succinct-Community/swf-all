@@ -1,8 +1,15 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public interface Email extends OtpEnabled {
@@ -21,5 +28,9 @@ public interface Email extends OtpEnabled {
             throw new RuntimeException("Email is invalid!");
         }
     }
+
+    @IS_VIRTUAL
+    public String getDomain();
+
 
 }

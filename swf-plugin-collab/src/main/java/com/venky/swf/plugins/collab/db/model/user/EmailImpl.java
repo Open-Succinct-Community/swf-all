@@ -3,9 +3,15 @@ package com.venky.swf.plugins.collab.db.model.user;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.util.MailUtil;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
-public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.user.Email> extends ModelImpl<T> {
+import java.util.List;
+
+public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.user.Email> extends OtpEnabledImpl<T> {
     public EmailImpl(){
         super();
     }
@@ -14,12 +20,7 @@ public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.u
     }
 
 
-    public void resendOtp(){
-        sendOtp(false);
-    }
-    public void sendOtp(){
-        sendOtp(true);
-    }
+
     public void sendOtp(boolean generateFresh) {
         T email = getProxy();
 
@@ -28,31 +29,24 @@ public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.u
         }
         email.setValidated(false);
         email.save();
-
         MailUtil.getInstance().sendMail(email.getEmail(),"Your verification code.", "Your verification code is : " + email.getLastOtp());
     }
 
-    public void validateOtp(String otp) {
-        T email = getProxy();
-        if (!ObjectUtil.equals(email.getLastOtp(), otp)) {
-            email.setValidated(false);
-        } else {
-            email.setValidated(true);
-            email.setLastOtp(null);
+
+
+    public String getDomain(){
+        Email proxy = getProxy();
+        String email = proxy.getEmail();
+        if (!ObjectUtil.isVoid(email)) {
+            Email.validate(email);
+            String[] parts = email.split("@");
+            if (parts.length != 2) {
+                throw new RuntimeException("Email Validation failed!");
+            }
+            return parts[1];
         }
-        email.save();
+        throw new RuntimeException("Email Validation failed!");
     }
 
-    public void validateOtp(){
-        validateOtp(getProxy().getOtp());
-    }
-
-    private String otp = null;
-    public String getOtp(){
-        return this.otp;
-    }
-    public void setOtp(String otp){
-        this.otp = otp;
-    }
 
 }

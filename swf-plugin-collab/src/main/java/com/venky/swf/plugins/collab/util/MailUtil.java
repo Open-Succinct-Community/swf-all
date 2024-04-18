@@ -30,7 +30,7 @@ public class MailUtil {
     }
     public void sendMail(String toEmailId,
                          String subject, String text){
-        TaskManager.instance().executeAsync(new MailTask(toEmailId,toEmailId,subject,text),true);
+        TaskManager.instance().executeAsync(new MailTask(toEmailId,toEmailId,subject,text),false);
     }
 
     public static class MailTask implements Task {
