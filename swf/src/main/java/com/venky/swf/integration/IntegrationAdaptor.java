@@ -73,12 +73,14 @@ public class IntegrationAdaptor<M extends Model,T> {
 		}
 		return adaptor;
 	}
-	
 	public List<M> readRequest(Path path){
+		return readRequest(path,false);
+	}
+	public List<M> readRequest(Path path,boolean saveRecursive){
             InputStream is = null;
             try {
                     is = path.getInputStream();
-                    return reader.read(is);
+                    return reader.read(is,saveRecursive);
             }catch(IOException ex){
                     throw new RuntimeException(ex);
             }finally {

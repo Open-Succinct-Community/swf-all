@@ -51,8 +51,11 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	} 
 	
 	@Override
-	public List<M> read(InputStream source) throws IOException{
-		return read(source,getBeanClass().getSimpleName());
+	/**
+	 * Save recursive is ignored in xls update
+	 */
+	public List<M> read(InputStream source,boolean saveRecursive) throws IOException{
+		return read(source,getBeanClass().getSimpleName(),saveRecursive);
 	}
 
 	public List<M> read(Sheet sheet){
@@ -75,7 +78,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
         Map<String,Integer> headingIndexMap = headingIndexMap(sheet);
         while (rowIterator.hasNext()){
         	Row row = rowIterator.next();
-        	M m = read(row,headingIndexMap,true,true);
+        	M m = read(row,headingIndexMap,true, true,true);
         	visitor.visit(m);
         }
 
@@ -150,27 +153,28 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 
 	
 	@Override
-	public M read(Row source) {
-		return read(source,true);
+	public M read(Row source,boolean saveRecursive) {
+		return read(source,true,saveRecursive);
 	}
 	@Override
-	public M read(Row source, boolean ensureAccessibleByLoggedInUser) {
-		return read(source,ensureAccessibleByLoggedInUser,true);
+	public M read(Row source, boolean ensureAccessibleByLoggedInUser,boolean saveRecursive) {
+		return read(source,ensureAccessibleByLoggedInUser,true,saveRecursive);
 	}
 
 	@Override
-	public M read(Row source, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement) {
+	public M read(Row source, boolean ensureAccessibleByLoggedInUser, boolean updateAttributesFromElement, boolean saveRecursive) {
 		Map<String,Integer> headingIndexMap = headingIndexMap(source.getSheet());
-		return read(source , headingIndexMap, ensureAccessibleByLoggedInUser,updateAttibutesFromElement);
+		return read(source , headingIndexMap, ensureAccessibleByLoggedInUser, updateAttributesFromElement,saveRecursive);
 	}
 
 
-	private M read(Row source,Map<String, Integer> headingIndexMap, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement){
+	private M read(Row source,Map<String, Integer> headingIndexMap, boolean ensureAccessibleByLoggedInUser, boolean updateAttributesFromElement,boolean saveRecursive){
 		M m = createInstance();
 		copyRowValuesToBean(m, source, headingIndexMap);
-		if (updateAttibutesFromElement){
+		if (updateAttributesFromElement){
 			M m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
 			copyRowValuesToBean(m1,source,headingIndexMap);
+			//saveRecursive is ignored.
 			return m1;
 		}else{
 			return Database.getTable(getBeanClass()).find(m,ensureAccessibleByLoggedInUser);
@@ -343,7 +347,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	}
 
 	@Override
-	public List<M> read(InputStream in, String rootElementName)
+	public List<M> read(InputStream in, String rootElementName,boolean saveRecursive)
 			throws IOException {
 
 		Workbook book = null;

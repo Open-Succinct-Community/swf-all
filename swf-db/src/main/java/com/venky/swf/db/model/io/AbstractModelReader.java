@@ -1,15 +1,20 @@
 package com.venky.swf.db.model.io;
 
+import com.venky.core.string.StringUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.integration.FormatHelper;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M> implements ModelReader<M, T> {
     public void setInvalidReferencesAllowed(boolean invalidReferencesAllowed) {
@@ -33,25 +38,62 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
         return FormatHelper.getMimeType(getFormatClass());
     }
 
-    public M read(T source) {
-        return read(source, true);
+    public M read(T source ,boolean saveRecursive) {
+        return read(source, true,saveRecursive);
     }
-    public M read(T source, boolean ensureAccessibleByLoggedInUser) {
-        return read(source,ensureAccessibleByLoggedInUser,true);
+    public M read(T source, boolean ensureAccessibleByLoggedInUser,boolean saveRecursive) {
+        return read(source,ensureAccessibleByLoggedInUser,true,saveRecursive);
     }
-    public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateAttibutesFromElement) {
+    public M read(T source, boolean ensureAccessibleByLoggedInUser, boolean updateAttributesFromElement,boolean saveRecursive) {
 
         M m = createInstance();
         FormatHelper<T> helper = FormatHelper.instance(source);
         load(m,helper);
 
         M m1 = null ;
-        if (updateAttibutesFromElement){
+        if (updateAttributesFromElement){
             m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
             load(m1, helper);
+            if (saveRecursive) {
+                m1.save(); //Needed to propagate the id.
+            }
+
             //Since we were loading on a new instance,
             // it is possible that some fields are not getting marked as dirty which need to be getting marked as dirty and null.
             // Hence this second load is required.
+            if (saveRecursive && !helper.getArrayElementNames().isEmpty()){
+                Set<String> processedChildElementNames = new HashSet<>();
+                for (Method childGetter : m1.getReflector().getChildGetters()){
+                    ModelReflector<? extends Model> childReflector = ModelReflector.instance(m1.getReflector().getChildModelClass(childGetter));
+                    String elementName = childReflector.getModelClass().getSimpleName();
+                    if (processedChildElementNames.contains(elementName)){
+                        continue;
+                    }
+                    processedChildElementNames.add(elementName);
+                    List<T> childElements = helper.getArrayElements(elementName);
+                    if (childElements.isEmpty()){
+                        continue;
+                    }
+                    CONNECTED_VIA connectedVia  = getReflector().getAnnotation(childGetter, CONNECTED_VIA.class);
+                    String parentAttributeName = null;
+                    if (connectedVia != null ){
+                        String connectedViaColumn = connectedVia.value();
+                        parentAttributeName = StringUtil.camelize(childReflector.getFieldName(connectedViaColumn));
+                    }else {
+                        List<Method> methods = childReflector.getReferredModelGetters(getReflector().getModelClass());
+                        if (methods.size() == 1){
+                            parentAttributeName = StringUtil.camelize(childReflector.getReferenceField(methods.get(0)));
+                        }
+                    }
+
+                    for (T childElement : childElements) {
+                        FormatHelper.instance(childElement).setAttribute(parentAttributeName,StringUtil.valueOf(m1.getId())); // Link parent with child
+                        ModelIOFactory.getReader(childReflector.getModelClass(),
+                                getFormatClass()).read(childElement,ensureAccessibleByLoggedInUser,true,true);
+                        //Saving done recursively
+                    }
+                }
+            }
         }else {
             m1 =  Database.getTable(getBeanClass()).find(m,ensureAccessibleByLoggedInUser);
         }

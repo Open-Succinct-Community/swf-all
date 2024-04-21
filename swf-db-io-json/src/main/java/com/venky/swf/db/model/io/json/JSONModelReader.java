@@ -23,12 +23,12 @@ public class JSONModelReader<M extends Model> extends AbstractModelReader<M, JSO
 	}
 	
 	@Override
-	public List<M> read(InputStream in) throws IOException {
-		return read(in,getBeanClass().getSimpleName());
+	public List<M> read(InputStream in,boolean saveRecursive) throws IOException {
+		return read(in,getBeanClass().getSimpleName(),saveRecursive);
 	}
 	
 	@Override
-	public List<M> read(InputStream in,String rootElementName) throws IOException{
+	public List<M> read(InputStream in,String rootElementName,boolean saveRecursive) throws IOException{
 		try {
 			JSONParser parser = new JSONParser();
 			List<M> list = new ArrayList<M>();
@@ -58,7 +58,7 @@ public class JSONModelReader<M extends Model> extends AbstractModelReader<M, JSO
 				if (oelement != null && oelement instanceof JSONObject){
 					element = (JSONObject)oelement;
 				}
-				list.add(read(element));
+				list.add(read(element,saveRecursive));
 			}
 			return list;
 		} catch (ParseException e) {

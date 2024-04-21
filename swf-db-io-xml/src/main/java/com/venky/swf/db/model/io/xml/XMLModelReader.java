@@ -16,16 +16,16 @@ public class XMLModelReader<M extends Model> extends AbstractModelReader<M,XMLEl
 		super(modelClass);
 	}
 	@Override 
-	public List<M> read(InputStream in) {
-		return read(in,getBeanClass().getSimpleName());
+	public List<M> read(InputStream in,boolean saveRecursive) {
+		return read(in,getBeanClass().getSimpleName(),saveRecursive);
 	}
 	@Override
-	public List<M> read(InputStream in,String rootElementName) {
+	public List<M> read(InputStream in,String rootElementName,boolean saveRecursive) {
 		List<M> ret = new ArrayList<M>();
 		XMLDocument doc = XMLDocument.getDocumentFor(in);
 		XMLElement root = doc.getDocumentRoot();
 		if (root.getNodeName().equals(rootElementName)){
-			ret.add(read(root));
+			ret.add(read(root,saveRecursive));
 		}else {
 			Iterator<XMLElement> pluralRootElementIterator = root.getChildElements(StringUtil.pluralize(rootElementName));
 		
@@ -40,7 +40,7 @@ public class XMLModelReader<M extends Model> extends AbstractModelReader<M,XMLEl
 			for (Iterator<XMLElement> elemIterator = root.getChildElements(rootElementName) ; elemIterator.hasNext() ; ){
 				XMLElement e = elemIterator.next();
 				if (e.getNodeName().equals(rootElementName)) {
-					ret.add(read(e));
+					ret.add(read(e,saveRecursive));
 				}
 			}
 		}

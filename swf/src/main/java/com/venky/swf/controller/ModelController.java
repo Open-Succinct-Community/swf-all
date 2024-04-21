@@ -1287,7 +1287,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected <T> List<M>   persistModelsFromRequest() {
-        List<M> models = integrationAdaptor.readRequest(getPath());
+        List<M> models = integrationAdaptor.readRequest(getPath(),true);
         persistModels(models);
         return models;
     }
@@ -1295,14 +1295,11 @@ public class ModelController<M extends Model> extends Controller {
     protected void persistModels(List<M> models) {
         for (M m : models) {
             try {
+                // We would have already save these models while reading.
                 save(m, getModelClass());
-            } catch (Exception ex) {
+            } catch (RuntimeException ex) {
                 Database.getInstance().getCache(getReflector()).clear();
-                if (ex instanceof RuntimeException) {
-                    throw (RuntimeException) ex;
-                } else {
-                    throw new RuntimeException(ex);
-                }
+                throw ex;
             }
         }
     }
