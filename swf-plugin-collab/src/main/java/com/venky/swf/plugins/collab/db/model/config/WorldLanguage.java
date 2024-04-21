@@ -2,7 +2,9 @@ package com.venky.swf.plugins.collab.db.model.config;
 
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
+@MENU("World")
 
 public interface WorldLanguage extends Model {
     @UNIQUE_KEY

@@ -14,7 +14,7 @@ import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 
-@MENU("Admin")
+@MENU("Tasks")
 @EXPORTABLE(false)
 public interface DelayedTask extends Task, Model {
 	public InputStream getData();

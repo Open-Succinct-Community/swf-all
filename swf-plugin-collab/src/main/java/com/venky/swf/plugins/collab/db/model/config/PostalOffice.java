@@ -5,10 +5,12 @@ import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
 @EXPORTABLE(false)
+@MENU("Geography")
 public interface PostalOffice extends Model {
 
     public String getOfficeName();

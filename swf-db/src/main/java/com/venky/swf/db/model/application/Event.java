@@ -4,11 +4,12 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.validations.RegEx;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.api.EventHandler;
 
 import java.util.List;
-
+@MENU("Admin")
 public interface Event extends Model {
 
     @UNIQUE_KEY

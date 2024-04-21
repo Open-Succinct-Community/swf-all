@@ -160,6 +160,12 @@ public class ModelListView<M extends Model> extends AbstractModelView<M> {
         		exportxls.addControl(new Glyphicon("glyphicon-download","Download data as xls"));
     			links.add(exportxls);
         	}
+			if (getPath().canAccessControllerAction("erd")){
+				HotLink erdLink = new HotLink();
+				erdLink.setUrl(getPath().controllerPath()+"/erd");
+				erdLink.addControl(new Glyphicon("fa-sitemap","See ERD for this entity"));
+				links.add(erdLink);
+			}
     	}
     	return links;
     }

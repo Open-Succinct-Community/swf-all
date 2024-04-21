@@ -281,6 +281,38 @@ $(document).ready(function () {
         }
     });
 });
+document.addEventListener( "DOMContentLoaded" , function(){
+    if (mermaid){
+        var targets = document.querySelectorAll(".mermaid");
+        targets.forEach(target => {
+            // create an observer instance
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type= 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].nodeName == 'svg' ) {
+                        var entities = mutation.addedNodes[0].querySelectorAll("g");
+                        entities.forEach(entity=>{
+                            var textNode = entity.querySelector("text.entityLabel");
+                            if (textNode){
+                                textNode.innerHTML ='<a href="/'+textNode.textContent.toLowerCase() +'/erd" >' + textNode.textContent + "</a>"
+                            }
+                        })
+
+                    }
+                });
+            });
+            var config = { attributes: true, childList: true, characterData: true }
+
+            // pass in the target node, as well as the observer options
+            observer.observe(target, config);
+        });
+
+        // configuration of the observer:
+        mermaid.initialize({
+          startOnLoad: true,
+          securityLevel: "loose",
+        });
+    }
+});
 
 function api() {
     var _url ;

@@ -8,11 +8,13 @@ import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.application.ApplicationPublicKey;
 
 import java.security.KeyPair;
 
 @HAS_DESCRIPTION_FIELD("ALIAS")
+@MENU("Security")
 public interface CryptoKey extends Model {
     @Index
     @UNIQUE_KEY

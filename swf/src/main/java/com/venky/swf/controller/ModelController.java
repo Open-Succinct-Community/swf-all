@@ -24,6 +24,7 @@ import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
+import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
@@ -64,6 +65,8 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
+import com.venky.swf.views.controls._IControl;
+import com.venky.swf.views.controls.page.layout.Pre;
 import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
@@ -100,8 +103,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -1520,5 +1525,97 @@ public class ModelController<M extends Model> extends Controller {
         }else {
             return getReturnIntegrationAdaptor().createStatusResponse(getPath(),null);
         }
+    }
+
+    public View erd(){
+        StringBuilder erd = new StringBuilder("---\ntitle: %s\n---\nerDiagram\n".formatted(getModelClass().getSimpleName()));Set<String> childTables = new SequenceSet<>();
+        Set<String> parentTables = new SequenceSet<>();
+
+        ModelReflector<M> ref = getReflector();
+
+        ref.getChildModels().forEach(m->childTables.add(ModelReflector.instance(m).getTableName()));
+
+
+        for (String referenceField : ref.getReferenceFields()) {
+            if (ref.isHouseKeepingField(referenceField)){
+                continue;
+            }
+            Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(ref.getFieldGetter(referenceField)));
+            parentTables.add(ModelReflector.instance(referredModelClass).getTableName());
+        }
+        for (String parentTableName : parentTables){
+            Table<? extends Model> parentTable = Database.getTable(parentTableName);
+            if (parentTable != null) {
+                erd.append(erd(parentTable, new SequenceSet<>()));  // Print fields of parents.
+            }
+        }
+
+        erd.append(erd(Database.getTable(getModelClass()),parentTables));
+
+        for (String childTableName : childTables){
+            Table<? extends Model> childTable = Database.getTable(childTableName);
+            if (childTable == null){
+                continue;
+            }
+            erd.append(erd(childTable,new SequenceSet<>(){{
+                add(ref.getTableName());
+            }}));
+        }
+
+        Pre pre = new Pre();
+        pre.addClass("mermaid");
+        pre.setText(erd.toString());
+
+        return new HtmlView(getPath()) {
+            @Override
+            protected void createBody(_IControl b) {
+                b.addControl(pre);
+            }
+        };
+    }
+    public String erd(Table<? extends Model> table,  Set<String> referenceTablesToBeIncluded){
+        ModelReflector<? extends Model> ref = table.getReflector();
+
+
+        StringBuilder fields = new StringBuilder();
+        StringBuilder references = new StringBuilder();
+
+        fields.append("\n").append(table.getTableName()).append("{");
+        List<String> referenceFields = ref.getReferenceFields();
+
+        ref.getRealFields().forEach(rf->{
+            Method fieldGetter = ref.getFieldGetter(rf);
+            fields.append("\n\t").append(fieldGetter.getReturnType().getSimpleName()) .append(" ").append(rf);
+
+            UNIQUE_KEY uk= ref.getAnnotation(fieldGetter, UNIQUE_KEY.class);
+            StringBuilder comment = new StringBuilder();
+            if (uk != null) {
+                comment.append(" ").append(uk.value());
+            }
+
+            if (referenceFields.contains(rf)) {
+                comment.append(" ").append("FK");
+                Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(fieldGetter));
+                ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+                if (referenceTablesToBeIncluded.contains(referredModelReflector.getTableName())){
+                    references.append("\n").append(referredModelReflector.getTableName()).append("|");
+
+                    if (ref.getColumnDescriptor(rf).isNullable()) {
+                        references.append("o--o{ ").append(table.getTableName());
+                    } else {
+                        references.append("|--o{ ").append(table.getTableName());
+                    }
+                    references.append(" : has ");
+                }
+            }
+
+            if (!comment.isEmpty() ) {
+                fields.append("\"").append(comment).append("\"");
+            }
+        });
+
+        fields.append("\n}");
+        fields.append(references);
+        return fields.toString();
     }
 }

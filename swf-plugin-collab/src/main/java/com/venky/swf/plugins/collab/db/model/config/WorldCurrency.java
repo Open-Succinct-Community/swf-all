@@ -1,8 +1,10 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
 import com.venky.swf.db.annotations.column.indexing.Index;
+import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 
+@MENU("World")
 public interface WorldCurrency extends Model {
 
     @Index
