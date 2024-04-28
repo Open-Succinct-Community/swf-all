@@ -154,7 +154,7 @@ public class AsyncTaskManager  {
 
 			JSONObject jsonObject = new Call<Object>().url(getQueueServerURL()+"/push").headers(headers).timeOut(timeOut).
 					method(HttpMethod.POST).inputFormat(InputFormat.INPUT_STREAM).input(os.toByteArray()).getResponseAsJson();
-			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read((JSONObject)jsonObject.get(ModelReflector.instance(SWFHttpResponse.class).getModelClass().getSimpleName()));
+			SWFHttpResponse response = new JSONModelReader<SWFHttpResponse>(SWFHttpResponse.class).read((JSONObject)jsonObject.get(ModelReflector.instance(SWFHttpResponse.class).getModelClass().getSimpleName()),false);
 
 			if (!ObjectUtil.equals(response.getStatus(),"OK")){
 				throw new RuntimeException("Unable to push Tasks to the queue server.");

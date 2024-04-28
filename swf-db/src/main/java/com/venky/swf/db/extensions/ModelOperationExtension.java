@@ -27,12 +27,12 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
 
     protected static <M extends Model> void registerExtension(ModelOperationExtension<M> instance){
         for (ModelOperationExtensionPoint value : ModelOperationExtensionPoint.values()) {
-            Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +"." +value.extensionPointName(), instance);
+            Registry.instance().registerExtension(instance.getModelClass().getSimpleName() +"." +value.extensionPointName(), instance);
         }
     }
     protected static <M extends Model> void deregisterExtension(ModelOperationExtension<M> instance){
         for (ModelOperationExtensionPoint value : ModelOperationExtensionPoint.values()) {
-            Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +"." + value.extensionPointName(), instance);
+            Registry.instance().deregisterExtension(instance.getModelClass().getSimpleName() +"." + value.extensionPointName(), instance);
         }
     }
     @SuppressWarnings("unchecked")
@@ -40,12 +40,15 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
         ParameterizedType pt = (ParameterizedType)instance.getClass().getGenericSuperclass();
         return (Class<M>) pt.getActualTypeArguments()[0];
     }
+    protected Class<M> getModelClass(){
+        return getModelClass(this);
+    }
 
     @SuppressWarnings("unchecked")
     @Override
     public void invoke(Object... context){
         M instance = (M) context[0];
-        String pointName = ((String) context[1]).substring(getModelClass(this).getSimpleName().length()  + 1);
+        String pointName = ((String) context[1]).substring(getModelClass().getSimpleName().length()  + 1);
         ModelOperationExtensionPoint modelOperationExtensionPoint = ModelOperationExtensionPoint.extensionPoint(pointName);
         switch (modelOperationExtensionPoint){
             case before_validate:

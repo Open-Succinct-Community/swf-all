@@ -12,13 +12,7 @@ import java.util.List;
 
 public interface MasterFacilityCategory extends Model{
 
-	@PARTICIPANT
-	@IS_NULLABLE(false)
-	@PROTECTION(Kind.NON_EDITABLE)
-	@UNIQUE_KEY
-	public long getCompanyId(); 
-	public void setCompanyId(long id); 
-	public Company getCompany(); 
+
 	
 	@UNIQUE_KEY
 	public String getName();

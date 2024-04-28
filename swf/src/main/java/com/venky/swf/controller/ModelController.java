@@ -1525,7 +1525,8 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View erd(){
-        StringBuilder erd = new StringBuilder("---\ntitle: %s\n---\nerDiagram\n".formatted(getModelClass().getSimpleName()));Set<String> childTables = new SequenceSet<>();
+        StringBuilder erd = new StringBuilder("erDiagram\n");
+        Set<String> childTables = new SequenceSet<>();
         Set<String> parentTables = new SequenceSet<>();
 
         ModelReflector<M> ref = getReflector();
