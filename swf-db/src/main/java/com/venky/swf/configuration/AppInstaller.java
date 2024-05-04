@@ -5,6 +5,7 @@ import com.venky.core.collections.IgnoreCaseList;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.encryption.EncryptedField;
@@ -19,11 +20,20 @@ import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 import com.venky.swf.sql.Update;
 import com.venky.swf.util.SharedKeys;
+import org.apache.commons.io.FileUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class AppInstaller implements Installer {
@@ -32,7 +42,54 @@ public class AppInstaller implements Installer {
 		fixUserName();
 		fixUserPasswords();
 		migrateEncryptedModels();
+		installIndexes();
 	}
+	private void installIndexes()  {
+		for (String pool : ConnectionManager.instance().getPools()){
+			StringBuilder path = new StringBuilder();
+			path.append("database/indexes");
+			if (!ObjectUtil.isVoid(pool)){
+				path.append("/").append(pool);
+			}
+			File dir = new File(path.toString());
+			if (!dir.exists()){
+				continue;
+			}
+			for (File file : Objects.requireNonNull(dir.listFiles((dir1, name) -> name.endsWith(".sql")))) {
+				File doneFile = new File(file.getPath() +".done");
+				if (doneFile.exists()) {
+					continue;
+				}
+				if (!file.exists()){
+					continue;
+				}
+
+				try{
+					InputStream inputStream = new FileInputStream(file);
+					BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+					reader.lines().forEach(sql->{
+						try {
+							Config.instance().getLogger(getClass().getName()).log(Level.INFO,sql);
+							PreparedStatement statement = Database.getInstance().createStatement(pool, sql);
+							statement.execute();
+
+						}catch (Exception ex){
+							Config.instance().getLogger(getClass().getName()).log(Level.WARNING,sql ,ex);
+						}finally {
+							try {
+								FileUtils.touch(doneFile);
+							}catch (Exception ex){
+								Config.instance().getLogger(getClass().getName()).log(Level.WARNING,sql ,ex);
+							}
+						}
+					});
+				}catch (Exception ex){
+					Config.instance().getLogger(getClass().getName()).log(Level.WARNING,ex.getMessage() ,ex);
+				}
+			}
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	protected  void migrateEncryptedModels() {
 		List<String> modelClasses = Config.instance().getModelClasses();

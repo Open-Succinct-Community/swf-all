@@ -157,9 +157,6 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
             }
 
             Object attrValue = helper.getAttribute(attributeName) ;
-            if (attrValue == null && !helper.hasAttribute(attributeName)){
-                continue;
-            }
             Class<?> valueClass = getReflector().getFieldGetter(fieldName).getReturnType();
 
             ColumnDescriptor columnDescriptor = getReflector().getColumnDescriptor(fieldName);

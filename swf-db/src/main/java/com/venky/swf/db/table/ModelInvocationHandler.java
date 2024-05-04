@@ -57,6 +57,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -453,11 +454,11 @@ public class ModelInvocationHandler implements InvocationHandler {
 				return new ModelImpl<M>(m);
 			}else {
 				ParameterizedType pt = (ParameterizedType)implClass.getGenericSuperclass();
-				Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
 				try {
+					Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
 					return implClass.getConstructor(modelClass).newInstance(m);
 				} catch (Exception e) {
-					throw new RuntimeException(e);
+					throw new RuntimeException("Don't know how to instantiate " + implClass.getName() , e);
 				}
 			}
 		}
@@ -530,8 +531,10 @@ public class ModelInvocationHandler implements InvocationHandler {
 				String modelImplClassName = c.getName()+"Impl";
 				try { 
 					Class<?> modelImplClass = Class.forName(modelImplClassName);
-					if (ModelImpl.class.isAssignableFrom(modelImplClass)){
-						modelImplClasses.add(modelImplClass);
+					if (ModelImpl.class.isAssignableFrom(modelImplClass) ){
+						if (!Modifier.isAbstract(modelImplClass.getModifiers())) {
+							modelImplClasses.add(modelImplClass);
+						}
 					}else {
 						throw new ClassCastException(modelImplClassName + " does not extend " + ModelImpl.class.getName());
 					}

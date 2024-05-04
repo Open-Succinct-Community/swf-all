@@ -1,11 +1,22 @@
 package com.venky.swf.db.extensions;
 
+import com.venky.core.string.StringUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.Model;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
+/**
+ * Must be extended only once if this class is extended two level deep, the the grand child must implement all
+ * methods implemented by its parent and defer to the parent with super call. Thats the only way to ensure all extensions
+ * are registered correctly. This class used declared methods to optimize installing call outs/extension..
+ * @param <M>
+ */
 public abstract class  ModelOperationExtension<M extends Model> implements Extension {
     enum ModelOperationExtensionPoint {
         before_validate,
@@ -23,11 +34,30 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
         public static ModelOperationExtensionPoint extensionPoint(String exptName){
             return ModelOperationExtensionPoint.valueOf(exptName.replace('.','_'));
         }
+        public String getMethodName(){
+            return StringUtil.camelize(name(),false);
+        }
     }
+    public static final Set<String> overrideableMethods = Collections.unmodifiableSet(new HashSet<>(){{
+        for (ModelOperationExtensionPoint value : ModelOperationExtensionPoint.values()) {
+            add(value.getMethodName());
+        }
+    }});
+
 
     protected static <M extends Model> void registerExtension(ModelOperationExtension<M> instance){
+        Method[] methods = instance.getClass().getDeclaredMethods();
+        Set<String> overriddenMethods = new HashSet<>();
+        for (Method method : methods){
+            if (overrideableMethods.contains(method.getName()) && method.getParameterCount() == 1 &&
+                    method.getParameterTypes()[0] == instance.getModelClass()) {
+                overriddenMethods.add(method.getName());
+            }
+        }
         for (ModelOperationExtensionPoint value : ModelOperationExtensionPoint.values()) {
-            Registry.instance().registerExtension(instance.getModelClass().getSimpleName() +"." +value.extensionPointName(), instance);
+            if (overriddenMethods.contains(value.getMethodName())) {
+                Registry.instance().registerExtension(instance.getModelClass().getSimpleName() + "." + value.extensionPointName(), instance);
+            }
         }
     }
     protected static <M extends Model> void deregisterExtension(ModelOperationExtension<M> instance){

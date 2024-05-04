@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.TimeZone;
 
 public class AppInstaller implements Installer {
@@ -64,7 +65,11 @@ public class AppInstaller implements Installer {
             }
             Country country= countryMap.get(l.getCountry());
             country.setName(l.getDisplayCountry());
-            country.setIsoCode(l.getISO3Country());
+            try {
+                country.setIsoCode(l.getISO3Country());
+            }catch (MissingResourceException ex){
+                country.setIsoCode(country.getIsoCode2());
+            }
         });
         countryMap.values().forEach(o->o.save());
     }
