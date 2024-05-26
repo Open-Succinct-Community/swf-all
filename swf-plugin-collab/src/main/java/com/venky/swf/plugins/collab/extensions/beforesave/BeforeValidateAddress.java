@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.extensions.beforesave;
 import com.venky.swf.db.extensions.BeforeModelValidateExtension;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.plugins.collab.db.model.config.PinCode;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.plugins.collab.db.model.user.Phone;
 import com.venky.swf.plugins.collab.db.model.user.User;
@@ -35,10 +36,15 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
                 throw new RuntimeException("Email is invalid!");
             }
         }
-        if (model.getCityId() != null) {
+        if (model.getPinCodeId()  != null) {
+            PinCode pinCode = model.getPinCode();
+            model.setCityId(pinCode.getCityId());
+            model.setStateId(pinCode.getStateId());
+        }
+        if (model.getCityId() != null && model.getStateId() == null) {
             model.setStateId(model.getCity().getStateId());
         }
-        if (model.getStateId() != null) {
+        if (model.getStateId() != null && model.getCountryId() == null) {
             model.setCountryId(model.getState().getCountryId());
         }
     }

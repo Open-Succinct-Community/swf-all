@@ -40,7 +40,7 @@ public interface ApplicationPublicKey extends Model {
 
     @UNIQUE_KEY("KeyId")
     public String getKeyId();
-    public void setKeyId(String keyId);
+    public void     setKeyId(String keyId);
 
     @IS_NULLABLE
     public Timestamp getValidFrom();

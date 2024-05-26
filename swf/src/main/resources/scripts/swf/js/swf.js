@@ -289,6 +289,7 @@ document.addEventListener( "DOMContentLoaded" , function(){
             var observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     if (mutation.type= 'childList' && mutation.addedNodes.length > 0 && mutation.addedNodes[0].nodeName == 'svg' ) {
+                        mutation.addedNodes[0].setAttribute("width","400%"); //the default 100% is too tiny fonts.
                         var entities = mutation.addedNodes[0].querySelectorAll("g");
                         entities.forEach(entity=>{
                             var textNode = entity.querySelector("text.entityLabel");

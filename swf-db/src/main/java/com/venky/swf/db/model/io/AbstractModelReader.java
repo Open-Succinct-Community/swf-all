@@ -48,12 +48,12 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
 
         M m = createInstance();
         FormatHelper<T> helper = FormatHelper.instance(source);
-        load(m,helper);
+        load(m,helper,saveRecursive);
 
         M m1 = null ;
         if (updateAttributesFromElement){
             m1 = Database.getTable(getBeanClass()).getRefreshed(m,ensureAccessibleByLoggedInUser);
-            load(m1, helper);
+            load(m1, helper,saveRecursive);
             if (saveRecursive) {
                 m1.save(); //Needed to propagate the id.
             }
@@ -100,7 +100,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
 
         return m1;
     }
-    private void load(M m, FormatHelper<T>helper){
+    private void load(M m, FormatHelper<T>helper , boolean saveRecursive){
         set(m, helper);
 
         for (Method referredModelGetter : getReflector().getReferredModelGetters()) {
@@ -119,7 +119,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                     }
                     ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>) ModelIOFactory.getReader(referredModelClass, formatClass);
                     reader.setInvalidReferencesAllowed(isInvalidReferencesAllowed());
-                    Model referredModel = reader.read(refElement, false,false);
+                    Model referredModel = reader.read(refElement, false,saveRecursive);
                     if (referredModel != null) {
                         if (referredModel.getRawRecord().isNewRecord()) {
                             if (!isInvalidReferencesAllowed()) {

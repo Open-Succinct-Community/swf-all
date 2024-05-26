@@ -23,7 +23,7 @@ import java.util.List;
 @HAS_DESCRIPTION_FIELD("APP_ID")
 @MENU("Onboarding")
 
-public interface Application extends Model {
+public interface    Application extends Model {
     @UNIQUE_KEY
     @IS_NULLABLE(false)
     @Index
@@ -84,8 +84,8 @@ public interface Application extends Model {
     public void setIndustryClassificationCode(String industryClassificationCode);
 
 
-    public List<EventHandler> getEventHandlers(); //
     public List<EndPoint> getEndPoints();
+    public List<EventHandler> getEventHandlers(); //
     public List<WhiteListIp> getWhiteListIps();
     public List<ApplicationPublicKey> getApplicationPublicKeys();
 

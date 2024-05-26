@@ -13,7 +13,7 @@ public class IssueParticipantExtension extends CompanySpecificParticipantExtensi
         registerExtension(new IssueParticipantExtension());
     }
     @Override
-    protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Issue partiallyFilledModel, String fieldName) {
+    public List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Issue partiallyFilledModel, String fieldName) {
         User u = user.getRawRecord().getAsProxy(User.class);
 
         if ("COMPANY_ID".equalsIgnoreCase(fieldName)){

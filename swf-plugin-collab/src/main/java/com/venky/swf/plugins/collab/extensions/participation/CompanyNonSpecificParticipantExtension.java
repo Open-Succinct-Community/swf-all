@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class CompanyNonSpecificParticipantExtension<M extends Model & CompanyNonSpecific> extends ParticipantExtension<M>{
 
 	@Override
-	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, M partiallyFilledModel, String fieldName) {
+	public List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, M partiallyFilledModel, String fieldName) {
 		
 		User u = (User)user;
 		if (partiallyFilledModel != null){

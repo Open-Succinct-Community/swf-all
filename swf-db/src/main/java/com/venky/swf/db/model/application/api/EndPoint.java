@@ -44,6 +44,7 @@ public interface EndPoint extends Model {
     public void setTokenValue(String tokenValue);
 
     @IS_NULLABLE
+    @UNIQUE_KEY
     public Long getOpenApiId();
     public void setOpenApiId(Long id);
     public OpenApi getOpenApi();

@@ -646,6 +646,13 @@ public abstract class JdbcTypeHelper {
             if (o instanceof String){
                 try {
                     String s = (String)o;
+                    if (s.startsWith("data:") ){
+                        String prefix = "base64,";
+                        int index = s.indexOf(prefix);
+                        if (index > 0){
+                            s = s.substring(index+prefix.length());
+                        }
+                    }
                     byte[] bytes = Base64.getDecoder().decode(s);
                     return new ByteArrayInputStream(bytes);
                 }catch (IllegalArgumentException ex){ //If Decode fails

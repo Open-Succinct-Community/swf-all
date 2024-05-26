@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +13,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.routing.Config;
 
 
@@ -23,7 +23,7 @@ public abstract class FormatHelper<T> {
 	}
 
 	protected void fixInputCase(){
-		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
+		KeyCase keyCase = getKeyCase();
 
 		if (keyCase != KeyCase.CAMEL){
 			change_key_case(KeyCase.CAMEL);
@@ -34,14 +34,17 @@ public abstract class FormatHelper<T> {
 	}
 
 	protected boolean isRootElementNameRequired(){
-		return Config.instance().getBooleanProperty("swf.api.root.required",true);
+		return Config.instance().isRootElementNameRequiredForApis();
+	}
+	protected KeyCase getKeyCase(){
+		return Config.instance().getApiKeyCase();
 	}
 	protected void fixOutputCase(){
 		if (!isRootElementNameRequired() && !isPlural() && getElementAttribute(getRootName()) != null) {
 			T element = getElementAttribute(getRootName());
 			setRoot(element);
 		}
-		KeyCase keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
+		KeyCase keyCase = getKeyCase();
 
 		if (keyCase != KeyCase.CAMEL){
 			change_key_case(keyCase);
@@ -163,10 +166,7 @@ public abstract class FormatHelper<T> {
 
 	public abstract void removeAttribute(String name) ;
 
-	public enum KeyCase {
-		SNAKE,
-		CAMEL,
-	}
+
 	public T change_key_case(KeyCase toKeyCase){
 		FormatHelper<T> helper = this;
 		for (String name : helper.getAttributes()){

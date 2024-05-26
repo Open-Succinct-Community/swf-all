@@ -108,7 +108,12 @@ public interface Company extends Model{
 	public int getLogoContentSize();
 	public void setLogoContentSize(int size);
 
-	
+	public String getRegistrationNumber();
+	public void setRegistrationNumber(String registrationNumber);
+
+	public String getTaxIdentificationNumber();
+	public void setTaxIdentificationNumber(String taxIdentificationNumber);
+
 	public List<Facility> getFacilities();
 	
 	@CONNECTED_VIA("COMPANY_ID")
@@ -140,4 +145,12 @@ public interface Company extends Model{
 	public void setWorkCalendarId(Long WorkCalendarId);
 	public WorkCalendar getWorkCalendar();
 
+
+	@Override
+	@Index
+	Long getCreatorUserId();
+
+	@Override
+	@Index
+	Long getUpdaterUserId();
 }

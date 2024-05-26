@@ -255,7 +255,12 @@ public class Controller implements TemplateLoader{
     @RequireLogin(false)
     public View logout() {
         invalidateSession();
-        return new RedirectorView(getPath(), "/", "");
+        String redirect_to = (String)getPath().getFormFields().get("_redirect_to");
+        if (ObjectUtil.isVoid(redirect_to)){
+            redirect_to = "/";
+        }
+        
+        return new RedirectorView(getPath(), redirect_to, "");
     }
 
     public View dashboard() {

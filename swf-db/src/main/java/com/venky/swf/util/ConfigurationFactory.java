@@ -9,6 +9,7 @@ import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 
 import java.io.File;
+import java.nio.file.Files;
 
 public class ConfigurationFactory {
     private static volatile ConfigurationFactory sSoleInstance;
@@ -42,9 +43,9 @@ public class ConfigurationFactory {
             try {
                 File dir = null;
                 if (!ObjectUtil.isVoid(directory)) {
-                    dir = new File(directory);
+                    dir = new File(new File(directory).getCanonicalPath());
                 }
-                if (dir != null && dir.exists() && dir.isDirectory()) {
+                if (dir != null && dir.exists() && dir.isDirectory() ) {
                     cfg.setDirectoryForTemplateLoading(dir);
                 } else {
                     cfg.setClassForTemplateLoading(ConfigurationFactory.class, directory);

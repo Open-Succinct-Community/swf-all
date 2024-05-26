@@ -10,9 +10,12 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.UserEmail;
+import com.venky.swf.db.model.io.ModelIOFactory;
 import com.venky.swf.extensions.DefaultSocialLoginInfoExtractor;
+import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
@@ -38,6 +41,8 @@ import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.owasp.encoder.Encode;
+import org.owasp.encoder.Encoder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -47,6 +52,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -62,30 +68,34 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 public class OidController extends Controller{
 
 	public enum OAuthProviderType {
-		FACEBOOK("facebook","https://graph.facebook.com","/oauth/authorize", "/oauth/access_token"),
-		FOURSQUARE("foursquare", "https://foursquare.com","/oauth2/authenticate", "/oauth2/access_token"),
-		GITHUB("GitHub", "https://github.com","/login/oauth/authorize", "/login/oauth/access_token"),
-		GOOGLE("Google", "https://accounts.google.com","/o/oauth2/auth", "/o/oauth2/token"),
-		INSTAGRAM("Instagram", "https://api.instagram.com","/oauth/authorize", "/oauth/access_token"),
-		LINKEDIN("LinkedIn", "https://www.linkedin.com","/uas/oauth2/authorization", "/uas/oauth2/accessToken"),
-		MICROSOFT("Microsoft", "https://login.live.com","/oauth20_authorize.srf", "/oauth20_token.srf"),
-		PAYPAL("PayPal", "https://identity.x.com","/xidentity/resources/authorize", "/xidentity/oauthtokenservice"),
-		REDDIT("reddit", "https://ssl.reddit.com","/api/v1/authorize", "/api/v1/access_token"),
-		SALESFORCE("salesforce", "https://login.salesforce.com","/services/oauth2/authorize", "/services/oauth2/token"),
-		YAMMER("Yammer", "https://www.yammer.com","/dialog/oauth", "/oauth2/access_token.json"),
-		HUMBOL("HumBhiOnline","https://id.humbhionline.in","/oauth/authorize","/oauth/token");
+		FACEBOOK("facebook","https://graph.facebook.com","/oauth/authorize", "/oauth/access_token","/logout"),
+		FOURSQUARE("foursquare", "https://foursquare.com","/oauth2/authenticate", "/oauth2/access_token","/logout"),
+		GITHUB("GitHub", "https://github.com","/login/oauth/authorize", "/login/oauth/access_token","/logout"),
+		GOOGLE("Google", "https://accounts.google.com","/o/oauth2/auth", "/o/oauth2/token","/logout"),
+		INSTAGRAM("Instagram", "https://api.instagram.com","/oauth/authorize", "/oauth/access_token","/logout"),
+		LINKEDIN("LinkedIn", "https://www.linkedin.com","/uas/oauth2/authorization", "/uas/oauth2/accessToken","/logout"),
+		MICROSOFT("Microsoft", "https://login.live.com","/oauth20_authorize.srf", "/oauth20_token.srf","/logout"),
+		PAYPAL("PayPal", "https://identity.x.com","/xidentity/resources/authorize", "/xidentity/oauthtokenservice","/logout"),
+		REDDIT("reddit", "https://ssl.reddit.com","/api/v1/authorize", "/api/v1/access_token","/logout"),
+		SALESFORCE("salesforce", "https://login.salesforce.com","/services/oauth2/authorize", "/services/oauth2/token","/logout"),
+		YAMMER("Yammer", "https://www.yammer.com","/dialog/oauth", "/oauth2/access_token.json","/logout"),
+		HUMBOL("HumBhiOnline","https://id.humbhionline.in","/oauth/authorize","/oauth/token","/logout?_redirect_to="+ Encode.forUriComponent(Config.instance().getServerBaseUrl()));
 
 		private String providerName;
 		private String authzEndpoint;
 		private String tokenEndpoint;
 		private String defaultBaseUrl;
+		private String logoutEndPoint;
+		OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint){
+			this(providerName,defaultBaseUrl,authzEndpoint,tokenEndpoint,null);
+		}
 
-
-		OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint) {
+	  	OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint, String logoutEndPoint) {
 			this.providerName = providerName;
 			this.authzEndpoint = authzEndpoint;
 			this.tokenEndpoint = tokenEndpoint;
 			this.defaultBaseUrl = defaultBaseUrl;
+			this.logoutEndPoint = logoutEndPoint;
 		}
 
 		public String authzEndpoint(String overrideBaseUrl) {
@@ -94,6 +104,10 @@ public class OidController extends Controller{
 
 		public String tokenEndPoint(String overrideBaseUrl){
 			return  String.format("%s%s",overrideBaseUrl != null ?overrideBaseUrl : defaultBaseUrl ,tokenEndpoint) ;
+		}
+
+		public String logoutEndPoint(String overrideBaseUrl){
+			return  String.format("%s%s",overrideBaseUrl != null ?overrideBaseUrl : defaultBaseUrl ,logoutEndPoint) ;
 		}
 	}
 
@@ -205,6 +219,8 @@ public class OidController extends Controller{
 		public String iss() {
 			return iss;
 		}
+
+
 	}
 	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
@@ -221,9 +237,9 @@ public class OidController extends Controller{
 
 
 		for (Map.Entry<String,Map<String,String>> group : getHumBolProviders().entrySet()) {
-			oidproviderMap.put(group.getKey(), new OIDProvider(group.getKey(), group.getValue().get(String.format("swf.%s.base.url",group.getKey())) ,
-					OAuthProviderType.HUMBOL, "",
-					OAuthJSONAccessTokenResponse.class, group.getValue().get(String.format("swf.%s.resource.url",group.getKey())), "all",
+			oidproviderMap.put(group.getKey(), new OIDProvider(group.getKey(), group.getValue().get("base.url") ,
+					OAuthProviderType.HUMBOL, group.getValue().get("base.url"),
+					OAuthJSONAccessTokenResponse.class, group.getValue().get("resource.url"), "all",
 					GrantType.AUTHORIZATION_CODE, true,
 					true));
 		}
@@ -270,6 +286,17 @@ public class OidController extends Controller{
 			return createLoginView(StatusType.ERROR,e.getMessage());
 		} 
 	}
+	@RequireLogin(false)
+	public View logout() {
+		invalidateSession();
+		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
+		if (ObjectUtil.isVoid(selectedOpenId)){
+			throw new RuntimeException("Open id provider not specified");
+		}
+		OIDProvider provider = oidproviderMap.get(selectedOpenId);
+
+		return new RedirectorView(getPath(), provider.providerType.logoutEndPoint(provider.overrideBaseUrl),"");
+	}
 
 	@RequireLogin(false)
 	public View linkedin()throws OAuthProblemException, OAuthSystemException, ParseException{
@@ -294,36 +321,16 @@ public class OidController extends Controller{
 		try {
 	        JSONObject userObject = provider.authorize(code,redirectedTo);
 			String email = (String)userObject.get("email");
-    		User u = null;
-			Select select = new Select().from(UserEmail.class);
-			select.where(new Expression(select.getPool(),"email",Operator.EQ, email));
-			List<UserEmail> oids = select.execute(UserEmail.class);
-			int numOids = oids.size();
-			
-			if (numOids > 0) {
-    			SortedSet<Long> numUsers = new TreeSet<Long>();
-    			for (UserEmail oid: oids){
-    				numUsers.add(oid.getUserId());
-    			}
-    			if (numUsers.size() > 1) {
-    				return createLoginView(StatusType.ERROR, "Multiple users associated with same email id");
-    			}
-				u = Database.getTable(User.class).get(numUsers.first());
-				//initializeUser(u,selectedOpenId,userObject);
+			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
+			User u = initializeUser(selectedOpenId,userObject);
+			List<UserEmail> emails = u.getUserEmails();
+			if (emails.isEmpty()){
+				UserEmail oid = Database.getTable(UserEmail.class).newRecord();
+				oid.setUserId(u.getId());
+				oid.setEmail(email);
+				oid.save();
 			}
-			if (u == null){
-    			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
-				u = Database.getTable(User.class).newRecord();
-				initializeUser(u,selectedOpenId,userObject);
-				List<UserEmail> emails = u.getUserEmails();
-				if (emails.isEmpty()){
-					UserEmail oid = Database.getTable(UserEmail.class).newRecord();
-					oid.setUserId(u.getId());
-					oid.setEmail(email);
-					oid.save();
-				}
-    			txn.commit();
-    		}
+			txn.commit();
     		getPath().createUserSession(u, false);
             
 			return redirectSuccess(redirectedTo);
@@ -333,10 +340,13 @@ public class OidController extends Controller{
 		}
 	}
 
-	private void initializeUser(User u, String selectedOpenId , JSONObject userObject) {
-		u.setName((String)userObject.get("email"));
-		u.setPassword(null);
+	private User initializeUser(String selectedOpenId , JSONObject userObject) {
+		FormatHelper.instance(userObject).change_key_case(KeyCase.CAMEL);
+
+		User u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true);
+		u = Database.getTable(User.class).getRefreshed(u);
 		u.save();
+		return u;
 	}
 
 	protected RedirectorView redirectSuccess(String redirectedTo){

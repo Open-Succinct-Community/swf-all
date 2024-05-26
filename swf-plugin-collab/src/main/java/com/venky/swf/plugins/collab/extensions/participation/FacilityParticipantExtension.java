@@ -16,7 +16,7 @@ public class FacilityParticipantExtension extends CompanySpecificParticipantExte
 		registerExtension(new FacilityParticipantExtension());
 	}
 	@Override
-	protected List<Long> getAllowedFieldValues(User user,
+	public List<Long> getAllowedFieldValues(User user,
 			Facility partiallyFilledModel, String fieldName) {
 		if (fieldName.equals("COUNTRY_ID")){
 			return  null ; //DataSecurityFilter.getIds(DataSecurityFilter.getRecordsAccessible(Country.class, user));

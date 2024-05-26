@@ -15,7 +15,7 @@ public class UserParticipantExtension extends CompanyNonSpecificParticipantExten
 	}
 
 	@Override
-	protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, User partiallyFilledModel,
+	public List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, User partiallyFilledModel,
 			String fieldName) {
 		
 		SequenceSet<Long> ret = null;

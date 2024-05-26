@@ -3,12 +3,14 @@ package com.venky.swf.db.model.application.api;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.model.Model;
 
 public interface OpenApi extends Model {
 
     @UNIQUE_KEY
+    @Index
     public String getName();
     public void setName(String name);
 

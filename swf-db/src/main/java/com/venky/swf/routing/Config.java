@@ -28,7 +28,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -399,5 +398,39 @@ public class Config {
 
 	public boolean shouldPasswordsBeEncrypted(){
 		return getBooleanProperty("swf.user.password.encrypted",false);
+	}
+
+	ThreadLocal<Boolean> rootElementNameRequiredForApis = new ThreadLocal<>();
+	public void setRootElementNameRequiredForApis(Boolean required){
+		if (required == null){
+			rootElementNameRequiredForApis.remove();
+		}else {
+			rootElementNameRequiredForApis.set(required);
+		}
+	}
+
+	public boolean isRootElementNameRequiredForApis(){
+		Boolean required = rootElementNameRequiredForApis.get();
+		if (required == null){
+			required = getBooleanProperty("swf.api.root.required",true);
+		}
+		return required;
+	}
+	ThreadLocal<KeyCase> apiKeyCase = new ThreadLocal<>();
+
+	public void setApiKeyCase(KeyCase keyCase) {
+		if (keyCase == null){
+			apiKeyCase.remove();
+		}else {
+			apiKeyCase.set(keyCase);
+		}
+	}
+
+	public KeyCase getApiKeyCase(){
+		KeyCase keyCase = apiKeyCase.get();
+		if (keyCase == null){
+			keyCase = KeyCase.valueOf(Config.instance().getProperty("swf.api.keys.case",KeyCase.CAMEL.toString()));
+		}
+		return keyCase;
 	}
 }

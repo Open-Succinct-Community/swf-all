@@ -13,7 +13,7 @@ public class ApplicationParticipantExtension extends CompanyNonSpecificParticipa
     }
 
     @Override
-    protected List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Application partiallyFilledModel, String fieldName) {
+    public List<Long> getAllowedFieldValues(com.venky.swf.db.model.User user, Application partiallyFilledModel, String fieldName) {
         User u = (User) user;
         if (partiallyFilledModel != null) {
             if ("CREATOR_USER_ID".equalsIgnoreCase(fieldName)) {
