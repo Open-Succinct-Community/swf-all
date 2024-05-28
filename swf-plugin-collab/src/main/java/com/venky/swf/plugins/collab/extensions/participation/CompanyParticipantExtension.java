@@ -63,7 +63,7 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 
 		for (com.venky.swf.db.model.UserEmail ue : u.getUserEmails()){
 			UserEmail userEmail = ue.getRawRecord().getAsProxy(UserEmail.class);
-			if (userEmail.isValidated()){
+			if (userEmail.isValidated() && userEmail.getCompanyId() != null){
 				ret.add(userEmail.getCompanyId());
 			}
 		}
