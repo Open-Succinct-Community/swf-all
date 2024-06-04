@@ -8,10 +8,10 @@ import com.venky.swf.db.model.Model;
 
 public abstract class BeforeModelUpdateExtension<M extends Model> implements Extension{
 	protected static <M extends Model> void registerExtension(BeforeModelUpdateExtension<M> instance){
-		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.update", instance);
+		Registry.instance().registerExtension(instance.getModelClass().getSimpleName() +".before.update", instance);
 	}
     protected static <M extends Model> void deregisterExtension(BeforeModelUpdateExtension<M> instance){
-        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".before.update", instance);
+        Registry.instance().deregisterExtension(instance.getModelClass().getSimpleName() +".before.update", instance);
     }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelUpdateExtension<M> instance){
@@ -24,6 +24,8 @@ public abstract class BeforeModelUpdateExtension<M extends Model> implements Ext
 		M model = (M)context[0];
 		beforeUpdate(model);
 	}
-	
+	protected Class<M> getModelClass(){
+		return getModelClass(this);
+	}
 	public abstract void beforeUpdate(M model);
 }

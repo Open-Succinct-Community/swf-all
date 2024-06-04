@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 @MENU("Onboarding")
-public interface Company extends Model{
+public interface Company extends Model, BankAccount{
 	@IS_VIRTUAL
 	@PARTICIPANT
 	@HIDDEN
@@ -153,4 +153,5 @@ public interface Company extends Model{
 	@Override
 	@Index
 	Long getUpdaterUserId();
+
 }

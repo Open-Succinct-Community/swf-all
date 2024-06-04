@@ -361,11 +361,8 @@ public class Config {
     
 	public boolean isDevelopmentEnvironment(){
 		String environment = getProperty("swf.env","development");
-		if ("development".equalsIgnoreCase(environment)){
-			return true;
-		}
-		return false;
-	}
+        return "development".equalsIgnoreCase(environment);
+    }
 
 	private Boolean timerAdditive = null;
 	public boolean isTimerAdditive(){

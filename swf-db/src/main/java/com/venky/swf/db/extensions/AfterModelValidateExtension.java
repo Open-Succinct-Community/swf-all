@@ -8,10 +8,10 @@ import com.venky.swf.db.model.Model;
 
 public abstract class AfterModelValidateExtension<M extends Model> implements Extension{
 	protected static <M extends Model> void registerExtension(AfterModelValidateExtension<M> instance){
-		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".after.validate", instance);
+		Registry.instance().registerExtension(instance.getModelClass().getSimpleName() +".after.validate", instance);
 	}
     protected static <M extends Model> void deregisterExtension(AfterModelValidateExtension<M> instance){
-        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".after.validate", instance);
+        Registry.instance().deregisterExtension(instance.getModelClass().getSimpleName() +".after.validate", instance);
     }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(AfterModelValidateExtension<M> instance){
@@ -24,6 +24,8 @@ public abstract class AfterModelValidateExtension<M extends Model> implements Ex
 		M model = (M)context[0];
 		afterValidate(model);
 	}
-	
+	protected Class<M> getModelClass(){
+		return getModelClass(this);
+	}
 	public abstract void afterValidate(M model);
 }

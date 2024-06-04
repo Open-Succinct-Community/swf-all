@@ -50,7 +50,7 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
         Set<String> overriddenMethods = new HashSet<>();
         for (Method method : methods){
             if (overrideableMethods.contains(method.getName()) && method.getParameterCount() == 1 &&
-                    method.getParameterTypes()[0] == instance.getModelClass()) {
+                    method.getParameterTypes()[0].isAssignableFrom(instance.getModelClass())) {
                 overriddenMethods.add(method.getName());
             }
         }

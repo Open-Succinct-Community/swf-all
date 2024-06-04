@@ -40,8 +40,15 @@ public interface User extends com.venky.swf.plugins.templates.db.model.User, Add
 	@IS_VIRTUAL
 	public List<Long> getCompanyIds();
 
+	// Don't change the order of these methods.
+	@CONNECTED_VIA(value = "CREATOR_ID")
+	@HIDDEN
+	public List<Company> getCreatedCompanies();
+
 	@IS_VIRTUAL
 	public List<Company> getCompanies();
+	//Order changing comment ends.
+
 
 	@CONNECTED_VIA(value = "CREATOR_ID",additional_join = "( COMPANY_ID IS NULL)")
 	public List<Application> getApplications();

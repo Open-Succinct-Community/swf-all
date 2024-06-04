@@ -9,10 +9,10 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 
 public abstract class BeforeModelSaveExtension<M extends Model> implements Extension{
 	protected static <M extends Model> void registerExtension(BeforeModelSaveExtension<M> instance){
-		Registry.instance().registerExtension(getModelClass(instance).getSimpleName() +".before.save", instance);
+		Registry.instance().registerExtension(instance.getModelClass().getSimpleName() +".before.save", instance);
 	}
     protected static <M extends Model> void deregisterExtension(BeforeModelSaveExtension<M> instance){
-        Registry.instance().deregisterExtension(getModelClass(instance).getSimpleName() +".before.save", instance);
+        Registry.instance().deregisterExtension(instance.getModelClass().getSimpleName() +".before.save", instance);
     }
 	@SuppressWarnings("unchecked")
 	protected static <M extends Model> Class<M> getModelClass(BeforeModelSaveExtension<M> instance){
@@ -27,6 +27,8 @@ public abstract class BeforeModelSaveExtension<M extends Model> implements Exten
 		M model = (M)context[0];
 		beforeSave(model);
 	}
-	
+	protected Class<M> getModelClass(){
+		return getModelClass(this);
+	}
 	public abstract void beforeSave(M model);
 }

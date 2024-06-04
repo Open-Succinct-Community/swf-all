@@ -16,16 +16,10 @@ import com.venky.swf.db.model.reflection.ModelReflector;
 public abstract class ParticipantExtension<M extends Model> implements Extension{
 
 	protected static <M extends Model> void registerExtension(ParticipantExtension<M> instance){
-		Class<M> modelClass = getModelClass(instance);
-		instance.modelClass = modelClass;
-		instance.ref = ModelReflector.instance(modelClass);
-		Registry.instance().registerExtension(User.GET_PARTICIPATION_OPTION + "." + modelClass.getSimpleName() , instance);
+		Registry.instance().registerExtension(User.GET_PARTICIPATION_OPTION + "." + instance.getModelClass().getSimpleName() , instance);
 	}
     protected static <M extends Model> void deregisterExtension(ParticipantExtension<M> instance){
-        Class<M> modelClass = getModelClass(instance);
-        instance.modelClass = modelClass;
-        instance.ref = ModelReflector.instance(modelClass);
-        Registry.instance().deregisterExtension(User.GET_PARTICIPATION_OPTION + "." + modelClass.getSimpleName() , instance);
+        Registry.instance().deregisterExtension(User.GET_PARTICIPATION_OPTION + "." + instance.getModelClass().getSimpleName() , instance);
     }
 	
 	@SuppressWarnings("unchecked")
@@ -34,18 +28,26 @@ public abstract class ParticipantExtension<M extends Model> implements Extension
 		return (Class<M>) pt.getActualTypeArguments()[0];
 	}
 
+
 	
-	private Class<M> modelClass; 
-	private ModelReflector<M> ref ; 
+	private ModelReflector<M> ref = null;
+	private Class<M> modelClass = null;
 	protected ParticipantExtension(){
 		
 	}
 	
 	public ModelReflector<M> getReflector(){
+		if (ref == null) {
+			ref =  ModelReflector.instance(getModelClass());
+		}
 		return ref;
 	}
-	
-	public Class<M> getModelClass(){
+
+
+	protected Class<M> getModelClass(){
+		if (modelClass == null) {
+			modelClass = getModelClass(this);
+		}
 		return modelClass;
 	}
 	
