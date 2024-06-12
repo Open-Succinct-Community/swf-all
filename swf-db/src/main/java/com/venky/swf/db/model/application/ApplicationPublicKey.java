@@ -1,11 +1,14 @@
 package com.venky.swf.db.model.application;
 
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
+import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.model.Model;
@@ -62,4 +65,10 @@ public interface ApplicationPublicKey extends Model {
 
     @IS_VIRTUAL
     boolean isExpired();
+
+
+    @COLUMN_DEF(StandardDefault.BOOLEAN_FALSE)
+    public boolean isVerified();
+    public void setVerified(boolean verified);
+
 }

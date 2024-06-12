@@ -8,9 +8,15 @@ import com.venky.swf.plugins.collab.db.model.config.Country;
 import com.venky.swf.plugins.collab.db.model.config.WorldCurrency;
 import com.venky.swf.plugins.collab.db.model.config.WorldLanguage;
 import com.venky.swf.plugins.collab.db.model.config.WorldTimeZone;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Facility;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Currency;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -22,7 +28,18 @@ public class AppInstaller implements Installer {
         installLanguages();
         installTimeZones();
         installCurrencies();
+        fixFacilityGeographies();
     }
+    private void fixFacilityGeographies(){
+        Select select = new Select().from(Facility.class);
+        List<Facility> facilities = select.where(new Expression(select.getPool(),"CITY_ID", Operator.EQ)).execute();
+        facilities.forEach(facility -> {
+            facility.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
+            facility.save(); //Let before validate default fill the defaults.
+        });
+
+    }
+
     public void installCurrencies(){
         long count = Database.getTable(WorldCurrency.class).recordCount();
         if (count > 0){

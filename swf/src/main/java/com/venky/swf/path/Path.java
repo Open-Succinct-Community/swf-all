@@ -40,6 +40,7 @@ import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.pm.DataSecurityFilter;
 import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -1002,6 +1003,13 @@ public class Path implements _IPath{
             extScheme = request.getScheme();
         }
         Config.instance().setExternalURIScheme(extScheme);
+
+        String apiKeyCase = getHeader("ApiKeyCase");
+        String apiRootRequired = getHeader("ApiRootRequired");
+
+        Config.instance().setApiKeyCase(apiKeyCase == null ? null : KeyCase.valueOf(apiKeyCase));
+        Config.instance().setRootElementNameRequiredForApis(apiRootRequired == null ? null : Database.getJdbcTypeHelper("").
+                getTypeRef(boolean.class).getTypeConverter().valueOf(apiRootRequired));
     }
 
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());

@@ -144,11 +144,11 @@ public class LoginView extends HtmlView{
 		if (allowRegistration){
 			if (context == LoginContext.PASSWORD_RESET){
 				resetPassword = fg.createSubmit("Reset Password",0,12);
-				btn = fg.createLink("Login","/login",0,12);
+				btn = fg.createLink("Oh! I remember now.","/login",0,12);
 				register = fg.createLink("I'm a new user", "/register", 0,12);
 			}else if (context == LoginContext.REGISTER){
 				register = fg.createSubmit("Register", 0,12);
-				btn = fg.createLink("Login","/login",0,12);
+				btn = fg.createLink("I'm an Existing User","/login",0,12);
 				resetPassword = fg.createLink("Forgot Password","/users/reset_password" ,0,12);
 			}else {
 				btn = fg.createSubmit("Login",0,12);

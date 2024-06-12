@@ -6,6 +6,8 @@ import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.plugins.collab.db.model.CompanyNonSpecific;
 
+import java.util.List;
+
 @MENU("Onboarding")
 public interface Application extends com.venky.swf.db.model.application.Application , CompanyNonSpecific {
 
@@ -16,4 +18,5 @@ public interface Application extends com.venky.swf.db.model.application.Applicat
 
     String getChangeSecret(); //Just for reordering in ui
 
+    public List<ApplicationContext> getApplicationContexts();
 }

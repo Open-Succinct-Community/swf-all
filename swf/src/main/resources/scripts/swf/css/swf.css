@@ -120,9 +120,9 @@ p#msg {
   .model-list-table td.action-holder:before {
     display: none;
   }
-  body {
-    padding-top: 46px;
-  }
+  #body {
+  #  padding-top: 46px;
+  #}
   .navbar-light {
     position: fixed;
     width: 100%;

@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.openhtmltopdf.css.parser.property.CounterPropertyBuilder.CounterReset;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
+import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.model.CONFIGURATION;
@@ -24,7 +26,13 @@ public interface Country extends Model{
 	@Index
 	public String getName();
 	public void setName(String name);
-	
+
+	@COLUMN_NAME("ISO_CODE")
+	@IS_NULLABLE
+	@UNIQUE_KEY("CODE")
+	public String getCode();
+	public void setCode(String code);
+
 	@UNIQUE_KEY("ISO")
 	@Index
 	public String getIsoCode();
