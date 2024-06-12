@@ -1,6 +1,7 @@
 package com.venky.swf.controller.reflection;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 import com.venky.cache.Cache;
@@ -65,6 +66,7 @@ public class ControllerReflector<C extends Controller> extends Reflector<Control
 							matches = (parameterTypes[0] == String.class || Path.isNumberClass(parameterTypes[0]));
 						}
 					}
+					matches = matches && Modifier.isPublic(method.getModifiers());
 					
 					return matches;
 				}
