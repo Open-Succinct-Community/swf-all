@@ -16,9 +16,6 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.KeyCase;
-import com.venky.swf.sql.Expression;
-import com.venky.swf.sql.Operator;
-import com.venky.swf.sql.Select;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
@@ -42,7 +39,6 @@ import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.owasp.encoder.Encode;
-import org.owasp.encoder.Encoder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -52,13 +48,10 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.logging.Level;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
@@ -341,7 +334,7 @@ public class OidController extends Controller{
 	}
 
 	private User initializeUser(String selectedOpenId , JSONObject userObject) {
-		FormatHelper.instance(userObject).change_key_case(KeyCase.CAMEL);
+		FormatHelper.instance(userObject).change_key_case(KeyCase.SNAKE,KeyCase.CAMEL);
 
 		User u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true);
 		u = Database.getTable(User.class).getRefreshed(u);

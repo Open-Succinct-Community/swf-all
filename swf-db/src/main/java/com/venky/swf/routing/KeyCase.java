@@ -2,5 +2,6 @@ package com.venky.swf.routing;
 
 public enum KeyCase {
     SNAKE,
-    CAMEL,
+    CAMEL, //Same as PASCAL
+    LOWER_CAMEL,
 }

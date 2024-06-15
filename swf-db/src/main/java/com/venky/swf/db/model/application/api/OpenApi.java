@@ -7,6 +7,8 @@ import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.WATERMARK;
 import com.venky.swf.db.model.Model;
 
+import java.util.List;
+
 public interface OpenApi extends Model {
 
     @UNIQUE_KEY
@@ -36,4 +38,6 @@ public interface OpenApi extends Model {
         return openApi;
     }
 
+
+    public List<EndPoint> getEndPoints();
 }

@@ -81,7 +81,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                         parentAttributeName = StringUtil.camelize(childReflector.getFieldName(connectedViaColumn));
                     }else {
                         List<Method> methods = childReflector.getReferredModelGetters(getReflector().getModelClass());
-                        if (methods.size() == 1){
+                        if (!methods.isEmpty()){
                             parentAttributeName = StringUtil.camelize(childReflector.getReferenceField(methods.get(0)));
                         }
                     }

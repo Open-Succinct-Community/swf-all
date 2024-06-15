@@ -1,5 +1,13 @@
 package com.venky.swf.integration;
 
+import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
+import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
+import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
+
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -7,14 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.venky.core.collections.LowerCaseStringCache;
-import com.venky.core.string.StringUtil;
-import com.venky.core.util.ObjectUtil;
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
-import com.venky.swf.db.model.io.ModelIOFactory.UnsupportedMimeTypeException;
-import com.venky.swf.routing.KeyCase;
-import com.venky.swf.routing.Config;
 
 
 public abstract class FormatHelper<T> {
@@ -25,8 +25,8 @@ public abstract class FormatHelper<T> {
 	protected void fixInputCase(){
 		KeyCase keyCase = getKeyCase();
 
-		if (keyCase != KeyCase.CAMEL){
-			change_key_case(KeyCase.CAMEL);
+		if (keyCase != KeyCase.CAMEL ){
+			change_key_case(keyCase,KeyCase.CAMEL);
 		}
 	}
 	protected boolean isPlural(){
@@ -47,7 +47,7 @@ public abstract class FormatHelper<T> {
 		KeyCase keyCase = getKeyCase();
 
 		if (keyCase != KeyCase.CAMEL){
-			change_key_case(keyCase);
+			change_key_case(KeyCase.CAMEL,keyCase);
 		}
 	}
 
@@ -166,16 +166,39 @@ public abstract class FormatHelper<T> {
 
 	public abstract void removeAttribute(String name) ;
 
+	public String change_case(String name , KeyCase fromKeyCase, KeyCase toKeyCase){
+		if (fromKeyCase == toKeyCase){
+			return name;
+		}
 
-	public T change_key_case(KeyCase toKeyCase){
+		switch (toKeyCase){
+			case SNAKE:
+				return LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+			case LOWER_CAMEL:
+				if (fromKeyCase == KeyCase.SNAKE) {
+					return StringUtil.camelize(name, false);
+				}else {
+					return name.substring(0,1).toLowerCase() + name.substring(1);
+				}
+			default:
+				if (fromKeyCase == KeyCase.SNAKE) {
+					return StringUtil.camelize(name);
+				}else {
+					return name.substring(0,1).toUpperCase() + name.substring(1);
+				}
+		}
+	}
+
+	public T change_key_case(KeyCase fromKeyCase ,KeyCase toKeyCase){
 		FormatHelper<T> helper = this;
 		for (String name : helper.getAttributes()){
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
+				(toKeyCase == KeyCase.SNAKE  || toKeyCase == KeyCase.LOWER_CAMEL) && Character.isUpperCase(name.charAt(0))){
 
 				boolean isArray = isArrayAttribute(name);
 				Object v = getAttribute(name) ;
-				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				String newName = change_case(name,fromKeyCase,toKeyCase);
+
 				if (isArray) {
 					helper.setAttribute(newName, (String[])v);
 				}else {
@@ -188,13 +211,13 @@ public abstract class FormatHelper<T> {
 		}
 		for (String name : helper.getArrayElementNames()) {
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
+				(toKeyCase == KeyCase.LOWER_CAMEL || toKeyCase == KeyCase.SNAKE) && Character.isUpperCase(name.charAt(0))){
 				List<T> childElements = helper.getArrayElements(name);
 				List<T> newChildElements = new ArrayList<>();
 				for (T childElement : childElements){
-					newChildElements.add(FormatHelper.instance(childElement).change_key_case(toKeyCase));
+					newChildElements.add(FormatHelper.instance(childElement).change_key_case(fromKeyCase,toKeyCase));
 				}
-				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				String newName = change_case(name,fromKeyCase,toKeyCase);
 				String rootName = getRootName();
 				if (rootName != null && rootName.equals(StringUtil.pluralize(name))){
 					helper.setArrayElement(name, newChildElements);
@@ -209,10 +232,10 @@ public abstract class FormatHelper<T> {
 		}
 		for (String name : helper.getElementAttributeNames()) {
 			if (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0))){
-				FormatHelper.instance(helper.getElementAttribute(name)).change_key_case(toKeyCase);
+					((toKeyCase == KeyCase.SNAKE || toKeyCase == KeyCase.LOWER_CAMEL) && Character.isUpperCase(name.charAt(0)))){
+				FormatHelper.instance(helper.getElementAttribute(name)).change_key_case(fromKeyCase,toKeyCase);
 
-				String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+				String newName = change_case(name,fromKeyCase,toKeyCase);
 				helper.setAttribute(newName,helper.getElementAttribute(name));
 				helper.removeElementAttribute(name);
 			}else {
@@ -222,8 +245,8 @@ public abstract class FormatHelper<T> {
 		}
 		String name = getRootName();
 		if (name != null && (toKeyCase == KeyCase.CAMEL && !Character.isUpperCase(name.charAt(0)) ||
-					toKeyCase == KeyCase.SNAKE && Character.isUpperCase(name.charAt(0)))){
-			String newName = toKeyCase == KeyCase.CAMEL ? StringUtil.camelize(name) : LowerCaseStringCache.instance().get(StringUtil.underscorize(name));
+							 ((toKeyCase == KeyCase.SNAKE || toKeyCase == KeyCase.LOWER_CAMEL)  && Character.isUpperCase(name.charAt(0))))){
+			String newName = change_case(name,fromKeyCase,toKeyCase);
 			helper.changeRootName(newName);
 		}
 		return helper.getRoot();
