@@ -158,7 +158,7 @@ public class LoginView extends HtmlView{
 			resetPassword.setName("_RESET");
 			register.setName("_REGISTER");
 		}else {
-			btn = fg.createSubmit("Login",3,12,6);
+			btn = fg.createSubmit("Login",0,12);
 		}
 		btn.setName("_LOGIN");
 
