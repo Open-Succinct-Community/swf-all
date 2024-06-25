@@ -11,15 +11,27 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
+import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.annotations.RequireLogin;
+import com.venky.swf.controller.annotations.SingleRecordAction;
+import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
+import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.User;
+import com.venky.swf.db.model.entity.Actions;
+import com.venky.swf.db.model.entity.ChildEntity;
+import com.venky.swf.db.model.entity.ChildEntity.ChildEntities;
+import com.venky.swf.db.model.entity.Entity;
+import com.venky.swf.db.model.entity.Field;
+import com.venky.swf.db.model.entity.Fields;
+import com.venky.swf.db.model.entity.Strings;
 import com.venky.swf.db.model.io.xls.XLSModelReader;
 import com.venky.swf.db.model.io.xls.XLSModelReader.RecordVisitor;
 import com.venky.swf.db.model.io.xls.XLSModelWriter;
@@ -72,6 +84,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -748,6 +761,196 @@ public class Controller implements TemplateLoader{
         }
     }
 
+    public <M extends Model> Entity meta(Long id,ModelReflector<M> ref){
+        Entity entity = new Entity();
+        entity.setName(ref.getModelClass().getSimpleName());
+        entity.setVirtual(ref.isVirtual());
+        entity.setFields(new Fields());
+        entity.setActions(new Actions());
+        entity.setChildren(new ChildEntities());
+
+        List<String> referenceFields = ref.getReferenceFields();
+
+        for (String f : ref.getFields()){
+            Method fieldGetter = ref.getFieldGetter(f);
+            ColumnDescriptor descriptor = ref.getColumnDescriptor(f);
+            Field field = new Field();
+            field.setName(StringUtil.camelize(f));
+            field.setJavaClass(fieldGetter.getReturnType().getName());
+            field.setNullable(descriptor.isNullable());
+            field.setVirtual(descriptor.isVirtual());
+            if (referenceFields.contains(f)){
+                Method referredModelGetter = ref.getReferredModelGetterFor(fieldGetter);
+                field.setReferenceEntityName(referredModelGetter.getReturnType().getSimpleName());
+            }
+            if (ref.isFieldEnumeration(f)){
+                Strings values = new Strings();
+                for (String allowedValue : ref.getAllowedValues(f)) {
+                    values.add(allowedValue);
+                }
+                field.setValues(values);
+            }
+            entity.getFields().add(field);
+        }
+        for (Method childGetter : ref.getChildGetters()) {
+            IS_VIRTUAL isVirtual= childGetter.getAnnotation(IS_VIRTUAL.class);
+
+            Class<? extends Model> childClass = ref.getChildModelClass(childGetter);
+            ModelReflector<? extends Model> childRef = ModelReflector.instance(childClass);
+            if (childRef.isVirtual()){
+                continue;
+            }
+
+            CONNECTED_VIA via = ref.getAnnotation(childGetter, CONNECTED_VIA.class);
+            String referenceFieldName = null;
+            if (via != null){
+                referenceFieldName = ref.getFieldName(via.value());
+            }else {
+                List<Method> referredModelGetters = childRef.getReferredModelGetters(ref.getModelClass());
+                if (!referredModelGetters.isEmpty()){
+                    referenceFieldName = childRef.getReferenceField(referredModelGetters.get(0));
+                }
+            }
+            if (referenceFieldName != null && !childRef.isFieldVirtual(referenceFieldName)) {
+                ChildEntity childEntity = new ChildEntity();
+                childEntity.setVirtual(isVirtual != null && isVirtual.value());
+                childEntity.setName(childClass.getSimpleName());
+                childEntity.setReferenceFields(new Fields());
+                Field referenceField = new Field();
+                referenceField.setName(StringUtil.camelize(referenceFieldName));
+                childEntity.getReferenceFields().add(referenceField);
+                entity.getChildren().add(childEntity);
+            }
+        }
+
+        List<Method> actionMethods = ControllerReflector.instance(getClass()).getMethods(new MethodMatcher() {
+            @Override
+            public boolean matches(Method method) {
+                Class<?>[] parameterTypes = method.getParameterTypes();
+
+                boolean matches = (method.getModifiers() & Modifier.PUBLIC) > 0;
+                if (parameterTypes.length <= 1 && matches){
+                    matches = View.class.isAssignableFrom(method.getReturnType());
+                    if (matches && parameterTypes.length == 1){
+                        matches = Path.isNumberClass(parameterTypes[0]);
+                    }
+                }
+                return matches;
+            }
+        });
+
+        for (Method actionMethod : actionMethods) {
+            com.venky.swf.db.model.entity.Action action = new com.venky.swf.db.model.entity.Action();
+            action.setName(actionMethod.getName());
+            action.setRequireLogin(ControllerReflector.instance(getClass()).isSecuredActionMethod(actionMethod));
+
+            SingleRecordAction singleRecordAction = ControllerReflector.instance(getClass()).getAnnotation(actionMethod, SingleRecordAction.class);
+            if (singleRecordAction != null){
+                if (id == null) {
+                    if (!getPath().canAccessControllerAction(actionMethod.getName())){
+                        action.setAllowed(false);
+                    }
+                }else {
+                    action.setAllowed(getPath().canAccessControllerAction(actionMethod.getName(),id.toString()));
+                }
+                action.setIcon(singleRecordAction.icon());
+                action.setToolTip(singleRecordAction.tooltip());
+            }
+            entity.getActions().add(action);
+        }
+        return entity;
+    }
 
 
+    public <M extends Model> View erd(ModelReflector<M> ref){
+        StringBuilder erd = new StringBuilder("erDiagram\n");
+        Set<String> childTables = new SequenceSet<>();
+        Set<String> parentTables = new SequenceSet<>();
+
+
+        ref.getChildModels().forEach(m->childTables.add(ModelReflector.instance(m).getTableName()));
+
+
+        for (String referenceField : ref.getReferenceFields()) {
+            if (ref.isHouseKeepingField(referenceField)){
+                continue;
+            }
+            Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(ref.getFieldGetter(referenceField)));
+            parentTables.add(ModelReflector.instance(referredModelClass).getTableName());
+        }
+        for (String parentTableName : parentTables){
+            Table<? extends Model> parentTable = Database.getTable(parentTableName);
+            if (parentTable != null) {
+                erd.append(erd(parentTable, new SequenceSet<>()));  // Print fields of parents.
+            }
+        }
+
+        erd.append(erd(Database.getTable(ref.getModelClass()),parentTables));
+
+        for (String childTableName : childTables){
+            Table<? extends Model> childTable = Database.getTable(childTableName);
+            if (childTable == null){
+                continue;
+            }
+            erd.append(erd(childTable,new SequenceSet<>(){{
+                add(ref.getTableName());
+            }}));
+        }
+
+        Pre pre = new Pre();
+        pre.addClass("mermaid");
+        pre.setText(erd.toString());
+
+        return new HtmlView(getPath()) {
+            @Override
+            protected void createBody(_IControl b) {
+                b.addControl(pre);
+            }
+        };
+    }
+    public String erd(Table<? extends Model> table,  Set<String> referenceTablesToBeIncluded){
+        ModelReflector<? extends Model> ref = table.getReflector();
+
+
+        StringBuilder fields = new StringBuilder();
+        StringBuilder references = new StringBuilder();
+
+        fields.append("\n").append(table.getTableName()).append("{");
+        List<String> referenceFields = ref.getReferenceFields();
+
+        ref.getRealFields().forEach(rf->{
+            Method fieldGetter = ref.getFieldGetter(rf);
+            fields.append("\n\t").append(fieldGetter.getReturnType().getSimpleName()) .append(" ").append(rf);
+
+            UNIQUE_KEY uk= ref.getAnnotation(fieldGetter, UNIQUE_KEY.class);
+            StringBuilder comment = new StringBuilder();
+            if (uk != null) {
+                comment.append(" ").append(uk.value());
+            }
+
+            if (referenceFields.contains(rf)) {
+                comment.append(" ").append("FK");
+                Class<? extends Model> referredModelClass = ref.getReferredModelClass(ref.getReferredModelGetterFor(fieldGetter));
+                ModelReflector<? extends Model> referredModelReflector = ModelReflector.instance(referredModelClass);
+                if (referenceTablesToBeIncluded.contains(referredModelReflector.getTableName())){
+                    references.append("\n").append(referredModelReflector.getTableName()).append("|");
+
+                    if (ref.getColumnDescriptor(rf).isNullable()) {
+                        references.append("o--o{ ").append(table.getTableName());
+                    } else {
+                        references.append("|--o{ ").append(table.getTableName());
+                    }
+                    references.append(" : has ");
+                }
+            }
+
+            if (!comment.isEmpty() ) {
+                fields.append("\"").append(comment).append("\"");
+            }
+        });
+
+        fields.append("\n}");
+        fields.append(references);
+        return fields.toString();
+    }
 }

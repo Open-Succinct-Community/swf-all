@@ -29,6 +29,7 @@ public interface ApplicationPublicKey extends Model {
     @Enumeration(PURPOSE_ENCRYPTION+","+PURPOSE_SIGNING)
 
     @UNIQUE_KEY("KeyId")
+    @IS_NULLABLE(false)
     public String getPurpose();
     public void setPurpose(String purpose);
 
@@ -42,6 +43,7 @@ public interface ApplicationPublicKey extends Model {
     public void setPublicKey(String publicKey);
 
     @UNIQUE_KEY("KeyId")
+    @IS_NULLABLE(false)
     public String getKeyId();
     public void     setKeyId(String keyId);
 
