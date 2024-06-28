@@ -24,10 +24,7 @@ import com.venky.swf.plugins.collab.db.model.user.User;
 
 import java.io.InputStream;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 @MENU("Onboarding")
 public interface Company extends Model, BankAccount{
@@ -139,7 +136,6 @@ public interface Company extends Model, BankAccount{
 
 	public List<Application> getApplications();
 
-	public List<MasterFacilityCategory> getFacilityCategories();
 	@IS_NULLABLE
 	public Long getWorkCalendarId();
 	public void setWorkCalendarId(Long WorkCalendarId);

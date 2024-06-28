@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
@@ -197,7 +198,12 @@ public class JSON extends FormatHelper<JSONObject>{
 	
 	@Override
 	public JSONObject getElementAttribute(String name) {
-		return (JSONObject)root.get(name);
+		try {
+			return (JSONObject) root.get(name);
+		}catch (ClassCastException ex){
+			Config.instance().getLogger(getClass().getName()).log(Level.WARNING,String.format("%s is not a JSONObject in %s", name , root.toString()));
+			throw ex;
+		}
 }
 
 	@Override

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class SWFClassLoader extends ClassLoader {
@@ -96,7 +97,10 @@ public class SWFClassLoader extends ClassLoader {
                     continue;
                 }
             }
-            return super.loadClass(name,resolve);
+            if (Config.instance().getMonitorClassesLoaded().contains(name) ) {
+                Config.instance().getLogger(SWFClassLoader.class.getName()).log(Level.WARNING,name, new RuntimeException("Class loaded by default class loader"));
+            }
+            return super.loadClass(name, resolve);
         }
     }
 

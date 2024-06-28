@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -327,7 +328,7 @@ public class Config {
 
 		@Override
 		protected List<String> getValue(String name) {
-	    	List<String> values = new ArrayList<String>();
+	    	List<String> values = new SequenceSet<>();
 	    	StringTokenizer tok = new StringTokenizer(properties.getProperty(name,""),",");
 	    	while (tok.hasMoreTokens()) {
 	    		values.add(tok.nextToken());
@@ -430,4 +431,10 @@ public class Config {
 		}
 		return keyCase;
 	}
+
+
+	public List<String> getMonitorClassesLoaded(){
+		return Config.instance().getPropertyValueList("swf.classloader.debug.classes");
+	}
+
 }

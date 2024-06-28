@@ -17,6 +17,7 @@ public interface BankAccount {
     public String getAccountNo();
     public void setAccountNo(String AccountNo);
 
+
     public String getVirtualPaymentAddress();
     public void setVirtualPaymentAddress(String VirtualPaymentAddress);
 }
