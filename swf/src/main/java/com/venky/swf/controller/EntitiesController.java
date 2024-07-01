@@ -34,7 +34,7 @@ public class EntitiesController extends Controller{
         Entities entities = new Entities();
 
         Database.getTableNames().forEach(name->{
-            if (name.matches("^.*%s.*$".formatted(q))) {
+            if (name.matches("^.*%s.*$".formatted(q.toUpperCase()))) {
                 ModelReflector<? extends Model> ref = Objects.requireNonNull(Database.getTable(name)).getReflector();
                 entities.add(meta(null, ref));
             }
