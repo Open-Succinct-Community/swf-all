@@ -913,7 +913,7 @@ public class ModelReflector<M extends Model> {
     }
     @SuppressWarnings({"rawtypes", "unchecked"})
     private Set<String> getAllowedValues(Enumeration annotation){
-        Set<String> allowedValues = new HashSet<>();
+        Set<String> allowedValues = new SequenceSet<>();
         if (!ObjectUtil.isVoid(annotation.value())) {
             StringTokenizer tokens = new StringTokenizer(annotation.value(), ",");
             while (tokens.hasMoreElements()) {

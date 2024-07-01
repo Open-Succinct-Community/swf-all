@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import com.venky.core.collections.IgnoreCaseList;
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.collections.UpperCaseStringCache;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
@@ -170,7 +171,7 @@ public class ModelAwareness implements FieldUIMetaProvider{
                 }else {
                 	select = new RadioGroup();
                 }
-				Set<String> allowedValues = new HashSet<>();
+				Set<String> allowedValues = new SequenceSet<>();
 				if (!ObjectUtil.isVoid(enumeration.value())) {
 					StringTokenizer tokens = new StringTokenizer(enumeration.value(), ",");
 					while (tokens.hasMoreElements()) {

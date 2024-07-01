@@ -204,7 +204,7 @@ public class JSON extends FormatHelper<JSONObject>{
 			Config.instance().getLogger(getClass().getName()).log(Level.WARNING,String.format("%s is not a JSONObject in %s", name , root.toString()));
 			throw ex;
 		}
-}
+	}
 
 	@Override
 	public void setAttribute(String name, JSONObject element) {
