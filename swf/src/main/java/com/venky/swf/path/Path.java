@@ -393,6 +393,7 @@ public class Path implements _IPath{
         return pathelements;
     }
 
+    @SuppressWarnings("unchecked")
     public Path(String target) {
         this.target = target;
         Config.instance().getLogger(Path.class.getName()).log(Level.INFO,"Api Called:" + target);
@@ -423,9 +424,11 @@ public class Path implements _IPath{
             }
             try {
                 if (i < pathElementSize - 1){
-                    if (ControllerCache.instance().get(pathelements.get(i+1)) != null){
-                        // No parameter.!!
-                        continue;
+                    if (ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(info.getAction()).isEmpty() ){
+                        //if (ControllerCache.instance().get(pathelements.get(i+1)) != null){
+                            // No parameter.!!
+                            continue;
+                        //}
                     }
                     info.setParameter(Long.valueOf(pathelements.get(i+1)));
                     i+=1;

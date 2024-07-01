@@ -99,6 +99,7 @@ public class Router extends AbstractHandler {
 						db.loadFactorySettings();
 						db.getCurrentTransaction().commit();
 					}catch (Exception ex){
+						Config.instance().getLogger(Router.class.getName()).log(Level.SEVERE,"Boot up failed" , ex);
 						try {
 							db.getCurrentTransaction().rollback(ex);
 						} catch (Exception e) {
