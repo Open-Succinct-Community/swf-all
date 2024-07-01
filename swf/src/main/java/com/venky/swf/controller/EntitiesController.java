@@ -30,6 +30,19 @@ public class EntitiesController extends Controller{
 
         return new BytesView(getPath(),json.toString().getBytes(StandardCharsets.UTF_8), MimeType.APPLICATION_JSON);
     }
+    public View search(String q){
+        Entities entities = new Entities();
+
+        Database.getTableNames().forEach(name->{
+            if (name.matches("^.*%s.*$".formatted(q))) {
+                ModelReflector<? extends Model> ref = Objects.requireNonNull(Database.getTable(name)).getReflector();
+                entities.add(meta(null, ref));
+            }
+        });
+        JSON json = new JSON(entities.getInner());
+
+        return new BytesView(getPath(),json.toString().getBytes(StandardCharsets.UTF_8), MimeType.APPLICATION_JSON);
+    }
 
     public View describe(String name){
         ModelReflector<? extends Model> ref = Objects.requireNonNull(Database.getTable(name)).getReflector();
