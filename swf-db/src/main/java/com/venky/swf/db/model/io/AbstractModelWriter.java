@@ -8,6 +8,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ATTRIBUTE_GROUP;
+import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -232,7 +233,10 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				try {
 					List<Method> childGetters = ref.getChildGetters();
 					for (Method childGetter : childGetters) {
-						write(_formatHelper,record,childGetter,parentsAlreadyConsidered,considerChildren,templateFields);
+						HIDDEN hidden = ref.getAnnotation(childGetter, HIDDEN.class) ;
+						if (hidden == null || !hidden.value()) {
+							write(_formatHelper, record, childGetter, parentsAlreadyConsidered, considerChildren, templateFields);
+						}
 					}
 				}finally {
 					parentsAlreadyConsidered.remove(ref.getModelClass().getSimpleName());
