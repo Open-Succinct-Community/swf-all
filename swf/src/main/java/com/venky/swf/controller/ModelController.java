@@ -15,31 +15,18 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
-import com.venky.reflection.Reflector;
-import com.venky.reflection.Reflector.MethodMatcher;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
-import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
-import com.venky.swf.db.annotations.column.IS_VIRTUAL;
-import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
-import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelectionProcessor;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
-import com.venky.swf.db.model.entity.Action;
-import com.venky.swf.db.model.entity.Actions;
-import com.venky.swf.db.model.entity.ChildEntity;
-import com.venky.swf.db.model.entity.ChildEntity.ChildEntities;
 import com.venky.swf.db.model.entity.Entity;
-import com.venky.swf.db.model.entity.Field;
-import com.venky.swf.db.model.entity.Fields;
-import com.venky.swf.db.model.entity.Strings;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.db.table.RecordNotFoundException;
@@ -54,6 +41,7 @@ import com.venky.swf.path.Path.ControllerInfo;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -65,8 +53,6 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.layout.Pre;
 import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
@@ -89,7 +75,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -103,10 +88,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -536,6 +519,7 @@ public class ModelController<M extends Model> extends Controller {
         }
         return map;
     }
+    @SuppressWarnings("unchecked")
     public Map<Class<? extends Model>,List<String>> getIncludedModelFieldsFromRequest(){
         Map<Class<? extends Model>,List<String>> map = null;
         String template = getPath().getHeader("IncludedModelFields");
@@ -544,7 +528,9 @@ public class ModelController<M extends Model> extends Controller {
             if (jsonObject != null){
                 map = new HashMap<>();
                 for (Object key : jsonObject.keySet()){
-                    List<String> modelClasses = Config.instance().getModelClasses((String)key);
+
+                    List<String> modelClasses = Config.instance().getModelClasses(
+                            FormatHelper.change_case((String)key, Config.instance().getApiKeyCase(), KeyCase.CAMEL));
                     if (!modelClasses.isEmpty()){
                         try {
                             Class<? extends Model> modelClass = (Class<? extends Model>) Class.forName(modelClasses.get(0));

@@ -166,7 +166,7 @@ public abstract class FormatHelper<T> {
 
 	public abstract void removeAttribute(String name) ;
 
-	public String change_case(String name , KeyCase fromKeyCase, KeyCase toKeyCase){
+	public static String change_case(String name , KeyCase fromKeyCase, KeyCase toKeyCase){
 		if (fromKeyCase == toKeyCase){
 			return name;
 		}
