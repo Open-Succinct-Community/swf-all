@@ -3,6 +3,7 @@ package com.venky.swf.controller.reflection;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.venky.cache.Cache;
 import com.venky.reflection.Reflector;
@@ -10,10 +11,16 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.path.Path;
+import com.venky.swf.sql.Expression;
 import com.venky.swf.views.View;
 
 public class ControllerReflector<C extends Controller> extends Reflector<Controller,C>{
-    
+
+	public List<Method> getActionMethods(String action, int numParameters) {
+		List<Method> methods = getActionMethods(action);
+		return  methods.stream().filter(m->m.getParameterCount() == numParameters).collect(Collectors.toList());
+	}
+
 	private class SingleRecordActionMatcher implements MethodMatcher {
 		public boolean matches(Method method) {
 			return isAnnotationPresent(method,SingleRecordAction.class);

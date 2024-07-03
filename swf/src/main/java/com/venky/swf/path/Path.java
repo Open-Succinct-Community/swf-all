@@ -425,7 +425,7 @@ public class Path implements _IPath{
             try {
                 if (i < pathElementSize - 1){
                     // Check if action  needs parameter
-                    if (info.getAction().equals("index") || ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(info.getAction()).isEmpty() ){
+                    if (ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(info.getAction(),1).isEmpty() ){
                         //if (ControllerCache.instance().get(pathelements.get(i+1)) != null){
                             // No parameter.!!
                             continue;
