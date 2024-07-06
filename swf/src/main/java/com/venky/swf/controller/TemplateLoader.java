@@ -59,7 +59,7 @@ public interface TemplateLoader {
         }else if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/markdown/index.md")){
             return markdown();
         }else {
-            return new RedirectorView(getPath(), "dashboard");
+            return new ForwardedView(getPath(), "dashboard");
         }
     }
 

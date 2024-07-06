@@ -826,16 +826,19 @@ public class Controller implements TemplateLoader{
         List<Method> actionMethods = ControllerReflector.instance(getClass()).getMethods(new MethodMatcher() {
             @Override
             public boolean matches(Method method) {
+                boolean matches = false;
                 Class<?>[] parameterTypes = method.getParameterTypes();
 
-                boolean matches = (method.getModifiers() & Modifier.PUBLIC) > 0;
-                if (parameterTypes.length <= 1 && matches){
-                    matches = View.class.isAssignableFrom(method.getReturnType());
+                if (parameterTypes.length <= 1){
+                    matches =  View.class.isAssignableFrom(method.getReturnType());
                     if (matches && parameterTypes.length == 1){
-                        matches = Path.isNumberClass(parameterTypes[0]);
+                        matches = (parameterTypes[0] == String.class || Path.isNumberClass(parameterTypes[0]));
                     }
                 }
+                matches = matches && Modifier.isPublic(method.getModifiers());
+
                 return matches;
+                
             }
         });
 
