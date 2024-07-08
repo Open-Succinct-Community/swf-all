@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
@@ -24,7 +27,7 @@ public class JSONModelReader<M extends Model> extends AbstractModelReader<M, JSO
 	
 	@Override
 	public List<M> read(InputStream in,boolean saveRecursive) throws IOException {
-		return read(in,getBeanClass().getSimpleName(),saveRecursive);
+		return read(in, FormatHelper.change_case(getBeanClass().getSimpleName(), KeyCase.CAMEL, Config.instance().getApiKeyCase()),saveRecursive);
 	}
 	
 	@Override
@@ -40,7 +43,7 @@ public class JSONModelReader<M extends Model> extends AbstractModelReader<M, JSO
 			}else {
 				JSONObject possibleSingularObject = (JSONObject) jsIn;
 				String attrName = StringUtil.pluralize(rootElementName);
-				if (possibleSingularObject.containsKey(StringUtil.pluralize(rootElementName))){
+				if (possibleSingularObject.containsKey(attrName)){
 					jsArr = (JSONArray)possibleSingularObject.get(attrName);
 				}else {
 					jsArr = new JSONArray();

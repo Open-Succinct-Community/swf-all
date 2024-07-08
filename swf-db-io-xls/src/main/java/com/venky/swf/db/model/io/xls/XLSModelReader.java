@@ -11,6 +11,9 @@ import com.venky.swf.db.model.io.ModelReader;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.IncompleteDataException;
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
@@ -55,7 +58,7 @@ public class XLSModelReader<M extends Model> extends XLSModelIO<M> implements Mo
 	 * Save recursive is ignored in xls update
 	 */
 	public List<M> read(InputStream source,boolean saveRecursive) throws IOException{
-		return read(source,getBeanClass().getSimpleName(),saveRecursive);
+		return read(source, FormatHelper.change_case(getBeanClass().getSimpleName(), KeyCase.CAMEL, Config.instance().getApiKeyCase()),saveRecursive);
 	}
 
 	public List<M> read(Sheet sheet){

@@ -8,6 +8,9 @@ import java.util.List;
 import com.venky.core.string.StringUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.io.AbstractModelReader;
+import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
+import com.venky.swf.routing.KeyCase;
 import com.venky.xml.XMLDocument;
 import com.venky.xml.XMLElement;
 
@@ -17,7 +20,7 @@ public class XMLModelReader<M extends Model> extends AbstractModelReader<M,XMLEl
 	}
 	@Override 
 	public List<M> read(InputStream in,boolean saveRecursive) {
-		return read(in,getBeanClass().getSimpleName(),saveRecursive);
+		return read(in, FormatHelper.change_case(getBeanClass().getSimpleName(), KeyCase.CAMEL, Config.instance().getApiKeyCase()),saveRecursive);
 	}
 	@Override
 	public List<M> read(InputStream in,String rootElementName,boolean saveRecursive) {
