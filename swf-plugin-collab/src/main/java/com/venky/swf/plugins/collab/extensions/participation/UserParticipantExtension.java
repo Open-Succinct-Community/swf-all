@@ -1,10 +1,18 @@
 package com.venky.swf.plugins.collab.extensions.participation;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.swf.controller.ModelController;
 import com.venky.swf.db.Database;
 import com.venky.swf.plugins.collab.db.model.config.State;
+import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
 import com.venky.swf.plugins.collab.db.model.user.User;
+import com.venky.swf.plugins.collab.db.model.user.UserEmail;
+import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.pm.DataSecurityFilter;
+import com.venky.swf.sql.Expression;
+import com.venky.swf.sql.Operator;
+import com.venky.swf.sql.Select;
+import org.apache.lucene.search.Query;
 
 import java.util.List;
 
@@ -24,6 +32,38 @@ public class UserParticipantExtension extends CompanyNonSpecificParticipantExten
 			if (!u.isStaff() || partiallyFilledModel.getId() == user.getId()){
 				ret = new SequenceSet<>();
 				ret.add(user.getId());
+			}else if (partiallyFilledModel.getId() > 0){
+				ret = new SequenceSet<>();
+				List<Long> accessibleCompanyIds = u.getCompanyIds();
+				accessibleCompanyIds.retainAll(partiallyFilledModel.getCompanyIds());
+				if (!accessibleCompanyIds.isEmpty()){
+					ret.add(partiallyFilledModel.getId());
+				}
+			}else {
+				StringBuilder q = new StringBuilder();
+
+				for (Long companyId : u.getCompanyIds()) {
+					if (companyId == null){
+						continue;
+					}
+					if (!q.isEmpty()){
+						q.append(" OR ");
+					}
+					q.append("(  EMAIL:\"@").append(Database.getTable(Company.class).get(companyId).getDomainName()).append("\" )");
+				}
+				q.append(")");
+				q.insert(0,"(");
+				LuceneIndexer indexer = LuceneIndexer.instance(UserEmail.class);
+				Query qry = indexer.constructQuery(q.toString());
+				List<Long> userEmailIds = indexer.findIds(qry,0);
+				if (userEmailIds.size() < 50){
+					ret = new SequenceSet<>();
+					Select s = new Select().from(UserEmail.class) ;
+					List<UserEmail> userEmails = s.where(new Expression(s.getPool(),"ID", Operator.IN,userEmailIds.toArray())).execute();
+					for (UserEmail userEmail : userEmails) {
+						ret.add(userEmail.getUserId());
+					}
+				}
 			}
 		}else if (fieldName.equals("COMPANY_ID")){
 			return super.getAllowedFieldValues(user,partiallyFilledModel,fieldName);
