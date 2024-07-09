@@ -192,7 +192,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
         return existing;
     }
     protected void addToIncludedModelFieldsMap(Map<Class<? extends Model>,List<String>> map, Class<? extends Model> clazz , List<String> excludedFields){
-        List<String> fields = ModelReflector.instance(clazz).getVisibleFields(Collections.emptyList());
+        List<String> fields = ModelReflector.instance(clazz).getVisibleFields(Collections.singletonList("ID"));
         List<String> oldFields = getExistingModelFields(map,clazz);
 
         Map<Class<? extends Model>,List<String>> requestedFieldsMap  = getIncludedModelFieldsFromRequest();
