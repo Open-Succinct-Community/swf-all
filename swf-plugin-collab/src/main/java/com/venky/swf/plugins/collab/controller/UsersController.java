@@ -272,7 +272,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
 
         addToIncludedModelFieldsMap(map, User.class, Arrays.asList("COMPANY_ID",  "COUNTRY_ID", "STATE_ID"));
         addToIncludedModelFieldsMap(map, UserPhone.class, Arrays.asList("USER_ID", "ID"));
-        addToIncludedModelFieldsMap(map, UserEmail.class, Arrays.asList("USER_ID", "ID"));
+        addToIncludedModelFieldsMap(map, UserEmail.class, Arrays.asList("USER_ID", "ID" , "COMPANY_ID"));
         addToIncludedModelFieldsMap(map, Application.class, Arrays.asList("ID", "COMPANY_ID", "ADMIN_ID"));
         addToIncludedModelFieldsMap(map, Event.class, Collections.singletonList("ID"));
         addToIncludedModelFieldsMap(map, ApplicationPublicKey.class, Arrays.asList("ID", "APPLICATION_ID"));
