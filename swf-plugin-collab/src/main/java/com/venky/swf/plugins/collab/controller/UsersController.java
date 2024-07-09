@@ -28,6 +28,7 @@ import com.venky.swf.plugins.collab.db.model.user.Phone;
 import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.plugins.collab.db.model.user.UserEmail;
 import com.venky.swf.plugins.collab.db.model.user.UserPhone;
+import com.venky.swf.plugins.security.db.model.UserRole;
 import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
@@ -271,6 +272,8 @@ public class UsersController extends com.venky.swf.controller.UsersController {
         }
 
         addToIncludedModelFieldsMap(map, User.class, Arrays.asList("COMPANY_ID",  "COUNTRY_ID", "STATE_ID"));
+        addToIncludedModelFieldsMap(map, UserRole.class, Collections.singletonList("USER_ID"));
+
         addToIncludedModelFieldsMap(map, UserPhone.class, Arrays.asList("USER_ID", "ID"));
         addToIncludedModelFieldsMap(map, UserEmail.class, Arrays.asList("USER_ID", "ID" , "COMPANY_ID"));
         addToIncludedModelFieldsMap(map, Application.class, Arrays.asList("ID", "COMPANY_ID", "ADMIN_ID"));
