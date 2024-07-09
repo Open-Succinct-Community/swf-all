@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.collab.db.model.user;
 
 import com.venky.core.collections.SequenceSet;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
@@ -64,6 +65,18 @@ public class UserImpl extends ModelImpl<User> {
                 Long companyId = ue.getCompanyId();
                 if (!getReflector().isVoid(companyId )){
                     ret.add(companyId);
+                }
+            }
+        }
+        if (!ObjectUtil.isVoid(u.getEmail())) {
+            String[] parts = u.getEmail().split("@");
+            if (parts.length > 1){
+                String domain = parts[parts.length-1];
+                Company company = Database.getTable(Company.class).newRecord();
+                company.setDomainName(domain);
+                company = Database.getTable(Company.class).getRefreshed(company,false);
+                if (!company.getRawRecord().isNewRecord()){
+                    ret.add(company.getId());
                 }
             }
         }
