@@ -65,7 +65,9 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                 Set<String> processedChildElementNames = new HashSet<>();
                 for (Method childGetter : m1.getReflector().getChildGetters()){
                     ModelReflector<? extends Model> childReflector = ModelReflector.instance(m1.getReflector().getChildModelClass(childGetter));
-                    String elementName = childReflector.getModelClass().getSimpleName();
+                    String pluralName = childGetter.getName().substring(3);
+
+                    String elementName = StringUtil.singularize(pluralName) ; //childReflector.getModelClass().getSimpleName();
                     if (processedChildElementNames.contains(elementName)){
                         continue;
                     }

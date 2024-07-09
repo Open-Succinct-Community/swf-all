@@ -276,7 +276,9 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			Map<String,List<String>> newConsiderChilden = new HashMap<>(considerChildren);
 			newConsiderChilden.remove(getBeanClass().getSimpleName()); //Don't print children of parent via children. !! Duplication.
 			for (R child : children) {
-				T childElement = formatHelper.createArrayElement(childModelClass.getSimpleName());
+				String pluralName = childGetter.getName().substring(3);
+                String elementName = StringUtil.singularize(pluralName); //childModelClass.getSimpleName();
+				T childElement = formatHelper.createArrayElement(elementName);
 				childWriter.writeSimplified(child, childElement, fields, parentsWritten, newConsiderChilden, templateFields);
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
