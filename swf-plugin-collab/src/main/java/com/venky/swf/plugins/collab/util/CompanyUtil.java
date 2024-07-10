@@ -59,7 +59,7 @@ public class CompanyUtil {
     private static String getFQDomainName(List<String> domainParts){
         StringBuilder FQDomainName = new StringBuilder();
         for (String part: domainParts){
-            if(FQDomainName.length() > 0){
+            if(!FQDomainName.isEmpty()){
                 FQDomainName.append(".");
             }
             FQDomainName.append(part);
@@ -67,16 +67,6 @@ public class CompanyUtil {
         return FQDomainName.toString();
     }
 
-
-    
-    public static List<User> getAdminUsers() {
-
-        Role role = Role.getRole("ADMIN");
-        if (role != null){
-            return role.getUserRoles().stream().map(ur->ur.getUser().getRawRecord().getAsProxy(User.class)).collect(Collectors.toList());
-        }
-        return new ArrayList<>();
-    }
 
 
 
