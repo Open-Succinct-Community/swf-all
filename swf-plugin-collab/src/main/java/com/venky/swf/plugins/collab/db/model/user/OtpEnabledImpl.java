@@ -34,7 +34,11 @@ public abstract class OtpEnabledImpl<T extends OtpEnabled & Model> extends Model
             if (ObjectUtil.equals(otpEnabled.getLastOtp(), otp)){
                 otpEnabled.setValidated(true);
                 otpEnabled.setLastOtp(null);
+            }else {
+                throw new RuntimeException("Incorrect Otp");
             }
+        }else {
+            throw new RuntimeException("Otp not generated");
         }
         otpEnabled.save();
     }
