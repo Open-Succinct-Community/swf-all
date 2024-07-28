@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.controller;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
 import com.venky.core.util.ObjectUtil;
+import com.venky.extension.Registry;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -10,6 +11,8 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.Application;
 import com.venky.swf.db.model.application.Event;
 import com.venky.swf.db.model.application.api.OpenApi;
+import com.venky.swf.db.model.io.ModelIO;
+import com.venky.swf.db.model.io.ModelIOFactory;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
@@ -49,6 +52,7 @@ import org.json.simple.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -96,29 +100,9 @@ public class UsersController extends com.venky.swf.controller.UsersController {
 
         return getIntegrationAdaptor().createResponse(getPath(),user, getIncludedModelFields().get(User.class), new HashSet<>(),getIncludedModelFields());
     }
-    protected View sendPasswordResetEmail(User user, String subject, String text){
-        if (ObjectUtil.isVoid(user.getApiKey())){
 
-            user.generateApiKey(true);
-        }
-
-        Link link = new Link();
-        link.setUrl(Config.instance().getProperty("swf.password.reset.link",
-                Config.instance().getServerBaseUrl() + "/users/reset_password")+"?ApiKey=" + user.getApiKey());
-        link.setText("here");
-
-        Paragraph p = new Paragraph();
-        p.setText(String.format("%sTo set your password , click ", StringUtil.valueOf(text)));
-        p.addControl(link);
-        Body body = new Body();
-
-        body.addControl(p);
-        Html html = new Html();
-        html.addControl(body);
-
-
-        user.getRawRecord().getAsProxy(User.class).sendMail(subject == null ? "Password reset request received" : subject,
-                html.toString());
+    public View sendMail(User user, String subject, String text){
+        user.getRawRecord().getAsProxy(User.class).sendMail(subject,text);
 
         if (getIntegrationAdaptor() != null) {
             return getIntegrationAdaptor().createStatusResponse(getPath(), null, "Mail sent with instructions to set password");
@@ -132,18 +116,45 @@ public class UsersController extends com.venky.swf.controller.UsersController {
                 return back();
             }
         }
-
     }
 
-    public View sendInviteMail(long id){
+    public View sendInviteMail(long id) {
         User user = Database.getTable(User.class).get(id);
-        return sendPasswordResetEmail(user,"Congratulations! You are granted access to the platform. ", """
-                    \nCongratulations, You are granted access to the platform.
-                    \nYou need to first set your password to start enjoying its features.
-                    \n  - Admin
-                    """
-        );
+        return sendPasswordResetEmail(user, "before.send.email.invite");
     }
+    protected View sendPasswordResetEmail(User user, String extensionPointName){
+        if (ObjectUtil.isVoid(user.getApiKey())){
+            user.generateApiKey(true);
+        }
+
+        Link link = new Link();
+        link.setUrl(Config.instance().getProperty("swf.password.reset.link",
+                Config.instance().getServerBaseUrl() + "/users/reset_password")+"?ApiKey=" + user.getApiKey());
+        link.setText("here");
+
+
+        Paragraph p = new Paragraph();
+        p.setText("To set your password , click ");
+        p.addControl(link);
+
+        Html html = new Html();
+        Body body = new Body();
+        html.addControl(body);
+        body.addControl(p);
+
+        Map<String,Object> context  = new HashMap<>(){{
+            put("SUBJECT","Password reset request received");
+            put("TEXT",html);
+            put("RESET_LINK",link);
+            put("USER", user);
+        }};
+        Registry.instance().callExtensions(extensionPointName == null ? "before.send.password.reset" : extensionPointName,context);
+
+
+
+        return sendMail(user,(String)context.get("SUBJECT"),String.valueOf(context.get("TEXT"))); //Reset link is auto substituted;
+    }
+
 
     @Override
     @RequireLogin(value = false)
@@ -165,7 +176,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
             throw new RuntimeException("Email not registered");
         }
 
-        return sendPasswordResetEmail(user.getRawRecord().getAsProxy(User.class),null,null);
+        return sendPasswordResetEmail(user.getRawRecord().getAsProxy(User.class),"before.send.password.reset" );
 
     }
 
