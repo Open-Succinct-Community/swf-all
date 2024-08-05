@@ -43,6 +43,11 @@ public interface Country extends Model{
 	public String getIsoCode2();
 	public void setIsoCode2(String isoCode);
 
+	@IS_NULLABLE
+	public Long getWorldCurrencyId();
+	public void setWorldCurrencyId(Long id);
+	public WorldCurrency getWorldCurrency();
+
 
 	public List<State> getStates(); 
 	
