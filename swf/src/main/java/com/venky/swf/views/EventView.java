@@ -15,15 +15,23 @@ public class EventView extends View {
         super(path);
     }
 
+    private boolean headersAdded = false;
+    private void addHeaders(){
+        if (!headersAdded){
+            headersAdded = true;
+            HttpServletResponse response = getPath().getResponse();
+            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_OK);
+            response.setContentType(MimeType.TEXT_EVENT_STREAM.toString());
+            response.setHeader("Cache-Control","no-store");
+            response.setHeader("Connection","keep-alive");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.toString());
+        }
+    }
+
     public void write(int httpStatusCode){
-        HttpServletResponse response = getPath().getResponse();
-        response.setStatus(httpStatusCode);
-        response.setContentType(MimeType.TEXT_EVENT_STREAM.toString());
-        response.addHeader("Cache-Control","no-store");
-        response.addHeader("Connection","keep-alive");
-        response.setCharacterEncoding(StandardCharsets.UTF_8.toString());
         try {
-            response.flushBuffer();
+            addHeaders();
+            getPath().getResponse().flushBuffer();
         }catch (Exception ex){
             //
         }
@@ -32,10 +40,12 @@ public class EventView extends View {
         HttpServletResponse response = getPath().getResponse();
         String wireEvent  = String.format("data: %s\n\n", event);
 
+        addHeaders();
         response.getWriter().print(wireEvent);
         response.getWriter().flush();
+
         response.flushBuffer();
         Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Server Sent Event\n" + wireEvent);
     }
 
-}
+    }
