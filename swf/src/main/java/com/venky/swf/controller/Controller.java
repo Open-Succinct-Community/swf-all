@@ -62,8 +62,6 @@ import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.controls._IControl;
-import com.venky.swf.views.controls.page.Body;
-import com.venky.swf.views.controls.page.Html;
 import com.venky.swf.views.controls.page.layout.Pre;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.login.LoginView.LoginContext;
@@ -80,6 +78,7 @@ import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -955,5 +954,25 @@ public class Controller implements TemplateLoader{
         fields.append("\n}");
         fields.append(references);
         return fields.toString();
+    }
+
+
+    public View info() throws IOException{
+        return info(0L);
+    }
+    public View info(long id) throws IOException{
+        if (!Config.instance().isDevelopmentEnvironment() &&  getPath().getSessionUserId() != 1){
+            throw new AccessDeniedException("You cannot view logs!");
+        }
+        return new BytesView(getPath(),StringUtil.readBytes(new FileInputStream(String.format("tmp/java_info0.log.%d",id)),true),MimeType.TEXT_PLAIN);
+    }
+    public View warn() throws IOException{
+        return warn(0L);
+    }
+    public View warn(long id) throws IOException{
+        if (!Config.instance().isDevelopmentEnvironment()){
+            throw new AccessDeniedException("You cannot view logs!");
+        }
+        return new BytesView(getPath(),StringUtil.readBytes(new FileInputStream(String.format("tmp/java_warn0.log.%d",id)),true),MimeType.TEXT_PLAIN);
     }
 }
