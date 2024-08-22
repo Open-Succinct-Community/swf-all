@@ -848,11 +848,9 @@ public class Controller implements TemplateLoader{
 
             SingleRecordAction singleRecordAction = ControllerReflector.instance(getClass()).getAnnotation(actionMethod, SingleRecordAction.class);
             if (singleRecordAction != null){
-                if (id == null) {
-                    if (!getPath().canAccessControllerAction(actionMethod.getName())){
-                        action.setAllowed(false);
-                    }
-                }else {
+                if (id == null)
+                    action.setAllowed(getPath().canAccessControllerAction(actionMethod.getName()));
+                else {
                     action.setAllowed(getPath().canAccessControllerAction(actionMethod.getName(),id.toString()));
                 }
                 action.setIcon(singleRecordAction.icon());
