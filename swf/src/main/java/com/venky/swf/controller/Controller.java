@@ -855,6 +855,8 @@ public class Controller implements TemplateLoader{
                 }
                 action.setIcon(singleRecordAction.icon());
                 action.setToolTip(singleRecordAction.tooltip());
+            }else {
+                action.setAllowed(getPath().canAccessControllerAction(actionMethod.getName()));
             }
             entity.getActions().add(action);
         }
