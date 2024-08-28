@@ -121,7 +121,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                     }
                     ModelReader<? extends Model, T> reader = (ModelReader<? extends Model, T>) ModelIOFactory.getReader(referredModelClass, formatClass);
                     reader.setInvalidReferencesAllowed(isInvalidReferencesAllowed());
-                    Model referredModel = reader.read(refElement, false,saveRecursive);
+                    Model referredModel = reader.read(refElement, false,saveRecursive && isInvalidReferencesAllowed());
                     if (referredModel != null) {
                         if (referredModel.getRawRecord().isNewRecord()) {
                             if (!isInvalidReferencesAllowed()) {

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.venky.swf.db.model.Model;
 import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
 
 
 public class ModelIOFactory {
@@ -26,6 +27,7 @@ public class ModelIOFactory {
 		if (reader == null){
 			throw new UnsupportedMimeTypeException("No Reader available for Mimetype:" +  FormatHelper.getMimeType(formatClass).toString());
 		}
+		reader.setInvalidReferencesAllowed(Config.instance().getBooleanProperty("swf.db.auto.create.references", false));
 		return reader;
 	}
 	@SuppressWarnings("unchecked")
