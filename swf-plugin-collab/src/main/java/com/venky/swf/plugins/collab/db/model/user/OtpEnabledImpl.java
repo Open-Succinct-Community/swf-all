@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.db.model.user;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.routing.Config;
 
 public abstract class OtpEnabledImpl<T extends OtpEnabled & Model> extends ModelImpl<T> {
     public OtpEnabledImpl() {
@@ -21,7 +22,7 @@ public abstract class OtpEnabledImpl<T extends OtpEnabled & Model> extends Model
     }
 
     public void resendOtp(){
-        sendOtp(false);
+        sendOtp(Config.instance().getBooleanProperty("swf.otp.refresh.on.resend",false));
     }
     public void sendOtp(){
         sendOtp(true);

@@ -4,6 +4,7 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.collab.util.MailUtil;
+import com.venky.swf.routing.Config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,8 +21,11 @@ public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.u
 
     public void sendOtp(boolean generateFresh) {
         T email = getProxy();
+        long ttl = Config.instance().getLongProperty("swf.otp.ttl.minutes",10) * 60L * 1000L; //10 minutes.
+        long now = System.currentTimeMillis();
+        long expiry = email.getUpdatedAt() == null ? now + ttl : email.getUpdatedAt().getTime() + ttl;
 
-        if (generateFresh || ObjectUtil.isVoid(email.getLastOtp())){
+        if (generateFresh || ObjectUtil.isVoid(email.getLastOtp()) || email.getUpdatedAt() == null || now > expiry){
             email.setLastOtp(OtpEnabled.generateOTP());
         }
         email.setValidated(false);
