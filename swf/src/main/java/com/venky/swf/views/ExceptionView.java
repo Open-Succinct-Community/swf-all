@@ -32,7 +32,7 @@ public class ExceptionView extends View{
     final Throwable th;
     public ExceptionView(_IPath path,Throwable th){
         super(path);
-        this.th = th;
+        this.th = ExceptionUtil.getRootCause(th);
     }
     public void write() throws IOException{
         int httpStatus = HttpServletResponse.SC_BAD_REQUEST;
