@@ -785,7 +785,7 @@ public class Path implements _IPath{
         }else if (!ObjectUtil.equals(password,password2)){
             // Signup or reset password request;!
             throw new RuntimeException("Passwords don't match!");
-        }else if (user != null && !getFormFields().containsKey("_RESET")){
+        }else if (user != null && !ObjectUtil.equals(action(),"reset_password")){
             throw new RuntimeException("Username "+ username + " is already registered");
         }else {
             user = Database.getTable(User.class).newRecord();
