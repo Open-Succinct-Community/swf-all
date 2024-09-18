@@ -790,9 +790,9 @@ public class Path implements _IPath{
         }else {
             user = Database.getTable(User.class).newRecord();
             user.setName(username);
-            user.setPassword(password);
             user = Database.getTable(User.class).getRefreshed(user);
             if (save){
+                user.setPassword(password);
                 saveUserInNewTxn(user);
             }
             return user;
