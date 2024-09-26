@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.uom;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
@@ -54,17 +55,23 @@ public interface UnitOfMeasure extends Model {
 	public static UnitOfMeasure getLengthMeasure(String name) { 
 		return getMeasure(MEASURES_LENGTH,name);
 	}
-	
+
+	public static UnitOfMeasure getMeasure(String name){
+		return getMeasure(null,name);
+	}
+
 	public static UnitOfMeasure getMeasure(String measures, String name) { 
 		Select s = new Select().from(UnitOfMeasure.class);
 		Expression w = new Expression(s.getPool(),Conjunction.AND);
 		w.add(new Expression(s.getPool(),"NAME",Operator.EQ,name));
-		w.add(new Expression(s.getPool(),"MEASURES",Operator.EQ,measures));
+		if (!ObjectUtil.isVoid(measures)) {
+			w.add(new Expression(s.getPool(), "MEASURES", Operator.EQ, measures));
+		}
 		List<UnitOfMeasure> uoms = s.where(w).execute();
 		if (uoms.isEmpty()) {
 			return null;
 		}else if (uoms.size() > 1) {
-			throw new  RuntimeException("Multiple UOMS match " + name + " that measures "+ measures);
+			throw new  RuntimeException("Multiple UOMS match " + name );
 		}else {
 			return uoms.get(0);
 		}

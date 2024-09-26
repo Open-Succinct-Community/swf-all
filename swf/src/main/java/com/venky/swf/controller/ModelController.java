@@ -351,11 +351,20 @@ public class ModelController<M extends Model> extends Controller {
     private String[] getColumnsToList() {
         List<String> columns = new ArrayList<>();
         ModelReflector<M> reflector = getReflector();
-        for (String field : reflector.getRealFields()){
-            if (!InputStream.class.isAssignableFrom(reflector.getFieldGetter(field).getReturnType())){
-                ColumnDescriptor cd = reflector.getColumnDescriptor(field);
-                columns.add(cd.getEscapedName());
+        String[] iFields = getIncludedFields();
+        List<String> includedFields =  iFields == null?  reflector.getRealFields() : Arrays.asList(iFields);
+
+        //Only include requested fields if passed.
+        for (String field : includedFields){
+            if (reflector.isFieldVirtual(field)){
+                //API may have requested virtual fields also
+                continue;
             }
+            if (InputStream.class.isAssignableFrom(reflector.getFieldGetter(field).getReturnType()) && iFields == null ){
+                continue; //Don't include stream fields by default unless asked; It kills performance
+            }
+            ColumnDescriptor cd = reflector.getColumnDescriptor(field);
+            columns.add(cd.getEscapedName());
         }
         return columns.toArray(new String[]{});
     }
