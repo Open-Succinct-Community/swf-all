@@ -9,6 +9,8 @@ import com.venky.core.log.ExtendedLevel;
 import com.venky.core.util.PackageUtil;
 import com.venky.extension.Registry;
 import com.venky.swf.db._IDatabase;
+import com.venky.swf.db.model.status.RouterStatus;
+import com.venky.swf.db.model.status.ServerStatus;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.eventloop.jetty._HttpCoreEvent;
 import com.venky.swf.views._IView;
@@ -29,7 +31,7 @@ import java.util.logging.LogManager;
 public class Router extends AbstractHandler {
 
     protected Router() {
-    	
+		status = RouterStatus.created;
     }
 
 	@Override
@@ -71,7 +73,13 @@ public class Router extends AbstractHandler {
     public void shutDown(){
     	callShutdownExtensions();
     }
+
+	private RouterStatus status;
+	public void status(ServerStatus serverStatus){
+		serverStatus.setRouterStatus(status);
+	}
 	public void setLoader(ClassLoader loader) {
+		this.status = RouterStatus.initializing;
 		synchronized (this) {
 			if (this.loader != loader) {
 				shutDown();
@@ -91,6 +99,7 @@ public class Router extends AbstractHandler {
 			    			Config.instance().getLogger(Router.class.getName()).info("Logging not configured! using defaults");
 			    		}
 					} catch (Exception e1) {
+						this.status = RouterStatus.failed;
 						Config.instance().getLogger(Router.class.getName()).info("config/logger.properties not configured! using defaults");
 					}
 					_IDatabase db = getDatabase(true);
@@ -103,6 +112,7 @@ public class Router extends AbstractHandler {
 						try {
 							db.getCurrentTransaction().rollback(ex);
 						} catch (Exception e) {
+							this.status = RouterStatus.failed;
 							throw new RuntimeException(e);
 						}
 					} finally{
@@ -112,7 +122,10 @@ public class Router extends AbstractHandler {
 						getPathClass();
 						getExceptionViewClass();
 					} catch (Exception e) {
+						this.status = RouterStatus.failed;
 						Config.instance().getLogger(Router.class.getName()).log(Level.SEVERE,e.getMessage(),e);
+					}finally {
+						status = RouterStatus.initialized;
 					}
 				}
 			}

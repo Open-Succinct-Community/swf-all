@@ -106,6 +106,9 @@ public class AsyncTaskManager  {
 		}
 		return queue;
 	}
+	public int count(){
+		return queue.size();
+	}
 
 	void evict(AsyncTaskWorker asyncTaskWorker) {
 		if (Thread.currentThread() == asyncTaskWorker) {

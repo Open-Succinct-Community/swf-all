@@ -36,6 +36,7 @@ import com.venky.swf.db.model.io.xls.XLSModelReader;
 import com.venky.swf.db.model.io.xls.XLSModelReader.RecordVisitor;
 import com.venky.swf.db.model.io.xls.XLSModelWriter;
 import com.venky.swf.db.model.reflection.ModelReflector;
+import com.venky.swf.db.model.status.ServerStatus;
 import com.venky.swf.db.table.BindVariable;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
@@ -66,6 +67,7 @@ import com.venky.swf.views.controls.page.layout.Pre;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.login.LoginView.LoginContext;
 import com.venky.swf.views.model.FileUploadView;
+import in.succinct.json.JSONObjectWrapper;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -84,6 +86,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -955,6 +958,19 @@ public class Controller implements TemplateLoader{
         fields.append(references);
         return fields.toString();
     }
+
+    @RequireLogin(false)
+    public View ping(){
+        return new BytesView(getPath(),new byte[]{},MimeType.TEXT_PLAIN);
+    }
+    @RequireLogin(false)
+    public View status(){
+        ServerStatus status = new ServerStatus();
+        AsyncTaskManagerFactory.getInstance().status(status);
+        Router.instance().status(status);
+        return new BytesView(getPath(),status.toString().getBytes(StandardCharsets.UTF_8),MimeType.APPLICATION_JSON);
+    }
+
 
 
     public View info() throws IOException{

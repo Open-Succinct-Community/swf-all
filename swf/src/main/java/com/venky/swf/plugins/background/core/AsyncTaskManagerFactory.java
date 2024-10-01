@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.background.core;
 
 import com.venky.cache.Cache;
+import com.venky.swf.db.model.status.ServerStatus;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,6 +64,16 @@ public class AsyncTaskManagerFactory {
             }
         }
         return t;
+    }
+    public void status(ServerStatus status){
+        for (Class<? extends AsyncTaskManager> aClass : taskManagerCache.keySet()) {
+            AsyncTaskManager asyncTaskManager = taskManagerCache.get(aClass);
+
+            status.setAsyncServer(aClass.getSimpleName());
+            status.setJobCount(asyncTaskManager.count());
+            status.setNumWorkers(asyncTaskManager.getNumWorkers());
+
+        }
     }
 
     public void shutdown() {
