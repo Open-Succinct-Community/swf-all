@@ -51,17 +51,19 @@ public class UserParticipantExtension extends CompanyNonSpecificParticipantExten
 					}
 					q.append("(  EMAIL:\"@").append(Database.getTable(Company.class).get(companyId).getDomainName()).append("\" )");
 				}
-				q.append(")");
-				q.insert(0,"(");
-				LuceneIndexer indexer = LuceneIndexer.instance(UserEmail.class);
-				Query qry = indexer.constructQuery(q.toString());
-				List<Long> userEmailIds = indexer.findIds(qry,0);
-				if (userEmailIds.size() < 50){
-					ret = new SequenceSet<>();
-					Select s = new Select().from(UserEmail.class) ;
-					List<UserEmail> userEmails = s.where(new Expression(s.getPool(),"ID", Operator.IN,userEmailIds.toArray())).execute();
-					for (UserEmail userEmail : userEmails) {
-						ret.add(userEmail.getUserId());
+				if (!q.isEmpty()){
+					q.append(")");
+					q.insert(0,"(");
+					LuceneIndexer indexer = LuceneIndexer.instance(UserEmail.class);
+					Query qry = indexer.constructQuery(q.toString());
+					List<Long> userEmailIds = indexer.findIds(qry,0);
+					if (userEmailIds.size() < 50){
+						ret = new SequenceSet<>();
+						Select s = new Select().from(UserEmail.class) ;
+						List<UserEmail> userEmails = s.where(new Expression(s.getPool(),"ID", Operator.IN,userEmailIds.toArray())).execute();
+						for (UserEmail userEmail : userEmails) {
+							ret.add(userEmail.getUserId());
+						}
 					}
 				}
 			}
