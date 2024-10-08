@@ -4,6 +4,7 @@ import com.venky.core.string.StringUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.reflection.ModelReflector;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -107,6 +108,9 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
                 break;
         }
 
+    }
+    public String getPool(){
+        return ModelReflector.instance(getModelClass(this)).getPool();
     }
 
     protected void afterValidate(M instance){
