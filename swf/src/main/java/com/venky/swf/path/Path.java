@@ -862,9 +862,7 @@ public class Path implements _IPath{
                     return false;
                 }
             }else {
-                FormatHelper<T> helper = null ;
                 try {
-                    helper = FormatHelper.instance(this.getProtocol(),getInputStream());
                     List<User> input = adaptor.readRequest(this);
                     if (input.size() == 1){
                         Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
