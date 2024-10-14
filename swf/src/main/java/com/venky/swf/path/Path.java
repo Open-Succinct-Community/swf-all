@@ -865,23 +865,21 @@ public class Path implements _IPath{
                 FormatHelper<T> helper = null ;
                 try {
                     helper = FormatHelper.instance(this.getProtocol(),getInputStream());
-                    if (helper.getElementAttribute("User") != null){
-                        List<User> input = adaptor.readRequest(this);
-                        if (input.size() == 1){
-                            Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
-                            username = input.get(0).getName();
-                            if (ObjectUtil.isVoid(username) && user != null){
-                                username = user.getName();
-                            }
-                            password = input.get(0).getPassword();
-                            password2 = input.get(0).getPassword2();
-                            user = login(username,password,password2,false);
-                            if (user.getRawRecord().isNewRecord()) {
-                                //signedup!
-                                user.getRawRecord().load(input.get(0).getRawRecord());
-                            }
-                            saveUserInNewTxn(user);
+                    List<User> input = adaptor.readRequest(this);
+                    if (input.size() == 1){
+                        Database.getInstance().getCache(ModelReflector.instance(User.class)).clear();
+                        username = input.get(0).getName();
+                        if (ObjectUtil.isVoid(username) && user != null){
+                            username = user.getName();
                         }
+                        password = input.get(0).getPassword();
+                        password2 = input.get(0).getPassword2();
+                        user = login(username,password,password2,false);
+                        if (user.getRawRecord().isNewRecord()) {
+                            //signedup!
+                            user.getRawRecord().load(input.get(0).getRawRecord());
+                        }
+                        saveUserInNewTxn(user);
                     }
                 }catch (Exception ex){
                     throw new RuntimeException(ex);
