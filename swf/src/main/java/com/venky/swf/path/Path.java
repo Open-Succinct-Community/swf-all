@@ -849,7 +849,7 @@ public class Path implements _IPath{
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
 
-        if (getRequest().getMethod().equalsIgnoreCase("POST") && LOGIN_ACTIONS.contains(action())){
+        if (getRequest().getMethod().equalsIgnoreCase("POST") && (LOGIN_ACTIONS.contains(action()) || (LOGIN_ACTIONS.contains(controllerPathElement())&& "index".equals(action()))  )){
             if (ObjectUtil.isVoid(username) && user != null ){
                 // logged in with api key or other means
                 username = user.getName();
