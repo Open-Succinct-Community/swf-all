@@ -808,6 +808,11 @@ public class Path implements _IPath{
             throw new RuntimeException(ex);
         }
     }
+
+    Set<String> LOGIN_ACTIONS = new HashSet<>(){{
+        add("login");
+        add("register");
+    }};
     public <T> boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
             return true;
@@ -844,7 +849,7 @@ public class Path implements _IPath{
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
 
-        if (getRequest().getMethod().equalsIgnoreCase("POST")){
+        if (getRequest().getMethod().equalsIgnoreCase("POST") && LOGIN_ACTIONS.contains(action())){
             if (ObjectUtil.isVoid(username) && user != null ){
                 // logged in with api key or other means
                 username = user.getName();
@@ -859,7 +864,7 @@ public class Path implements _IPath{
             }else {
                 FormatHelper<T> helper = null ;
                 try {
-                        helper = FormatHelper.instance(this.getProtocol(),getInputStream());
+                    helper = FormatHelper.instance(this.getProtocol(),getInputStream());
                     if (helper.getElementAttribute("User") != null){
                         List<User> input = adaptor.readRequest(this);
                         if (input.size() == 1){

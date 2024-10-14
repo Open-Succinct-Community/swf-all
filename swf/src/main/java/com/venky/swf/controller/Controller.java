@@ -67,7 +67,6 @@ import com.venky.swf.views.controls.page.layout.Pre;
 import com.venky.swf.views.login.LoginView;
 import com.venky.swf.views.login.LoginView.LoginContext;
 import com.venky.swf.views.model.FileUploadView;
-import in.succinct.json.JSONObjectWrapper;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -302,6 +301,10 @@ public class Controller implements TemplateLoader{
 
     @RequireLogin(false)
     public View resources(String name) throws IOException {
+        return resources(name,null);
+    }
+    @RequireLogin(false)
+    public View resources(String name, View defaultView) throws IOException {
         Path p = getPath();
         if (name.startsWith("/config/")) {
             return new BytesView(p, "Access Denied!".getBytes());
@@ -317,7 +320,11 @@ public class Controller implements TemplateLoader{
             is = p.getResourceAsStream(resource);
         }
         if (is == null){
-            throw new AccessDeniedException("No such resource!");
+            if (defaultView != null){
+                return defaultView;
+            }else {
+                throw new AccessDeniedException("No such resource!");
+            }
         }
 
         return new BytesView(getPath(), StringUtil.readBytes(is), MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(name));

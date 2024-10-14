@@ -63,12 +63,26 @@ public interface TemplateLoader {
         }
     }
 
+    @RequireLogin(false)
+    default View app(){
+        return app("index.html");
+    }
+    @RequireLogin(false)
+    default View app(String path)  {
+        return publish(TemplateSubDirectory.APP,path,false,true);
+    }
     enum TemplateSubDirectory {
         HTML(){
             public String contentType(String fileName){
                 return MimeType.TEXT_HTML.toString();
             }
 
+        },
+        APP(){
+            @Override
+            public String fileExtension() {
+                return ".html";
+            }
         },
         MARKDOWN(){
             @Override
@@ -130,17 +144,13 @@ public interface TemplateLoader {
         // dir/file or dir/file.html
         if (file.lastIndexOf(".") > file.lastIndexOf("/")) {
             filesToCheck.add(String.format("/%s/%s",subDirectory.dir(),file));
+        }else {
+            filesToCheck.add(String.format("/%s/%s%s", subDirectory.dir(), file, subDirectory.fileExtension()));
         }
-        filesToCheck.add(String.format("/%s/%s/index%s", subDirectory.dir(), file, subDirectory.fileExtension()));
-        filesToCheck.add(String.format("/%s/%s/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
-        filesToCheck.add(String.format("/%s/%s/server/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
-        filesToCheck.add(String.format("/%s/%s/_next/server/app/index%s",subDirectory.dir(),file,subDirectory.fileExtension()));
-        filesToCheck.add(String.format("/%s/%s%s", subDirectory.dir(), file, subDirectory.fileExtension()));
-
-
+        filesToCheck.add(String.format("/%s", subDirectory.index()));
 
         File template = null;
-        boolean treatAsFragment = fragment;
+        boolean treatAsFragment = fragment || (subDirectory == TemplateSubDirectory.APP);
         for (String templateName : filesToCheck){
             template = new File(getTemplateDirectory(),templateName);
             if (template.exists() && template.isFile()){
@@ -159,7 +169,7 @@ public interface TemplateLoader {
             if (subDirectory == TemplateSubDirectory.MARKDOWN){
                 bytes = pegDownProcessor.markdownToHtml(new String(bytes)).getBytes(StandardCharsets.UTF_8);
             }
-            if (!treatAsFragment){
+            if (!treatAsFragment) {
                 final String processed = new String(bytes);
                 ret = new HtmlView(getPath()) {
                     @Override
@@ -178,7 +188,6 @@ public interface TemplateLoader {
             }else {
                 ret = new BytesView(getPath(), bytes, MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(template.getName()));
             }
-
         }catch (Exception ex){
             throw new RuntimeException(ex);
         }
@@ -190,11 +199,11 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View html(){
-        return publish(TemplateSubDirectory.HTML);
+        return html(new File(TemplateSubDirectory.HTML.index()).getName());
     }
     @RequireLogin(false)
     default View html(String path){
-        return publish(TemplateSubDirectory.HTML,path);
+        return html(path,false);
     }
     default View html(String path, boolean includeMenu){
         return publish(TemplateSubDirectory.HTML,path,includeMenu);
@@ -202,11 +211,11 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View markdown(){
-        return publish(TemplateSubDirectory.MARKDOWN);
+        return markdown(new File(TemplateSubDirectory.MARKDOWN.index()).getName());
     }
     @RequireLogin(false)
     default View markdown(String path){
-        return publish(TemplateSubDirectory.MARKDOWN,path);
+        return markdown(path,false);
     }
     default View markdown(String path, boolean includeMenu){
         return publish(TemplateSubDirectory.MARKDOWN,path,includeMenu);
@@ -215,12 +224,12 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View markdownFragment(String file){
-        return publish(TemplateSubDirectory.MARKDOWN,file,false,true);
+        return publish(TemplateSubDirectory.MARKDOWN,file,false);
     }
 
     @RequireLogin(false)
     default View htmlFragment(String file){
-        return publish(TemplateSubDirectory.HTML,file,false,true);
+        return publish(TemplateSubDirectory.HTML,file,false);
     }
 
     DashboardView dashboard(HtmlView aContainedView);
