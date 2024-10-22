@@ -130,17 +130,15 @@ public class UsersController extends ModelController<User>{
 		if (getPath().getRequest().getMethod().equals("GET")){
 			return html("close");
 		}
-		String msg = "Initiated request to close account.";
 		if (user != null) {
 			user.setAccountClosureInitiated(true);
 			user.save();
 			if (getPath().getProtocol() == MimeType.TEXT_HTML){
+				String msg = "Initiated request to close account.";
 				getPath().addInfoMessage(msg);
 				return back();
 			}else {
-				JSONObject out = new JSONObject();
-				out.put("message",msg);
-				return new BytesView(getPath(),out.toString().getBytes(StandardCharsets.UTF_8),MimeType.APPLICATION_JSON);
+				return show(user);
 			}
 		}else {
 			return new BytesView(getPath(), new byte[]{}, MimeType.TEXT_PLAIN);
@@ -150,17 +148,15 @@ public class UsersController extends ModelController<User>{
 	@RequireLogin
 	public View cancelAccountClosureRequest(){
 		User user = getPath().getSessionUser();
-		String msg = "Cancelled your request to close account!!";
 		if (user != null) {
 			user.setAccountClosureInitiated(false);
 			user.save();
 			if (getPath().getProtocol() == MimeType.TEXT_HTML){
+				String msg = "Cancelled your request to close account!!";
 				getPath().addInfoMessage(msg);
 				return back();
 			}else {
-				JSONObject out = new JSONObject();
-				out.put("message",msg);
-				return new BytesView(getPath(),out.toString().getBytes(StandardCharsets.UTF_8),MimeType.APPLICATION_JSON);
+				return show(user);
 			}
 		}else {
 			return new BytesView(getPath(), new byte[]{}, MimeType.TEXT_PLAIN);
