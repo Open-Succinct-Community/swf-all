@@ -15,5 +15,11 @@ public enum HttpMethod {
         public String  toString() {
             return "PUT" ;
         }
-    }
+    },
+    DELETE() {
+        public String  toString() {
+            return "DELETE" ;
+        }
+    },
+
 }
