@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.collab.extensions.beforesave;
 
 import com.venky.swf.plugins.collab.db.model.user.User;
+import com.venky.swf.routing.Config;
 
 public class BeforeSaveUser extends BeforeSaveAddress<User> {
     static {
@@ -9,6 +10,6 @@ public class BeforeSaveUser extends BeforeSaveAddress<User> {
 
     @Override
     protected boolean isOkToSetLocationAsync() {
-        return false;
+        return  Config.instance().getBooleanProperty("swf.collab.user.geo.assign.async",false);
     }
 }
