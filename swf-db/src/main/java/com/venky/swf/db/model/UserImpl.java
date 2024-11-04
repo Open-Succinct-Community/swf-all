@@ -417,4 +417,13 @@ public class UserImpl extends ModelImpl<User>{
 	public void setCurrentLng(BigDecimal lng){
 		this.lng = lng;
 	}
+
+
+	public boolean isPasswordSet() {
+		return !ObjectUtil.isVoid(getProxy().getPassword());
+	}
+
+	public void setPasswordSet(boolean set){
+		//Do nothing.
+	}
 }

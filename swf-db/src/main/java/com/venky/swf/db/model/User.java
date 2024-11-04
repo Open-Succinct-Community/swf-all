@@ -154,4 +154,7 @@ public interface User extends Model {
     public void setAccountClosed(boolean accountClosed);
 
 
+    @IS_VIRTUAL
+    public boolean isPasswordSet();
+
 }
