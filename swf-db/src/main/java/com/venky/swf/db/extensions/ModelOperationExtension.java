@@ -22,6 +22,8 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
     enum ModelOperationExtensionPoint {
         before_validate,
         after_validate,
+        before_update,
+        after_update,
         before_create,
         after_create,
         before_save,
@@ -94,6 +96,12 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
             case after_create:
                 afterCreate(instance);
                 break;
+            case before_update:
+                beforeUpdate(instance);
+                break;
+            case after_update:
+                afterUpdate(instance);
+                break;
             case before_save:
                 beforeSave(instance);
                 break;
@@ -125,6 +133,12 @@ public abstract class  ModelOperationExtension<M extends Model> implements Exten
 
     }
     protected void afterCreate(M instance){
+
+    }
+    protected void beforeUpdate(M instance){
+
+    }
+    protected void afterUpdate(M instance){
 
     }
     protected void beforeSave(M instance){
