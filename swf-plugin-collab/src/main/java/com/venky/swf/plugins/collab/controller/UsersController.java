@@ -50,6 +50,7 @@ import com.venky.swf.views.login.LoginView.LoginContext;
 import org.json.simple.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -204,7 +205,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
         return existing;
     }
     protected void addToIncludedModelFieldsMap(Map<Class<? extends Model>,List<String>> map, Class<? extends Model> clazz , List<String> excludedFields){
-        List<String> fields = ModelReflector.instance(clazz).getVisibleFields(Collections.singletonList("ID"));
+        List<String> fields = ModelReflector.instance(clazz).getVisibleFields(List.of("ID"));
         List<String> oldFields = getExistingModelFields(map,clazz);
 
         Map<Class<? extends Model>,List<String>> requestedFieldsMap  = getIncludedModelFieldsFromRequest();
@@ -262,13 +263,13 @@ public class UsersController extends com.venky.swf.controller.UsersController {
             return map ;
         }
         if (!map.containsKey(User.class)) {
-            map.put(User.class, new ArrayList<>(Arrays.asList("ID", "NAME")));
+            map.put(User.class, new ArrayList<>(List.of("ID", "NAME")));
         }
         if (!map.containsKey(UserPhone.class)) {
-            map.put(UserPhone.class, new ArrayList<>(Arrays.asList("ID", "PHONE_NUMBER", "VALIDATED")));
+            map.put(UserPhone.class, new ArrayList<>(List.of("ID", "PHONE_NUMBER", "VALIDATED")));
         }
         if (!map.containsKey(UserEmail.class)){
-            map.put(UserEmail.class, new ArrayList<>(Arrays.asList("ID", "EMAIL", "VALIDATED")));
+            map.put(UserEmail.class, new ArrayList<>(List.of("ID", "EMAIL", "VALIDATED")));
         }
         return map;
     }
@@ -282,24 +283,24 @@ public class UsersController extends com.venky.swf.controller.UsersController {
             return map;
         }
 
-        addToIncludedModelFieldsMap(map, User.class, Arrays.asList("COMPANY_ID",  "COUNTRY_ID", "STATE_ID"));
-        addToIncludedModelFieldsMap(map, UserRole.class, Collections.singletonList("USER_ID"));
+        addToIncludedModelFieldsMap(map, User.class, List.of("COMPANY_ID",  "COUNTRY_ID", "STATE_ID"));
+        addToIncludedModelFieldsMap(map, UserRole.class, List.of("USER_ID"));
 
-        addToIncludedModelFieldsMap(map, UserPhone.class, Arrays.asList("USER_ID", "ID"));
-        addToIncludedModelFieldsMap(map, UserEmail.class, Arrays.asList("USER_ID", "ID" , "COMPANY_ID"));
-        addToIncludedModelFieldsMap(map, Application.class, Arrays.asList("ID", "COMPANY_ID", "ADMIN_ID"));
-        addToIncludedModelFieldsMap(map, Event.class, Collections.singletonList("ID"));
-        addToIncludedModelFieldsMap(map, ApplicationPublicKey.class, Arrays.asList("ID", "APPLICATION_ID"));
-        addToIncludedModelFieldsMap(map, EndPoint.class, Arrays.asList("ID", "APPLICATION_ID"));
-        addToIncludedModelFieldsMap(map, EventHandler.class, Arrays.asList("ID", "ADMIN_ID", "APPLICATION_ID", "END_POINT_ID"));
-        addToIncludedModelFieldsMap(map, WhiteListIp.class, Arrays.asList("ID", "APPLICATION_ID"));
-        addToIncludedModelFieldsMap(map, OpenApi.class, Collections.singletonList("ID"));
-        addToIncludedModelFieldsMap(map, Country.class, Collections.singletonList("ID"));
-        addToIncludedModelFieldsMap(map, State.class, Collections.singletonList("ID"));
-        addToIncludedModelFieldsMap(map, City.class, Collections.singletonList("ID"));
-        addToIncludedModelFieldsMap(map, PinCode.class, Arrays.asList("ID", "STATE_ID", "CITY_ID"));
-        addToIncludedModelFieldsMap(map, Facility.class, Arrays.asList("ID", "COMPANY_ID"));
-        addToIncludedModelFieldsMap(map, Company.class, Arrays.asList("ID", "LOGO"));
+        addToIncludedModelFieldsMap(map, UserPhone.class, List.of("USER_ID"));
+        addToIncludedModelFieldsMap(map, UserEmail.class, List.of("USER_ID",  "COMPANY_ID"));
+        addToIncludedModelFieldsMap(map, Application.class, List.of( "COMPANY_ID", "ADMIN_ID"));
+        addToIncludedModelFieldsMap(map, Event.class, Collections.emptyList());
+        addToIncludedModelFieldsMap(map, ApplicationPublicKey.class, List.of( "APPLICATION_ID"));
+        addToIncludedModelFieldsMap(map, EndPoint.class, List.of( "APPLICATION_ID"));
+        addToIncludedModelFieldsMap(map, EventHandler.class, List.of( "ADMIN_ID", "APPLICATION_ID", "END_POINT_ID"));
+        addToIncludedModelFieldsMap(map, WhiteListIp.class, List.of( "APPLICATION_ID"));
+        addToIncludedModelFieldsMap(map, OpenApi.class,  List.of());
+        addToIncludedModelFieldsMap(map, Country.class, List.of());
+        addToIncludedModelFieldsMap(map, State.class, List.of());
+        addToIncludedModelFieldsMap(map, City.class, List.of());
+        addToIncludedModelFieldsMap(map, PinCode.class, List.of( "STATE_ID", "CITY_ID"));
+        addToIncludedModelFieldsMap(map, Facility.class, List.of( "COMPANY_ID"));
+        addToIncludedModelFieldsMap(map, Company.class, List.of( "LOGO"));
 
         return map;
     }
