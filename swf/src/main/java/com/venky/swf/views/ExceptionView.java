@@ -12,6 +12,7 @@ import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.SWFHttpResponse;
+import com.venky.swf.db.table.RecordNotFoundException;
 import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.exceptions.UserNotAuthenticatedException;
 import com.venky.swf.integration.FormatHelper;
@@ -40,6 +41,8 @@ public class ExceptionView extends View{
             httpStatus = HttpServletResponse.SC_FORBIDDEN;
         }else if (ExceptionUtil.getEmbeddedException(th,UserNotAuthenticatedException.class) instanceof UserNotAuthenticatedException){
             httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+        }else if (ExceptionUtil.getEmbeddedException(th, RecordNotFoundException.class) instanceof RecordNotFoundException) {
+            httpStatus =HttpServletResponse.SC_NOT_FOUND;
         }
         write(httpStatus);
     }
