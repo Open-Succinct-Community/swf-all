@@ -319,7 +319,7 @@ public class Path implements _IPath{
             }
             if ((token.contains(".") && !pathTokenizer.hasMoreElements())) {
                 isResource = true;
-                if (resourcePath.length() == 0) {
+                if (resourcePath.isEmpty()) {
                     pathComponents.forEach(pe -> resourcePath.append("/").append(pe));
                 }
             }

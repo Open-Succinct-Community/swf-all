@@ -310,16 +310,14 @@ public class ModelAwareness implements FieldUIMetaProvider{
     	Link actionLink = new Link();
     	String icon = "glyphicon-asterisk" ; 
     	String tooltip = StringUtil.camelize(actionName);
-    	if (sra != null) {
-    		if (!ObjectUtil.isVoid(sra.icon())){
-        		icon = sra.icon(); 
-    		}
-    		if (!ObjectUtil.isVoid(sra.tooltip())){
-        		tooltip = sra.tooltip(); 
-    		}
-    	}
+		if (!ObjectUtil.isVoid(sra.icon())){
+			icon = sra.icon();
+		}
+		if (!ObjectUtil.isVoid(sra.tooltip())){
+			tooltip = sra.tooltip();
+		}
         StringBuilder sAction = new StringBuilder();
-        if ("search".equals(getPath().action())){
+        if ("search".equals(getPath().action()) && getPath().getFormFields().containsKey("q")){
         	sAction.append(getPath().controllerPath()).append("/").append(getPath().action()).append("/").append(StringUtil.valueOf(getPath().getFormFields().get("q")));
         }else {
         	sAction.append(getPath().controllerPath()).append("/").append(getPath().action());
