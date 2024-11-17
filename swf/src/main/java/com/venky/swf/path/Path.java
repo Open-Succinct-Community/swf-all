@@ -419,8 +419,15 @@ public class Path implements _IPath{
             controllerElements.add(info);
             
             if (i < pathElementSize -1){
-                info.setAction(pathelements.get(i+1));
-                i+= 1;
+                if (ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(pathelements.get(i+1)).isEmpty()){
+                    // Not an action.
+                    pathelements.add(i+1,"index");
+                    pathElementSize ++;
+                    info.setAction("index");
+                }else {
+                    info.setAction(pathelements.get(i + 1));
+                }
+                i+=1;
             }
             try {
                 if (i < pathElementSize - 1){
