@@ -1108,7 +1108,7 @@ public class Path implements _IPath{
     }
     
     private List<Method> getActionMethods(final String actionPathElement,final String parameterPathElement){
-        List<Method> methods = getControllerReflector().getActionMethods(actionPathElement);
+        List<Method> methods = new ArrayList<>(getControllerReflector().getActionMethods(actionPathElement));
         
         final int targetParameterLength = ObjectUtil.isVoid(parameterPathElement)? 0 : 1;
         final boolean parameterIsNumeric = isNumber(parameterPathElement);
