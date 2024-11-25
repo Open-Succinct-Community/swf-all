@@ -20,6 +20,7 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
+import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -392,83 +393,61 @@ public class Path implements _IPath{
     public List<String> getPathElements() {
         return pathelements;
     }
+    
+    @SuppressWarnings("unchecked")
+    private void loadControllerElements(){
+        
+        for (int i = 0 ; i < pathelements.size() ; i ++ ) {
+            String token = pathelements.get(i);
+            ControllerInfo lastKnownControllerInfo = controllerElements.isEmpty() ? null : controllerElements.getLast();
+            
+            String controllerClassName = ControllerCache.instance().get(token);
+            
+            if (lastKnownControllerInfo != null) {
+                if (ObjectUtil.isVoid(lastKnownControllerInfo.getAction())) {
+                    List<Method> actions = ControllerReflector.instance((Class<? extends Controller>) lastKnownControllerInfo.getControllerClass()).getActionMethods(token);
+                    if (!actions.isEmpty()) {
+                        lastKnownControllerInfo.setAction(token);
+                    } else {
+                        pathelements.add(i, "index");
+                        lastKnownControllerInfo.setAction("index");
+                    }
+                } else if (ObjectUtil.isVoid(lastKnownControllerInfo.getParameter())) {
+                    List<Method> actions = ControllerReflector.instance((Class<? extends Controller>) lastKnownControllerInfo.getControllerClass()).getActionMethods(lastKnownControllerInfo.getAction(), 1);
+                    if (!actions.isEmpty()) {
+                        
+                        lastKnownControllerInfo.setParameter(token);
+                    } else if (controllerClassName != null) {
+                        lastKnownControllerInfo = new ControllerInfo(token, controllerClassName);
+                        lastKnownControllerInfo.setControllerPathIndex(i);
+                        controllerElements.add(lastKnownControllerInfo);
+                    }
+                } else if ( controllerClassName != null) {
+                    lastKnownControllerInfo = new ControllerInfo(token, controllerClassName);
+                    lastKnownControllerInfo.setControllerPathIndex(i);
+                    controllerElements.add(lastKnownControllerInfo);
+                } else {
+                    lastKnownControllerInfo.setParameter(lastKnownControllerInfo.getParameter() + "/" + token);
+                }
+            } else if (controllerClassName != null){
+                lastKnownControllerInfo = new ControllerInfo(token, controllerClassName);
+                lastKnownControllerInfo.setControllerPathIndex(i);
+                controllerElements.add(lastKnownControllerInfo);
+            }
+        }
+        
+        
+    }
 
     @SuppressWarnings("unchecked")
     public Path(String target) {
         this.target = target;
         Config.instance().getLogger(Path.class.getName()).log(Level.INFO,"Api Called:" + target);
         pathelements = parsePathElements(target);
+        
         boolean isResource = !pathelements.isEmpty() && pathelements.get(0).equals("resources");
-
-        int pathElementSize = pathelements.size();
-        for (int i = 0 ; !isResource && i < pathElementSize ; i++){
-            String token = pathelements.get(i);
-            try {
-                Long.valueOf(token);
-                continue; //Ignore integer elements;
-            }catch (NumberFormatException e){
-                //
-            }
-            
-            String controllerClassName = ControllerCache.instance().get(token);
-            if (controllerClassName == null){
-                continue;
-            }
-            ControllerInfo info = new ControllerInfo(token,controllerClassName);
-            info.setControllerPathIndex(i);
-            controllerElements.add(info);
-            
-            if (i < pathElementSize -1){
-                if (ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(pathelements.get(i+1)).isEmpty()){
-                    // Not an action.
-                    pathelements.add(i+1,"index");
-                    pathElementSize ++;
-                    info.setAction("index");
-                }else {
-                    info.setAction(pathelements.get(i + 1));
-                }
-                i+=1;
-            }
-            try {
-                if (i < pathElementSize - 1){
-                    // Check if action  needs parameter
-                    if (ControllerReflector.instance((Class<? extends Controller>)info.getControllerClass()).getActionMethods(info.getAction(),1).isEmpty() ){
-                        //if (ControllerCache.instance().get(pathelements.get(i+1)) != null){
-                            // No parameter.!!
-                            continue;
-                        //}
-                    }
-                    info.setParameter(Long.valueOf(pathelements.get(i+1)));
-                    i+=1;
-                }
-            }catch (NumberFormatException ex){
-                //It is possible that the parameter is a string one. So lets check the next parameter to see if it is a model or this is 
-                //the last pathelement.
-                if (i  < pathElementSize - 2){
-                    String nextElement =  pathelements.get(i+2);
-                    if (ControllerCache.instance().get(nextElement) != null){
-                        info.setParameter(pathelements.get(i+1));
-                        i ++ ;
-                    } else {
-                        StringBuilder filePath = new StringBuilder();
-                        for ( ; i< pathElementSize -1 ;  ){
-                            if (filePath.length() > 0){
-                                filePath.append("/");
-                            }
-                            filePath.append(pathelements.remove(i+1));
-                            pathElementSize --;
-                        }
-                        pathelements.add(filePath.toString());
-                    }
-                }else {
-                    //Last pathelement.
-                    info.setParameter(pathelements.get(i+1));
-                    i++;
-                }
-            }
-        }
-        if (pathElementSize == 0){
-            pathelements.add("index");
+        if (!isResource){
+            loadControllerElements();
         }
         loadControllerClassName();
     }
@@ -538,7 +517,11 @@ public class Path implements _IPath{
             if (parameter instanceof Long){
                 return (Long)parameter;
             }
-            return null;
+            try {
+                return Database.getJdbcTypeHelper("").getTypeRef(long.class).getTypeConverter().valueOf(parameter);
+            }catch (NumberFormatException ex) {
+                return null;
+            }
         }
 
         public int getControllerPathIndex() {
@@ -565,9 +548,9 @@ public class Path implements _IPath{
             return;
         }
         if (!controllerElements.isEmpty()){
-            ControllerInfo cinfo = controllerElements.get(controllerElements.size() -1 );
-            controllerClassName = cinfo.getControllerClass().getName();
-            controllerPathIndex = cinfo.getControllerPathIndex();
+            ControllerInfo cInfo = controllerElements.get(controllerElements.size() -1 );
+            controllerClassName = cInfo.getControllerClass().getName();
+            controllerPathIndex = cInfo.getControllerPathIndex();
         }
 
         if (controllerClassName == null) {

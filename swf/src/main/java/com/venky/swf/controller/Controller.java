@@ -108,13 +108,13 @@ public class Controller implements TemplateLoader{
 
     public static final int MAX_LIST_RECORDS = 30;
     protected Path path;
+    
+    public Controller(Path path) {
+        this.path = path;
+    }
 
     public Path getPath() {
         return path;
-    }
-
-    public Controller(Path path) {
-        this.path = path;
     }
 
     public View tron(String loggerName) {

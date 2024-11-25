@@ -131,9 +131,7 @@ public interface TemplateLoader {
     }
 
     default View publish(TemplateSubDirectory subDirectory,String file){
-        return publish(subDirectory,file,
-                Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().
-                        valueOf(getPath().getFormFields().getOrDefault("includeMenu","N")));
+        return publish(subDirectory,file,isMenuIncluded());
     }
     default View publish(TemplateSubDirectory subDirectory,String file, boolean includeMenu){
         return publish(subDirectory,file,includeMenu,false);
@@ -203,7 +201,11 @@ public interface TemplateLoader {
     }
     @RequireLogin(false)
     default View html(String path){
-        return html(path,false);
+        return html(path,isMenuIncluded());
+    }
+    default boolean isMenuIncluded(){
+        return Database.getJdbcTypeHelper("").getTypeRef(Boolean.class).getTypeConverter().
+                valueOf(getPath().getFormFields().getOrDefault("includeMenu","N"));
     }
     default View html(String path, boolean includeMenu){
         return publish(TemplateSubDirectory.HTML,path,includeMenu);

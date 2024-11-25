@@ -29,17 +29,16 @@ public class UserParticipantExtension extends CompanyNonSpecificParticipantExten
 		SequenceSet<Long> ret = null;
 		User u = user.getRawRecord().getAsProxy(User.class);
 		if ("SELF_USER_ID".equalsIgnoreCase(fieldName)) {
-			if (!u.isStaff() || partiallyFilledModel.getId() == user.getId()){
-				ret = new SequenceSet<>();
-				ret.add(user.getId());
-			}else if (partiallyFilledModel.getId() > 0){
-				ret = new SequenceSet<>();
+			ret = new SequenceSet<>();
+			ret.add(user.getId());
+			
+			if (u.isStaff() && partiallyFilledModel.getId() > 0 && partiallyFilledModel.getId() != user.getId()){
 				List<Long> accessibleCompanyIds = u.getCompanyIds();
 				accessibleCompanyIds.retainAll(partiallyFilledModel.getCompanyIds());
 				if (!accessibleCompanyIds.isEmpty()){
 					ret.add(partiallyFilledModel.getId());
 				}
-			}else {
+			}else if (u.isStaff()){
 				StringBuilder q = new StringBuilder();
 
 				for (Long companyId : u.getCompanyIds()) {
