@@ -903,9 +903,9 @@ public class Path implements _IPath{
         return getProtocol().toString();
     }
     public MimeType getProtocol(){
-        String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
+        String apiprotocol = getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)) {
-            apiprotocol = getRequest().getHeader("content-type");
+            apiprotocol = getHeader("content-type");
         }
         return Path.getProtocol(apiprotocol);
     }
@@ -913,9 +913,9 @@ public class Path implements _IPath{
         return getReturnProtocol().toString();
     }
     public MimeType getReturnProtocol(){
-        String apiprotocol = getRequest().getHeader("ApiProtocol"); // This is bc.
+        String apiprotocol = getHeader("ApiProtocol"); // This is bc.
         if (ObjectUtil.isVoid(apiprotocol)){
-            apiprotocol = getRequest().getHeader("accept");
+            apiprotocol = getHeader("accept");
             if (ObjectUtil.equals("*/*",apiprotocol)){
                 apiprotocol = "";
             }
@@ -1534,10 +1534,12 @@ public class Path implements _IPath{
     }
 
     public String getHeader(String key){
-        String value = getRequest().getHeader("X-"+key);
+        Map<String,String> map = getHeaders();
+        
+        String value = map.get("X-"+key);
 
         if (ObjectUtil.isVoid(value)){
-            value = getRequest().getHeader(key);
+            value = map.get(key);
         }
 
         if (ObjectUtil.isVoid(value)){
