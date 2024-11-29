@@ -280,5 +280,7 @@ public class Record implements Comparable<Record>, Cloneable , Mergeable<Record>
 	    for (String f : from.getFieldNames()){
 	        put(f,from.get(f));
         }
+		this.startTracking();
+		this.dirtyFields.putAll(from.dirtyFields);
     }
 }

@@ -48,7 +48,7 @@ public class ApplicationUtil {
 
     public static Application find(ByteArrayInputStream is , Map<String, String> headers){
         ObjectHolder<Application> applicationObjectHolder = new ObjectHolder<>(null);
-        Registry.instance().callExtensions("swf.application.authenticator",is, headers,applicationObjectHolder);
+        Registry.instance().callExtensions(ApplicationUtil.APPLICATION_AUTHENTICATOR_EXTENSION,is, headers,applicationObjectHolder);
 
         Application app = applicationObjectHolder.get();
         if (app ==  null){
