@@ -802,6 +802,7 @@ public class Path implements _IPath{
     Set<String> LOGIN_ACTIONS = new HashSet<>(){{
         add("login");
         add("register");
+        add("authorize");
     }};
     public <T> boolean isRequestAuthenticated(){
         if (isUserLoggedOn()){
@@ -839,7 +840,10 @@ public class Path implements _IPath{
         String password = StringUtil.valueOf(map.get("password"));
         String password2 = StringUtil.valueOf(map.get("password2"));
 
-        if (getRequest().getMethod().equalsIgnoreCase("POST") && ( ( LOGIN_ACTIONS.contains(action()) && ObjectUtil.isVoid(controllerPathElement())) || (LOGIN_ACTIONS.contains(controllerPathElement())&& "index".equals(action()))  )){
+        if (getRequest().getMethod().equalsIgnoreCase("POST") &&
+                ( ( LOGIN_ACTIONS.contains(action()) && (ObjectUtil.isVoid(controllerPathElement()) || ObjectUtil.equals("oauth",controllerPathElement())))
+                    || (LOGIN_ACTIONS.contains(controllerPathElement())&& "index".equals(action()))
+                )) {
             if (ObjectUtil.isVoid(username) && user != null ){
                 // logged in with api key or other means
                 username = user.getName();

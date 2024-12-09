@@ -19,6 +19,7 @@ import com.venky.swf.views.controls.page.buttons.Submit;
 import com.venky.swf.views.controls.page.layout.Div;
 import com.venky.swf.views.controls.page.layout.FluidContainer;
 import com.venky.swf.views.controls.page.layout.FluidContainer.Column;
+import com.venky.swf.views.controls.page.layout.Span;
 import com.venky.swf.views.controls.page.text.Input;
 import com.venky.swf.views.controls.page.text.Label;
 import com.venky.swf.views.controls.page.text.PasswordText;
@@ -60,8 +61,17 @@ public class LoginView extends HtmlView{
 		}
 	}
 	public void addExternalLoginLinks(Column column,String _redirect_to){
+		boolean literalAdded = false;
+		
 		for (String provider :Config.instance().getOpenIdProviders()){
 			if (!ObjectUtil.isVoid(Config.instance().getClientId(provider))){
+				if (!literalAdded){
+					column.addControl(new Span(){{
+						addClass("self-center");
+						setText("Login With ");
+					}});
+					literalAdded = true;
+				}
 				column.addControl(new LinkedImage(String.format("/resources/images/%s.svg",provider),String.format("/oid/login?SELECTED_OPEN_ID=%s",provider) + (ObjectUtil.isVoid(_redirect_to) ? "" : "&_redirect_to=" + _redirect_to)));
 			}
 		}
@@ -80,10 +90,6 @@ public class LoginView extends HtmlView{
 
 		addProgressiveWebAppLinks(applicationDescPannel);
 
-		Column extLinks = loginPanel.createRow().createColumn(3,6);
-		extLinks.addClass("text-center flex");
-
-		addExternalLoginLinks(extLinks,_redirect_to);
 
 		Column formHolder = loginPanel.createRow().createColumn(2,8);
 		formHolder.addClass("offset-sm-4 col-sm-4 sm:offset-4 sm:col-4");
@@ -170,7 +176,14 @@ public class LoginView extends HtmlView{
 		}else if (!ObjectUtil.isVoid(message)){
 			setStatus(StatusType.INFO, message.toString());
 		}
-    }
+		
+		Column extLinks = loginPanel.createRow().createColumn(2,6);
+		extLinks.addClass("justify-end items-center flex");
+		
+		addExternalLoginLinks(extLinks,_redirect_to);
+		
+		
+	}
 
     private class FormGroup extends Div{
     	public FormGroup(){

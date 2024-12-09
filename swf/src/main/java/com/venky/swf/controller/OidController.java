@@ -238,7 +238,7 @@ public class OidController extends Controller{
 		}
 	}
 
-	private static Map<String, Map<String,String>>   getHumBolProviders() {
+	public static Map<String, Map<String,String>>   getHumBolProviders() {
 		Map<String, Map<String,String>> groupMap = new Cache<String, Map<String, String>>() {
 			@Override
 			protected Map<String, String> getValue(String groupKey) {

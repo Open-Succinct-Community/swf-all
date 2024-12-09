@@ -1,5 +1,6 @@
 package com.venky.swf.routing;
 
+import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.string.StringUtil;
 
@@ -18,7 +19,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class SWFClassLoader extends ClassLoader {
-    private Set<File> pathsHandled = new HashSet<>();
+    private Set<File> pathsHandled = new SequenceSet<>();
 
     public SWFClassLoader(ClassLoader parent) {
         super(parent);
