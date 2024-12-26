@@ -98,28 +98,23 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                 }
             }
 
-            StringBuilder defaultQueryString = new StringBuilder();
             if (priorityFields.containsKey("CITY_ID")) {
                 City city = oAddress.getCity();
                 State state = oAddress.getStateId() != null ? oAddress.getState() : ( city != null ? city.getState() : null ) ;
                 Country country = oAddress.getCountryId() != null ? oAddress.getCountry() : ( state != null ? state.getCountry() : null );
 
                 if (city != null) {
-                    defaultQueryString.append(city.getName());
+                    priorityFields.put("CITY_ID",city.getName());
                 }
                 if (state != null) {
-                    defaultQueryString.append(" ").append(state.getName());
+                    priorityFields.put("STATE_ID",state.getName());
                 }
                 if (country != null) {
-                    defaultQueryString.append(" ").append(country.getName());
+                    priorityFields.put("COUNTRY_ID",country.getName());
                 }
-                priorityFields.remove("CITY_ID");
-                priorityFields.remove("STATE_ID");
-                priorityFields.remove("COUNTRY_ID");
             }
             if (priorityFields.containsKey("PIN_CODE_ID")) {
-                defaultQueryString.append(" ").append(oAddress.getPinCode().getPinCode());
-                priorityFields.remove("PIN_CODE_ID");
+                priorityFields.put("PIN_CODE_ID",oAddress.getPinCode().getPinCode());
             }
 
             SequenceSet<String> addressQueries = new SequenceSet<>();
@@ -127,21 +122,11 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             for (int i = priorityFields.size() - 1; i >= 0; i--) {
                 StringBuilder addressQuery = new StringBuilder();
                 for (int j = 0; j <= i; j++) {
-                    addressQuery.append(priorityFields.getValueAt(j)).append(" ");
-                }
-                addressQuery.append(defaultQueryString.toString());
-                addressQueries.add(addressQuery.toString());
-            }
-            for (int i = priorityFields.size() - 2; i >= 0; i--) {
-                StringBuilder addressQuery = new StringBuilder();
-                for (int j = 0; j <= i; j++) {
                     addressQuery.insert(0, " ");
                     addressQuery.insert(0, priorityFields.getValueAt(priorityFields.size() - 1 - j));
                 }
-                addressQuery.append(defaultQueryString.toString());
                 addressQueries.add(addressQuery.toString());
             }
-            addressQueries.add(defaultQueryString.toString());
 
             return addressQueries;
         }

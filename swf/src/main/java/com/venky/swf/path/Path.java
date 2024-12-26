@@ -484,11 +484,17 @@ public class Path implements _IPath{
         private Class<? extends Model> modelClass = null;
         private Class<?> controllerClass = null;
         private int controllerPathIndex = -1;
+        private String controllerName = null;
         public ControllerInfo(String controllerName, String controllerClassName){
+            this.controllerName = controllerName;
             this.controllerClass = Path.getClass(controllerClassName);
             this.modelClass = Path.getModelClass(controllerName);
         }
-
+        
+        public String getControllerName() {
+            return controllerName;
+        }
+        
         public Class<?> getControllerClass() {
             return controllerClass;
         }
