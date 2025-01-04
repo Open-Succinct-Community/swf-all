@@ -48,8 +48,23 @@ public interface CoreTask extends Serializable , Comparable<CoreTask>{
 		return ret;
 	}
 
+	@SuppressWarnings("unchecked")
 	default AsyncTaskManager getAsyncTaskManager(){
-		return AsyncTaskManagerFactory.getInstance().get(AsyncTaskManager.class);
+		//return AsyncTaskManagerFactory.getInstance().get(IndexTaskManager.class);
+		String className = Config.instance().getProperty(String.format("%s.manager.class",getClass().getName()));
+		if (className == null){
+			return AsyncTaskManagerFactory.getInstance().get(getDefaultTaskManagerClass());
+		}
+		
+		try {
+			return AsyncTaskManagerFactory.getInstance().get((Class<? extends AsyncTaskManager>)Class.forName(className));
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	default <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass(){
+		return (Class<W>)AsyncTaskManager.class;
 	}
 
 	public enum Priority {

@@ -1,19 +1,25 @@
-package com.venky.swf.extensions;
+package com.venky.swf.extensions.request.authenticators;
 
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.User;
+import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
+import com.venky.swf.util.OidProvider;
+import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
-public class RequestAuthenticator implements Extension {
+public class ApiKeyAuthenticator implements Extension {
     static{
-        Registry.instance().registerExtension(Path.REQUEST_AUTHENTICATOR,new RequestAuthenticator());
+        Registry.instance().registerExtension(Path.REQUEST_AUTHENTICATOR,new ApiKeyAuthenticator());
     }
     @Override
     public void invoke(Object... context) {
@@ -27,8 +33,31 @@ public class RequestAuthenticator implements Extension {
 
         if (!ObjectUtil.isVoid(apiKey)){
             User user = path.getUser("api_key",apiKey);
-            if (user == null) {
-                path.addErrorMessage("Invalid Api Key");
+            Map<String, Map<String,String>> oidProviders =  OidProvider.getHumBolProviders();
+            Map<String,String> oidProps = oidProviders.get("HUMBOL");
+            if (user == null && oidProps != null && !oidProviders.isEmpty()) {
+                String resourceUrl = oidProps.get("resource.url");
+                Call<JSONObject> call = new Call<JSONObject>().url(resourceUrl).headers(new HashMap<>(){{
+                    put("content-type", MimeType.APPLICATION_JSON.toString());
+                    put("ApiKey",apiKey);
+                    if (lat != null && lng != null) {
+                        put("X-Lat", lat);
+                        put("X-Lng", lng);
+                    }
+                    
+                }}).method(HttpMethod.GET);
+                
+                JSONObject response = call.getResponseAsJson();
+                if (response != null) {
+                    JSONObject userInfo = (JSONObject) response.remove("User");
+                    if (userInfo == null){
+                        userInfo = response;
+                    }
+                    user = OidProvider.initializeUser(userInfo);
+                    userObjectHolder.set(user);
+                }else {
+                    path.addErrorMessage(call.getError());
+                }
             }else if (userObjectHolder.get() != null){
                 User alreadySet = userObjectHolder.get();
                 if (alreadySet.getId() != user.getId()){
@@ -45,6 +74,8 @@ public class RequestAuthenticator implements Extension {
                     user.setCurrentLng(tc.valueOf(lng));
                     Registry.instance().callExtensions(Path.USER_LOCATION_UPDATED_EXTENSION,path,user);
                 }
+            }else {
+                path.addErrorMessage("Invalid Api Key");
             }
         }
     }

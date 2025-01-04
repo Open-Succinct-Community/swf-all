@@ -5,7 +5,9 @@ import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
 import com.venky.swf.db._IDatabase._ITransaction;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
+import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.IndexTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
@@ -13,6 +15,7 @@ import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.plugins.lucene.index.background.SWFIndexDirectoryCache;
 import com.venky.swf.plugins.lucene.index.common.IndexUpdateTracker;
 import com.venky.swf.plugins.lucene.index.common.IndexUpdateTracker.IndexUpdateMeta;
+import com.venky.swf.routing.Config;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -124,8 +127,10 @@ public class LuceneBeforeCommitExtension implements Extension{
 
 		}
 
-		public IndexTaskManager getAsyncTaskManager() {
-			return AsyncTaskManagerFactory.getInstance().get(IndexTaskManager.class);
+		@Override
+		@SuppressWarnings("unchecked")
+		public <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass() {
+			return (Class<W>)(IndexTaskManager.class);
 		}
 	}
 }

@@ -24,7 +24,8 @@ public interface DbTask extends CoreTask{
     }
 
     @Override
-    default DbTaskManager getAsyncTaskManager() {
-        return AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class);
+    @SuppressWarnings("unchecked")
+    default <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass() {
+        return (Class<W>)DbTaskManager.class;
     }
 }

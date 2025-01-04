@@ -49,7 +49,8 @@ public interface DelayedTask extends Task, Model {
 	public boolean canExecuteRemotely() ;
 
 	@IS_VIRTUAL
-	public DbTaskManager getAsyncTaskManager();
+	public AsyncTaskManager getAsyncTaskManager();
+	
 
 	@IS_VIRTUAL
 	public void onStart() ;

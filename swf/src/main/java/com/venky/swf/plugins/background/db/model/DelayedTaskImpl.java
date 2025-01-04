@@ -4,6 +4,7 @@ import com.venky.core.io.StringReader;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
 import com.venky.swf.plugins.background.core.CoreTask.Priority;
@@ -31,18 +32,24 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	public long getTaskId(){
 		return getProxy().getId();
 	}
+	
+	private Task getContainedTask() {
+		DelayedTask proxy = getProxy();
+		SerializationHelper helper = new SerializationHelper();
+		try {
+			InputStream is = proxy.getData();
+			Task task = helper.read(is);
+			is.close();
+			return task;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
     public String getTaskClassName() {
 	    DelayedTask proxy = getProxy();
-		SerializationHelper helper = new SerializationHelper();
-	    try {
-			InputStream is = proxy.getData();
-			Task task = helper.read(is);
-            is.close();
-            return task.getClass().getName();
-        }catch (Exception e){
-	        return "Unknown";
-        }
+		Task task = getContainedTask();
+		return task.getClass().getName();
     }
 
 
@@ -84,8 +91,8 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 			parentTxn.rollback(ex);
 		}
 	}
-	public DbTaskManager getAsyncTaskManager(){
-		return AsyncTaskManagerFactory.getInstance().get(DbTaskManager.class);
+	public AsyncTaskManager getAsyncTaskManager(){
+		return getContainedTask().getAsyncTaskManager();
 	}
 
 	public void onStart() {

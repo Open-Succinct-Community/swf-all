@@ -85,7 +85,7 @@ public class AppInstaller implements Installer{
 
         @Override
         public void execute() {
-            int BATCH = 5000;
+            int BATCH = Config.instance().getIntProperty("lucene.batch.size",5000);
             List<M> records = new Select().from(currentTable.getModelClass()).where(new Expression(currentTable.getPool(),"ID",Operator.GT,startId)).orderBy("ID").execute(BATCH);
 
             for (M m:records){
