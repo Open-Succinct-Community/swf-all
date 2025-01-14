@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
@@ -11,7 +12,7 @@ import com.venky.swf.db.model.Model;
 @HAS_DESCRIPTION_FIELD("PIN_CODE")
 @EXPORTABLE(false)
 @MENU("Geography")
-public interface PostalOffice extends Model {
+public interface PostalOffice extends Model , GeoLocation {
 
     public String getOfficeName();
     public void setOfficeName(String name);
@@ -20,7 +21,7 @@ public interface PostalOffice extends Model {
     public String getPinCode();
     public void setPinCode(String code);
 
-    @Enumeration("S.O,B.O,H.O")
+    @Enumeration("SO,BO,HO")
     public String getOfficeType();
     public void setOfficeType(String type);
 
@@ -41,9 +42,6 @@ public interface PostalOffice extends Model {
     public String getCircleName();
     public void setCircleName(String circleName);
 
-    @Index
-    public String getTaluk();
-    public void setTaluk(String taluk);
 
     @Index
     public String getDistrict();
@@ -52,6 +50,7 @@ public interface PostalOffice extends Model {
     @Index
     public String getStateName();
     public void setStateName(String stateName);
+    
 
     @EXPORTABLE(false)
     public Long getCountryId();
@@ -67,6 +66,8 @@ public interface PostalOffice extends Model {
     public Long getCityId();
     public void setCityId(Long id);
     public City getCity();
-
-
+    
+    @Index
+    public String getTaluk();
+    public void setTaluk(String taluk);
 }

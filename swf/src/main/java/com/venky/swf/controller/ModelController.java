@@ -7,12 +7,16 @@ package com.venky.swf.controller;
 import com.venky.cache.Cache;
 import com.venky.cache.UnboundedCache;
 import com.venky.core.collections.LowerCaseStringCache;
+import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
+import com.venky.core.log.TimerUtils;
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.Bucket;
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.digest.Encryptor;
 import com.venky.swf.controller.annotations.Depends;
@@ -20,6 +24,7 @@ import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.controller.annotations.SingleRecordAction;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
+import com.venky.swf.db.JdbcTypeHelper.TypeRef;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.OnLookupSelect;
@@ -40,6 +45,7 @@ import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ControllerInfo;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
+import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Conjunction;
@@ -57,8 +63,24 @@ import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
-import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.CommonTermsQuery;
+import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
+import org.apache.lucene.queryparser.xml.builders.ConstantScoreQueryBuilder;
+import org.apache.lucene.queryparser.xml.builders.DisjunctionMaxQueryBuilder;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
+import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -81,9 +103,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,7 +131,11 @@ public class ModelController<M extends Model> extends Controller {
     public String getTemplateDirectory() {
         return getTemplateDirectory(getReflector().getTableName().toLowerCase());
     }
-
+    
+    public boolean isIndexedModel() {
+        return indexedModel;
+    }
+    
     public ModelController(Path path) {
         super(path);
         modelClass = getPath().getModelClass();
@@ -174,7 +202,7 @@ public class ModelController<M extends Model> extends Controller {
             return html("index");
         }
 
-        Timer index = Config.instance().getLogger(getClass().getName()).startTimer(getReflector().getTableName() + ".index");
+        Timer index = cat.startTimer(getReflector().getTableName() + ".index");
         try {
             if (indexedModel) {
                 return search();
@@ -201,15 +229,12 @@ public class ModelController<M extends Model> extends Controller {
 
 
     public View search() {
-        Map<String, Object> formData = new HashMap<>();
-        formData.putAll(getFormFields());
-        String q = "";
+        Map<String, Object> formData = new HashMap<>(getFormFields());
         int maxRecords = getMaxListRecords();
         if (!formData.isEmpty()) {
             rewriteQuery(formData);
-            q = StringUtil.valueOf(formData.get("q"));
         }
-        return search(q, maxRecords);
+        return search(formData, maxRecords);
     }
 
     public View search(String strQuery) {
@@ -217,102 +242,200 @@ public class ModelController<M extends Model> extends Controller {
         Map<String, Object> formData = new HashMap<String, Object>(getFormFields());
         rewriteQuery(formData);
 
-        String q = StringUtil.valueOf(formData.get("q"));
-        return search(q, getMaxListRecords());
+        return search(formData, getMaxListRecords());
     }
-    private final int MAX_SEARCH_RESULT_COUNT_ALLOWED = Config.instance().getIntProperty("swf.search.maxRecords",Integer.MAX_VALUE);
 
-    protected List<M> searchRecords(String strQuery, int maxRecords){
-        List<M> records = new ArrayList<>();
-        if (!ObjectUtil.isVoid(strQuery)) {
-            if (!getFormFields().containsKey("q")) {
-                getFormFields().put("q", strQuery);
-            }
-            LuceneIndexer indexer = LuceneIndexer.instance(getModelClass());
-            Query q = indexer.constructQuery(strQuery);
-
-            List<Long> ids = indexer.findIds(q, Select.MAX_RECORDS_ALL_RECORDS);
-            if (!ids.isEmpty()) {
-
-                {
-                    int numResultsExpected;
-                    if (maxRecords > 0) {
-                        numResultsExpected = Math.min(ids.size(), maxRecords);
-                    } else {
-                        numResultsExpected = ids.size();
-                    }
-
-                    if (numResultsExpected > MAX_SEARCH_RESULT_COUNT_ALLOWED) {
-                        throw new RuntimeException("Too many records being returned. Please filter better.");
-                    }
-                }
-
-                Select sel = new Select().from(getModelClass()).where(new Expression(getReflector().getPool(), Conjunction.AND)
-                        .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, ids.toArray()))
-                        .add(getWhereClause())).orderBy(getReflector().getOrderBy());
-                records = sel.execute(getModelClass(), maxRecords, getFilter());
-                /*
-                records.sort(new Comparator<M>() {
-                    @Override
-                    public int compare(M o1, M o2) {
-                        return ids.indexOf(o1.getId())  - ids.indexOf(o2.getId());
+    public LuceneIndexer getIndexer(){
+        return LuceneIndexer.instance(getModelClass());
+    }
+    
+    @SuppressWarnings("unchecked")
+    protected Query getQuery(Map<String,Object> formData){
+        String q = (String)formData.get("q");
+        Map<String,List<String>> termQueries = (Map<String,List<String>>)formData.get("termQueries");
+        ModelReflector<M> reflector = getReflector();
+        
+        
+        if (q != null){
+            return getIndexer().constructQuery(q);
+        }else if (termQueries != null && !termQueries.isEmpty()){
+            try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
+                Builder builder = new BooleanQuery.Builder();
+                Bucket numTerms = new Bucket();
+                termQueries.forEach((field,values)->{
+                    for (int i = 0 ; i < values.size() ; i ++){
+                        String value = values.get(i);
+                        
+                        Term term = new Term(field, analyzer.normalize(field, value));
+                        float boost = boostTable.get(values.size()-i);
+                        numTerms.increment();
+                        addQueries(builder, term, boost);
+                        //BoostQuery boostQuery = new BoostQuery(new TermQuery(term),boostTable.get(values.size()-i));
                     }
                 });
-                    Forgot why I sorted this way. There doesnot seem to be any good reason for this.
-                 */
+                builder.setMinimumNumberShouldMatch(Math.max(1,(int)(0.8 * numTerms.doubleValue())));
+                finalizeQuery(builder);
+                return builder.build();
+            }
+        }else {
+            return null;
+        }
+    }
+    
+    protected void finalizeQuery(Builder builder) {
+    }
+    
+    public void addQueries(Builder builder , Term term ,float boost){
+        if (term.text().length() > 7) {
+            builder.add(new BoostQuery(new ConstantScoreQuery(new FuzzyQuery(term)), boost), Occur.SHOULD);
+        }else {
+            builder.add(new BoostQuery(new ConstantScoreQuery(new PrefixQuery(term)),boost),Occur.SHOULD);
+        }
+    }
+    static Map<Integer,Float> boostTable = new UnboundedCache<>() {
+        @Override
+        protected Float getValue(Integer key) {
+            return Double.valueOf(Math.pow(1.2,key)).floatValue();
+        }
+    };
+    
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    protected List<M>   searchRecords(Query q, int _maxRecords){
+        int maxRecords = _maxRecords <= 0 ? Integer.MAX_VALUE/2 : _maxRecords;
+        
+        final Map<Long, M> recordMap  = new HashMap<>();
+        final SequenceMap<Long,ScoreDoc> allIdsInspected = new SequenceMap<>();
+        
+        Timer timer = cat.startTimer("Fetching query " + q);
+        getIndexer().fire(q, maxRecords , new ResultCollector() {
+            final SequenceMap<Long,ScoreDoc> idsBeingProcessed = new SequenceMap<>();
+            
+            @Override
+            public void collect(Document d, ScoreDoc scoreDoc) {
+                TimerUtils.time(cat,"Collecting Record Ids" , ()->{
+                    Long id = Long.valueOf(d.getField("ID").stringValue());
+                    idsBeingProcessed.put(id,scoreDoc);
+                    return null;
+                });
+            }
+            
+            public int count() {
+                if (!idsBeingProcessed.isEmpty()) {
+                    Select sel = TimerUtils.time(cat, "Forming Select Statement for collected ids" , () ->{
+                        Select select = new Select();
+                        select.from(getModelClass());
+                        select.where(new Expression(getReflector().getPool(), Conjunction.AND)
+                                .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, idsBeingProcessed.keySet().toArray()))
+                                .add(getWhereClause()));
+                        select.orderBy(getReflector().getOrderBy());
+                        return select;
+                    });
+                    
+                    List<M> tmpList = TimerUtils.time(cat, "Executing Select for collected ids " , ()->{
+                        return sel.execute(getModelClass(), getFilter());
+                    });
+                    
+                    for (M tmp : tmpList) {
+                        recordMap.put(tmp.getId(), tmp);
+                    }
+                    allIdsInspected.putAll(idsBeingProcessed);
+                    idsBeingProcessed.clear();
+                }
+                return recordMap.size();
+            }
+        });
+        List<M> records = new ArrayList<>();
+        int numRecordsAdded = 0;
+        for (long id : allIdsInspected.keySet()){
+            M record = recordMap.remove(id); //Retains the order from lucene based on scores.
+            if (record != null){
+                record.setTxnProperty("scoreDoc",allIdsInspected.get(id));
+                records.add(record);
+                numRecordsAdded ++ ;
+            }
+            if (numRecordsAdded >= maxRecords){
+                break;
             }
         }
+        
         return records;
     }
-    protected View search(String strQuery, int maxRecords) {
-        if (!ObjectUtil.isVoid(strQuery)) {
-            List<M> records = searchRecords(strQuery, maxRecords);
+    
+    protected View search(Map<String, Object> formData, int maxRecords) {
+        Query query =  TimerUtils.time(cat, "getQueries" , ()-> getQuery(formData));
+        if (query != null) {
+            List<M> records = TimerUtils.time(cat, "Searching across all queries" ,  ()-> searchRecords(query, maxRecords));
             if (!records.isEmpty()) {
                 return list(records, maxRecords == 0 || records.size() < maxRecords);
             } else {
                 return list(new ArrayList<>(), true);
             }
+        }else {
+            return list(maxRecords);
         }
-        return list(maxRecords);
     }
-
+    
     protected void rewriteQuery(Map<String, Object> formData) {
+        if (!formData.containsKey("q")){
+            return;
+        }
         String strQuery = StringUtil.valueOf(formData.get("q"));
-        StringBuilder q = new StringBuilder();
-
-        if (!ObjectUtil.isVoid(strQuery) && !strQuery.contains(":")) {
-            for (String f : getReflector().getIndexedFields()) {
-                if (q.length() > 0) {
-                    q.append(" OR ");
-                }
-                q.append("(");
-                Method referredModelIdGetter = getReflector().getFieldGetter(f);
-                for (StringTokenizer tk = new StringTokenizer(strQuery); tk.hasMoreTokens();) {
-                    if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null) {
-                        q.append(f.substring(0, f.length() - "_ID".length())).append(":").append(QueryParser.escape(tk.nextToken())).append("*");
-                    } else {
-                        q.append(f).append(":").append(QueryParser.escape(tk.nextToken())).append("*");
-                    }
-                    if (tk.hasMoreTokens()) {
-                        q.append(" AND ");
-                    }
-                }
-                q.append(")");
+        if (ObjectUtil.isVoid(strQuery)){
+            formData.remove("q");
+            return;
+        }
+        if (strQuery.contains(":")){
+            //Already in lucene syntax;
+            //Do nothing
+            return;
+        }
+        
+        Map<String,List<String>> termQueries = new UnboundedCache<String, List<String>>() {
+            @Override
+            protected List<String> getValue(String field) {
+                return new LinkedList<>();
             }
+        };
+        
+        for (String f : getReflector().getIndexedFields()) {
+            String luceneTerm = f;
+            Method referredModelIdGetter = getReflector().getFieldGetter(f);
+            boolean isReferenceField = false;
+            if (getReflector().getReferredModelGetterFor(referredModelIdGetter) != null) {
+                luceneTerm = f.substring(0,f.length()-"_ID".length());
+                isReferenceField = true;
+            }
+            
+            TypeRef<?> ref = reflector.getJdbcTypeHelper().getTypeRef(referredModelIdGetter.getReturnType());
+            
+
+            for (StringTokenizer tk = new StringTokenizer(strQuery,", ()\t\r\n\f"); tk.hasMoreTokens();) {
+                String token  = tk.nextToken();
+                boolean canAdd = true;
+                
+                if (!isReferenceField && ref.isNumeric()) {
+                    try {
+                        canAdd = !reflector.isVoid(ref.getTypeConverter().valueOf(token));
+                    }catch (Exception ex){
+                        canAdd = false;
+                    }
+                }
+                if (canAdd) {
+                    termQueries.get(luceneTerm).add(token);
+                }
+            }
+        }
+        if (isIndexedModel()) {
             try {
                 Integer.valueOf(strQuery);
-                if (q.length() > 0) {
-                    q.append(" OR ");
-                }
-                q.append("(");
-                q.append("ID:").append(strQuery);
-                q.append(")");
+                termQueries.get("ID").add(strQuery);
             } catch (NumberFormatException ex) {
                 // Nothing to do.
             }
-            formData.put("q", q.toString());
         }
-        Config.instance().getLogger(getClass().getName()).fine(formData.toString());
+        formData.put("termQueries", termQueries);
+        formData.remove("q");
+        cat.fine(formData.toString());
     }
 
     public View list() {
@@ -1292,7 +1415,7 @@ public class ModelController<M extends Model> extends Controller {
                 value = StringUtil.valueOf(formData.get(fieldName));
             }
         }
-        Config.instance().getLogger(getClass().getName()).info(autoCompleteFieldName + "=" + value);
+        cat.info(autoCompleteFieldName + "=" + value);
         model.getRawRecord().remove(autoCompleteFieldName);
         Expression where = getAutoCompleteBaseWhere(reflector, model, autoCompleteFieldName);
         ModelReflector<? extends Model> autoCompleteModelReflector = getAutoCompleteModelReflector(reflector, autoCompleteFieldName);

@@ -9,6 +9,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -88,6 +89,7 @@ public class SWFIndexDirectoryCache  {
             IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer(new CharArraySet(new ArrayList<>(), false)));
             config.setCommitOnClose(true);
             config.setMergeScheduler(new SerialMergeScheduler());
+            //config.setSimilarity(new BM25Similarity());
             return config;
         }
         private static Directory initializeDirectory(String tableName) throws IOException {
@@ -153,6 +155,7 @@ public class SWFIndexDirectoryCache  {
         public TrackedSearcher(TrackedReader trackedReader){
             super(trackedReader.reader);
             this.trackedReader = trackedReader;
+            //this.setSimilarity(new BM25Similarity());
         }
 
         public void open(){

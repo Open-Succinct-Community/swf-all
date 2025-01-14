@@ -5,23 +5,6 @@
 package com.venky.swf.db;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.logging.Level;
-
 import com.venky.cache.Cache;
 import com.venky.core.date.DateUtils;
 import com.venky.core.io.ByteArrayInputStream;
@@ -40,6 +23,30 @@ import com.venky.swf.db.jdbc.ConnectionManager;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.routing.Config;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.logging.Level;
 
 /**
  * 
@@ -241,7 +248,7 @@ public abstract class JdbcTypeHelper {
     	return isCLOB(jdbcType) || isBLOB(jdbcType);
     }
     
-    public abstract class TypeConverter<M> {
+    public static abstract class TypeConverter<M> {
 
         public abstract M valueOf(Object o);
         
@@ -253,13 +260,13 @@ public abstract class JdbcTypeHelper {
         public abstract String getDisplayClassName();
     }
 
-    public class BooleanConverter extends TypeConverter<Boolean> {
+    public static class BooleanConverter extends TypeConverter<Boolean> {
 
     	public Boolean valueOf(Object s) {
             if (ObjectUtil.isVoid(s)) {
                 return false;
             }
-            return Boolean.valueOf(StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y") || StringUtil.valueOf(s).equalsIgnoreCase("YES"));
+            return StringUtil.valueOf(s).equalsIgnoreCase("true") || StringUtil.valueOf(s).equalsIgnoreCase("1") || StringUtil.valueOf(s).equalsIgnoreCase("Y") || StringUtil.valueOf(s).equalsIgnoreCase("YES");
         }
 
     	public String toString(Object m) {
@@ -280,7 +287,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public class CharacterConverter extends TypeConverter<Character> {
+    public static class CharacterConverter extends TypeConverter<Character> {
 
         public Character valueOf(Object object) {
             if (ObjectUtil.isVoid(object)) {
@@ -300,7 +307,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public class ByteConverter extends TypeConverter<Byte> {
+    public static class ByteConverter extends TypeConverter<Byte> {
 
         public Byte valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
@@ -314,7 +321,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public abstract class NumberConverter<N extends Number> extends TypeConverter<N> {
+    public abstract static class NumberConverter<N extends Number> extends TypeConverter<N> {
 		@Override
 		public String getDisplayClassName() {
 			return "number text-right";
@@ -322,7 +329,7 @@ public abstract class JdbcTypeHelper {
     }
  
 	@SuppressWarnings("unchecked")
-	public abstract class NumericConverter<N extends Number> extends NumberConverter<N> {
+	public abstract static class NumericConverter<N extends Number> extends NumberConverter<N> {
 		public DecimalFormat getDisplayFormat(){
 			return new DecimalFormat("##############.0000");
 		}
@@ -356,12 +363,12 @@ public abstract class JdbcTypeHelper {
     public class LongConverter extends NumberConverter<Long> {
         public Long valueOf(Object o) {
             if (ObjectUtil.isVoid(o)) {
-                return Long.valueOf(0L);
+                return 0L;
             }else if (o instanceof Date){
                 return ((Date)o).getTime();
             }else if (o instanceof Boolean){
                 BooleanConverter bc = (BooleanConverter) getTypeRef(Boolean.class).getTypeConverter();
-                return Long.valueOf(bc.valueOf("1").equals(o)? 1L : 0L);
+                return bc.valueOf("1").equals(o) ? 1L : 0L;
             }else if (o instanceof Long) {
                 return (Long)o;
             }else {
@@ -420,7 +427,7 @@ public abstract class JdbcTypeHelper {
             }
         }
     }
-    public class BigDecimalConverter extends NumericConverter<BigDecimal> {
+    public static class BigDecimalConverter extends NumericConverter<BigDecimal> {
     	public DecimalFormat getDisplayFormat(){
 			return new DecimalFormat("###############.0000000000");
 		}
@@ -433,7 +440,7 @@ public abstract class JdbcTypeHelper {
         }
     }
 
-    public class StringConverter extends TypeConverter<String> {
+    public static class StringConverter extends TypeConverter<String> {
 
         public String valueOf(Object o) {
             return StringUtil.valueOf(o);
@@ -448,7 +455,7 @@ public abstract class JdbcTypeHelper {
 		}
     }
 
-    public class DateConverter extends TypeConverter<Date> {
+    public static class DateConverter extends TypeConverter<Date> {
     	private String format = null;
     	private TimeZone tz = null;
     	public DateConverter(){
@@ -484,7 +491,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public class TimeConverter extends TypeConverter<Time> {
+    public static class TimeConverter extends TypeConverter<Time> {
     	String format = null ;
     	TimeZone tz  = null; 
     	public TimeConverter(){
@@ -517,7 +524,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public class TimestampConverter extends TypeConverter<Timestamp> {
+    public static class TimestampConverter extends TypeConverter<Timestamp> {
     	public TimestampConverter(){
     		this(DateUtils.APP_DATE_TIME_FORMAT_STR,TimeZone.getDefault());
     	}
@@ -616,7 +623,7 @@ public abstract class JdbcTypeHelper {
             return "array";
         }
     }
-    public class InputStreamConverter extends TypeConverter<InputStream> {
+    public static class InputStreamConverter extends TypeConverter<InputStream> {
 
         public InputStream valueOf(Object o) {
             if (o == null) {
@@ -675,7 +682,7 @@ public abstract class JdbcTypeHelper {
 
     }
 
-    public class ReaderConverter extends TypeConverter<Reader> {
+    public static class ReaderConverter extends TypeConverter<Reader> {
 
         public Reader valueOf(Object o) {
             if (o == null) {
@@ -758,11 +765,7 @@ public abstract class JdbcTypeHelper {
     protected <T> void registerjdbcSQLType(Class<T> clazz, TypeRef<T> ref) {
     	ref.setJavaClass(clazz);
         javaTypeRefMap.put(clazz, ref);
-        List<TypeRef<?>> colTypeRefs = jdbcTypeRefMap.get(ref.jdbcType);
-        if (colTypeRefs == null){
-        	colTypeRefs = new ArrayList<TypeRef<?>>();
-        	jdbcTypeRefMap.put(ref.jdbcType, colTypeRefs);
-        }
+        List<TypeRef<?>> colTypeRefs = jdbcTypeRefMap.computeIfAbsent(ref.jdbcType, k -> new ArrayList<TypeRef<?>>());
         colTypeRefs.add(ref);
     }
 
@@ -776,7 +779,7 @@ public abstract class JdbcTypeHelper {
 	        for (Class<?> key : javaTypeRefMap.keySet()) {
 	            if (key.isAssignableFrom(javaClass)) {
 	            	TypeRef<?> value = javaTypeRefMap.get(key);
-	            	javaTypeRefMap.put(key, value);
+	            	javaTypeRefMap.put(javaClass, value); // Caching by javaclass for performance was not done correctly.
 	                return (TypeRef<T>) value;
 	            }
 	        }

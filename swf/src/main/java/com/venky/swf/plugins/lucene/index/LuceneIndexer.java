@@ -9,6 +9,7 @@ import com.venky.core.util.MultiException;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
+import com.venky.geo.GeoLocation;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.JdbcTypeHelper.TypeRef;
@@ -25,19 +26,23 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserTokenManager;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class LuceneIndexer {
@@ -75,8 +80,8 @@ public class LuceneIndexer {
     }
 
 
-    private IgnoreCaseSet indexedColumns = new IgnoreCaseSet();
-    private Map<String, Class<? extends Model>> indexedReferenceColumns = new IgnoreCaseMap<Class<? extends Model>>();
+    private final IgnoreCaseSet indexedColumns = new IgnoreCaseSet();
+    private final Map<String, Class<? extends Model>> indexedReferenceColumns = new IgnoreCaseMap<Class<? extends Model>>();
     private final String tableName;
 
     public String getTableName() {
@@ -89,17 +94,15 @@ public class LuceneIndexer {
         }
         try {
             this.tableName = tableName;
-            for (Class<? extends Model> mClass : Database.getTable(tableName).getReflector().getModelClasses()) {
-                ModelReflector<? extends Model> ref = ModelReflector.instance(mClass);
-                for (Method indexedFieldGetter : ref.getIndexedFieldGetters()) {
-                    String indexedColumnName = ref.getColumnDescriptor(ref.getFieldName(indexedFieldGetter)).getName();
-                    indexedColumns.add(indexedColumnName);
-                    if (ref.getReferredModelGetters().size() > 0) {
-                        Method referredModelGetter = ref.getReferredModelGetterFor(indexedFieldGetter);
-                        if (referredModelGetter != null) {
-                            Class<? extends Model> referredModelClass = ref.getReferredModelClass(referredModelGetter);
-                            indexedReferenceColumns.put(indexedColumnName, referredModelClass);
-                        }
+            ModelReflector<? extends Model> ref = Objects.requireNonNull(Database.getTable(tableName)).getReflector();
+            for (Method indexedFieldGetter : ref.getIndexedFieldGetters()) {
+                String indexedColumnName = ref.getColumnDescriptor(ref.getFieldName(indexedFieldGetter)).getName();
+                indexedColumns.add(indexedColumnName);
+                if (!ref.getReferredModelGetters().isEmpty()) {
+                    Method referredModelGetter = ref.getReferredModelGetterFor(indexedFieldGetter);
+                    if (referredModelGetter != null) {
+                        Class<? extends Model> referredModelClass = ref.getReferredModelClass(referredModelGetter);
+                        indexedReferenceColumns.put(indexedColumnName, referredModelClass);
                     }
                 }
             }
@@ -125,13 +128,13 @@ public class LuceneIndexer {
         boolean isNumeric = true;
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
-            if (c >= '0' && c<= '9'){
+            if ((c >= '0' && c<= '9') || c == '.'){
                 sanitized.append(c);
             }else if ((c >= 'a' && c <= 'z') ||
                     (c >= 'A' && c <= 'Z') || (c == ' ')) {
                 isNumeric = false;
                 sanitized.append(c);
-            } else if (sanitized.length() > 0) {
+            } else if (!sanitized.isEmpty()) {
                 isNumeric = false;
                 isAlphaNumericOnly = false;
                 if (sanitized.charAt(sanitized.length() - 1) != ' ') {
@@ -162,9 +165,8 @@ public class LuceneIndexer {
         }
         Document doc = new Document();
         boolean addedFields = false;
+        ModelReflector<?> reflector = Objects.requireNonNull(Database.getTable(tableName)).getReflector();
         for (String columnName : indexedColumns) {
-            ModelReflector<?> reflector = Database.getTable(tableName).getReflector();
-
             String fieldName = reflector.getFieldName(columnName);
             Object value = reflector.get(r, fieldName);
 
@@ -183,7 +185,7 @@ public class LuceneIndexer {
                         for (String s: sValue){
                             builder.append(sanitize(s)).append(" ");
                         }
-                        if (builder.length() >0 ) {
+                        if (!builder.isEmpty()) {
                             doc.add(new TextField(fieldName,builder.toString(),Store.YES));
                         }else {
                             addTextField(doc,fieldName,"NULL",Store.YES);
@@ -218,13 +220,25 @@ public class LuceneIndexer {
         if (addedFields) {
             addTextField(doc,"ID",StringUtil.valueOf(r.getId()), Store.YES);
             addLongField(doc,"_ID",r.getId());
+            if (GeoLocation.class.isAssignableFrom(reflector.getModelClass())){
+                if (indexedColumns.contains("LAT") || indexedColumns.contains("LNG")){
+                    addGeoField(doc, reflector ,r.get("LAT") , r.get("LNG"));
+                }
+            }
         } else {
             doc = null;
         }
         return doc;
     }
-
-
+    
+    private void addGeoField(Document doc, ModelReflector<?> reflector, Object lat, Object lng) {
+        if (lat != null && lng != null) {
+            TypeConverter<BigDecimal> converter = reflector.getJdbcTypeHelper().getTypeRef(BigDecimal.class).getTypeConverter();
+            doc.add(new LatLonPoint("_GEO_LOCATION_", converter.valueOf(lat).doubleValue(), converter.valueOf(lng).doubleValue()));
+        }
+    }
+    
+    
     private String sanitizeTs(String value) {
         return value.replaceAll("[- :]", "");
     }
@@ -262,13 +276,23 @@ public class LuceneIndexer {
 
     public List<Long> findIds(Query q, int numHits) {
         final List<Long> ids = new SequenceSet<>();
-        fire(q, numHits, new ResultCollector() {
-            public boolean found(Document d) {
-                return ids.add(Long.valueOf(d.getField("ID").stringValue()));
+        
+        ResultCollector resultCollector  =new ResultCollector() {
+            
+            public void collect(Document d, ScoreDoc scoreDoc) {
+                ids.add(Long.valueOf(d.getField("ID").stringValue()));
             }
-        });
+            
+            @Override
+            public int count(){
+                return ids.size();
+            }
+            
+        };
+        fire(q, numHits, resultCollector);
         return ids;
     }
+    
 
     public Query constructQuery(String queryString) {
         String descriptionField = Database.getTable(tableName).getReflector().getDescriptionField();
@@ -293,17 +317,18 @@ public class LuceneIndexer {
             throw ex;
         }
     }
-
-
-    public void fire(Query q, int numHits, ResultCollector callback) {
-        try {
-            if (!hasIndexedFields()) {
-                return;
-            }
-            IndexManager.getInstance().fire(tableName, q, numHits, callback);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
+    
+    public int count(Query q) {
+        if (!hasIndexedFields()){
+            return 0;
         }
+        return IndexManager.getInstance().count(tableName,q);
+    }
+    public void fire(Query q, int numHits, ResultCollector callback) {
+        if (!hasIndexedFields()) {
+            return;
+        }
+        IndexManager.getInstance().fire(tableName, q, numHits, callback);
     }
 
     public static void dispose() {

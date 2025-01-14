@@ -1,14 +1,19 @@
 package com.venky.swf.plugins.lucene.index.background;
 
+import com.venky.cache.TimeSensitiveMap;
+import com.venky.core.log.TimerUtils;
 import com.venky.swf.plugins.lucene.index.background.SWFIndexDirectoryCache.TrackedSearcher;
 import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
+import com.venky.swf.routing.SWFClassLoader;
 import com.venky.swf.sql.Select;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
+
+import java.io.IOException;
 
 public class IndexManager {
 
@@ -38,7 +43,20 @@ public class IndexManager {
         return getInstance();
     }
 
-
+    public int count(String tableName , Query q){
+        TrackedSearcher searcher = null;
+        try  {
+            searcher = SWFIndexDirectoryCache.getInstance().getIndexSearcher(tableName);
+            searcher.open();
+            return searcher.count(q);
+        }catch (IOException ex){
+            throw new RuntimeException(ex);
+        }finally {
+            if (searcher != null){
+                searcher.close();
+            }
+        }
+    }
 
     public void fire(String tableName, Query q, int numHits,
             ResultCollector callback) {
@@ -46,40 +64,23 @@ public class IndexManager {
         try {
             searcher = SWFIndexDirectoryCache.getInstance().getIndexSearcher(tableName);
             searcher.open();
-            if (numHits == Select.MAX_RECORDS_ALL_RECORDS) {
-                CompleteSearchCollector collector = new CompleteSearchCollector();
-                searcher.search(q, collector);
-                for (int docId : collector.getDocIds()) {
-                    Document d = searcher.doc(docId);
-                    callback.found(d);
-                }
-            } else {
-                int numRecordsFound = 0;
-                TopDocs tDocs = searcher.search(q, numHits + 1);
-                /*
-				TopScoreDocCollector collector = TopScoreDocCollector.create(numHits, true);
-				searcher.search(q, collector);
-				tDocs = collector.topDocs();
-                 */
+            TopDocs tDocs = searcher.search(q, numHits + 1);
 
-                ScoreDoc[] hits = tDocs.scoreDocs;
-                
-                while (numRecordsFound < numHits && tDocs.totalHits.value > 0) {
-                    for (ScoreDoc hit : hits) {
-                        int docId = hit.doc;
-                        Document d = searcher.doc(docId);
-                        if (callback.found(d)) {
-                            numRecordsFound++;
-                        }
-                    }
-                    if (numRecordsFound < numHits && tDocs.totalHits.value > numHits) {
-                        tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
-                    }else {
-                        break;
-                    }
+            ScoreDoc[] hits = tDocs.scoreDocs;
+            
+            while (callback.count() < numHits && tDocs.totalHits.value > 0) {
+                for (ScoreDoc hit : hits) {
+                    int docId = hit.doc;
+                    Document d = searcher.storedFields().document(docId);
+                    callback.collect(d,hit);
+                }
+                if (callback.count()  < numHits && tDocs.totalHits.value > numHits && hits.length > 0) {
+                    tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
+                    hits = tDocs.scoreDocs;
+                }else {
+                    break;
                 }
             }
-
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } finally {

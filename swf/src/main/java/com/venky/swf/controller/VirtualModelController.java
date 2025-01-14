@@ -4,6 +4,8 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.View;
 
+import java.util.Map;
+
 public abstract class VirtualModelController<M extends Model> extends ModelController<M> {
 
 	public VirtualModelController(Path path) {
@@ -28,7 +30,7 @@ public abstract class VirtualModelController<M extends Model> extends ModelContr
 		return throwOperationNotSupportedException();
 	}
 
-	protected View search(String strQuery, int maxRecords) {
+	protected View search(Map<String, Object> strQuery, int maxRecords) {
 		return throwOperationNotSupportedException();
 	}
 	@Override
