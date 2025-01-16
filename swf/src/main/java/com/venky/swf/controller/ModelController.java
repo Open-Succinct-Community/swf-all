@@ -273,7 +273,6 @@ public class ModelController<M extends Model> extends Controller {
                         //BoostQuery boostQuery = new BoostQuery(new TermQuery(term),boostTable.get(values.size()-i));
                     }
                 });
-                builder.setMinimumNumberShouldMatch(Math.max(1,(int)(0.8 * numTerms.doubleValue())));
                 finalizeQuery(builder);
                 return builder.build();
             }
