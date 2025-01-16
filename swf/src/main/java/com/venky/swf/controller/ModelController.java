@@ -221,6 +221,9 @@ public class ModelController<M extends Model> extends Controller {
             Object mr = formData.get("maxRecords");
             if (!ObjectUtil.isVoid(mr)) {
                 maxRecords = Integer.parseInt(StringUtil.valueOf(mr));
+                if (maxRecords == 0){
+                    maxRecords = (int)Database.getTable(getModelClass()).recordCount();
+                }
             }
         }
 
@@ -273,6 +276,7 @@ public class ModelController<M extends Model> extends Controller {
                         //BoostQuery boostQuery = new BoostQuery(new TermQuery(term),boostTable.get(values.size()-i));
                     }
                 });
+                builder.setMinimumNumberShouldMatch((int)Math.ceil(0.6 * numTerms.doubleValue()));
                 finalizeQuery(builder);
                 return builder.build();
             }
@@ -299,14 +303,18 @@ public class ModelController<M extends Model> extends Controller {
     };
     
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    protected List<M>   searchRecords(Query q, int _maxRecords){
-        int maxRecords = _maxRecords <= 0 ? Integer.MAX_VALUE/2 : _maxRecords;
+    protected List<M>   searchRecords(Query q, int maxRecords){
+        return searchRecords(q, maxRecords,0);
+    }
+    protected List<M>   searchRecords(Query q,  int maxRecords , int minDistinctScores){
+        int batchSize = Math.min(500,maxRecords);
         
         final Map<Long, M> recordMap  = new HashMap<>();
         final SequenceMap<Long,ScoreDoc> allIdsInspected = new SequenceMap<>();
+        Set<Float> scores = new HashSet<>();
         
         Timer timer = cat.startTimer("Fetching query " + q);
-        getIndexer().fire(q, maxRecords , new ResultCollector() {
+        getIndexer().fire(q, batchSize , new ResultCollector() {
             final SequenceMap<Long,ScoreDoc> idsBeingProcessed = new SequenceMap<>();
             
             @Override
@@ -336,11 +344,21 @@ public class ModelController<M extends Model> extends Controller {
                     
                     for (M tmp : tmpList) {
                         recordMap.put(tmp.getId(), tmp);
+                        if (minDistinctScores > 0) {
+                            scores.add(idsBeingProcessed.get(tmp.getId()).score);
+                        }
                     }
                     allIdsInspected.putAll(idsBeingProcessed);
                     idsBeingProcessed.clear();
                 }
-                return recordMap.size();
+                int totalNumRecords = recordMap.size();
+                int totalScoreCount = scores.size();
+                
+                if (totalNumRecords >= maxRecords && totalScoreCount >= minDistinctScores) {
+                    return batchSize; //No more needed.
+                }else {
+                    return Math.min(totalNumRecords,batchSize-1);
+                }
             }
         });
         List<M> records = new ArrayList<>();
