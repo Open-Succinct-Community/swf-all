@@ -1,9 +1,11 @@
 package com.venky.swf.db.table;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -23,7 +25,7 @@ import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
 public class QueryCache implements Mergeable<QueryCache> , Cloneable{
-	private TreeSet<Record> cachedRecords = new TreeSet<Record>();
+	private NavigableSet<Record> cachedRecords = Collections.synchronizedNavigableSet(new TreeSet<Record>());
 	private HashMap<Expression, SequenceSet<Record>> queryCache = new HashMap<Expression, SequenceSet<Record>>();
 	private Table<? extends Model> table;
 	private ModelReflector<? extends Model> reflector ;
@@ -47,8 +49,10 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	public void registerLockRelease(){
 		if (hasLockedRecords){
-			for (Record record: cachedRecords){
-				record.setLocked(false);
+			synchronized (cachedRecords) {
+				for (Record record : cachedRecords) {
+					record.setLocked(false);
+				}
 			}
 			hasLockedRecords = false;
 		}
@@ -57,16 +61,14 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	public QueryCache clone(){
 		try {
 			QueryCache clone = (QueryCache) super.clone();
-			clone.cachedRecords = (TreeSet<Record>) cachedRecords.clone();
-			clone.queryCache = (HashMap<Expression, SequenceSet<Record>>) queryCache.clone();
-			
+			clone.cachedRecords = Collections.unmodifiableNavigableSet(new TreeSet<Record>(cachedRecords));
+			clone.queryCache = new HashMap<>(queryCache);
 			ObjectUtil.cloneValues(clone.cachedRecords);
 			ObjectUtil.cloneValues(clone.queryCache);
 			return clone;
-		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException(e);
+		}catch (CloneNotSupportedException ex){
+			throw new RuntimeException(ex);
 		}
-		
 	}
 	private static final Level defaultLevel = Level.FINE;
 
@@ -155,23 +157,26 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	
 	private void filter( Set<Record> cachedRecords, Expression where, Set<Record> target, int maxRecords,boolean locked) {
-		for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || target.size() < maxRecords) ;) {
-			Record m = i.next();
-			if (where == null || where.isEmpty() || where.eval(m,reflector)) {
-				if (!locked || (locked == m.isLocked())){
-					target.add(m);
-				}else if (locked && maxRecords == Select.MAX_RECORDS_ALL_RECORDS){
-					// m is not locked. 
-					target.clear();
-					return;
+		synchronized (cachedRecords) {
+			for (Iterator<Record> i = cachedRecords.iterator(); i.hasNext() && (maxRecords == Select.MAX_RECORDS_ALL_RECORDS || target.size() < maxRecords); ) {
+				Record m = i.next();
+				if (where == null || where.isEmpty() || where.eval(m, reflector)) {
+					if (!locked || m.isLocked()) {
+						target.add(m);
+					} else if (maxRecords == Select.MAX_RECORDS_ALL_RECORDS) {
+						// m is not locked.
+						target.clear();
+						return;
+					}
 				}
 			}
 		}
 	}
 
 	public Record getCachedRecord(Record record) {
+		
 		SortedSet<Record> tail = cachedRecords.tailSet(record);
-		if (tail == null || tail.isEmpty()) {
+		if (tail.isEmpty()) {
 			return null;
 		}
 		Record recordInCache = tail.first();
@@ -185,25 +190,27 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		if (where != null && where.isEmpty()) {
 			where = null;
 		}
-		if (!queryCache.containsKey(where) && result != null){
-			queryCache.put(where, result);
-			if (where == null){
-				for (Record record:result){
-					for (String column: getTable().getReflector().getIndexedColumns()) {
-						Expression indexWhere = getIndexWhereClause(record,column);
-						SequenceSet<Record> records = queryCache.get(indexWhere); 
-						if (records == null){
-							records = new SequenceSet<Record>();
-							queryCache.put(indexWhere, records);
+		synchronized (queryCache) {
+			if (!queryCache.containsKey(where) && result != null) {
+				queryCache.put(where, result);
+				if (where == null) {
+					for (Record record : result) {
+						for (String column : getTable().getReflector().getIndexedColumns()) {
+							Expression indexWhere = getIndexWhereClause(record, column);
+							SequenceSet<Record> records = queryCache.get(indexWhere);
+							if (records == null) {
+								records = new SequenceSet<Record>();
+								queryCache.put(indexWhere, records);
+							}
+							
+							records.add(record);
 						}
-						
-						records.add(record);
 					}
 				}
+			} else if (queryCache.containsKey(where) && result == null) {
+				queryCache.remove(where);
 			}
-		}else if (queryCache.containsKey(where) && result == null){
-		    queryCache.remove(where);
-        }
+		}
 	}
 
 	private Expression getIdWhereClause(long id) {
@@ -252,10 +259,12 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 
 	public void registerInsert(Record record) {
 		if (add(record)) {
-			for (Expression cacheKey : queryCache.keySet()) {
-				if (cacheKey == null || cacheKey.eval(record,reflector)) {
-					Set<Record> values = queryCache.get(cacheKey);
-					values.add(record);
+			synchronized (queryCache){
+				for (Expression cacheKey : queryCache.keySet()) {
+					if (cacheKey == null || cacheKey.eval(record,reflector)) {
+						Set<Record> values = queryCache.get(cacheKey);
+						values.add(record);
+					}
 				}
 			}
 		}
@@ -273,16 +282,18 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 		}else {
 			record = updatedRecord;
 		}
-		for (Expression cacheKey: queryCache.keySet()){
-			if (recordInCache == null){
-				if (cacheKey == null || cacheKey.eval(record,reflector)){
-					queryCache.get(cacheKey).add(record); // Will not be added if already exists.
-				}	
-			}else if (cacheKey != null &&  !isIdWhereClause(cacheKey)){
-				if (!cacheKey.eval(record,reflector)){
-					queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
-				}else {
-					queryCache.get(cacheKey).add(record);
+		synchronized (queryCache) {
+			for (Expression cacheKey : queryCache.keySet()) {
+				if (recordInCache == null) {
+					if (cacheKey == null || cacheKey.eval(record, reflector)) {
+						queryCache.get(cacheKey).add(record); // Will not be added if already exists.
+					}
+				} else if (cacheKey != null && !isIdWhereClause(cacheKey)) {
+					if (!cacheKey.eval(record, reflector)) {
+						queryCache.get(cacheKey).remove(record); // Will not be removed if it doesnot exist.
+					} else {
+						queryCache.get(cacheKey).add(record);
+					}
 				}
 			}
 		}
@@ -293,10 +304,12 @@ public class QueryCache implements Mergeable<QueryCache> , Cloneable{
 	}
 	public void registerDestroy(Record record) {
 		if (remove(record)) {
-			for (Expression cacheKey : queryCache.keySet()) {
-				if (cacheKey == null || cacheKey.eval(record,reflector)) {
-					Set<Record> values = queryCache.get(cacheKey);
-					values.remove(record);
+			synchronized (queryCache) {
+				for (Expression cacheKey : queryCache.keySet()) {
+					if (cacheKey == null || cacheKey.eval(record, reflector)) {
+						Set<Record> values = queryCache.get(cacheKey);
+						values.remove(record);
+					}
 				}
 			}
 		}

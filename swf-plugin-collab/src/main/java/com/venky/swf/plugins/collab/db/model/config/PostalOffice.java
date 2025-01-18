@@ -14,6 +14,7 @@ import com.venky.swf.db.model.Model;
 @MENU("Geography")
 public interface PostalOffice extends Model , GeoLocation {
 
+    @Index
     public String getOfficeName();
     public void setOfficeName(String name);
 
@@ -21,7 +22,7 @@ public interface PostalOffice extends Model , GeoLocation {
     public String getPinCode();
     public void setPinCode(String code);
 
-    @Enumeration("SO,BO,HO")
+    @Enumeration("S.O,B.O,H.O,P.O")
     public String getOfficeType();
     public void setOfficeType(String type);
 
@@ -30,10 +31,12 @@ public interface PostalOffice extends Model , GeoLocation {
     public void setDeliveryStatus(String status);
 
 
+    @Index
     public String getDivisionName();
     public void setDivisionName(String name);
 
 
+    @Index
     public String getRegionName();
     public void setRegionName(String regionName);
 
@@ -58,11 +61,13 @@ public interface PostalOffice extends Model , GeoLocation {
     public Country getCountry();
 
     @EXPORTABLE(false)
+    @Index
     public Long getStateId();
     public void setStateId(Long id);
     public State getState();
 
     @EXPORTABLE(false)
+    @Index
     public Long getCityId();
     public void setCityId(Long id);
     public City getCity();

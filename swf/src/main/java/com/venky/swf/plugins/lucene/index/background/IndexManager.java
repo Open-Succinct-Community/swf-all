@@ -64,21 +64,33 @@ public class IndexManager {
         try {
             searcher = SWFIndexDirectoryCache.getInstance().getIndexSearcher(tableName);
             searcher.open();
-            TopDocs tDocs = searcher.search(q, numHits + 1);
-
-            ScoreDoc[] hits = tDocs.scoreDocs;
-            
-            while (callback.count() < numHits && tDocs.totalHits.value > 0) {
-                for (ScoreDoc hit : hits) {
-                    int docId = hit.doc;
-                    Document d = searcher.storedFields().document(docId);
-                    callback.collect(d,hit);
+            if (numHits == 0){
+                TopDocs tDocs = searcher.search(q, Integer.MAX_VALUE);
+                ScoreDoc[] hits = tDocs.scoreDocs;
+                if (tDocs.totalHits.value > 0) {
+                    for (ScoreDoc hit : hits) {
+                        int docId = hit.doc;
+                        Document d = searcher.storedFields().document(docId);
+                        callback.collect(d, hit);
+                    }
                 }
-                if (callback.count()  < numHits && tDocs.totalHits.value > numHits && hits.length > 0) {
-                    tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
-                    hits = tDocs.scoreDocs;
-                }else {
-                    break;
+            }else {
+                TopDocs tDocs = searcher.search(q, numHits + 1);
+                
+                ScoreDoc[] hits = tDocs.scoreDocs;
+                
+                while (callback.count() < numHits && tDocs.totalHits.value > 0) {
+                    for (ScoreDoc hit : hits) {
+                        int docId = hit.doc;
+                        Document d = searcher.storedFields().document(docId);
+                        callback.collect(d, hit);
+                    }
+                    if (callback.count() < numHits && tDocs.totalHits.value > numHits && hits.length > 0) {
+                        tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
+                        hits = tDocs.scoreDocs;
+                    } else {
+                        break;
+                    }
                 }
             }
         } catch (Exception ex) {

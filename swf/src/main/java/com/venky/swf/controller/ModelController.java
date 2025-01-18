@@ -264,8 +264,9 @@ public class ModelController<M extends Model> extends Controller {
         }else if (termQueries != null && !termQueries.isEmpty()){
             try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
                 Builder builder = new BooleanQuery.Builder();
-                Bucket numTerms = new Bucket();
+                ObjectHolder<Integer> maxNumTerms = new ObjectHolder<>(0);
                 termQueries.forEach((field,values)->{
+                    Bucket numTerms = new Bucket();
                     for (int i = 0 ; i < values.size() ; i ++){
                         String value = values.get(i);
                         
@@ -275,8 +276,9 @@ public class ModelController<M extends Model> extends Controller {
                         addQueries(builder, term, boost);
                         //BoostQuery boostQuery = new BoostQuery(new TermQuery(term),boostTable.get(values.size()-i));
                     }
+                    maxNumTerms.set(Math.max(maxNumTerms.get(),numTerms.intValue()));
                 });
-                builder.setMinimumNumberShouldMatch((int)Math.ceil(0.6 * numTerms.doubleValue()));
+                builder.setMinimumNumberShouldMatch((int)Math.ceil(0.6 * maxNumTerms.get().doubleValue()));
                 finalizeQuery(builder);
                 return builder.build();
             }
