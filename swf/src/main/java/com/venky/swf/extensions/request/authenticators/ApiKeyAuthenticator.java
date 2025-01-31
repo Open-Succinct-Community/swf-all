@@ -35,7 +35,7 @@ public class ApiKeyAuthenticator implements Extension {
             User user = path.getUser("api_key",apiKey);
             Map<String, Map<String,String>> oidProviders =  OidProvider.getHumBolProviders();
             Map<String,String> oidProps = oidProviders.get("HUMBOL");
-            if (user == null && oidProps != null && !oidProviders.isEmpty()) {
+            if (user == null && oidProps != null && !oidProps.isEmpty()) {
                 String resourceUrl = oidProps.get("resource.url");
                 Call<JSONObject> call = new Call<JSONObject>().url(resourceUrl).headers(new HashMap<>(){{
                     put("content-type", MimeType.APPLICATION_JSON.toString());
