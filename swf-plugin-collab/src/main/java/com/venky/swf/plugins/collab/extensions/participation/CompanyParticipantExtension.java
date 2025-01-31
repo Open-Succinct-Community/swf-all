@@ -56,6 +56,8 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 	}
 
 	public List<Long> getAssociatedCompanyIds(User u){
+		/*
+		// How is this different from u.getCompanyIds()
 		List<Long> ret = new SequenceSet<>();
 		if (u.getCompanyId() != null){
 			ret.add(u.getCompanyId());
@@ -72,6 +74,9 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		List<Company> companies = new Select("ID").from(Company.class).where(new Expression(ref.getPool(),ref.getColumnDescriptor("CREATOR_USER_ID").getName(), Operator.EQ, u.getId())).execute();
 		ret.addAll(DataSecurityFilter.getIds(companies));
 		return ret;
+		
+		 */
+		return u.getCompanyIds();
 	}
 
 

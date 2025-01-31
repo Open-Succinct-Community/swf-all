@@ -10,6 +10,7 @@ import com.venky.swf.plugins.collab.db.model.user.User;
 import com.venky.swf.pm.DataSecurityFilter;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,9 @@ public class CompanyNonSpecificParticipantExtension<M extends Model & CompanyNon
 		if (partiallyFilledModel != null){
 			if ("COMPANY_ID".equalsIgnoreCase(fieldName)){
 				List<Long> ret = u.getCompanyIds();
+				if (partiallyFilledModel.getCompanyId() != null){
+					ret.retainAll(Collections.singletonList(partiallyFilledModel.getCompanyId()));
+				}
 				return ret;
 			}else if ("USER_ID".equalsIgnoreCase(fieldName)){
 				if (u.isStaff()) {
