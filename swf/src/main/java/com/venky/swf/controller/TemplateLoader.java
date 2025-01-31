@@ -54,7 +54,9 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View index(){
-        if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/index.html")) {
+        if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/app/index.html")) {
+            return app();
+        }else if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/html/index.html")) {
             return html();
         }else if (TemplateProcessor.getInstance(getTemplateDirectory()).exists("/markdown/index.md")){
             return markdown();
@@ -65,7 +67,7 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View app(){
-        return app("index.html");
+        return new RedirectorView(getPath(),"app/index");
     }
     @RequireLogin(false)
     default View app(String path)  {
