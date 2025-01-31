@@ -45,9 +45,13 @@ public class DefaultSocialLoginInfoExtractor implements Extension {
         JSONObject body = (JSONObject) new JSONParser().parse(oAuthResponse.getBody());
         String email =  (String) body.get("email");
         if (ObjectUtil.isVoid(email)){
-            email =  (String) ((JSONObject)(((JSONObject)((JSONArray)body.get("elements")).get(0)).get("handle~"))).get("emailAddress");
-            body = new JSONObject();
-            body.put("email",email);
+            try {
+                email = (String) ((JSONObject) (((JSONObject) ((JSONArray) body.get("elements")).get(0)).get("handle~"))).get("emailAddress");
+                body = new JSONObject();
+                body.put("email", email);
+            }catch (Exception ex){
+                //
+            }
         }
         return body;
     }
