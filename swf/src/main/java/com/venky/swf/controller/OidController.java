@@ -317,7 +317,7 @@ public class OidController extends Controller{
 			Transaction txn = Database.getInstance().getTransactionManager().createTransaction();
 			User u = initializeUser(selectedOpenId,userObject);
 			List<UserEmail> emails = u.getUserEmails();
-			if (emails.isEmpty()){
+			if (emails.isEmpty() && !ObjectUtil.isVoid(email)){
 				UserEmail oid = Database.getTable(UserEmail.class).newRecord();
 				oid.setUserId(u.getId());
 				oid.setEmail(email);
