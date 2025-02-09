@@ -1,15 +1,18 @@
 package com.venky.swf.plugins.collab.db.model.config;
 
+import com.venky.cache.Cache;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.ModelImpl;
+import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
-import com.venky.swf.sql.parser.SQLExpressionParser.EQ;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PinCodeImpl extends ModelImpl<PinCode> {
     public PinCodeImpl(){
@@ -19,34 +22,60 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
         super(pinCode);
     }
 
-    public void loadPostalOffice(){
-        if (postalOffice == null){
+    private void loadPostalOffice(){
+        if (fieldValues.isEmpty()){
             PinCode pinCode = getProxy();
             if (!ObjectUtil.isVoid(pinCode.getPinCode())){
                 List<PostalOffice> postalOfficeList = new Select().from(PostalOffice.class).where(new Expression(ModelReflector.instance(PostalOffice.class).getPool(),"PIN_CODE", Operator.EQ, pinCode.getPinCode())).execute();
-                if (!postalOfficeList.isEmpty()){
-                    postalOffice = postalOfficeList.get(0);
+                
+                for (PostalOffice postalOffice : postalOfficeList) {
+                    if (postalOffice.getCountryId() != null){
+                        fieldValues.get("COUNTRY_ID").add(postalOffice.getCountryId());
+                    }
+                    if (postalOffice.getStateId() != null){
+                        fieldValues.get("STATE_ID").add(postalOffice.getStateId());
+                    }else {
+                        List<State> states = new Select().from(State.class).where(
+                                new Expression(ModelReflector.instance(State.class).getPool(), Conjunction.AND).add(
+                                    new Expression(ModelReflector.instance(State.class).getPool(),"COUNTRY_ID",Operator.EQ,fieldValues.get("COUNTRY_ID"))).add(
+                                    new Expression(ModelReflector.instance(State.class).getPool(),"lower(NAME)", Operator.EQ, postalOffice.getStateName().toLowerCase())))
+                                .execute();
+                        for (State state : states) {
+                            fieldValues.get("STATE_ID").add(state.getId());
+                        }
+                    }
+                    if (postalOffice.getCityId() != null) {
+                        fieldValues.get("CITY_ID").add(postalOffice.getCityId());
+                    }else {
+                        for (String name : new String[]{postalOffice.getTaluk(), postalOffice.getDistrict() }){
+                            if (!ObjectUtil.isVoid(name)){
+                                Select select = new Select().from(City.class);
+                                
+                                List<City> cities = select.where(
+                                                new Expression(select.getPool(),Conjunction.AND).
+                                                        add(new Expression(select.getPool(),"STATE_ID",Operator.IN,fieldValues.get("STATE_ID").toArray())).
+                                                        add(new Expression(select.getPool(),"lower(NAME)", Operator.EQ, name.toLowerCase())))
+                                        .execute();
+                                for (City city : cities) {
+                                    fieldValues.get("CITY_ID").add(city.getId());
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-    private PostalOffice postalOffice =  null;
-
+    private Map<String, Set<Long>> fieldValues = new Cache<String, Set<Long>>() {
+        @Override
+        protected Set<Long> getValue(String s) {
+            return new HashSet<>();
+        }
+    } ;
     public Long getStateId() {
         loadPostalOffice();
-        if ( postalOffice != null){
-            if (postalOffice.getStateId() != null) {
-                return postalOffice.getStateId();
-            }else {
-                List<State> states = new Select().from(State.class).where(
-                        new Expression(ModelReflector.instance(State.class).getPool(),"lower(NAME)", Operator.EQ, postalOffice.getStateName().toLowerCase()))
-                        .execute(1);
-                if (!states.isEmpty()){
-                    return states.get(0).getId();
-                }
-            }
-        }
-        return null;
+        Set<Long> stateIds = fieldValues.get("STATE_ID");
+        return stateIds.size() == 1 ? stateIds.iterator().next() : null;
     }
     public void setStateId(Long id){
 
@@ -54,23 +83,8 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
 
     public Long getCityId() {
         loadPostalOffice();
-        if (postalOffice != null){
-            if (postalOffice.getCityId() == null){
-                for (String name : new String[]{postalOffice.getTaluk(), postalOffice.getDistrict() }){
-                    if (!ObjectUtil.isVoid(name)){
-                        List<City> cities = new Select().from(City.class).where(
-                                new Expression(ModelReflector.instance(City.class).getPool(),"NAME", Operator.EQ, name))
-                                .execute(1);
-                        if (!cities.isEmpty()){
-                            return cities.get(0).getId();
-                        }
-                    }
-                }
-            }else {
-                return postalOffice.getCityId();
-            }
-        }
-        return null;
+        Set<Long> cityIds = fieldValues.get("CITY_ID");
+        return cityIds.size() == 1 ? cityIds.iterator().next() : null ;
     }
     public void setCityId(Long id){
 

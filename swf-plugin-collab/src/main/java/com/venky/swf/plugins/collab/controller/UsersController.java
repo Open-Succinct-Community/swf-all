@@ -283,7 +283,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
             return map;
         }
 
-        addToIncludedModelFieldsMap(map, User.class, List.of("COMPANY_ID",  "COUNTRY_ID", "STATE_ID"));
+        addToIncludedModelFieldsMap(map, User.class, List.of("COMPANY_ID"));
         addToIncludedModelFieldsMap(map, UserRole.class, List.of("USER_ID"));
 
         addToIncludedModelFieldsMap(map, UserPhone.class, List.of("USER_ID"));
@@ -298,7 +298,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
         addToIncludedModelFieldsMap(map, Country.class, List.of());
         addToIncludedModelFieldsMap(map, State.class, List.of());
         addToIncludedModelFieldsMap(map, City.class, List.of());
-        addToIncludedModelFieldsMap(map, PinCode.class, List.of( "STATE_ID", "CITY_ID"));
+        addToIncludedModelFieldsMap(map, PinCode.class, List.of());
         addToIncludedModelFieldsMap(map, Facility.class, List.of( "COMPANY_ID"));
         addToIncludedModelFieldsMap(map, Company.class, List.of( "LOGO"));
 

@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.extensions.beforesave;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.extensions.BeforeModelValidateExtension;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
@@ -38,8 +39,12 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
         }
         if (model.getPinCodeId()  != null) {
             PinCode pinCode = model.getPinCode();
-            model.setCityId(pinCode.getCityId());
-            model.setStateId(pinCode.getStateId());
+            if (ObjectUtil.isVoid(model.getCityId())) {
+                model.setCityId(pinCode.getCityId());
+            }
+            if (ObjectUtil.isVoid(model.getStateId())) {
+                model.setStateId(pinCode.getStateId());
+            }
         }
         if (model.getCityId() != null && model.getStateId() == null) {
             model.setStateId(model.getCity().getStateId());
