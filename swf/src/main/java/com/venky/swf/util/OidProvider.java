@@ -31,7 +31,14 @@ public class OidProvider {
         for (String humBolKeys : Config.instance().getPropertyKeys("swf\\.HUMBOL.*\\..*")){
             String[] group = humBolKeys.split("\\.");
             String groupKey = group[1];
-            groupMap.get(groupKey);
+            StringBuilder key = new StringBuilder();
+            for (int i = 2; i < group.length ; i ++ ){
+                if (i > 2){
+                    key.append(".");
+                }
+                key.append(group[i]);
+            }
+            groupMap.get(groupKey).get(key.toString());
         }
         return groupMap;
         
