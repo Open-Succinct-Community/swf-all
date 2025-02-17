@@ -386,11 +386,20 @@ public class Config {
 
 	public Map<String,String> getGeoProviderParams(){
 		Map<String,String> params  =new HashMap<>();
+		/*
 		params.put("here.app_id",Config.instance().getProperty("geocoder.here.app_id"));
 		params.put("here.app_code",Config.instance().getProperty("geocoder.here.app_code"));
 		params.put("here.app_key",Config.instance().getProperty("geocoder.here.app_key"));
 
 		params.put("google.api_key",Config.instance().getProperty("geocoder.google.api_key"));
+		return params;
+		
+		 */
+		
+		List<String> keys = Config.instance().getPropertyKeys("geocoder\\..*");
+		for (String key :keys){
+			params.put(key.substring("geocoder.".length()),Config.instance().getProperty(key));
+		}
 		return params;
 	}
 

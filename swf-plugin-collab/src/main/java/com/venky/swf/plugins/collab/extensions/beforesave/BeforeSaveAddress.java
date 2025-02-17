@@ -77,17 +77,8 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
         M oAddress = null;
         Map<String, String> params = new HashMap<>();
         public LocationSetterTask(M address){
-            this(address,null);
-        }
-        public LocationSetterTask(M address, Map<String,String> input) {
             this.oAddress = address;
-            params.put("here.app_id", Config.instance().getProperty("geocoder.here.app_id"));
-            params.put("here.app_code", Config.instance().getProperty("geocoder.here.app_code"));
-            params.put("here.app_key", Config.instance().getProperty("geocoder.here.app_key"));
-            params.put("google.api_key", Config.instance().getProperty("geocoder.google.api_key"));
-            if (input !=null){
-                params.putAll(input);
-            }
+            this.params = Config.instance().getGeoProviderParams();
         }
 
         private Set<String> getAddressQueries(M oAddress) {
@@ -118,7 +109,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             }
 
             SequenceSet<String> addressQueries = new SequenceSet<>();
-
+            /*
             for (int i = priorityFields.size() - 1; i >= 0; i--) {
                 StringBuilder addressQuery = new StringBuilder();
                 for (int j = 0; j <= i; j++) {
@@ -127,32 +118,39 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                 }
                 addressQueries.add(addressQuery.toString());
             }
+            
+             */
+            StringBuilder addressQuery = new StringBuilder();
+            for (String value : priorityFields.values()) {
+                if (!addressQuery.isEmpty()){
+                    addressQuery.append(" ");
+                }
+                addressQuery.append(value);
+            }
+            addressQueries.add(addressQuery.toString());
+            
+            //Just one query is enough! plugin osm can be used effectively.
 
             return addressQueries;
         }
 
         public void setLatLng(boolean persistAfterSetting) {
-            List<GeoCoder> coders = new ArrayList<GeoCoder>();
-            coders.add(new GeoCoder("google"));
-            coders.add(new GeoCoder("here"));
-            coders.add(new GeoCoder("openstreetmap"));
             BigDecimal lat = null;
             BigDecimal lng = null;
-
-            for (Iterator<GeoCoder> i = coders.iterator(); i.hasNext() && (ObjectUtil.isVoid(lat) || ObjectUtil.isVoid(lng));) {
-                GeoCoder coder = i.next();
-                if (!coder.isEnabled(params)){
-                    continue;
-                }
-                for (String address : getAddressQueries(oAddress)) {
-                    GeoLocation location = coder.getLocation(address, params);
-                    if (location != null) {
-                        lat = location.getLat();
-                        lng = location.getLng();
-                        break;
-                    }
+            
+            GeoCoder coder = GeoCoder.getInstance();
+            if (!coder.isEnabled(params)){
+                return;
+            }
+            for (String address : getAddressQueries(oAddress)) {
+                GeoLocation location = coder.getLocation(address, params);
+                if (location != null) {
+                    lat = location.getLat();
+                    lng = location.getLng();
+                    break;
                 }
             }
+            
             if (lat != null && lng != null) {
                 oAddress.setLat(lat);
                 oAddress.setLng(lng);

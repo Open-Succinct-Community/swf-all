@@ -1,8 +1,6 @@
 package com.venky.swf.plugins.collab.util;
 
-import com.venky.geo.GeoCoder;
 import com.venky.geo.GeoCoordinate;
-import com.venky.geo.GeoDistance;
 import com.venky.geo.GeoLocation;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
