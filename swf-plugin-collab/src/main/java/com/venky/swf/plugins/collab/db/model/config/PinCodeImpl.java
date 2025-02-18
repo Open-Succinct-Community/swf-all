@@ -34,7 +34,7 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
                     }
                     if (postalOffice.getStateId() != null){
                         fieldValues.get("STATE_ID").add(postalOffice.getStateId());
-                    }else {
+                    }else if (!ObjectUtil.isVoid(postalOffice.getStateName())){
                         List<State> states = new Select().from(State.class).where(
                                 new Expression(ModelReflector.instance(State.class).getPool(), Conjunction.AND){{
                                     if (!fieldValues.get("COUNTRY_ID").isEmpty()) {
@@ -54,9 +54,12 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
                                 Select select = new Select().from(City.class);
                                 
                                 List<City> cities = select.where(
-                                                new Expression(select.getPool(),Conjunction.AND).
-                                                        add(new Expression(select.getPool(),"STATE_ID",Operator.IN,fieldValues.get("STATE_ID").toArray())).
-                                                        add(new Expression(select.getPool(),"lower(NAME)", Operator.EQ, name.toLowerCase())))
+                                                new Expression(select.getPool(),Conjunction.AND){{
+                                                    if (!fieldValues.get("STATE_ID").isEmpty()) {
+                                                        add(new Expression(select.getPool(), "STATE_ID", Operator.IN, fieldValues.get("STATE_ID").toArray()));
+                                                    }
+                                                    add(new Expression(select.getPool(),"lower(NAME)", Operator.EQ, name.toLowerCase()));
+                                                }})
                                         .execute();
                                 for (City city : cities) {
                                     fieldValues.get("CITY_ID").add(city.getId());
