@@ -36,10 +36,12 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
                         fieldValues.get("STATE_ID").add(postalOffice.getStateId());
                     }else {
                         List<State> states = new Select().from(State.class).where(
-                                new Expression(ModelReflector.instance(State.class).getPool(), Conjunction.AND).add(
-                                    new Expression(ModelReflector.instance(State.class).getPool(),"COUNTRY_ID",Operator.EQ,fieldValues.get("COUNTRY_ID"))).add(
-                                    new Expression(ModelReflector.instance(State.class).getPool(),"lower(NAME)", Operator.EQ, postalOffice.getStateName().toLowerCase())))
-                                .execute();
+                                new Expression(ModelReflector.instance(State.class).getPool(), Conjunction.AND){{
+                                    if (!fieldValues.get("COUNTRY_ID").isEmpty()) {
+                                        add(new Expression(ModelReflector.instance(State.class).getPool(), "COUNTRY_ID", Operator.IN, fieldValues.get("COUNTRY_ID").toArray()));
+                                    }
+                                    add(new Expression(ModelReflector.instance(State.class).getPool(),"lower(NAME)", Operator.EQ, postalOffice.getStateName().toLowerCase()));
+                                }}).execute();
                         for (State state : states) {
                             fieldValues.get("STATE_ID").add(state.getId());
                         }
@@ -89,4 +91,5 @@ public class PinCodeImpl extends ModelImpl<PinCode> {
     public void setCityId(Long id){
 
     }
+    
 }
