@@ -7,7 +7,6 @@ package com.venky.swf.controller;
 import com.venky.cache.Cache;
 import com.venky.cache.UnboundedCache;
 import com.venky.core.collections.LowerCaseStringCache;
-import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.core.log.TimerStatistics.Timer;
@@ -45,7 +44,7 @@ import com.venky.swf.path.Path;
 import com.venky.swf.path.Path.ControllerInfo;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
-import com.venky.swf.plugins.lucene.index.common.ResultCollector;
+import com.venky.swf.plugins.lucene.index.common.ModelCollector;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.KeyCase;
 import com.venky.swf.sql.Conjunction;
@@ -64,23 +63,15 @@ import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.CommonTermsQuery;
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
-import org.apache.lucene.queryparser.xml.builders.ConstantScoreQueryBuilder;
-import org.apache.lucene.queryparser.xml.builders.DisjunctionMaxQueryBuilder;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.ConstantScoreQuery;
-import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -103,7 +94,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -309,6 +299,18 @@ public class ModelController<M extends Model> extends Controller {
         return searchRecords(q, maxRecords,0);
     }
     protected List<M>   searchRecords(Query q,  int maxRecords , int minDistinctScores){
+        return searchRecords(q,createCollector(maxRecords,minDistinctScores));
+    }
+    protected ModelCollector<M> createCollector(int maxRecords,int minDistinctScores){
+        return new ModelCollector<M>(getModelClass(),maxRecords,minDistinctScores,500,getWhereClause());
+    }
+    protected List<M>   searchRecords(Query q, ModelCollector<M> collector ){
+        Timer timer = cat.startTimer("Fetching query " + q);
+        getIndexer().fire(q,collector.getBatchSize(),collector);
+        return collector.getRecords();
+    }
+    /*
+    protected List<M>   searchRecords(Query q,  int maxRecords , int minDistinctScores){
         int batchSize = Math.min(500,maxRecords);
         
         final Map<Long, M> recordMap  = new HashMap<>();
@@ -379,6 +381,8 @@ public class ModelController<M extends Model> extends Controller {
         
         return records;
     }
+    
+     */
     
     protected View search(Map<String, Object> formData, int maxRecords) {
         Query query =  TimerUtils.time(cat, "getQueries" , ()-> getQuery(formData));

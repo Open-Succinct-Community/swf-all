@@ -6,5 +6,5 @@ import org.apache.lucene.search.ScoreDoc;
 public interface ResultCollector {
 	public void collect(Document doc, ScoreDoc scoreDoc);
 	
-	public int count();
+	boolean isEnough();
 }

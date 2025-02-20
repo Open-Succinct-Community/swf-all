@@ -1,16 +1,10 @@
 package com.venky.swf.plugins.lucene.index.background;
 
-import com.venky.cache.TimeSensitiveMap;
-import com.venky.core.log.TimerUtils;
 import com.venky.swf.plugins.lucene.index.background.SWFIndexDirectoryCache.TrackedSearcher;
-import com.venky.swf.plugins.lucene.index.common.CompleteSearchCollector;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
-import com.venky.swf.routing.SWFClassLoader;
-import com.venky.swf.sql.Select;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
@@ -59,7 +53,7 @@ public class IndexManager {
     }
 
     public void fire(String tableName, Query q, int numHits,
-            ResultCollector callback) {
+            ResultCollector collector) {
         TrackedSearcher searcher = null;
         try {
             searcher = SWFIndexDirectoryCache.getInstance().getIndexSearcher(tableName);
@@ -71,7 +65,7 @@ public class IndexManager {
                     for (ScoreDoc hit : hits) {
                         int docId = hit.doc;
                         Document d = searcher.storedFields().document(docId);
-                        callback.collect(d, hit);
+                        collector.collect(d, hit);
                     }
                 }
             }else {
@@ -79,13 +73,13 @@ public class IndexManager {
                 
                 ScoreDoc[] hits = tDocs.scoreDocs;
                 
-                while (callback.count() < numHits && tDocs.totalHits.value > 0) {
+                while (!collector.isEnough() && tDocs.totalHits.value > 0) {
                     for (ScoreDoc hit : hits) {
                         int docId = hit.doc;
                         Document d = searcher.storedFields().document(docId);
-                        callback.collect(d, hit);
+                        collector.collect(d, hit);
                     }
-                    if (callback.count() < numHits && tDocs.totalHits.value > numHits && hits.length > 0) {
+                    if (!collector.isEnough() && tDocs.totalHits.value > numHits && hits.length > 0) {
                         tDocs = searcher.searchAfter(hits[hits.length - 1], q, numHits + 1);
                         hits = tDocs.scoreDocs;
                     } else {

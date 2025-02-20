@@ -284,8 +284,8 @@ public class LuceneIndexer {
             }
             
             @Override
-            public int count(){
-                return ids.size();
+            public boolean isEnough() {
+                return ids.size() > numHits;
             }
             
         };
