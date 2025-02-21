@@ -1562,16 +1562,29 @@ public class Path implements _IPath{
     public Map<String,String> getHeaders(){
         if (headers == null){
             headers = new IgnoreCaseMap<>();
-            Enumeration<String> names = getRequest().getHeaderNames();
-            while(names.hasMoreElements()){
-                String name = names.nextElement();
-                String value = getRequest().getHeader(name);
-                if (value != null){
-                    headers.put(name,value);
+            {
+                Enumeration<String> names = getRequest().getHeaderNames();
+                while (names.hasMoreElements()) {
+                    String name = names.nextElement();
+                    String value = getRequest().getHeader(name);
+                    if (value != null) {
+                        headers.put(name, value);
+                    }
+                }
+            }
+            if (getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString())){
+                Enumeration<String> names = getRequest().getParameterNames();
+                while (names.hasMoreElements()){
+                    String name = names.nextElement();
+                    String value = getRequest().getParameter(name);
+                    if (value != null) {
+                        headers.putIfAbsent(name, value);
+                    }
                 }
             }
         }
         return headers;
     }
+    
 
 }

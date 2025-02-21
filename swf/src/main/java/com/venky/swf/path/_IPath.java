@@ -62,6 +62,10 @@ public interface _IPath {
 
     public static final String USER_LOGIN_SUCCESS_EXTENSION = "user.login.success";
 	public static final String USER_LOCATION_UPDATED_EXTENSION = "user.login.updated";
+	
+	
+	public Map<String,String> getHeaders();
+	
 
 
 }

@@ -7,8 +7,11 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Registry;
 import com.venky.geo.GeoCoder;
 import com.venky.geo.GeoLocation;
+import com.venky.swf.db.Database;
 import com.venky.swf.db.extensions.BeforeModelSaveExtension;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.collab.db.model.config.City;
@@ -63,7 +66,10 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             }
         }
         if (!isAddressVoid(oAddress)) {
-            LocationSetterTask<M> setterTask = new LocationSetterTask<M>(oAddress);
+            _IPath path  = Database.getInstance().getContext(_IPath.class.getName());
+            Map<String,String> headers = path == null ? new HashMap<>() : path.getHeaders();
+            
+            LocationSetterTask<M> setterTask = new LocationSetterTask<M>(oAddress,headers);
             if (isOkToSetLocationAsync()) {
                 TaskManager.instance().executeAsync(setterTask, false);
             } else {
@@ -76,9 +82,10 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
         M oAddress = null;
         Map<String, String> params = new HashMap<>();
-        public LocationSetterTask(M address){
+        public LocationSetterTask(M address,Map<String,String>params){
             this.oAddress = address;
-            this.params = Config.instance().getGeoProviderParams();
+            this.params.putAll(Config.instance().getGeoProviderParams());
+            this.params.putAll(params);
         }
 
         private Set<String> getAddressQueries(M oAddress) {
