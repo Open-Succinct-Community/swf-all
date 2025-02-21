@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.collab.extensions.beforesave;
 
+import com.venky.core.collections.IgnoreCaseMap;
 import com.venky.core.collections.SequenceMap;
 import com.venky.core.collections.SequenceSet;
 import com.venky.core.string.StringUtil;
@@ -81,7 +82,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
     public static class LocationSetterTask<M extends Address & Model> implements Task {
 
         M oAddress = null;
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> params = new IgnoreCaseMap<>();
         public LocationSetterTask(M address,Map<String,String>params){
             this.oAddress = address;
             this.params.putAll(Config.instance().getGeoProviderParams());
