@@ -268,7 +268,7 @@ public class ModelController<M extends Model> extends Controller {
                     }
                     maxNumTerms.set(Math.max(maxNumTerms.get(),numTerms.intValue()));
                 });
-                builder.setMinimumNumberShouldMatch((int)Math.ceil(0.6 * maxNumTerms.get().doubleValue()));
+                //builder.setMinimumNumberShouldMatch((int)Math.ceil(0.6 * maxNumTerms.get().doubleValue())); Too Restrictive
                 finalizeQuery(builder);
                 return builder.build();
             }
@@ -281,7 +281,7 @@ public class ModelController<M extends Model> extends Controller {
     }
     
     public void addQueries(Builder builder , Term term ,float boost){
-        if (term.text().length() > 7) {
+        if (term.text().length() > 6) { //Changed from 7 to 6
             builder.add(new BoostQuery(new ConstantScoreQuery(new FuzzyQuery(term)), boost), Occur.SHOULD);
         }else {
             builder.add(new BoostQuery(new ConstantScoreQuery(new PrefixQuery(term)),boost),Occur.SHOULD);

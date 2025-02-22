@@ -91,6 +91,12 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
 
         private Set<String> getAddressQueries(M oAddress) {
             SequenceMap<String, String> priorityFields = new SequenceMap<>();
+            if (oAddress.getReflector().getFields().contains("NAME")){
+                String name = oAddress.getReflector().get(oAddress, "NAME");
+                if (!oAddress.getReflector().isVoid(name)){
+                    priorityFields.put("NAME",StringUtil.valueOf(name));
+                }
+            }
             for (String f : Address.getAddressFields()) {
                 if (!oAddress.getReflector().isVoid(oAddress.getReflector().get(oAddress, f))) {
                     priorityFields.put(f, StringUtil.valueOf(oAddress.getReflector().get(oAddress, f)));

@@ -1577,8 +1577,8 @@ public class Path implements _IPath{
                 while (names.hasMoreElements()){
                     String name = names.nextElement();
                     String value = getRequest().getParameter(name);
-                    if (value != null) {
-                        headers.putIfAbsent(name, value);
+                    if (value != null && headers.get(name) == null) {
+                        headers.put(name, value);
                     }
                 }
             }
