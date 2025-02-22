@@ -2,6 +2,7 @@ package com.venky.swf.plugins.collab.db.model.participants.admin;
 
 import com.venky.core.util.ObjectUtil;
 import com.venky.geo.GeoLocation;
+import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -34,6 +35,11 @@ public interface Address extends GeoLocation {
     public String getAddressLine4();
     public void setAddressLine4(String line4);
 
+    @COLUMN_NAME("ADDRESS_LINE_4")
+    String getLandmark();
+    void setLandmark(String landmark);
+    
+    
     @IS_NULLABLE
     @PARTICIPANT(value = "CITY", redundant = true)
     @OnLookupSelect(processor="com.venky.swf.plugins.collab.db.model.participants.admin.AddressCitySelectionProcessor")
@@ -75,7 +81,7 @@ public interface Address extends GeoLocation {
 
 
     public static String[] getAddressFields(){
-        return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
+        return new String[]{"NAME","LANDMARK","ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
     }
 
     public static <F extends Model & Address,T extends Model & Address> void copy(F from, T to){
