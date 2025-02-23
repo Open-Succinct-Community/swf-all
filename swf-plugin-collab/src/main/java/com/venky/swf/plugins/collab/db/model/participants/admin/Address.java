@@ -81,9 +81,12 @@ public interface Address extends GeoLocation {
 
 
     public static String[] getAddressFields(){
-        return new String[]{"NAME","LANDMARK","ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
+        return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
     }
-
+    public static String[] getGeoCodingFields(){
+        return new String[]{"NAME","LANDMARK","ADDRESS_LINE_2","ADDRESS_LINE_3","CITY_ID","PIN_CODE_ID"};
+    }
+    
     public static <F extends Model & Address,T extends Model & Address> void copy(F from, T to){
        for (String f : getAddressFields()){
            to.getRawRecord().put(f,from.getRawRecord().get(f));

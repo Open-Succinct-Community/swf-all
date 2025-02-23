@@ -93,11 +93,11 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
             SequenceMap<String, String> priorityFields = new SequenceMap<>();
             List<String> fields = oAddress.getReflector().getFields();
             
-            for (String f : Address.getAddressFields()) {
+            for (String f : Address.getGeoCodingFields()) {
                 if (fields.contains(f)) {
                     Object value = oAddress.getReflector().get(oAddress, f);
                     if (!oAddress.getReflector().isVoid(value)) {
-                        priorityFields.put(f, StringUtil.valueOf(value));
+                        priorityFields.put(f, StringUtil.valueOf(value).replaceAll("[ ]+","*"));
                     }
                 }
             }
