@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSaveExtension<M> {
 
@@ -120,6 +121,7 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
                     addressQueries.add(addressQuery.toString());
                 }
             }
+            Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Address Query:" + addressQueries);
             
             return addressQueries;
         }
