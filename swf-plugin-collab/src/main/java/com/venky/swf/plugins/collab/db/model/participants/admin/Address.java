@@ -19,6 +19,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -83,8 +84,12 @@ public interface Address extends GeoLocation {
     public static String[] getAddressFields(){
         return new String[]{"ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4","CITY_ID","STATE_ID","COUNTRY_ID","PIN_CODE_ID"};
     }
-    public static String[] getGeoCodingFields(){
-        return new String[]{"NAME","LANDMARK","ADDRESS_LINE_2","ADDRESS_LINE_3","CITY_ID","PIN_CODE_ID"};
+    public static List<String[]> getGeoCodingFields(){
+        return new ArrayList<>(){{
+            add(new String[]{"NAME","ADDRESS_LINE_1","ADDRESS_LINE_2","ADDRESS_LINE_3","ADDRESS_LINE_4"});
+            add(new String[]{"LANDMARK"});
+        }};
+        
     }
     
     public static <F extends Model & Address,T extends Model & Address> void copy(F from, T to){

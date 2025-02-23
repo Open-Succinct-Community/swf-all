@@ -17,6 +17,7 @@ import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.collab.db.model.config.City;
 import com.venky.swf.plugins.collab.db.model.config.Country;
+import com.venky.swf.plugins.collab.db.model.config.PinCode;
 import com.venky.swf.plugins.collab.db.model.config.State;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Address;
 import com.venky.swf.routing.Config;
@@ -90,62 +91,39 @@ public class BeforeSaveAddress<M extends Address & Model> extends BeforeModelSav
         }
 
         private Set<String> getAddressQueries(M oAddress) {
-            SequenceMap<String, String> priorityFields = new SequenceMap<>();
             List<String> fields = oAddress.getReflector().getFields();
+            City city = oAddress.getCity();
+            State state = oAddress.getStateId() != null ? oAddress.getState() : ( city != null ? city.getState() : null ) ;
+            Country country = oAddress.getCountryId() != null ? oAddress.getCountry() : ( state != null ? state.getCountry() : null );
+            PinCode pinCode = oAddress.getPinCode();
             
-            for (String f : Address.getGeoCodingFields()) {
-                if (fields.contains(f)) {
-                    Object value = oAddress.getReflector().get(oAddress, f);
-                    if (!oAddress.getReflector().isVoid(value)) {
-                        priorityFields.put(f, StringUtil.valueOf(value).replaceAll("[ ]+","*"));
+            SequenceSet<String> addressQueries = new SequenceSet<>();
+            
+            for (String[] geoCodingFields : Address.getGeoCodingFields()) {
+                StringBuilder addressQuery = new StringBuilder();
+                for (String f : geoCodingFields) {
+                    if (fields.contains(f)) {
+                        Object value = oAddress.getReflector().get(oAddress, f);
+                        if (!oAddress.getReflector().isVoid(value)){
+                            addressQuery.append(StringUtil.valueOf(value).replaceAll("[ ]+", "*")).append(" ");
+                        }
                     }
                 }
-            }
-
-            if (priorityFields.containsKey("CITY_ID")) {
-                City city = oAddress.getCity();
-                State state = oAddress.getStateId() != null ? oAddress.getState() : ( city != null ? city.getState() : null ) ;
-                Country country = oAddress.getCountryId() != null ? oAddress.getCountry() : ( state != null ? state.getCountry() : null );
-
-                if (city != null) {
-                    priorityFields.put("CITY_ID",city.getName());
+                if (!addressQuery.isEmpty()) {
+                    if (city != null){
+                        addressQuery.append(city.getName()).append(" ");
+                    }
+                    if (pinCode != null){
+                        addressQuery.append(pinCode.getPinCode()).append(" ");
+                    }
+                    addressQuery.setLength(addressQuery.length()-1);
+                    addressQueries.add(addressQuery.toString());
                 }
-                if (state != null) {
-                    priorityFields.put("STATE_ID",state.getName());
-                }
-                if (country != null) {
-                    priorityFields.put("COUNTRY_ID",country.getName());
-                }
-            }
-            if (priorityFields.containsKey("PIN_CODE_ID")) {
-                priorityFields.put("PIN_CODE_ID",oAddress.getPinCode().getPinCode());
-            }
-
-            SequenceSet<String> addressQueries = new SequenceSet<>();
-            /*
-            for (int i = priorityFields.size() - 1; i >= 0; i--) {
-                StringBuilder addressQuery = new StringBuilder();
-                for (int j = 0; j <= i; j++) {
-                    addressQuery.insert(0, " ");
-                    addressQuery.insert(0, priorityFields.getValueAt(priorityFields.size() - 1 - j));
-                }
-                addressQueries.add(addressQuery.toString());
             }
             
-             */
-            StringBuilder addressQuery = new StringBuilder();
-            for (String value : priorityFields.values()) {
-                if (!addressQuery.isEmpty()){
-                    addressQuery.append(" ");
-                }
-                addressQuery.append(value);
-            }
-            addressQueries.add(addressQuery.toString());
-            
-            //Just one query is enough! plugin osm can be used effectively.
-
             return addressQueries;
         }
+        
 
         public void setLatLng(boolean persistAfterSetting) {
             BigDecimal lat = null;
