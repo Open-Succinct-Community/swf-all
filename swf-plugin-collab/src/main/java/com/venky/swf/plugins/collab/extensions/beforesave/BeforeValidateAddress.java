@@ -39,18 +39,25 @@ public class BeforeValidateAddress<M extends Address & Model> extends BeforeMode
         }
         if (model.getPinCodeId()  != null) {
             PinCode pinCode = model.getPinCode();
+            
             if (ObjectUtil.isVoid(model.getCityId())) {
                 model.setCityId(pinCode.getCityId());
             }
-            if (ObjectUtil.isVoid(model.getStateId())) {
-                model.setStateId(pinCode.getStateId());
+            if (!ObjectUtil.isVoid(pinCode.getStateId())) {
+                model.setStateId(pinCode.getStateId()); //Ensure state matches pincode.
             }
         }
-        if (model.getCityId() != null && model.getStateId() == null) {
-            model.setStateId(model.getCity().getStateId());
+        if (model.getCityId() != null ) {
+            if (model.getStateId() == null) {
+                model.setStateId(model.getCity().getStateId());
+            }else if (!ObjectUtil.equals(model.getStateId() , model.getCity().getStateId())){
+                throw new RuntimeException("City not in state!");
+            }
         }
-        if (model.getStateId() != null && model.getCountryId() == null) {
-            model.setCountryId(model.getState().getCountryId());
+        if (model.getStateId() != null ) {
+            Long stateCountryId =  model.getState().getCountryId();
+            model.setCountryId(stateCountryId);
         }
+        
     }
 }
