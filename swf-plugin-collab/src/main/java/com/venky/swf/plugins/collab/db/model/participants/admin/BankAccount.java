@@ -9,6 +9,7 @@ public interface BankAccount {
     public String getBankName();
     public void setBankName(String bankName);
 
+    @UNIQUE_KEY(allowMultipleRecordsWithNull = false)
     public String getBankCode();
     public void setBankCode(String BankCode);
 
@@ -20,13 +21,23 @@ public interface BankAccount {
     public void setBranchName(String branchName);
 
     
-    public String getAccountNo();
-    public void setAccountNo(String AccountNo);
    
     public String getAccountHolderName();
     public void setAccountHolderName(String accountHolderName);
     
     
+    @UNIQUE_KEY("VPA")
+    @IS_NULLABLE
     public String getVirtualPaymentAddress();
     public void setVirtualPaymentAddress(String VirtualPaymentAddress);
+    
+    
+    @UNIQUE_KEY(allowMultipleRecordsWithNull = false)
+    public String getAccountNo();
+    public void setAccountNo(String AccountNo);
+    
+    public String getAddress();
+    public void setAddress(String address);
+    
+    
 }

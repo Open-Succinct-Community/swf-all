@@ -399,7 +399,7 @@ public class Path implements _IPath{
         
         for (int i = 0 ; i < pathelements.size() ; i ++ ) {
             String token = pathelements.get(i);
-            ControllerInfo lastKnownControllerInfo = controllerElements.isEmpty() ? null : controllerElements.getLast();
+            ControllerInfo lastKnownControllerInfo = controllerElements.isEmpty() ? null : controllerElements.get(controllerElements.size()-1);
             
             String controllerClassName = ControllerCache.instance().get(token);
             
