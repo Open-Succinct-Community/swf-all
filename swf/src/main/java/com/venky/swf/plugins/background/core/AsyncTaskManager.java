@@ -399,6 +399,7 @@ public class AsyncTaskManager  {
 				helper.write(os,task);
 				//ObjectOutputStream oos = new ObjectOutputStream(os);
 				de.setPriority(task.getTaskPriority().getValue());
+				de.setTaskClassName(task.getClass().getName());
 				de.setData(new ByteArrayInputStream(os.toByteArray()));
 				de.save();
 			}

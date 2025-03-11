@@ -33,25 +33,23 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 		return getProxy().getId();
 	}
 	
-	private Task getContainedTask() {
+	public Task getContainedTask() {
 		DelayedTask proxy = getProxy();
 		SerializationHelper helper = new SerializationHelper();
 		try {
 			InputStream is = proxy.getData();
-			Task task = helper.read(is);
-			is.close();
+			Task task = null;
+			if (is != null) {
+				task = helper.read(is);
+				is.close();
+			}
 			return task;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-    public String getTaskClassName() {
-	    DelayedTask proxy = getProxy();
-		Task task = getContainedTask();
-		return task.getClass().getName();
-    }
-
+    
 
     public void execute(){
 		DelayedTask o = getProxy();

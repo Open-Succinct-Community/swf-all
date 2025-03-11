@@ -31,9 +31,11 @@ public interface DelayedTask extends Task, Model {
 	public Reader getLastError();
 	public void setLastError(Reader s);
 
-	@IS_VIRTUAL
 	public String getTaskClassName();
+	public void setTaskClassName(String taskClassName);
 	
+	@IS_VIRTUAL
+	public Task getContainedTask() ;
 	
 	@IS_VIRTUAL
 	public Priority getTaskPriority();
