@@ -67,7 +67,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			}
 			
 			List<String> realColumns = ref.getRealColumns();
-			realColumns.remove("DATA");
+			//realColumns.remove("DATA"); Needed to know the job queue
 			realColumns.remove("LAST_ERROR"); //Remove Clob and Blob Columns.
 			Select select = new Select(realColumns.toArray(new String[]{})).from(DelayedTask.class).
 					where(where).
