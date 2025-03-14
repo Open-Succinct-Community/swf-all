@@ -2,7 +2,6 @@ package com.venky.swf.plugins.collab.db.model.participants.admin;
 
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
-import com.venky.swf.db.model.Model;
 
 public interface BankAccount {
     
@@ -36,8 +35,8 @@ public interface BankAccount {
     public String getAccountNo();
     public void setAccountNo(String AccountNo);
     
-    public String getAddress();
-    public void setAddress(String address);
+    public String getBranchAddress();
+    public void setBranchAddress(String address);
     
     
 }
