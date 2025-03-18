@@ -1568,6 +1568,7 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
 
+    @RequireLogin(false)
     public View erd(){
         return super.erd(getReflector());
     }
