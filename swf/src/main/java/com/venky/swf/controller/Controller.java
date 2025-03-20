@@ -77,6 +77,7 @@ import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -968,7 +969,7 @@ public class Controller implements TemplateLoader{
 
     @RequireLogin(false)
     public View ping(){
-        return new BytesView(getPath(),new byte[]{},MimeType.TEXT_PLAIN);
+        return no_content();
     }
     @RequireLogin(false)
     public View status(){
@@ -997,5 +998,14 @@ public class Controller implements TemplateLoader{
             throw new AccessDeniedException("You cannot view logs!");
         }
         return new BytesView(getPath(),StringUtil.readBytes(new FileInputStream(String.format("tmp/java_warn0.log.%d",id)),true),MimeType.TEXT_PLAIN);
+    }
+    
+    protected View no_content(){
+        return new BytesView(getPath(),new byte[]{},getPath().getAccept()){
+            @Override
+            public void write() throws IOException {
+                super.write(HttpServletResponse.SC_NO_CONTENT);
+            }
+        };
     }
 }
