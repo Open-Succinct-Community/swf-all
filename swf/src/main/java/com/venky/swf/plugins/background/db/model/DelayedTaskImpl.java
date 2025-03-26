@@ -1,6 +1,7 @@
 package com.venky.swf.plugins.background.db.model;
 
 import com.venky.core.io.StringReader;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.table.ModelImpl;
@@ -35,17 +36,25 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	
 	public Task getContainedTask() {
 		DelayedTask proxy = getProxy();
-		SerializationHelper helper = new SerializationHelper();
-		try {
-			InputStream is = proxy.getData();
-			Task task = null;
-			if (is != null) {
-				task = helper.read(is);
-				is.close();
+		if (!ObjectUtil.isVoid(proxy.getTaskClassName()) && proxy.getData() == null){
+			try {
+				return (Task)Class.forName(proxy.getTaskClassName()).getConstructor().newInstance();
+			}catch (Exception ex){
+				throw new RuntimeException(ex);
 			}
-			return task;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		}else {
+			SerializationHelper helper = new SerializationHelper();
+			try {
+				InputStream is = proxy.getData();
+				Task task = null;
+				if (is != null) {
+					task = helper.read(is);
+					is.close();
+				}
+				return task;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
