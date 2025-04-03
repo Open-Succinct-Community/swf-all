@@ -16,7 +16,7 @@ public class EventView extends View {
     }
 
     private boolean headersAdded = false;
-    private void addHeaders(){
+    private void addHeaders() throws IOException{
         if (!headersAdded){
             headersAdded = true;
             HttpServletResponse response = getPath().getResponse();
@@ -24,7 +24,10 @@ public class EventView extends View {
             response.setContentType(MimeType.TEXT_EVENT_STREAM.toString());
             response.setHeader("Cache-Control","no-store");
             response.setHeader("Connection","keep-alive");
+            response.setHeader("Transfer-Encoding","chunked");
+            
             response.setCharacterEncoding(StandardCharsets.UTF_8.toString());
+            response.getWriter().print("retry: 1000\n\n");
         }
     }
 
