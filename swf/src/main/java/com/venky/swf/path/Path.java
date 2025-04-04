@@ -1032,10 +1032,8 @@ public class Path implements _IPath{
                     User guest = getGuestUser();
                     if (guest != null){
                         createUserSession(guest, false);
-                    }
-
-                    if(!isRequestAuthenticated()) {
-                        if (getProtocol() == MimeType.TEXT_HTML){
+                    }else  {
+                        if (getReturnProtocol() == MimeType.TEXT_HTML){
                             addErrorMessage("Login Failed");
                             return new RedirectorView(this,"","login");
                         }else {
