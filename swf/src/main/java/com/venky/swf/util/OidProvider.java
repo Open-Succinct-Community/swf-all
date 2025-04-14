@@ -44,10 +44,11 @@ public class OidProvider {
         
     }
     
-    public static  User initializeUser(JSONObject userObject) {
+    public static  User initializeUser(JSONObject userObject,String apiKey) {
         cleanUpId(userObject);
         User u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true);
         u = Database.getTable(User.class).getRefreshed(u);
+        u.setApiKey(apiKey);
         u.save();
         return u;
     }

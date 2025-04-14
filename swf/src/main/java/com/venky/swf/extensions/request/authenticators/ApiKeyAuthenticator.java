@@ -53,7 +53,7 @@ public class ApiKeyAuthenticator implements Extension {
                     if (userInfo == null){
                         userInfo = response;
                     }
-                    user = OidProvider.initializeUser(userInfo);
+                    user = OidProvider.initializeUser(userInfo,apiKey);
                     userObjectHolder.set(user);
                 }else {
                     path.addErrorMessage(call.getError());

@@ -109,7 +109,7 @@ public class OauthController extends Controller {
                 if ("code_challenge".equals(k) ){
                     return;
                 }
-                if (queryParams.length() >0 ){
+                if (!queryParams.isEmpty()){
                     queryParams.append("&");
                 }
                 queryParams.append(k);
