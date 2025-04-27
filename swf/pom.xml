@@ -47,7 +47,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <openhtml.version>[1.0.10,)</openhtml.version>
-        <jetty.version>11.0.14</jetty.version>
+        <jetty.version>11.0.24</jetty.version>
     </properties>
 
     <dependencies>
