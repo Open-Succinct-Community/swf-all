@@ -17,7 +17,7 @@ public class SequentialNumberImpl extends ModelImpl<SequentialNumber> {
     public void increment(){
         SequentialNumber number = getProxy();
         String value  =  number.getCurrentNumber();
-        String nextNumber = String.format("%0"+value.length()+"d", Long.valueOf(value)+1L);
+        String nextNumber = String.format("%0"+value.length()+"d", Long.parseLong(value)+1L);
         number.setCurrentNumber(nextNumber);
         number.save();
     }

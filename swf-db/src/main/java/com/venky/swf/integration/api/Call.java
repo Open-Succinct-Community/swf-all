@@ -134,11 +134,12 @@ public class Call<T> implements Serializable {
 
     private Call<T> invoke() {
         checkExpired();
+        /*
         if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
             method = HttpMethod.POST;
             //throw new RuntimeException("Cannot call API using Method " + method + " and parameter as " + inputFormat );
         }
-
+        */
         Builder curlBuilder ;
         StringBuilder fakeCurlRequest = new StringBuilder();
         try {
@@ -150,7 +151,7 @@ public class Call<T> implements Serializable {
                             (inputFormat == InputFormat.FORM_FIELDS ? getParametersAsFormFields(input) :
                                     ""));
 
-            if (method == HttpMethod.GET && parameterString.length() > 0) {
+            if (method == HttpMethod.GET && !parameterString.isEmpty() && inputFormat == InputFormat.FORM_FIELDS) {
                 if (sUrl.lastIndexOf("?") < 0) {
                     sUrl.append("?");
                 }else {
@@ -164,10 +165,15 @@ public class Call<T> implements Serializable {
             curlBuilder.timeout(Duration.ofMillis(timeOut));
             byte[] parameterByteArray = inputFormat == InputFormat.INPUT_STREAM ? getParameterRaw(input) : parameterString.getBytes();
             if (method ==  HttpMethod.GET){
-                curlBuilder.GET();
+                if (inputFormat == InputFormat.FORM_FIELDS) {
+                    curlBuilder.GET();
+                }else {
+                    curlBuilder.method("GET",BodyPublishers.ofByteArray(parameterByteArray));
+                }
             }else {
                 curlBuilder.POST(BodyPublishers.ofByteArray(parameterByteArray));
             }
+            
             curlBuilder.setHeader("Accept-Encoding", "gzip");
             curlBuilder.version(Version.HTTP_2);
 
@@ -230,7 +236,7 @@ public class Call<T> implements Serializable {
                     fakeCurlRequest.append("**Raw binary Stream**");
                 }
             }else if (errorStream.available() >0){
-                fakeCurlRequest.append("\n Status: " + response.statusCode());
+                fakeCurlRequest.append("\n Status: ").append(response.statusCode());
                 fakeCurlRequest.append("\n Error:\n");
                 fakeCurlRequest.append(StringUtil.read(errorStream,true));
             }

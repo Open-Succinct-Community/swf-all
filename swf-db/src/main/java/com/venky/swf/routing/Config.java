@@ -336,8 +336,7 @@ public class Config {
 	    	return values;
 		}
 	};
-    
-	private List<String> getPropertyValueList(String name){
+	public List<String> getPropertyValueList(String name){
     	return propertyValueList.get(name);
 	}
     
