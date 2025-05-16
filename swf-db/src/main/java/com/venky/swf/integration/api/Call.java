@@ -41,7 +41,7 @@ import java.util.concurrent.Flow.Subscriber;
 import java.util.zip.GZIPInputStream;
 
 public class Call<T> implements Serializable {
-    HttpMethod method = HttpMethod.GET;
+    HttpMethod method = null;
     InputFormat inputFormat = InputFormat.FORM_FIELDS;
 
     String url ;
@@ -134,12 +134,14 @@ public class Call<T> implements Serializable {
 
     private Call<T> invoke() {
         checkExpired();
-        /*
-        if (method == HttpMethod.GET && inputFormat != InputFormat.FORM_FIELDS) {
-            method = HttpMethod.POST;
-            //throw new RuntimeException("Cannot call API using Method " + method + " and parameter as " + inputFormat );
+        
+        if (method == null ) {
+            if (inputFormat != InputFormat.FORM_FIELDS) {
+                method = HttpMethod.POST;
+            }else {
+                method = HttpMethod.GET;
+            }
         }
-        */
         Builder curlBuilder ;
         StringBuilder fakeCurlRequest = new StringBuilder();
         try {
@@ -173,7 +175,6 @@ public class Call<T> implements Serializable {
             }else {
                 curlBuilder.POST(BodyPublishers.ofByteArray(parameterByteArray));
             }
-            
             curlBuilder.setHeader("Accept-Encoding", "gzip");
             curlBuilder.version(Version.HTTP_2);
 
