@@ -1,5 +1,7 @@
 package com.venky.swf.plugins.background.core;
 
+import com.venky.swf.routing.Config;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TaskHolder implements CoreTask {
@@ -15,6 +17,7 @@ public class TaskHolder implements CoreTask {
 
 	@Override
 	public void execute() {
+		Config.instance().setHostName(hostName);
 		task.execute();
 	}
 
@@ -71,12 +74,18 @@ public class TaskHolder implements CoreTask {
 
 	}
 
+	String hostName = null;
 	public TaskHolder(CoreTask task){
 		this.task = task;
 		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();
 		this.taskId = task.getTaskId() > 0 ? task.getTaskId() : fakeIdGenerator.incrementAndGet();
+		this.hostName = Config.instance().getHostName();
 	}
-
+	
+	public String getHostName() {
+		return hostName;
+	}
+	
 	public CoreTask innerTask(){
 		return task;
 	}
