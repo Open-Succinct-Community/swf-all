@@ -5,6 +5,10 @@ import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.SortField.Type;
+import org.apache.lucene.search.SortedNumericSortField;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
@@ -69,7 +73,7 @@ public class IndexManager {
                     }
                 }
             }else {
-                TopDocs tDocs = searcher.search(q, numHits + 1);
+                TopDocs tDocs = searcher.search(q, numHits + 1, new Sort(new SortField("_ID", Type.LONG,true)));
                 
                 ScoreDoc[] hits = tDocs.scoreDocs;
                 
