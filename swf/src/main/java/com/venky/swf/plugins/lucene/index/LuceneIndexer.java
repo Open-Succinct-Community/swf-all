@@ -27,7 +27,10 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LatLonPoint;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -156,7 +159,7 @@ public class LuceneIndexer {
         doc.add(new TextField(fieldName, sanitizeTs(dateValue), Field.Store.YES));
     }
     public void addLongField(Document doc, String name, Long value) {
-        doc.add(new LongPoint(name,value));
+        doc.add(new NumericDocValuesField(name,value));
     }
 
     public Document getDocument(Record r) throws IOException {

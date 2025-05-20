@@ -1,8 +1,13 @@
 package com.venky.swf.plugins.lucene.index.background;
 
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.plugins.lucene.index.background.SWFIndexDirectoryCache.TrackedSearcher;
 import com.venky.swf.plugins.lucene.index.common.ResultCollector;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DocValuesType;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
@@ -12,6 +17,7 @@ import org.apache.lucene.search.SortedNumericSortField;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
+import java.util.List;
 
 public class IndexManager {
 
@@ -73,7 +79,7 @@ public class IndexManager {
                     }
                 }
             }else {
-                TopDocs tDocs = searcher.search(q, numHits + 1, new Sort(new SortField("_ID", Type.LONG,true)));
+                TopDocs tDocs = searcher.search(q, numHits + 1,new Sort(SortField.FIELD_SCORE,new SortField("_ID", Type.LONG,true)));
                 
                 ScoreDoc[] hits = tDocs.scoreDocs;
                 
