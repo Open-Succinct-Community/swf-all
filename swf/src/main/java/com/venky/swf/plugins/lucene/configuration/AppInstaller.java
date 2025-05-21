@@ -5,6 +5,8 @@ import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
+import com.venky.swf.plugins.background.core.AsyncTaskManager;
+import com.venky.swf.plugins.background.core.IndexTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.extensions.LuceneBeforeCommitExtension.TableRecordSetIndexer;
@@ -100,6 +102,9 @@ public class AppInstaller implements Installer{
                 M last = records.get(records.size()-1);
                 TaskManager.instance().executeAsync(new TableIndexer<>(currentTable,last.getId()),false);
             }
+        }
+        public <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass() {
+            return (Class<W>)(IndexTaskManager.class);
         }
     }
     private static boolean mkdir(String tableName){
