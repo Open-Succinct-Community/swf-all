@@ -233,7 +233,7 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View htmlFragment(String file){
-        return publish(TemplateSubDirectory.HTML,file,false);
+        return publish(TemplateSubDirectory.HTML,file,false,true);
     }
 
     DashboardView dashboard(HtmlView aContainedView);
