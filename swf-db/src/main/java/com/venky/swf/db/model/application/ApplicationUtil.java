@@ -125,7 +125,7 @@ public class ApplicationUtil {
         dummy.put("signature",Crypt.getInstance().generateSignature(signingString,app.getSigningAlgorithm(), privateKey));
         StringBuilder signingHeaders = new StringBuilder();
         for (String k : dummy.keySet()){
-            if(signingHeaders.length() > 0){
+            if(!signingHeaders.isEmpty()){
                 signingHeaders.append(",");
             }
             signingHeaders.append(String.format("%s=\"%s\"",k,dummy.get(k)));
