@@ -16,7 +16,7 @@ public class UserEmailImpl extends EmailImpl<UserEmail> {
     }
     public Long getCompanyId(){
         Company company = getCompany();
-        if (company.getRawRecord().isNewRecord()){
+        if (company == null || company.getRawRecord().isNewRecord()){
             return null;
         }else {
             return company.getId();
