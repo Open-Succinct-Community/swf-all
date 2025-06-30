@@ -27,13 +27,17 @@ public class UserEmailImpl extends EmailImpl<UserEmail> {
     }
     public Company getCompany(){
         String domain = getProxy().getDomain();
-        Company company = Database.getTable(Company.class).newRecord();
-        company.setDomainName(domain);
-        company = Database.getTable(Company.class).getRefreshed(company,false);
-        if (company.getRawRecord().isNewRecord()){
-            company.setName(domain);
+        if (ObjectUtil.isVoid(domain)){
+            return null;
+        }else {
+            Company company = Database.getTable(Company.class).newRecord();
+            company.setDomainName(domain);
+            company = Database.getTable(Company.class).getRefreshed(company, false);
+            if (company.getRawRecord().isNewRecord()) {
+                company.setName(domain);
+            }
+            return company;
         }
-        return company;
     }
 
 }

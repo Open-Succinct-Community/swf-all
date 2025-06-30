@@ -54,7 +54,7 @@ public class EmailImpl<T extends Model & com.venky.swf.plugins.collab.db.model.u
             }
             return parts[1];
         }
-        throw new RuntimeException("Email Validation failed!");
+        return null;
     }
 
 
