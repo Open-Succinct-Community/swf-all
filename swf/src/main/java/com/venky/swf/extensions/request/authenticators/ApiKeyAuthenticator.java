@@ -38,7 +38,7 @@ public class ApiKeyAuthenticator implements Extension {
             User user = path.getUser("api_key",apiKey);
             Map<String, Map<String,String>> oidProviders =  OidProvider.getHumBolProviders();
             Map<String,String> oidProps = oidProviders.get("HUMBOL");
-            if ((user == null || DateUtils.compareToMinutes(user.getUpdatedAt(),new Date()) < Config.instance().getIntProperty("hbo.user.cache.ttl",10)) && oidProps != null && !oidProps.isEmpty()) {
+            if ((user == null || DateUtils.compareToMinutes(new Date(),user.getUpdatedAt()) > Config.instance().getIntProperty("hbo.user.cache.ttl",10)) && oidProps != null && !oidProps.isEmpty()) {
                 String resourceUrl = oidProps.get("resource.url");
                 Call<JSONObject> call = new Call<JSONObject>().url(resourceUrl).headers(new HashMap<>(){{
                     put("content-type", MimeType.APPLICATION_JSON.toString());
