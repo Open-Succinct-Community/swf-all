@@ -1,5 +1,6 @@
 package com.venky.swf.extensions.request.authenticators;
 
+import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
@@ -10,10 +11,12 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.Config;
 import com.venky.swf.util.OidProvider;
 import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +38,7 @@ public class ApiKeyAuthenticator implements Extension {
             User user = path.getUser("api_key",apiKey);
             Map<String, Map<String,String>> oidProviders =  OidProvider.getHumBolProviders();
             Map<String,String> oidProps = oidProviders.get("HUMBOL");
-            if (user == null && oidProps != null && !oidProps.isEmpty()) {
+            if ((user == null || DateUtils.compareToMinutes(user.getUpdatedAt(),new Date()) < Config.instance().getIntProperty("hbo.user.cache.ttl",10)) && oidProps != null && !oidProps.isEmpty()) {
                 String resourceUrl = oidProps.get("resource.url");
                 Call<JSONObject> call = new Call<JSONObject>().url(resourceUrl).headers(new HashMap<>(){{
                     put("content-type", MimeType.APPLICATION_JSON.toString());
