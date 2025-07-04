@@ -46,7 +46,7 @@ public class OidProvider {
         
     }
     
-    public static  User initializeUser(Path p, JSONObject userObject, String apiKey) {
+    public static  User initializeUser(JSONObject userObject, String apiKey) {
         cleanUpId(userObject);
         String name = (String)userObject.get("Name");
         User u = Database.getTable(User.class).newRecord();
@@ -63,6 +63,9 @@ public class OidProvider {
         }
         
         u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true); //Save recursive objs as loggedin  user.
+        if (currentUser == null) {
+            Database.getInstance().open(null);
+        }
         return u;
     }
     private static void cleanUpId(JSONObject userInfo){
