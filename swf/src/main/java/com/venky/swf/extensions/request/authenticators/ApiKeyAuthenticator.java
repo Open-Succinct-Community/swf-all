@@ -1,6 +1,5 @@
 package com.venky.swf.extensions.request.authenticators;
 
-import com.venky.core.date.DateUtils;
 import com.venky.core.util.ObjectHolder;
 import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
@@ -11,18 +10,51 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.integration.api.Call;
 import com.venky.swf.integration.api.HttpMethod;
 import com.venky.swf.path.Path;
-import com.venky.swf.routing.Config;
 import com.venky.swf.util.OidProvider;
 import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ApiKeyAuthenticator implements Extension {
     static{
         Registry.instance().registerExtension(Path.REQUEST_AUTHENTICATOR,new ApiKeyAuthenticator());
+    }
+    
+    public static void refresh(Path path,final User user){
+        String apiKey = getHeader(path,"ApiKey");
+        if (ObjectUtil.isVoid(apiKey)){
+            return;
+        }
+        String lat = getHeader( path,"Lat");
+        String lng = getHeader( path, "Lng");
+        
+        
+        Map<String, Map<String,String>> oidProviders =  OidProvider.getHumBolProviders();
+        Map<String,String> oidProps = oidProviders.get("HUMBOL");
+        if (oidProps == null || oidProps.isEmpty()){
+            return;
+        }
+        String resourceUrl = oidProps.get("resource.url");
+        Call<JSONObject> call = new Call<JSONObject>().url(resourceUrl).headers(new HashMap<>(){{
+            put("content-type", MimeType.APPLICATION_JSON.toString());
+            put("ApiKey",apiKey);
+            if (lat != null && lng != null) {
+                put("X-Lat", lat);
+                put("X-Lng", lng);
+            }
+            
+        }}).method(HttpMethod.GET);
+        
+        JSONObject response = call.getResponseAsJson();
+        if (response != null) {
+            JSONObject userInfo = (JSONObject) response.remove("User");
+            if (userInfo == null){
+                userInfo = response;
+            }
+            OidProvider.initializeUser(userInfo,apiKey);
+        }
     }
     @Override
     public void invoke(Object... context) {
@@ -83,7 +115,7 @@ public class ApiKeyAuthenticator implements Extension {
         }
     }
 
-    public String getHeader(Path path, String key){
+    public static String getHeader(Path path, String key){
         return path.getHeader(key);
     }
 }
