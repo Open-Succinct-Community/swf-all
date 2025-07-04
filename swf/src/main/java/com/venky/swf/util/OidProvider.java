@@ -1,6 +1,7 @@
 package com.venky.swf.util;
 
 import com.venky.cache.Cache;
+import com.venky.core.util.ObjectUtil;
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.db.Database;
@@ -8,6 +9,7 @@ import com.venky.swf.db.model.User;
 import com.venky.swf.db.model.io.ModelIOFactory;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.JSON;
+import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.KeyCase;
 import org.json.simple.JSONObject;
@@ -44,12 +46,23 @@ public class OidProvider {
         
     }
     
-    public static  User initializeUser(JSONObject userObject,String apiKey) {
+    public static  User initializeUser(Path p, JSONObject userObject, String apiKey) {
         cleanUpId(userObject);
-        User u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true);
+        String name = (String)userObject.get("Name");
+        User u = Database.getTable(User.class).newRecord();
+        u.setName(name);
         u = Database.getTable(User.class).getRefreshed(u);
+        
         u.setApiKey(apiKey);
         u.save();
+        User currentUser = Database.getInstance().getCurrentUser();
+        
+        
+        if (currentUser == null) {
+            Database.getInstance().open(u);
+        }
+        
+        u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true); //Save recursive objs as loggedin  user.
         return u;
     }
     private static void cleanUpId(JSONObject userInfo){
