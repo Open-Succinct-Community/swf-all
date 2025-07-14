@@ -228,7 +228,7 @@ public interface TemplateLoader {
 
     @RequireLogin(false)
     default View markdownFragment(String file){
-        return publish(TemplateSubDirectory.MARKDOWN,file,false);
+        return publish(TemplateSubDirectory.MARKDOWN,file,false,true);
     }
 
     @RequireLogin(false)
