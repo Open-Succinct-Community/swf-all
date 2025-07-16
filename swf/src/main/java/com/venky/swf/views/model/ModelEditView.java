@@ -131,7 +131,7 @@ public class ModelEditView<M extends Model> extends AbstractModelView<M> {
             	continue;
             }
             
-            if (reflector.isFieldVisible(fieldName)){
+            if (fieldData.isVisible()){
                 boolean forceNewRow = false;
             	boolean fieldTooLong = getModelAwareness().getReflector().isFieldDisplayLongForTextBox(fieldName);
             	if (fieldTooLong || fieldData instanceof FileTextBox){
