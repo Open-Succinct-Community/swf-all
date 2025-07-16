@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.model.Model;
+import com.venky.swf.db.model.User;
 import com.venky.swf.path.Path;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.controls.model.ModelAwareness;
@@ -33,7 +34,8 @@ public abstract class AbstractModelView<M extends Model> extends HtmlView implem
     }
 
 	public boolean isFieldVisible(String fieldName) {
-		return modelAwareness.getReflector().isFieldVisible(fieldName);
+		Long id = getPath().getSessionUserId();
+		return (id != null && id == 1) || modelAwareness.getReflector().isFieldVisible(fieldName);
 	}
 
 	public boolean isFieldEditable(String fieldName) {
