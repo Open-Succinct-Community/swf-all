@@ -757,15 +757,21 @@ public class ModelController<M extends Model> extends Controller {
                         if (asAttachment == null) {
                             asAttachment = !isViewableInLine(mimeType);
                         }
-                        if (fileName != null && asAttachment) {
-                            return new BytesView(getPath(), StringUtil.readBytes((InputStream) getter.invoke(record)), mimeType,
-                                    "content-disposition", "attachment; filename=\"" + fileName + "\"");
-                        } else {
-                            return new BytesView(getPath(), StringUtil.readBytes((InputStream) getter.invoke(record)), mimeType);
+                        Object value = getter.invoke(record);
+                        if (value != null) {
+                            if (fileName != null && asAttachment) {
+                                return new BytesView(getPath(), StringUtil.readBytes((InputStream) value), mimeType,
+                                        "content-disposition", "attachment; filename=\"" + fileName + "\"");
+                            } else {
+                                return new BytesView(getPath(), StringUtil.readBytes((InputStream) value), mimeType);
+                            }
                         }
                     }else if (Reader.class.isAssignableFrom(getter.getReturnType())){
-                        String fieldName = ref.getFieldName(getter);
-                        return new BytesView(getPath(),StringUtil.read((Reader) ref.get(record,fieldName)).getBytes(StandardCharsets.UTF_8));
+                        Object value = getter.invoke(record);
+                        if (value != null) {
+                            String fieldName = ref.getFieldName(getter);
+                            return new BytesView(getPath(), StringUtil.read((Reader) ref.get(record, fieldName)).getBytes(StandardCharsets.UTF_8));
+                        }
                     }
                 }
             } catch (IllegalAccessException e) {
