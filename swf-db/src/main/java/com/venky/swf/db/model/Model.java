@@ -20,6 +20,7 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
 import com.venky.swf.exceptions.AccessDeniedException;
@@ -112,6 +113,7 @@ public interface Model extends _Identifiable {
     
     @IS_VIRTUAL
     @HIDDEN
+	@EXPORTABLE(value = false)
     public boolean isDirty();
     
     public void defaultFields();
