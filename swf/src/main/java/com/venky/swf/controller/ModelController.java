@@ -156,7 +156,9 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View exportxls() {
-        return exportxls(null);
+        Select q = new Select(getColumnsToList()).from(modelClass);
+        List<M> records =  q.where(getWhereClause()).orderBy(getReflector().getOrderBy()).execute(modelClass,0,getFilter());
+        return exportxls(records);
     }
     protected View exportxls(List<M> records){
         ensureUI();
