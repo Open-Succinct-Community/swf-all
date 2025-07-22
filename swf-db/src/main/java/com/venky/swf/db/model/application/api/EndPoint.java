@@ -5,7 +5,6 @@ import com.venky.swf.db.annotations.column.ENCRYPTED;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
-import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.application.Application;
@@ -44,7 +43,7 @@ public interface EndPoint extends Model {
     public void setTokenValue(String tokenValue);
 
     @IS_NULLABLE
-    @UNIQUE_KEY
+    @UNIQUE_KEY(allowMultipleRecordsWithNull = false)
     public Long getOpenApiId();
     public void setOpenApiId(Long id);
     public OpenApi getOpenApi();
