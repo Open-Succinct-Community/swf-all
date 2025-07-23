@@ -130,6 +130,7 @@
     <module>swf-plugin-archetype</module>
     <module>swf-maven-plugin</module>
     <module>swf-plugin-templates</module>
+    <module>swf-plugin-calendar</module>
     <module>swf-plugin-collab</module>
     <module>swf-plugin-bugs</module>
     <module>swf-plugin-mail</module>
