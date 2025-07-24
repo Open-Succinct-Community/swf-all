@@ -34,12 +34,14 @@ public interface Model extends _Identifiable {
     @IS_AUTOINCREMENT
     @HIDDEN
     @HOUSEKEEPING
+	@PROTECTION
     public long getId();
     public void setId(long id);
     
     @HIDDEN
     @HOUSEKEEPING
     @IS_NULLABLE(false)
+	@PROTECTION
     @COLUMN_DEF(StandardDefault.ZERO)
     public int getLockId();
     public void setLockId(int lockid);
