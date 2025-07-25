@@ -20,6 +20,7 @@ import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Record;
@@ -34,14 +35,14 @@ public interface Model extends _Identifiable {
     @IS_AUTOINCREMENT
     @HIDDEN
     @HOUSEKEEPING
-	@PROTECTION
+	@PROTECTION(Kind.NON_EDITABLE)
     public long getId();
     public void setId(long id);
     
     @HIDDEN
     @HOUSEKEEPING
     @IS_NULLABLE(false)
-	@PROTECTION
+	@PROTECTION(Kind.NON_EDITABLE)
     @COLUMN_DEF(StandardDefault.ZERO)
     public int getLockId();
     public void setLockId(int lockid);

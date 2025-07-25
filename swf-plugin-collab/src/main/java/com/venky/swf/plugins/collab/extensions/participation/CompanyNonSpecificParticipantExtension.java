@@ -31,7 +31,7 @@ public class CompanyNonSpecificParticipantExtension<M extends Model & CompanyNon
 				if (u.isStaff()) {
 					return  null;
 				}else {
-					return Arrays.asList(u.getId());
+					return List.of(u.getId());
 				}
 			}
 		}
