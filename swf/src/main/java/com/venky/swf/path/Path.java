@@ -252,11 +252,15 @@ public class Path implements _IPath{
     }
 
     private ByteArrayInputStream inputStream = null;
-    public ByteArrayInputStream getInputStream() throws IOException {
-        if (inputStream == null){
-            inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(),false)); // Why is it not being closed? VENKY
+    public ByteArrayInputStream getInputStream() {
+        try {
+            if (inputStream == null) {
+                inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(), false)); // Why is it not being closed? VENKY
+            }
+            inputStream.close();
+        }catch (IOException ex){
+            throw new RuntimeException(ex);
         }
-        inputStream.close();
         return inputStream;
     }
 
@@ -470,12 +474,8 @@ public class Path implements _IPath{
         headers.putIfAbsent("X-ControllerAction",action());
 
         //headers.putIfAbsent("X-Real-IP",getRequest().getRemoteAddr());
-        try {
-            application = ApplicationUtil.find(getInputStream(),headers);
-            return application;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        application = ApplicationUtil.find(getInputStream(),headers);
+        return application;
     }
 
     public static class ControllerInfo {

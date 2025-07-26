@@ -52,13 +52,8 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 		}
 	}
 	private JSON getCriteria() {
-        try {
-            InputStream is = getPath().getInputStream();
-            return new JSON(is);
-        }catch (IOException ex){
-            throw new RuntimeException(ex);
-        }
-
+		InputStream is = getPath().getInputStream();
+		return new JSON(is);
     }
 
     @RequireLogin
@@ -98,7 +93,7 @@ public class DelayedTasksController extends ModelController<DelayedTask> {
 			InputStream is = getPath().getInputStream();
 			List<Task> tasks = new SerializationHelper().read(is);
 			TaskManager.instance().executeAsync(tasks,false);
-		}catch (IOException ex){
+		}catch (Exception ex){
 			return getIntegrationAdaptor().createStatusResponse(getPath(),ex);
 		}
 		return getIntegrationAdaptor().createStatusResponse(getPath(),null);
