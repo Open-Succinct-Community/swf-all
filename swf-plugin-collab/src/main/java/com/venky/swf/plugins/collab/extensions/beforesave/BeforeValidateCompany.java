@@ -3,6 +3,7 @@ package com.venky.swf.plugins.collab.extensions.beforesave;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.extensions.ModelOperationExtension;
 import com.venky.swf.plugins.collab.db.model.participants.admin.Company;
+import com.venky.swf.plugins.collab.db.model.user.Phone;
 
 import java.util.regex.Pattern;
 
@@ -26,7 +27,11 @@ public class BeforeValidateCompany extends ModelOperationExtension<Company> {
         
         Pattern pat = Pattern.compile(vpaRegEx);
         if (!pat.matcher(vpa).matches()){
-            throw new RuntimeException("VPA/UPI is invalid!");
+            try {
+                Phone.sanitizePhoneNumber(vpa);
+            }catch (Exception ex) {
+                throw new RuntimeException("VPA/UPI is invalid!");
+            }
         }
     }
     
