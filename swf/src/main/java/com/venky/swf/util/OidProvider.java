@@ -53,16 +53,17 @@ public class OidProvider {
         u.setName(name);
         u = Database.getTable(User.class).getRefreshed(u);
         
-        u.setApiKey(apiKey);
-        u.save();
+        u.setApiKey(apiKey); //Api key may have changed!! Read by name and update api key.
+        u.save(); //Very important so that all child objects can be created as this user.
         User currentUser = Database.getInstance().getCurrentUser();
         
         
         if (currentUser == null) {
-            Database.getInstance().open(u);
+            Database.getInstance().open(u); //needed to propagate u.Id to other objects.
         }
         
         u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true); //Save recursive objs as loggedin  user.
+        u.save(); //Other Attributes of user may change. Save it.
         if (currentUser == null) {
             Database.getInstance().open(null);
         }
