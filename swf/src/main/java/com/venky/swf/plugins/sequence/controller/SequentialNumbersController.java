@@ -7,6 +7,7 @@ import com.venky.swf.views.BytesView;
 import com.venky.swf.views.View;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class SequentialNumbersController extends ModelController<SequentialNumber> {
 
@@ -18,7 +19,7 @@ public class SequentialNumbersController extends ModelController<SequentialNumbe
         SequentialNumber number = SequentialNumber.get(sequenceName);
         number.increment();
         if (getIntegrationAdaptor() != null){
-            return getIntegrationAdaptor().createResponse(getPath(), number, Arrays.asList("CURRENT_VALUE"));
+            return getIntegrationAdaptor().createResponse(getPath(), number, List.of("CURRENT_NUMBER"));
         }else {
             return  new BytesView(getPath(),number.getCurrentNumber().getBytes());
         }
