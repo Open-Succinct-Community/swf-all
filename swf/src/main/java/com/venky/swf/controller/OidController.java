@@ -46,6 +46,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -61,30 +63,28 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 public class OidController extends Controller{
 
 	public enum OAuthProviderType {
-		FACEBOOK("facebook","https://graph.facebook.com","/oauth/authorize", "/oauth/access_token","/logout"),
-		FOURSQUARE("foursquare", "https://foursquare.com","/oauth2/authenticate", "/oauth2/access_token","/logout"),
-		GITHUB("GitHub", "https://github.com","/login/oauth/authorize", "/login/oauth/access_token","/logout"),
-		GOOGLE("Google", "https://accounts.google.com","/o/oauth2/auth", "/o/oauth2/token","/logout"),
-		INSTAGRAM("Instagram", "https://api.instagram.com","/oauth/authorize", "/oauth/access_token","/logout"),
-		LINKEDIN("LinkedIn", "https://www.linkedin.com","/uas/oauth2/authorization", "/uas/oauth2/accessToken","/logout"),
-		MICROSOFT("Microsoft", "https://login.live.com","/oauth20_authorize.srf", "/oauth20_token.srf","/logout"),
-		PAYPAL("PayPal", "https://identity.x.com","/xidentity/resources/authorize", "/xidentity/oauthtokenservice","/logout"),
-		REDDIT("reddit", "https://ssl.reddit.com","/api/v1/authorize", "/api/v1/access_token","/logout"),
-		SALESFORCE("salesforce", "https://login.salesforce.com","/services/oauth2/authorize", "/services/oauth2/token","/logout"),
-		YAMMER("Yammer", "https://www.yammer.com","/dialog/oauth", "/oauth2/access_token.json","/logout"),
-		HUMBOL("HumBhiOnline","https://id.humbhionline.in","/oauth/authorize","/oauth/token","/logout?_redirect_to="+ Encode.forUriComponent(Config.instance().getServerBaseUrl()));
+		FACEBOOK("https://graph.facebook.com","/oauth/authorize", "/oauth/access_token","/logout"),
+		FOURSQUARE( "https://foursquare.com","/oauth2/authenticate", "/oauth2/access_token","/logout"),
+		GITHUB( "https://github.com","/login/oauth/authorize", "/login/oauth/access_token","/logout"),
+		GOOGLE("https://accounts.google.com","/o/oauth2/auth", "/o/oauth2/token","/logout"),
+		INSTAGRAM("https://api.instagram.com","/oauth/authorize", "/oauth/access_token","/logout"),
+		LINKEDIN("https://www.linkedin.com","/uas/oauth2/authorization", "/uas/oauth2/accessToken","/logout"),
+		MICROSOFT( "https://login.live.com","/oauth20_authorize.srf", "/oauth20_token.srf","/logout"),
+		PAYPAL("https://identity.x.com","/xidentity/resources/authorize", "/xidentity/oauthtokenservice","/logout"),
+		REDDIT("https://ssl.reddit.com","/api/v1/authorize", "/api/v1/access_token","/logout"),
+		SALESFORCE( "https://login.salesforce.com","/services/oauth2/authorize", "/services/oauth2/token","/logout"),
+		YAMMER( "https://www.yammer.com","/dialog/oauth", "/oauth2/access_token.json","/logout"),
+		HUMBOL("https://id.humbhionline.in","/oauth/authorize","/oauth/token","/logout?_redirect_to="+ Encode.forUriComponent(Config.instance().getServerBaseUrl()));
 
-		private String providerName;
-		private String authzEndpoint;
-		private String tokenEndpoint;
-		private String defaultBaseUrl;
-		private String logoutEndPoint;
-		OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint){
-			this(providerName,defaultBaseUrl,authzEndpoint,tokenEndpoint,null);
+		private final String authzEndpoint;
+		private final String tokenEndpoint;
+		private final String defaultBaseUrl;
+		private final String logoutEndPoint;
+		OAuthProviderType(String defaultBaseUrl, String authzEndpoint, String tokenEndpoint){
+			this(defaultBaseUrl,authzEndpoint,tokenEndpoint,null);
 		}
 
-	  	OAuthProviderType(String providerName, String defaultBaseUrl, String authzEndpoint, String tokenEndpoint, String logoutEndPoint) {
-			this.providerName = providerName;
+	  	OAuthProviderType(String defaultBaseUrl, String authzEndpoint, String tokenEndpoint, String logoutEndPoint) {
 			this.authzEndpoint = authzEndpoint;
 			this.tokenEndpoint = tokenEndpoint;
 			this.defaultBaseUrl = defaultBaseUrl;
@@ -110,7 +110,7 @@ public class OidController extends Controller{
 		super(path);
 	}
 	public static class OIDProvider {
-		public String getRedirectUrl(String openIdProvider){
+		public String getRedirectUrl(){
 			if (!openIdProvider.equals("LINKEDIN")){
 				return Config.instance().getServerBaseUrl() + "/oid/verify?SELECTED_OPEN_ID="+ openIdProvider;
 			}else {
@@ -128,7 +128,6 @@ public class OidController extends Controller{
 			this.openIdProvider = opendIdProvider ;  this.providerType = providerType; 
 			this.clientId = Config.instance().getClientId(opendIdProvider); 
 			this.clientSecret = Config.instance().getClientSecret(opendIdProvider) ; 
-			this.redirectUrl = getRedirectUrl(opendIdProvider);
 			this.scope = scope;
 			this.grantType = grantType;
 			this.resourceUrlNeedsHeaders = resoureUrlNeedsHeaders;
@@ -149,11 +148,10 @@ public class OidController extends Controller{
 		String iss;
 		Class<? extends OAuthAccessTokenResponse> tokenResponseClass;
 		String resourceUrl;
-		String redirectUrl;
 		String scope;
 		public OAuthClientRequest createRequest(String _redirect_to){
 			try {
-				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" )+ _redirect_to );
+				String redirectTo = getRedirectUrl() + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" )+ _redirect_to );
 				return OAuthClientRequest.authorizationLocation(providerType.authzEndpoint(overrideBaseUrl)).
 						setClientId(clientId).setResponseType(OAuth.OAUTH_CODE)
 						.setScope(scope).
@@ -164,7 +162,7 @@ public class OidController extends Controller{
 		}
 		public JSONObject authorize(String code,String _redirect_to){
 			try {
-				String redirectTo = redirectUrl + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" ) +_redirect_to);
+				String redirectTo = getRedirectUrl() + (ObjectUtil.isVoid(_redirect_to) ?  "" : (redirectUrlSupportsParams ? "&_redirect_to=" : "/" ) +_redirect_to);
 				OAuthClientRequest oauthRequest = OAuthClientRequest
 				        .tokenLocation(providerType.tokenEndPoint(overrideBaseUrl))
 				        .setGrantType(grantType)
@@ -186,7 +184,7 @@ public class OidController extends Controller{
 		        }else {
 		        	String accessToken = oAuthResponse.getAccessToken();
 
-			    	OAuthClientRequest bearerClientRequest = null;
+			    	OAuthClientRequest bearerClientRequest ;
 					OAuthBearerClientRequest oAuthBearerClientRequest = new OAuthBearerClientRequest(resourceUrl)
 							.setAccessToken(accessToken);
 
@@ -215,7 +213,7 @@ public class OidController extends Controller{
 
 
 	}
-	private static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
+	private final static Map<String,OIDProvider> oidproviderMap = new HashMap<>();
 	static { 
 		oidproviderMap.put("GOOGLE", new OIDProvider("GOOGLE",null, OAuthProviderType.GOOGLE,"accounts.google.com",
 				OAuthJSONAccessTokenResponse.class,"","email",GrantType.AUTHORIZATION_CODE,false,true));
@@ -239,10 +237,10 @@ public class OidController extends Controller{
 	}
 
 	public static Map<String, Map<String,String>>   getHumBolProviders() {
-		Map<String, Map<String,String>> groupMap = new Cache<String, Map<String, String>>() {
+		Map<String, Map<String,String>> groupMap = new Cache<>() {
 			@Override
 			protected Map<String, String> getValue(String groupKey) {
-				return new Cache<String, String>() {
+				return new Cache<>() {
 					@Override
 					protected String getValue(String key) {
 						return Config.instance().getProperty(String.format("swf.%s.%s",groupKey,key));
@@ -259,7 +257,6 @@ public class OidController extends Controller{
 
 	}
 
-	@SuppressWarnings("rawtypes")
 	protected View authenticate() {
 		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
 		
@@ -299,12 +296,11 @@ public class OidController extends Controller{
 	public View linkedin(String redirectUrl) throws OAuthProblemException, OAuthSystemException, ParseException{
 		return verify("LINKEDIN",redirectUrl);
 	}
-	@SuppressWarnings("rawtypes")
 	@RequireLogin(false)
 	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException {
 		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"),getPath().getRequest().getParameter("_redirect_to"));
 	}
-	private View verify(String selectedOpenId,String redirectedTo) throws OAuthProblemException, OAuthSystemException, ParseException{
+	private View verify(String selectedOpenId,String redirectedTo) throws OAuthProblemException{
 		HttpServletRequest request = getPath().getRequest();
 		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
 		String code = oar.getCode();
@@ -357,19 +353,18 @@ public class OidController extends Controller{
 
 	        InputStream responseBody = null;
 	        URLConnection c;
-	        Map<String, List<String>> responseHeaders = new HashMap<String, List<String>>();
+	        Map<String, List<String>> responseHeaders = new HashMap<>();
 	        int responseCode;
 	        try {
-	            URL url = new URL(request.getLocationUri());
+	            URL url = new URI(request.getLocationUri()).toURL();
 
 	            c = url.openConnection();
 	            c.setConnectTimeout(20000);
 	            c.setReadTimeout(20000);
 	            responseCode = -1;
-	            if (c instanceof HttpURLConnection) {
-	                HttpURLConnection httpURLConnection = (HttpURLConnection) c;
-
-	                if (headers != null && !headers.isEmpty()) {
+	            if (c instanceof HttpURLConnection httpURLConnection) {
+					
+					if (headers != null && !headers.isEmpty()) {
 	                    for (Map.Entry<String, String> header : headers.entrySet()) {
 	                        httpURLConnection.addRequestProperty(header.getKey(), header.getValue());
 	                    }
@@ -401,7 +396,7 @@ public class OidController extends Controller{
 	                responseHeaders = httpURLConnection.getHeaderFields();
 	                responseBody = inputStream;
 	            }
-	        } catch (IOException e) {
+	        } catch (IOException | URISyntaxException e) {
 	            throw new OAuthSystemException(e);
 	        }
 
