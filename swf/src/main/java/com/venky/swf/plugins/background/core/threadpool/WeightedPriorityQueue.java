@@ -21,6 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 
 public class WeightedPriorityQueue extends AbstractQueue<Runnable> implements BlockingQueue<Runnable> {
 	private final ReentrantLock lock = new ReentrantLock();
@@ -117,6 +118,7 @@ public class WeightedPriorityQueue extends AbstractQueue<Runnable> implements Bl
 		Runnable polled = q.poll();
 		if (polled != null) {
 			priorityPollingStatistics.get(p).increment();
+			Config.instance().getLogger(getClass().getName()).info("Num of %s priority tasks pending: %d".formatted(p,size()));
 		}
 		return polled;
 	}
