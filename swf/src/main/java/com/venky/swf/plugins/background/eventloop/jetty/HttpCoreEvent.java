@@ -230,10 +230,6 @@ public class HttpCoreEvent extends CoreEvent implements _HttpCoreEvent, IOTask {
         }
     }
 
-    public void run(){
-        getAsyncTaskManager().addAll(Collections.singleton(this));
-    }
-
     @Override
     public Priority getTaskPriority() {
         return Priority.HIGH;

@@ -2,6 +2,8 @@ package com.venky.swf.plugins.background.core.agent;
 
 import com.venky.swf.plugins.background.core.Task;
 
+import java.io.Serial;
+
 public class AgentFinishUpTask implements Task{
 	private String agentName;
 	private Priority priority  = Priority.DEFAULT;
@@ -17,12 +19,9 @@ public class AgentFinishUpTask implements Task{
 		
 	}
 	public AgentFinishUpTask(String agentName){
-		this(agentName,false);
-	}
-	public AgentFinishUpTask(String agentName,boolean canExecuteRemotely){
 		setAgentName(agentName);
-		this.canExecuteRemotely = canExecuteRemotely;
 	}
+	@Serial
 	private static final long serialVersionUID = -912134633747814136L;
 
 	@Override
@@ -40,9 +39,4 @@ public class AgentFinishUpTask implements Task{
 
 
 
-	private boolean canExecuteRemotely ;
-	@Override
-	public boolean canExecuteRemotely() {
-		return canExecuteRemotely;
-	}
 }

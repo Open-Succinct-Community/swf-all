@@ -11,6 +11,7 @@ import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 
 	public static class PersistedTaskPoller extends AgentSeederTask {
 
+		@Serial
 		private static final long serialVersionUID = 512886938185460373L;
 
 		private Expression getWhereClause(DelayedTask lastRecord){
@@ -51,7 +53,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 		public PersistedTaskPoller(long lastRecordId) {
 			this.lastRecordId = lastRecordId;
 		}
-		private int maxTasksToBuffer = Config.instance().getIntProperty("swf.persisted.task.polling.batch.size",1000);
+		private final int maxTasksToBuffer = Config.instance().getIntProperty("swf.persisted.task.polling.batch.size",1000);
 		public int getMaxTasksToBuffer(){ 
 			return maxTasksToBuffer;
 		}
@@ -115,7 +117,7 @@ public class PersistedTaskPollingAgent implements AgentSeederTaskBuilder  {
 			try {
 				super.execute();
 			}catch (Exception ex){
-				new AgentFinishUpTask(PERSISTED_TASK_POLLER,false).execute();
+				new AgentFinishUpTask(PERSISTED_TASK_POLLER).execute();
 			}
 		}
 	}

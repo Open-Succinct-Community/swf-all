@@ -29,7 +29,7 @@ public abstract class AgentSeederTask implements Task{
 		}
 	}
 	public <T extends Task> void executeDelayed(T task) {
-		executeDelayed(Arrays.asList(task));
+		executeDelayed(List.of(task));
 	}
 	public <T extends Task>void executeDelayed(Collection<T> tasks) {
 		TaskManager.instance().executeAsync(tasks,isAgentTaskQPersistent());
@@ -49,7 +49,7 @@ public abstract class AgentSeederTask implements Task{
         }
 	    synchronized (this){
 	        if (finishUpTask == null){
-	            finishUpTask = new AgentFinishUpTask(getAgentName(),canExecuteRemotely());
+	            finishUpTask = new AgentFinishUpTask(getAgentName());
 	            finishUpTask.setPriority(getTaskPriority());
             }
         }
@@ -60,8 +60,5 @@ public abstract class AgentSeederTask implements Task{
 	    getFinishUpTask().execute();
     }
 
-	@Override
-	public boolean canExecuteRemotely() {
-		return isAgentTaskQPersistent();
-	}
+	
 }

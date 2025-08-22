@@ -22,12 +22,6 @@ public class AsyncServerStatus extends JSONObjectWrapper {
     }
 
 
-    public int getNumWorkers(){
-        return getInteger("num_workers");
-    }
-    public void setNumWorkers(int num_workers){
-        set("num_workers",num_workers);
-    }
     public static class AsyncServerStatuses extends ObjectWrappers<AsyncServerStatus>{
         public AsyncServerStatuses() {
         }

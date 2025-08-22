@@ -4,11 +4,13 @@ import com.venky.core.util.MultiException;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 
+import java.io.Serial;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 public class CompositeTask implements Task {
 	private final LinkedList<Task> tasks ;
+    @Serial
 	private static final long serialVersionUID = -6287257141086371584L;
 	private boolean splitTasksOnException = false;
 	
@@ -31,16 +33,9 @@ public class CompositeTask implements Task {
             if (priority.getValue() > t.getTaskPriority().getValue()){ //Lower the value higher the priority.
                 priority = t.getTaskPriority();
             }
-            canExecuteRemotely = canExecuteRemotely && t.canExecuteRemotely();
         }
     }
 
-    private boolean canExecuteRemotely = true;
-
-	@Override
-    public boolean canExecuteRemotely(){
-        return canExecuteRemotely;
-    }
 	@Override
 	public Priority getTaskPriority(){
 		return priority;

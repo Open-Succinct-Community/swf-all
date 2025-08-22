@@ -1,12 +1,11 @@
 package com.venky.swf.plugins.background.core;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
 import com.venky.extension.Extension;
 import com.venky.extension.Registry;
 import com.venky.swf.routing.Config;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class TaskManager{
 	static {
@@ -18,7 +17,7 @@ public class TaskManager{
 			}
     	});
     }
-	private static TaskManager _instance = new TaskManager();
+	private final static TaskManager _instance = new TaskManager();
 	public static TaskManager instance(){
 		return _instance;
 	}
@@ -49,14 +48,5 @@ public class TaskManager{
 	public void shutdown(){
 		AsyncTaskManagerFactory.getInstance().shutdown();
 	}
-	public void wakeUp(){
-		AsyncTaskManagerFactory.getInstance().wakeUp();
-	}
-
-	public CoreTask next(boolean local,boolean wait) {
-		return AsyncTaskManagerFactory.getInstance().next(local,wait);
-	}
-
-
-
+	
 }

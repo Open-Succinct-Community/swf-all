@@ -1,17 +1,55 @@
 package com.venky.swf.plugins.background.core;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.util.logging.Level;
 
 import com.venky.cache.Cache;
+import com.venky.core.log.SWFLogger;
+import com.venky.core.log.TimerStatistics;
+import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.GCDFinder;
+import com.venky.core.util.ExceptionUtil;
+import com.venky.core.util.MultiException;
 import com.venky.swf.routing.Config;
 
 
 
-public interface CoreTask extends Serializable , Comparable<CoreTask>{
+public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable{
 	default void onStart(){
 
 	}
+	default String getTaskIdentifier(){
+		return getClass().getName();
+	}
+	
+	@Override
+	default void run() {
+		Timer timer = Config.instance().getLogger(getTaskIdentifier()).startTimer();
+		try {
+			
+			onStart();
+			execute();
+			onSuccess();
+		}catch (Exception ex){
+			StringWriter sw = new StringWriter();
+			PrintWriter p = new PrintWriter(sw);
+			ExceptionUtil.getRootCause(ex).printStackTrace(p); p.close();
+			Config.instance().getLogger(getTaskIdentifier()).log(Level.WARNING,"Task encountered exception " + sw);
+			onException(ex);
+		}finally{
+			timer.stop();
+			try {
+				Config.instance().getLogger(getTaskIdentifier()).log(Level.INFO,"Completed Task:" + getTaskIdentifier());
+				onComplete();
+				TimerStatistics.dumpStatistics();
+			}catch(Exception ex) {
+				Config.instance().getLogger(getTaskIdentifier()).log(Level.WARNING,"Exception while completing task." , ex);
+			}
+		}
+	}
+	
 	public void execute();
 
 	default void onSuccess(){
@@ -32,9 +70,6 @@ public interface CoreTask extends Serializable , Comparable<CoreTask>{
 		return -1L;
 	}
 
-	default boolean canExecuteRemotely(){
-		return false;
-	}
 	
 	@Override
 	default int compareTo(CoreTask o) {

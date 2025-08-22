@@ -1,5 +1,6 @@
 package com.venky.swf.plugins.background.core;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,8 +10,9 @@ public class CompositeBatchTask implements Task{
 	/**
 	 * 
 	 */
+	@Serial
 	private static final long serialVersionUID = -8912479033438357513L;
-	private LinkedList<Task> tasks = new LinkedList<>();
+	private final LinkedList<Task> tasks = new LinkedList<>();
 	private int batchSize = 2;
 	private boolean persistTaskQueue = false;
 	public CompositeBatchTask(List<Task> tasks){
@@ -32,7 +34,6 @@ public class CompositeBatchTask implements Task{
 	public void add(List<Task> tasks){
 		for (Task task: tasks){
 			this.tasks.add(task);
-			canExecuteRemotely = canExecuteRemotely && task.canExecuteRemotely();
 		}
 	}
     @Override
@@ -53,9 +54,4 @@ public class CompositeBatchTask implements Task{
 		TaskManager.instance().executeAsync(new CompositeTask(batch.toArray(new Task[]{})), persistTaskQueue);
 	}
 
-	boolean canExecuteRemotely = true;
-	@Override
-	public boolean canExecuteRemotely() {
-		return canExecuteRemotely;
-	}
 }

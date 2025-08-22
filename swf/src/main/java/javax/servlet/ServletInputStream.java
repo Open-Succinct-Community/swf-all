@@ -1,7 +1,6 @@
 package javax.servlet;
 
 import jakarta.servlet.ReadListener;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,12 +41,12 @@ public class ServletInputStream  extends jakarta.servlet.ServletInputStream {
     }
 
     @Override
-    public int read(@NotNull byte[] b) throws IOException {
+    public int read( byte[] b) throws IOException {
         return inputStream.read(b);
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read( byte[] b, int off, int len) throws IOException {
         return inputStream.read(b, off, len);
     }
 

@@ -78,7 +78,6 @@ public class AsyncTaskManagerFactory {
             asyncServerStatuses.add(new AsyncServerStatus(){{
                 setAsyncServer(aClass.getSimpleName());
                 setJobCount(asyncTaskManager.count());
-                setNumWorkers(asyncTaskManager.getNumWorkers());
             }});
         }
     }
@@ -92,41 +91,12 @@ public class AsyncTaskManagerFactory {
         taskManagerCache.clear();
     }
 
-    public void wakeUp() {
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
-            Class<? extends AsyncTaskManager> cz = entry.getKey();
-            AsyncTaskManager atm = entry.getValue();
-            atm.wakeUp();
-        }
-    }
-    public CoreTask next(boolean local,boolean wait) {
-        CoreTask task = null;
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
-            task  = entry.getValue().next(local,wait);
-            if (task != null ){
-                break;
-            }
-        }
-        return task;
-    }
 
     public <T extends CoreTask> void addAll(Collection<T> tasks) {
         Map<AsyncTaskManager,List<CoreTask>> tasksMap = group(tasks);
         tasksMap.forEach((atm,l)->atm.addAll(l));
-
     }
 
-    public void evictWorker(int numWorkers){
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
-            entry.getValue().evictWorker(numWorkers);
-        }
-    }
-    public void addWorker(int numWorkers){
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> entry : taskManagerCache.entrySet()) {
-            entry.getValue().addWorker(numWorkers);
-        }
-
-    }
     private <T extends CoreTask> Map<AsyncTaskManager,List<CoreTask>> group(Collection<T> tasks){
         Map<AsyncTaskManager,List<CoreTask>> tasksMap = new Cache<AsyncTaskManager, List<CoreTask>>() {
             @Override
@@ -146,4 +116,5 @@ public class AsyncTaskManagerFactory {
         Map<AsyncTaskManager,List<CoreTask>> group = group(tasks);
         group.forEach((atm,l)->atm.execute(l,persistTaskQueue));
     }
+    
 }

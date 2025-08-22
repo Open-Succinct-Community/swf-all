@@ -2,6 +2,7 @@ package com.venky.swf.plugins.background.core;
 
 import com.venky.swf.routing.Config;
 
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TaskHolder implements CoreTask {
@@ -20,7 +21,12 @@ public class TaskHolder implements CoreTask {
 		Config.instance().setHostName(hostName);
 		task.execute();
 	}
-
+	
+	@Override
+	public String getTaskIdentifier() {
+		return task.getTaskIdentifier();
+	}
+	
 	@Override
 	public void onSuccess() {
 		task.onSuccess();
@@ -36,10 +42,6 @@ public class TaskHolder implements CoreTask {
 		task.onComplete();
 	}
 
-	@Override
-	public boolean canExecuteRemotely() {
-		return task.canExecuteRemotely();
-	}
 
 	@Override
 	public int compareTo(CoreTask o) {
@@ -69,10 +71,6 @@ public class TaskHolder implements CoreTask {
 	
 	
 	private static AtomicLong fakeIdGenerator = new AtomicLong();
-	@Deprecated //Kept for Kryo Serialization
-	public TaskHolder(){
-
-	}
 
 	String hostName = null;
 	public TaskHolder(CoreTask task){
