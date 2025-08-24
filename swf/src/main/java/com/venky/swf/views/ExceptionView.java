@@ -4,10 +4,6 @@
  */
 package com.venky.swf.views;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import com.venky.core.util.ExceptionUtil;
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -22,8 +18,11 @@ import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import com.venky.swf.views.controls._IControl;
 import com.venky.swf.views.controls.page.text.Label;
+import org.eclipse.jetty.http.HttpStatus;
 
-import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /**
  *
@@ -36,13 +35,13 @@ public class ExceptionView extends View{
         this.th = ExceptionUtil.getRootCause(th);
     }
     public void write() throws IOException{
-        int httpStatus = HttpServletResponse.SC_BAD_REQUEST;
+        int httpStatus = HttpStatus.BAD_REQUEST_400;
         if (ExceptionUtil.getEmbeddedException(th,AccessDeniedException.class) instanceof AccessDeniedException ) {
-            httpStatus = HttpServletResponse.SC_FORBIDDEN;
+            httpStatus = HttpStatus.FORBIDDEN_403;
         }else if (ExceptionUtil.getEmbeddedException(th,UserNotAuthenticatedException.class) instanceof UserNotAuthenticatedException){
-            httpStatus = HttpServletResponse.SC_UNAUTHORIZED;
+            httpStatus = HttpStatus.UNAUTHORIZED_401;
         }else if (ExceptionUtil.getEmbeddedException(th, RecordNotFoundException.class) instanceof RecordNotFoundException) {
-            httpStatus =HttpServletResponse.SC_NOT_FOUND;
+            httpStatus = HttpStatus.NOT_FOUND_404;
         }
         write(httpStatus);
     }

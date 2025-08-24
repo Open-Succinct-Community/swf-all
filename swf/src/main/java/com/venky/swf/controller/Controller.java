@@ -45,7 +45,6 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.path.Path;
 import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
-import com.venky.swf.plugins.background.core.IOTask;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
@@ -72,12 +71,12 @@ import org.apache.lucene.search.Query;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.Request;
 import org.json.simple.JSONObject;
 import org.owasp.encoder.Encode;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -130,7 +129,7 @@ public class Controller implements TemplateLoader{
 
     public View reset_router() {
         if (Config.instance().isDevelopmentEnvironment()) {
-            TaskManager.instance().executeAsync((IOTask)()->Router.instance().reset(),false);
+            TaskManager.instance().submit(()->Router.instance().reset());
         }
         return back();
     }
@@ -201,7 +200,7 @@ public class Controller implements TemplateLoader{
     }
 
     protected String loginSuccessful() {
-        String redirectedTo = getPath().getRequest().getParameter("_redirect_to");
+        String redirectedTo = getPath().getHeader("_redirect_to");
         return loginSuccessful(redirectedTo == null ? "" : redirectedTo);
     }
 
@@ -484,7 +483,7 @@ public class Controller implements TemplateLoader{
     }
 
     public final View importxls(ImportSheetFilter filter) {
-        HttpServletRequest request = getPath().getRequest();
+        Request request = getPath().getRequest();
 
         if (request.getMethod().equalsIgnoreCase("GET")) {
             return dashboard(new FileUploadView(getPath()));
@@ -1004,7 +1003,7 @@ public class Controller implements TemplateLoader{
         return new BytesView(getPath(),new byte[]{},getPath().getAccept()){
             @Override
             public void write() throws IOException {
-                super.write(HttpServletResponse.SC_NO_CONTENT);
+                super.write(HttpStatus.NO_CONTENT_204);
             }
         };
     }

@@ -4,15 +4,16 @@
  */
 package com.venky.swf.views;
 
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.venky.core.util.ObjectUtil;
 import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.Response;
+
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -61,15 +62,16 @@ public class RedirectorView extends View{
     
     
     public void write(int httpStatusCode) throws IOException {
-        HttpServletResponse response = getPath().getResponse();
-        response.setContentType("text/plain");
+        Response response = getPath().getResponse();
+        response.getHeaders().put(HttpHeader.CONTENT_TYPE,"text/plain");
         if (!redirectUrl.startsWith("/") && !redirectUrl.startsWith("http")){
             redirectUrl = "/" + redirectUrl;
         }
         if (redirectUrl.startsWith("/")){
             redirectUrl= Config.instance().getServerBaseUrl() + redirectUrl;
         }
-        response.sendRedirect(redirectUrl);
+        response.setStatus(HttpStatus.MOVED_TEMPORARILY_302);
+        response.getHeaders().put(HttpHeader.LOCATION,redirectUrl);
     }
 
     @Override

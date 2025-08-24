@@ -62,6 +62,7 @@ import com.venky.swf.views.model.AbstractModelView;
 import com.venky.swf.views.model.ModelEditView;
 import com.venky.swf.views.model.ModelListView;
 import com.venky.swf.views.model.ModelShowView;
+import in.succinct.json.JSONAwareWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -72,20 +73,19 @@ import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.jetty.server.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -109,11 +109,12 @@ import java.util.logging.Level;
  *
  * @author venky
  */
+@SuppressWarnings("all")
 public class ModelController<M extends Model> extends Controller {
 
-    private Class<M> modelClass;
-    private ModelReflector<M> reflector;
-    private boolean indexedModel = false;
+    private final Class<M> modelClass;
+    private final ModelReflector<M> reflector;
+    private final boolean indexedModel ;
     private IntegrationAdaptor<M, ?> integrationAdaptor = null;
     private IntegrationAdaptor<M, ?> returnIntegrationAdaptor = null ;
 
@@ -234,7 +235,7 @@ public class ModelController<M extends Model> extends Controller {
 
     public View search(String strQuery) {
         getFormFields().put("q", strQuery);
-        Map<String, Object> formData = new HashMap<String, Object>(getFormFields());
+        Map<String, Object> formData = new HashMap<>(getFormFields());
         rewriteQuery(formData);
 
         return search(formData, getMaxListRecords());
@@ -244,7 +245,6 @@ public class ModelController<M extends Model> extends Controller {
         return LuceneIndexer.instance(getModelClass());
     }
     
-    @SuppressWarnings("unchecked")
     protected Query getQuery(Map<String,Object> formData){
         String q = (String)formData.get("q");
         Map<String,List<String>> termQueries = (Map<String,List<String>>)formData.get("termQueries");
@@ -304,87 +304,14 @@ public class ModelController<M extends Model> extends Controller {
         return searchRecords(q,createCollector(maxRecords,minDistinctScores));
     }
     protected ModelCollector<M> createCollector(int maxRecords,int minDistinctScores){
-        return new ModelCollector<M>(getModelClass(),maxRecords,minDistinctScores,500,getWhereClause());
+        return new ModelCollector<>(getModelClass(),maxRecords,minDistinctScores,500,getWhereClause());
     }
     protected List<M>   searchRecords(Query q, ModelCollector<M> collector ){
         Timer timer = cat.startTimer("Fetching query " + q);
         getIndexer().fire(q,collector.getBatchSize(),collector);
         return collector.getRecords();
     }
-    /*
-    protected List<M>   searchRecords(Query q,  int maxRecords , int minDistinctScores){
-        int batchSize = Math.min(500,maxRecords);
-        
-        final Map<Long, M> recordMap  = new HashMap<>();
-        final SequenceMap<Long,ScoreDoc> allIdsInspected = new SequenceMap<>();
-        Set<Float> scores = new HashSet<>();
-        
-        Timer timer = cat.startTimer("Fetching query " + q);
-        getIndexer().fire(q, batchSize , new ResultCollector() {
-            final SequenceMap<Long,ScoreDoc> idsBeingProcessed = new SequenceMap<>();
-            
-            @Override
-            public void collect(Document d, ScoreDoc scoreDoc) {
-                TimerUtils.time(cat,"Collecting Record Ids" , ()->{
-                    Long id = Long.valueOf(d.getField("ID").stringValue());
-                    idsBeingProcessed.put(id,scoreDoc);
-                    return null;
-                });
-            }
-            
-            public int count() {
-                if (!idsBeingProcessed.isEmpty()) {
-                    Select sel = TimerUtils.time(cat, "Forming Select Statement for collected ids" , () ->{
-                        Select select = new Select();
-                        select.from(getModelClass());
-                        select.where(new Expression(getReflector().getPool(), Conjunction.AND)
-                                .add(Expression.createExpression(getReflector().getPool(), "ID", Operator.IN, idsBeingProcessed.keySet().toArray()))
-                                .add(getWhereClause()));
-                        select.orderBy(getReflector().getOrderBy());
-                        return select;
-                    });
-                    
-                    List<M> tmpList = TimerUtils.time(cat, "Executing Select for collected ids " , ()->{
-                        return sel.execute(getModelClass(), getFilter());
-                    });
-                    
-                    for (M tmp : tmpList) {
-                        recordMap.put(tmp.getId(), tmp);
-                        if (minDistinctScores > 0) {
-                            scores.add(idsBeingProcessed.get(tmp.getId()).score);
-                        }
-                    }
-                    allIdsInspected.putAll(idsBeingProcessed);
-                    idsBeingProcessed.clear();
-                }
-                int totalNumRecords = recordMap.size();
-                int totalScoreCount = scores.size();
-                
-                if (totalNumRecords >= maxRecords && totalScoreCount >= minDistinctScores) {
-                    return batchSize; //No more needed.
-                }else {
-                    return Math.min(totalNumRecords,batchSize-1);
-                }
-            }
-        });
-        List<M> records = new ArrayList<>();
-        int numRecordsAdded = 0;
-        for (long id : allIdsInspected.keySet()){
-            M record = recordMap.remove(id); //Retains the order from lucene based on scores.
-            if (record != null){
-                record.setTxnProperty("scoreDoc",allIdsInspected.get(id));
-                records.add(record);
-                numRecordsAdded ++ ;
-            }
-            if (numRecordsAdded >= maxRecords){
-                break;
-            }
-        }
-        
-        return records;
-    }
     
-     */
     
     protected View search(Map<String, Object> formData, int maxRecords) {
         Query query =  TimerUtils.time(cat, "getQueries" , ()-> getQuery(formData));
@@ -415,7 +342,7 @@ public class ModelController<M extends Model> extends Controller {
             return;
         }
         
-        Map<String,List<String>> termQueries = new UnboundedCache<String, List<String>>() {
+        Map<String,List<String>> termQueries = new UnboundedCache<>() {
             @Override
             protected List<String> getValue(String field) {
                 return new LinkedList<>();
@@ -468,7 +395,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected View list(int maxRecords) {
-        List<M> records = null;
+        List<M> records ;
         Select.ResultFilter<M> filter = getFilter();
         if (!reflector.isVirtual()) {
             Select q = new Select(getColumnsToList()).from(modelClass);
@@ -518,12 +445,14 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected Select.ResultFilter<M> getFilter() {
-        return new DefaultModelFilter<M>(getModelClass());
+        return new DefaultModelFilter<>(getModelClass());
     }
 
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private List<M> getChildrenFromParent() {
-        List<M> children = new ArrayList<M>();
-        Map<Class<? extends Model>, List<Method>> childListMethodsOnParentClass = new UnboundedCache<Class<? extends Model>, List<Method>>() {
+        List<M> children = new ArrayList<>();
+        Map<Class<? extends Model>, List<Method>> childListMethodsOnParentClass = new UnboundedCache<>() {
+            @Serial
             private static final long serialVersionUID = 1040614841128288969L;
 
             @Override
@@ -549,7 +478,7 @@ public class ModelController<M extends Model> extends Controller {
                 }
             }
         }
-        List<ControllerInfo> controllerElements = new ArrayList<ControllerInfo>(getPath().getControllerElements());
+        List<ControllerInfo> controllerElements = new ArrayList<>(getPath().getControllerElements());
         Collections.reverse(controllerElements);
         Iterator<ControllerInfo> cInfoIter = controllerElements.iterator();
         ControllerInfo selfModel = null;
@@ -570,7 +499,7 @@ public class ModelController<M extends Model> extends Controller {
                     for (Method childGetter : childListMethodsOnParentClass.get(parentClass)) {
                         try {
                             if (ObjectUtil.equals(selfModel.getModelClass().getSimpleName(),
-                                    ((Class) ((ParameterizedType) childGetter.getGenericReturnType()).getActualTypeArguments()[0]).getSimpleName())) {
+                                    ((Class<?>) ((ParameterizedType) childGetter.getGenericReturnType()).getActualTypeArguments()[0]).getSimpleName())) {
                                 children = (List<M>) childGetter.invoke(parent);
                                 break;
                             }
@@ -610,7 +539,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected View constructModelListView(List<M> records, boolean isCompleteList) {
-        return new ModelListView<M>(getPath(), getIncludedFields(), records, isCompleteList);
+        return new ModelListView<>(getPath(), getIncludedFields(), records, isCompleteList);
     }
 
     protected String[] getIncludedFields() {
@@ -676,12 +605,11 @@ public class ModelController<M extends Model> extends Controller {
         }
         return map;
     }
-    @SuppressWarnings("unchecked")
     public Map<Class<? extends Model>,List<String>> getIncludedModelFieldsFromRequest(){
         Map<Class<? extends Model>,List<String>> map = null;
         String template = getPath().getHeader("IncludedModelFields");
         if (template != null){
-            JSONObject jsonObject = (JSONObject) JSONValue.parse(new InputStreamReader(new ByteArrayInputStream(Base64.getDecoder().decode(template.getBytes(StandardCharsets.UTF_8)))));
+            JSONObject jsonObject = JSONAwareWrapper.parse(new InputStreamReader(new ByteArrayInputStream(Base64.getDecoder().decode(template.getBytes(StandardCharsets.UTF_8)))));
             if (jsonObject != null){
                 map = new HashMap<>();
                 for (Object key : jsonObject.keySet()){
@@ -711,7 +639,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     protected HtmlView constructModelShowView(Path path, M record) {
-        return new ModelShowView<M>(path, getIncludedFields(), record);
+        return new ModelShowView<>(path, getIncludedFields(), record);
     }
 
     @Depends("index")
@@ -735,13 +663,6 @@ public class ModelController<M extends Model> extends Controller {
         return false;
     }
 
-    /**
-     *
-     * @param record Any db object. Need not be of type M
-     * @param asAttachment
-     * @param <T>
-     * @return
-     */
     protected <T extends Model> View  view(T record,Boolean asAttachment){
         ModelReflector<T> ref = record.getReflector();
 
@@ -777,8 +698,6 @@ public class ModelController<M extends Model> extends Controller {
                     }
                 }
             } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalArgumentException e) {
                 throw new RuntimeException(e);
             } catch (InvocationTargetException e) {
                 throw new RuntimeException(e.getCause());
@@ -993,7 +912,7 @@ public class ModelController<M extends Model> extends Controller {
 
         @Override
         public View error(M m,boolean isNew) {
-            HtmlView errorView = null;
+            HtmlView errorView ;
             if (isNew) {
                 errorView = createBlankView(getPath().createRelativePath("blank"), m, "save");
             } else {
@@ -1017,7 +936,7 @@ public class ModelController<M extends Model> extends Controller {
         String id = (String) formFields.get("ID");
         String lockId = (String) formFields.get("LOCK_ID");
 
-        M record = null;
+        M record ;
         if (ObjectUtil.isVoid(id)) {
             record = Database.getTable(modelClass).newRecord();
         } else {
@@ -1074,7 +993,6 @@ public class ModelController<M extends Model> extends Controller {
                 }
                 action.act(record);
                 for (Class<? extends Model> childModelClass : reflector.getChildModels(true, false)) {
-                    @SuppressWarnings("unchecked")
                     Map<Integer, Map<String, Object>> childFormRecords = (Map<Integer, Map<String, Object>>) formFields.get(childModelClass.getSimpleName());
                     if (childFormRecords != null) {
                         for (Integer key : childFormRecords.keySet()) {
@@ -1137,7 +1055,7 @@ public class ModelController<M extends Model> extends Controller {
         if (ObjectUtil.isVoid(id)) {
             record = Database.getTable(childModelClass).newRecord();
         } else {
-            record = Database.getTable(childModelClass).get(Long.valueOf(id));
+            record = Database.getTable(childModelClass).get(Long.parseLong(id));
             if (!ObjectUtil.isVoid(lockId)) {
                 if (record.getLockId() != Long.parseLong(lockId)) {
                     throw new RuntimeException("Stale record update prevented. Please reload and retry!");
@@ -1206,7 +1124,7 @@ public class ModelController<M extends Model> extends Controller {
                 continue;
             }
             Object currentValue = formFields.get(field);
-            if (hash.length() > 0) {
+            if (!hash.isEmpty()) {
                 hash.append(",");
             }
             if (fieldPrefix != null) {
@@ -1229,7 +1147,6 @@ public class ModelController<M extends Model> extends Controller {
             String modelName = modelClass.getSimpleName();
             ModelReflector<? extends Model> childModelReflector = ModelReflector.instance(modelClass);
 
-            @SuppressWarnings("unchecked")
             SortedMap<Integer, Map<String, Object>> records = (SortedMap<Integer, Map<String, Object>>) formFields.get(modelName);
             if (records == null) {
                 continue;
@@ -1244,7 +1161,7 @@ public class ModelController<M extends Model> extends Controller {
     protected boolean hasUserModifiedData(Map<String, Object> formFields, String oldDigest) {
         StringBuilder hash = new StringBuilder();
         computeHash(hash, reflector, formFields, null);
-        String newDigest = hash == null ? null : Encryptor.encrypt(hash.toString());
+        String newDigest = Encryptor.encrypt(hash.toString());
         return !ObjectUtil.equals(newDigest, oldDigest);
     }
 
@@ -1297,8 +1214,7 @@ public class ModelController<M extends Model> extends Controller {
             where.add(getAutoCompleteBaseWhere(reflector, record, field));
         }
 
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass, 2, new Select.AccessibilityFilter());
+        List<? extends Model> models = new Select().from(referredModelReflector.getRealModelClass()).where(where).execute(referredModelClass, 2, new Select.AccessibilityFilter<>());
 
         if (models.size() == 1) {
             referredModel = models.get(0);
@@ -1320,7 +1236,7 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     public View save() {
-        HttpServletRequest request = getPath().getRequest();
+        Request request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Cannot call save in any other method other than POST");
         }
@@ -1356,14 +1272,13 @@ public class ModelController<M extends Model> extends Controller {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public View onAutoCompleteSelect() {
         ensureUI();
         List<String> fields = reflector.getFields();
         Map<String, Object> formData = getFormFields();
         M model = null;
         if (formData.containsKey("ID")) {
-            model = Database.getTable(modelClass).get(Long.valueOf(formData.get("ID").toString()));
+            model = Database.getTable(modelClass).get(Long.parseLong(formData.get("ID").toString()));
             model = model.cloneProxy();
         } else {
             model = Database.getTable(modelClass).newRecord();
@@ -1389,7 +1304,7 @@ public class ModelController<M extends Model> extends Controller {
         OnLookupSelect onlookup = reflector.getAnnotation(autoCompleteFieldGetter, OnLookupSelect.class);
         if (onlookup != null) {
             try {
-                OnLookupSelectionProcessor<M> processor = (OnLookupSelectionProcessor<M>) Class.forName(onlookup.processor()).newInstance();
+                OnLookupSelectionProcessor<M> processor = (OnLookupSelectionProcessor<M>) Class.forName(onlookup.processor()).getConstructor().newInstance();
                 processor.process(autoCompleteFieldName, model);
             } catch (Exception e) {
                 //
@@ -1398,7 +1313,7 @@ public class ModelController<M extends Model> extends Controller {
 
         fieldsToSet.addAll(record.getDirtyFields());
 
-        TypeConverter<Long> longTypeConverter = (TypeConverter<Long>) Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
+        TypeConverter<Long> longTypeConverter = Database.getJdbcTypeHelper(reflector.getPool()).getTypeRef(Long.class).getTypeConverter();
         JSONObject obj = new JSONObject();
         for (String f : fieldsToSet) {
             Object value = reflector.get(record, f);
@@ -1427,7 +1342,7 @@ public class ModelController<M extends Model> extends Controller {
         Map<String, Object> formData = getFormFields();
         M model = null;
         if (formData.containsKey("ID")) {
-            model = Database.getTable(modelClass).get(Long.valueOf(formData.get("ID").toString()));
+            model = Database.getTable(modelClass).get(Long.parseLong(formData.get("ID").toString()));
         } else {
             model = Database.getTable(modelClass).newRecord();
         }
@@ -1490,8 +1405,7 @@ public class ModelController<M extends Model> extends Controller {
 
     private <T extends Model> ModelReflector<? extends Model> getAutoCompleteModelReflector(ModelReflector<T> reflector, Method autoCompleteFieldGetter) {
         Class<? extends Model> autoCompleteModelClass = reflector.getReferredModelClass(reflector.getReferredModelGetterFor(autoCompleteFieldGetter));
-        ModelReflector<? extends Model> autoCompleteModelReflector = ModelReflector.instance(autoCompleteModelClass);
-        return autoCompleteModelReflector;
+        return ModelReflector.instance(autoCompleteModelClass);
     }
 
     private <T extends Model> Path getAutoCompleteModelPath(ModelReflector<T> reflector, String autoCompleteFieldName) {
@@ -1499,19 +1413,12 @@ public class ModelController<M extends Model> extends Controller {
     }
 
     private Path getAutoCompleteModelPath(ModelReflector<? extends Model> autoCompleteModelReflector) {
-        Path referredModelPath = getPath().createRelativePath((getPath().parameter() != null ? "" : getPath().action()) + "/" + LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) + "/index");
-        return referredModelPath;
+        return getPath().createRelativePath((getPath().parameter() != null ? "" : getPath().action()) + "/" + LowerCaseStringCache.instance().get(autoCompleteModelReflector.getTableName()) + "/index");
     }
 
     @Override
     protected ImportSheetFilter getDefaultImportSheetFilter() {
-        return new ImportSheetFilter() {
-
-            @Override
-            public boolean filter(Sheet sheet) {
-                return sheet.getSheetName().equals(StringUtil.pluralize(getModelClass().getSimpleName()));
-            }
-        };
+        return sheet -> sheet.getSheetName().equals(StringUtil.pluralize(getModelClass().getSimpleName()));
     }
 
     public View detail() {
@@ -1526,12 +1433,7 @@ public class ModelController<M extends Model> extends Controller {
 
         if (integrationAdaptor != null) {
             List<M> models = integrationAdaptor.readRequest(getPath());
-            for (Iterator<M> i = models.iterator(); i.hasNext();) {
-                M m = i.next();
-                if (m.getRawRecord().isNewRecord()) {
-                    i.remove();
-                }
-            }
+            models.removeIf(m -> m.getRawRecord().isNewRecord());
             return returnIntegrationAdaptor.createResponse(getPath(), models, null,
                     getIgnoredParentModels(), getConsideredChildModels(),getIncludedModelFields());
         }
@@ -1555,7 +1457,7 @@ public class ModelController<M extends Model> extends Controller {
 
     protected void ensureIntegrationMethod(HttpMethod httpmethod) throws RuntimeException {
         if (!getPath().getRequest().getMethod().equalsIgnoreCase(httpmethod.toString())){
-            throw new RuntimeException("Request must be invoked as a http " + httpmethod.toString() + " method.");
+            throw new RuntimeException("Request must be invoked as a http " + httpmethod + " method.");
         }
         if (getIntegrationAdaptor() == null){
             throw new RuntimeException("Request must be invoked as a http api content-type cannot be " + getPath().getProtocol().toString() );

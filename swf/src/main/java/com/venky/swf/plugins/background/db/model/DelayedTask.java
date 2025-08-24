@@ -1,9 +1,5 @@
 package com.venky.swf.plugins.background.db.model;
 
-import java.io.InputStream;
-import java.io.Reader;
-
-import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
@@ -11,8 +7,10 @@ import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
-import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.Task;
+
+import java.io.InputStream;
+import java.io.Reader;
 
 @MENU("Tasks")
 @EXPORTABLE(false)

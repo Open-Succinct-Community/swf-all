@@ -17,6 +17,7 @@ import com.venky.swf.sql.Conjunction;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import org.eclipse.jetty.server.Request;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -40,7 +41,7 @@ public class LoginLogger implements Extension {
             this.user = user;
             remoteHost = path.getHeader("Real-IP") ;
             if (remoteHost == null){
-                remoteHost = path.getRequest().getRemoteHost();
+                remoteHost = Request.getRemoteAddr(path.getRequest());
             }
             userAgent = path.getHeader("User-Agent");
             int size = ModelReflector.instance(UserLogin.class).getColumnDescriptor("USER_AGENT").getSize();

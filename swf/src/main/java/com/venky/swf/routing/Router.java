@@ -12,12 +12,14 @@ import com.venky.swf.db._IDatabase;
 import com.venky.swf.db.model.status.RouterStatus;
 import com.venky.swf.db.model.status.ServerStatus;
 import com.venky.swf.path._IPath;
-import com.venky.swf.plugins.background.eventloop.jetty._HttpCoreEvent;
+import com.venky.swf.plugins.background.core._TaskManager;
+import com.venky.swf.routing.jetty.RequestProcessor;
 import com.venky.swf.views._IView;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -28,22 +30,16 @@ import java.util.logging.LogManager;
  *
  * @author venky
  */
-public class Router extends AbstractHandler {
+public class Router extends Handler.Abstract.NonBlocking {
 
     protected Router() {
 		status = RouterStatus.created;
     }
-
-	@Override
-	public void handle(String target, Request request, jakarta.servlet.http.HttpServletRequest httpServletRequest, jakarta.servlet.http.HttpServletResponse httpServletResponse) throws IOException, jakarta.servlet.ServletException {
-		jakarta.servlet.AsyncContext context = request.startAsync(httpServletRequest,httpServletResponse);
-		context.setTimeout(0);
-		try {
-			_HttpCoreEvent coreEvent = (_HttpCoreEvent) getClass("com.venky.swf.plugins.background.eventloop.jetty.HttpCoreEvent").getConstructor(String.class, jakarta.servlet.AsyncContext.class).newInstance(target, context);
-			context.start(coreEvent);
-		}catch (Exception ex){
-			throw new RuntimeException(ex);
-		}
+	
+	
+	public boolean handle(Request request, Response response, Callback callback) throws Exception {
+		getTaskManager().submit(createProcessor(request,response,callback));
+		return true;
 	}
 
 	private static Router router = null;
@@ -174,6 +170,9 @@ public class Router extends AbstractHandler {
 	private Class<?> getDatabaseClass() throws ClassNotFoundException{
 		return getClass("com.venky.swf.db.Database");
 	}
+	private Class<?> getTaskManagerClass() throws ClassNotFoundException{
+		return getClass("com.venky.swf.plugins.background.core.TaskManager");
+	}
 	public _IView createRedirectorView(_IPath p,String url){
 		try {
 			Class<?> evc = getRedirectorViewClass();
@@ -194,6 +193,20 @@ public class Router extends AbstractHandler {
 			throw new RuntimeException(e);
 		}
 	}
+	public RequestProcessor createProcessor(Request request, Response response, Callback callback){
+		try {
+			Class<?> requestProcessorClass = getRequestProcessorClass();
+			RequestProcessor p = (RequestProcessor) requestProcessorClass.getConstructor(Request.class,Response.class,Callback.class).newInstance(request,response,callback);
+			return p;
+		}catch (Exception ex){
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	private Class<?> getRequestProcessorClass() throws ClassNotFoundException {
+		return getClass("com.venky.swf.plugins.background.core.HttpTask");
+	}
+	
 	public _IDatabase getDatabase(){
 		return getDatabase(false);
 	}
@@ -203,6 +216,16 @@ public class Router extends AbstractHandler {
 			//Database.getInstance()
 			Class<_IDatabase> c = (Class<_IDatabase>)getDatabaseClass();
 			_IDatabase idb = (_IDatabase)(c.getMethod("getInstance",boolean.class).invoke(c,migrate));
+			return idb;
+		}catch(Exception ex){
+			throw new RuntimeException(ex);
+		}
+	}
+	public _TaskManager getTaskManager(){
+		try {
+			//Database.getInstance()
+			Class<_TaskManager> c = (Class<_TaskManager>)getTaskManagerClass();
+			_TaskManager idb = (_TaskManager)(c.getMethod("instance").invoke(c));
 			return idb;
 		}catch(Exception ex){
 			throw new RuntimeException(ex);

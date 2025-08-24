@@ -1,13 +1,12 @@
 package com.venky.swf.path;
 
-import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.views._IView;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.Session;
+import org.eclipse.jetty.util.Callback;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -17,19 +16,20 @@ public interface _IPath {
 	public String getAccept();
 	public String getContentType();
 
-	void setRequest(HttpServletRequest request);
-	HttpServletRequest getRequest();
+	void setRequest(Request request);
+	Request getRequest();
 
-	void setAsyncContext(AsyncContext context);
-	AsyncContext getAsyncContext();
 
 	InputStream getInputStream() throws IOException;
 	
-	void setSession(HttpSession session);
-	HttpSession getSession();
+	void setSession(Session session);
+	Session getSession();
 	
-	void setResponse(HttpServletResponse response);
-	HttpServletResponse getResponse();
+	void setResponse(Response response);
+	Response getResponse();
+	
+	Callback getCallback();
+	void setCallback(Callback callBack);
 	
 	_IView invoke();
     String getTarget();
@@ -66,6 +66,6 @@ public interface _IPath {
 	
 	public Map<String,String> getHeaders();
 	
-
+	_IPath  constructNewPath(String target);
 
 }

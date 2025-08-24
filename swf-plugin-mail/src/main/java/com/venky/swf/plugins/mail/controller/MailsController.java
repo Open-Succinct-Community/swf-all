@@ -8,7 +8,8 @@ import com.venky.swf.plugins.mail.core.MailerTask;
 import com.venky.swf.plugins.mail.db.model.Mail;
 import com.venky.swf.views.View;
 
-import javax.servlet.http.HttpServletRequest;
+import org.eclipse.jetty.server.Request;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class MailsController extends ModelController<Mail> {
 
     public View send(){
 
-        HttpServletRequest request = getPath().getRequest();
+        Request request = getPath().getRequest();
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             throw new RuntimeException("Cannot sendMail in any other method other than POST");
         }

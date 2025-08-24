@@ -20,7 +20,6 @@ import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.Depends;
 import com.venky.swf.controller.reflection.ControllerReflector;
 import com.venky.swf.db.Database;
-import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.JdbcTypeHelper.TypeConverter;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
@@ -52,32 +51,36 @@ import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
 import com.venky.swf.views._IView;
 import com.venky.swf.views.controls.model.ModelAwareness;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.http.HttpField;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.MultiPart;
+import org.eclipse.jetty.http.MultiPart.Part;
+import org.eclipse.jetty.http.MultiPartConfig;
+import org.eclipse.jetty.http.MultiPartFormData;
+import org.eclipse.jetty.http.MultiPartFormData.Parts;
+import org.eclipse.jetty.io.Content;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.Session;
+import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.Fields;
+import org.eclipse.jetty.util.Fields.Field;
+import org.eclipse.jetty.util.Promise.Invocable;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.servlet.AsyncContext;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -105,57 +108,72 @@ public class Path implements _IPath{
     private int actionPathIndex = 1 ; 
     private int parameterPathIndex = 2; 
     private String target = null;
-    private HttpSession session = null ;
-    private HttpServletRequest request = null ;
-    private HttpServletResponse response = null ;
+    private Session session = null ;
+    private Request request = null ;
+    private Response response = null ;
+    Callback callback = null;
     
     private Map<String,Object> formFields = null;
     
-    @SuppressWarnings("unchecked")
     public Map<String, Object> getFormFields(){
         if (formFields != null){
             return formFields;
         }
         formFields = new HashMap<String,Object>();
         Map<String,Object> formInput = new HashMap<String, Object>();
-        HttpServletRequest request = getRequest();
-        boolean isMultiPart = ServletFileUpload.isMultipartContent(request);
+        Request request = getRequest();
+        String contentType = getHeaders().get("Content-type");
+        
+        boolean isMultiPart = contentType != null && contentType.toLowerCase().startsWith("multipart/");
         if (isMultiPart){
-            FileItemFactory factory = new DiskFileItemFactory(1024*1024*128, new File(System.getProperty("java.io.tmpdir")));
-            ServletFileUpload fu = new ServletFileUpload(factory);
-            try {
-                List<FileItem> fis = fu.parseRequest(request);
-                for (FileItem fi:fis){
-                    if (fi.isFormField()){
-                        if (!formInput.containsKey(fi.getFieldName())){
-                            formInput.put(fi.getFieldName(), fi.getString());
+            String boundary = MultiPart.extractBoundary(headers.get("Content-Type"));
+            MultiPartConfig config = new MultiPartConfig.Builder()
+                    .location(java.nio.file.Path.of(System.getProperty("java.io.tmpdir")))
+                    .maxPartSize(1024 * 1024)
+                    .build();
+            
+            MultiPartFormData.onParts(request, request, contentType, config, new Invocable<Parts>() {
+                @Override
+                public void succeeded(Parts result) {
+                    for (Part part: result){
+                        byte[] content;
+                        try {
+                            content = Content.Source.asByteBuffer(part.getContentSource()).array();
+                            if (content.length == 0){
+                                content = null;
+                            }else {
+                                formInput.put(part.getName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(part.getFileName()));
+                                formInput.put(part.getName() + "_CONTENT_NAME", part.getName());
+                                formInput.put(part.getName() + "_CONTENT_SIZE", part.getLength());
+                            }
+                            formInput.put(part.getName(), content == null ? null : new ByteArrayInputStream(content));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
-                    }else {
-                        byte[] content = StringUtil.readBytes(fi.getInputStream());
-                        if (content == null || content.length == 0){
-                            content = null;
-                        }else {
-                            formInput.put(fi.getFieldName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(fi.getName()));
-                            formInput.put(fi.getFieldName() + "_CONTENT_NAME", fi.getName());
-                            formInput.put(fi.getFieldName() + "_CONTENT_SIZE", fi.getSize());
-                        }
-                        formInput.put(fi.getFieldName(), content == null ? null : new ByteArrayInputStream(content));
+                        
                     }
                 }
-            } catch (FileUploadException e1) {
-                throw new RuntimeException(e1);
-            } catch (IOException e1){
-                throw new RuntimeException(e1);
-            }
-        }else {
-            Enumeration<String> parameterNames = request.getParameterNames();
-            while (parameterNames.hasMoreElements()){
-                String name =parameterNames.nextElement();
-                if (name.matches("[^\",:]+")) {
-                    //To avoid considering json posts as parameters.
-                    formInput.put(name, request.getParameter(name));
+                
+                @Override
+                public void failed(Throwable x) {
+                    cat.log(Level.WARNING,"Error reading multipart content",x);
                 }
+            });
+        }else {
+            try {
+                Fields parameters = Request.getParameters(request);
+                for  (Field paramenter : parameters){
+                    String name = paramenter.getName();
+                    if (name.matches("[^\",:]+")) {
+                        //To avoid considering json posts as parameters.
+                        formInput.put(name, paramenter.getValue());
+                    }
+                }
+            }catch (Exception ex){
+                throw new RuntimeException(ex);
             }
+            
+            
         }
         
         for (String key : formInput.keySet()){
@@ -181,11 +199,7 @@ public class Path implements _IPath{
                     formFields.put(modelName, modelRecords);        
                 }
                 
-                Map<String,Object> modelAttributes = modelRecords.get(index);
-                if (modelAttributes == null){
-                    modelAttributes = new HashMap<String,Object>();
-                    modelRecords.put(index, modelAttributes);
-                }
+                Map<String, Object> modelAttributes = modelRecords.computeIfAbsent(index, k -> new HashMap<String, Object>());
                 modelAttributes.put(fieldName, formInput.get(key));
             }
         }
@@ -193,7 +207,7 @@ public class Path implements _IPath{
         return formFields;
     }
     public User getSessionUser(){
-        HttpSession session = getSession();
+        Session session = getSession();
         if (session == null){
             return null;
         }
@@ -216,46 +230,32 @@ public class Path implements _IPath{
         return null;
     }
 
-    public HttpSession getSession() {
+    public Session getSession() {
         return session;
     }
 
-    public void setSession(HttpSession session) {
+    public void setSession(Session session) {
         this.session = session;
     }
 
-    public HttpServletRequest getRequest() {
+    public Request getRequest() {
         return request;
     }
 
-    public Cookie[] getCookies(){
-        jakarta.servlet.http.Cookie[] cookies = getRequest().getCookies();
-        if (cookies == null){
-            return new Cookie[]{};
-        }
-        Cookie[] cookies1 = new Cookie[cookies.length];
-        for (int i = 0 ; i < cookies.length; i++){
-            cookies1[i] = getCookie(cookies[i]);
-        }
-        return cookies1;
-    }
-    private Cookie getCookie(jakarta.servlet.http.Cookie cookie){
-        return new Cookie(cookie.getName(),cookie.getValue());
+    public List<HttpCookie> getCookies(){
+        return Request.getCookies(getRequest());
     }
 
-    public Cookie getCookie(String name){
-        Optional<Cookie> cookieOptional = Arrays.stream(getCookies()).filter(c->c.getName().equals(name)).findFirst();
-        if (cookieOptional.isPresent()){
-            return cookieOptional.get();
-        }
-        return null;
+    public HttpCookie getCookie(String name){
+        Optional<HttpCookie> cookieOptional = getCookies().stream().filter(c->c.getName().equals(name)).findFirst();
+        return cookieOptional.orElse(null);
     }
 
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() {
         try {
             if (inputStream == null) {
-                inputStream = new ByteArrayInputStream(StringUtil.readBytes(getRequest().getInputStream(), false)); // Why is it not being closed? VENKY
+                inputStream = new ByteArrayInputStream(Content.Source.asByteBuffer(getRequest()).array()) ;
             }
             inputStream.close();
         }catch (IOException ex){
@@ -264,43 +264,39 @@ public class Path implements _IPath{
         return inputStream;
     }
 
-    public void setRequest(HttpServletRequest request) {
+    public void setRequest(Request request) {
         this.request = request;
     }
 
-    @Override
-    public AsyncContext getAsyncContext() {
-        return asyncContext;
-    }
-
-    @Override
-    public void setAsyncContext(AsyncContext asyncContext) {
-        this.asyncContext = asyncContext;
-    }
-
-    AsyncContext asyncContext;
-
-    
     public String getOriginalRequestUrl(){
-        return StringUtil.valueOf(request.getRequestURI());
+        return StringUtil.valueOf(request.getHttpURI());
     }
     
     protected void logHeaders(){
         if (request != null){
             List<String> headers = new ArrayList<String>();
-            Enumeration<String> names = request.getHeaderNames();
-            while(names.hasMoreElements()){
-                headers.add(names.nextElement());
+            for (HttpField header: request.getHeaders()){
+                headers.add(header.getName());
             }
             Config.instance().getLogger(Path.class.getName()).info("Request Headers:" + headers.toString());
         }
     }
 
-    public HttpServletResponse getResponse() {
+    public Response getResponse() {
         return response;
     }
-
-    public void setResponse(HttpServletResponse response) {
+    
+    @Override
+    public Callback getCallback() {
+        return callback;
+    }
+    
+    @Override
+    public void setCallback(Callback callBack) {
+        this.callback  = callBack;
+    }
+    
+    public void setResponse(Response response) {
         this.response = response;
     }
     public Path  constructNewPath(String target){
@@ -308,6 +304,7 @@ public class Path implements _IPath{
         p.setSession(getSession());
         p.setRequest(getRequest());
         p.setResponse(getResponse());
+        p.setCallback(getCallback());
         return p;
     }
     public List<String> parsePathElements(String target){
@@ -728,9 +725,7 @@ public class Path implements _IPath{
     public void createUserSession(User user,boolean autoInvalidate){
         invalidateSession();
 
-        jakarta.servlet.http.HttpSession jaksession = getRequest().getSession(true);
-        HttpSession session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
-                (proxy, method, args) -> method.invoke(jaksession,args));
+        Session session = getRequest().getSession(true);
         if (user != null && !user.isAccountClosed()){
             session.setAttribute("user.id",user.getId());
             Registry.instance().callExtensions(USER_LOGIN_SUCCESS_EXTENSION,this,user);
@@ -742,16 +737,16 @@ public class Path implements _IPath{
         }
     }
     private void addSameSiteCookieAttribute() {
-        HttpServletResponse response = getResponse();
-        Collection<String> headers = response.getHeaders("Set-Cookie");
+        Response response = getResponse();
+        Collection<String> headers = response.getHeaders().getValuesList("Set-Cookie");
         boolean firstHeader = true;
         for (String header : headers) { // there can be multiple Set-Cookie attributes
             if (firstHeader) {
-                response.setHeader("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
+                response.getHeaders().put("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
                 firstHeader = false;
                 continue;
             }
-            response.addHeader("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
+            response.getHeaders().add("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
         }
     }
 
@@ -1006,7 +1001,7 @@ public class Path implements _IPath{
         Config.instance().setExternalPort(hostParams[1]);
         String extScheme = getHeader("URIScheme");
         if (extScheme == null){
-            extScheme = request.getScheme();
+            extScheme = request.getHttpURI().getScheme();
         }
         Config.instance().setExternalURIScheme(extScheme);
 
@@ -1486,12 +1481,10 @@ public class Path implements _IPath{
 
 
     public void addMessage(StatusType type, String message){
-        HttpSession session = getSession();
+        Session session = getSession();
 
         if (session == null){
-            jakarta.servlet.http.HttpSession jakSession = getRequest().getSession(true);
-            session = (HttpSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{HttpSession.class},
-                    (proxy, method, args) -> method.invoke(jakSession,args));
+            session = getRequest().getSession(true);
             setSession(session);
         }
         @SuppressWarnings("unchecked")
@@ -1509,7 +1502,7 @@ public class Path implements _IPath{
         if (getSession() == null){
             return ret;
         }
-        HttpSession session = getSession();
+        Session session = getSession();
         @SuppressWarnings("unchecked")
         List<String> existing = (List<String>) session.getAttribute(type.getSessionKey());
         if (existing != null){
@@ -1538,7 +1531,7 @@ public class Path implements _IPath{
     }
     
     public boolean isForwardedRequest(){
-        return !ObjectUtil.equals(getRequest().getRequestURI() , getTarget());
+        return !ObjectUtil.equals(getRequest().getHttpURI().getPath() , getTarget());
     }
 
     public String getHeader(String key){
@@ -1550,9 +1543,6 @@ public class Path implements _IPath{
             value = map.get(key);
         }
 
-        if (ObjectUtil.isVoid(value)){
-            value = getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString()) ? getRequest().getParameter(key) : null ;
-        }
         return value;
     }
 
@@ -1561,23 +1551,27 @@ public class Path implements _IPath{
         if (headers == null){
             headers = new IgnoreCaseMap<>();
             {
-                Enumeration<String> names = getRequest().getHeaderNames();
-                while (names.hasMoreElements()) {
-                    String name = names.nextElement();
-                    String value = getRequest().getHeader(name);
+                HttpFields fields = getRequest().getHeaders();
+                for (HttpField field: fields){
+                    String name = field.getName();
+                    String value = field.getValue();
                     if (value != null) {
                         headers.put(name, value);
                     }
                 }
             }
             if (getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString())){
-                Enumeration<String> names = getRequest().getParameterNames();
-                while (names.hasMoreElements()){
-                    String name = names.nextElement();
-                    String value = getRequest().getParameter(name);
-                    if (value != null && headers.get(name) == null) {
-                        headers.put(name, value);
+                try {
+                    Fields parameters = Request.getParameters(getRequest());
+                    for(Field parameter: parameters){
+                        String name = parameter.getName();
+                        String value = parameter.getValue();
+                        if (value != null && headers.get(name) == null) {
+                            headers.put(name, value);
+                        }
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
         }

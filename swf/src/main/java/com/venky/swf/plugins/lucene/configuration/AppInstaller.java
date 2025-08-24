@@ -1,14 +1,13 @@
 package com.venky.swf.plugins.lucene.configuration;
 
-import com.venky.extension.Registry;
 import com.venky.swf.configuration.Installer;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.model.Model;
 import com.venky.swf.db.table.Table;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
-import com.venky.swf.plugins.background.core.IndexTaskManager;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.plugins.background.core.TaskManager;
+import com.venky.swf.plugins.background.core.task.manager.IndexTaskManager;
 import com.venky.swf.plugins.lucene.extensions.LuceneBeforeCommitExtension.TableRecordSetIndexer;
 import com.venky.swf.plugins.lucene.index.LuceneIndexer;
 import com.venky.swf.routing.Config;
@@ -103,6 +102,7 @@ public class AppInstaller implements Installer{
                 TaskManager.instance().executeAsync(new TableIndexer<>(currentTable,last.getId()),false);
             }
         }
+        @Override
         public <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass() {
             return (Class<W>)(IndexTaskManager.class);
         }

@@ -36,11 +36,14 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.util.Fields;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.owasp.encoder.Encode;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,10 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-
 
 public class OidController extends Controller{
 
@@ -258,7 +257,7 @@ public class OidController extends Controller{
 	}
 
 	protected View authenticate() {
-		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
+		String selectedOpenId = getPath().getHeader("SELECTED_OPEN_ID");
 		
 		if (ObjectUtil.isVoid(selectedOpenId)){
 			HtmlView lv = createLoginView(LoginContext.LOGIN);
@@ -267,7 +266,7 @@ public class OidController extends Controller{
 		}
 		
 		try {
-			String _redirect_to= getPath().getRequest().getParameter("_redirect_to");
+			String _redirect_to= getPath().getHeader("_redirect_to");
 			OAuthClientRequest request = oidproviderMap.get(selectedOpenId).createRequest(_redirect_to);
 			RedirectorView ret = new RedirectorView(getPath());
 			ret.setRedirectUrl(request.getLocationUri());
@@ -279,7 +278,7 @@ public class OidController extends Controller{
 	@RequireLogin(false)
 	public View logout() {
 		invalidateSession();
-		String selectedOpenId = getPath().getRequest().getParameter("SELECTED_OPEN_ID");
+		String selectedOpenId = getPath().getHeader("SELECTED_OPEN_ID");
 		if (ObjectUtil.isVoid(selectedOpenId)){
 			throw new RuntimeException("Open id provider not specified");
 		}
@@ -289,21 +288,21 @@ public class OidController extends Controller{
 	}
 
 	@RequireLogin(false)
-	public View linkedin()throws OAuthProblemException, OAuthSystemException, ParseException{
+	public View linkedin()throws Exception{
 		return linkedin("");
 	}
 	@RequireLogin(false)
-	public View linkedin(String redirectUrl) throws OAuthProblemException, OAuthSystemException, ParseException{
+	public View linkedin(String redirectUrl) throws Exception{
 		return verify("LINKEDIN",redirectUrl);
 	}
 	@RequireLogin(false)
-	public View verify() throws OAuthProblemException, OAuthSystemException, ParseException {
-		return verify(getPath().getRequest().getParameter("SELECTED_OPEN_ID"),getPath().getRequest().getParameter("_redirect_to"));
+	public View verify() throws Exception {
+		return verify(getPath().getHeader("SELECTED_OPEN_ID"),getPath().getHeader("_redirect_to"));
 	}
-	private View verify(String selectedOpenId,String redirectedTo) throws OAuthProblemException{
-		HttpServletRequest request = getPath().getRequest();
-		OAuthAuthzResponse oar = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
-		String code = oar.getCode();
+	private View verify(String selectedOpenId,String redirectedTo) throws Exception {
+		Request request = getPath().getRequest();
+		String code = getPath().getHeader("code");
+		
 		
 		OIDProvider provider = oidproviderMap.get(selectedOpenId);
 
@@ -387,7 +386,7 @@ public class OidController extends Controller{
 
 	                InputStream inputStream;
 	                responseCode = httpURLConnection.getResponseCode();
-	                if (responseCode == SC_BAD_REQUEST || responseCode == SC_UNAUTHORIZED) {
+	                if (responseCode == HttpStatus.BAD_REQUEST_400 || responseCode == HttpStatus.UNAUTHORIZED_401) {
 	                    inputStream = httpURLConnection.getErrorStream();
 	                } else {
 	                    inputStream = httpURLConnection.getInputStream();

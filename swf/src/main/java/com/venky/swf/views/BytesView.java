@@ -4,14 +4,14 @@
  */
 package com.venky.swf.views;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
+import org.eclipse.jetty.server.Response;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -51,16 +51,15 @@ public class BytesView extends View{
         }
     }
     public void write(int httpStatusCode) throws IOException {
-        HttpServletResponse response = getPath().getResponse();
-        response.setContentType(contentType);
+        Response response = getPath().getResponse();
+        response.getHeaders().put("Content-Type",contentType);
         if (addnlResponseHeaders != null){
         	for (String key:addnlResponseHeaders.keySet()){
-        		response.addHeader(key, addnlResponseHeaders.get(key));
+        		response.getHeaders().add(key, addnlResponseHeaders.get(key));
         	}
         }
         response.setStatus(httpStatusCode);
         //response.setContentLength(bytes.length);
-        response.getOutputStream().write(bytes);
-        response.getOutputStream().flush();
+        response.write(true,ByteBuffer.wrap(bytes),getPath().getCallback());
     }
 }

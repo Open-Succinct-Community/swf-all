@@ -2,7 +2,6 @@ package com.venky.swf.controller;
 
 import com.venky.core.security.Crypt;
 import com.venky.core.util.ObjectUtil;
-import com.venky.swf.controller.Controller;
 import com.venky.swf.controller.annotations.RequireLogin;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -12,17 +11,15 @@ import com.venky.swf.exceptions.AccessDeniedException;
 import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.integration.IntegrationAdaptor;
 import com.venky.swf.integration.api.HttpMethod;
-import com.venky.swf.routing.KeyCase;
 import com.venky.swf.path.Path;
+import com.venky.swf.routing.KeyCase;
 import com.venky.swf.views.BytesView;
+import com.venky.swf.views.RedirectorView;
 import com.venky.swf.views.View;
-
+import org.eclipse.jetty.server.Session;
 import org.json.simple.JSONObject;
 import org.owasp.encoder.Encode;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +47,7 @@ public class OauthController extends Controller {
         return login();
     }
     private void prepareSession(){
-        HttpSession session = getPath().getSession();
+        Session session = getPath().getSession();
         if (session != null) {
             session.setAttribute("autoInvalidate", false);
         }
@@ -75,7 +72,7 @@ public class OauthController extends Controller {
             if ( k.equals("_LOGIN") || k.equals("_REGISTER") || k.equals("error") || k.equals("redirect_uri")){
                 return;
             }
-            if (queryParams.length() >0 ){
+            if (!queryParams.isEmpty()){
                 queryParams.append("&");
             }
             queryParams.append(k);
@@ -84,13 +81,7 @@ public class OauthController extends Controller {
         });
 
         prepareSession();
-        return new View(getPath()) {
-            public void write(int httpStatusCode) throws IOException {
-                HttpServletResponse response = getPath().getResponse();
-                response.setContentType("text/plain");
-                response.sendRedirect(queryParams.toString());
-            }
-        };
+        return new RedirectorView(getPath(),queryParams.toString());
     }
 
     @Override

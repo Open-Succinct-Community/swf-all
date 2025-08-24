@@ -9,6 +9,7 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.sql.Expression;
 import com.venky.swf.sql.Operator;
 import com.venky.swf.sql.Select;
+import org.eclipse.jetty.server.Request;
 
 
 import java.sql.Date;
@@ -25,7 +26,7 @@ public class CompanyUtil {
         if (path == null){
             domainName = Config.instance().getProperty("swf.host","");
         }else {
-            domainName = path.getRequest().getServerName();
+            domainName = Request.getServerName(path.getRequest());
         }
         return getCompany(domainName);
     }

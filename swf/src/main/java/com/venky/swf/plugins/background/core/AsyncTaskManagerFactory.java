@@ -39,16 +39,6 @@ public class AsyncTaskManagerFactory {
     }
 
     private final Map<Class<? extends AsyncTaskManager>, AsyncTaskManager> taskManagerCache = new HashMap<>();
-    @SuppressWarnings("unchecked")
-    public <T extends AsyncTaskManager> T get(String clazzName){
-        for (Entry<Class<? extends AsyncTaskManager>, AsyncTaskManager> classAsyncTaskManagerEntry : taskManagerCache.entrySet()) {
-            if (classAsyncTaskManagerEntry.getKey().getSimpleName().equals(clazzName)){
-                return (T)classAsyncTaskManagerEntry.getValue();
-            }
-        }
-        return null;
-    }
-    @SuppressWarnings("unchecked")
     public <T extends AsyncTaskManager> T get(Class<T> asyncTaskManagerClazz){
         T t = (T)taskManagerCache.get(asyncTaskManagerClazz);
         if (t != null){
@@ -111,7 +101,12 @@ public class AsyncTaskManagerFactory {
 
         return tasksMap;
     }
-
+    public <T extends CoreTask> void executeAsync(T task){
+        this.executeAsync(List.of(task),false);
+    }
+    public <T extends CoreTask> void executeAsync(Collection<T> tasks){
+        this.executeAsync(tasks,false);
+    }
     public <T extends CoreTask> void executeAsync(Collection<T> tasks, boolean persistTaskQueue) {
         Map<AsyncTaskManager,List<CoreTask>> group = group(tasks);
         group.forEach((atm,l)->atm.execute(l,persistTaskQueue));

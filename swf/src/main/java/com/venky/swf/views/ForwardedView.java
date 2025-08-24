@@ -4,10 +4,12 @@
  */
 package com.venky.swf.views;
 
+import com.venky.swf.path.Path;
+import com.venky.swf.plugins.background.core.HttpTask;
+import com.venky.swf.routing.Router;
+
 import java.io.IOException;
 
-import com.venky.swf.path.Path;
-import jakarta.servlet.ServletException;
 
 /**
  *
@@ -41,12 +43,8 @@ public class ForwardedView extends View{
     
     public void write(int httpStatus) throws IOException {
         try {
-            if (getPath().getAsyncContext() == null){
-                getPath().getRequest().getRequestDispatcher(forwardToUrl).forward(getPath().getRequest(), getPath().getResponse());
-            }else {
-                getPath().getAsyncContext().dispatch(getPath().getRequest().getServletContext(),forwardToUrl);
-            }
-		} catch (ServletException e) {
+            Router.instance().getTaskManager().submit(new HttpTask(getPath().constructNewPath(getForwaredToUrl())));
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
     }

@@ -4,30 +4,22 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
 import com.venky.swf.routing.SWFClassLoader;
-import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.session.SessionHandler;
+import org.eclipse.jetty.util.thread.VirtualThreadPool;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Hello world!
  * 
  */
 public class JettyServer {
-	int port = 8080;
-
-	public JettyServer() {
-	}
-
+	final int port;
 	public JettyServer(int port) {
-		this();
 		this.port = port;
 	}
 	
@@ -41,7 +33,7 @@ public class JettyServer {
 			pw.close();
 		}
 		
-		JettyServer s = new JettyServer(Integer.valueOf(Config.instance().getPortNumber()));
+		JettyServer s = new JettyServer(Config.instance().getPortNumber());
 		s.start();
 	}
 	public boolean isDevelopmentEnvironment(){
@@ -59,10 +51,15 @@ public class JettyServer {
 			System.in.close();
 		}
 
-		Server server = new Server();
-		addConnectors(server);
+		Server server = new Server(new VirtualThreadPool());
+		
+		ServerConnector connector = new ServerConnector(server);
+		connector.setPort(this.port);
+		server.addConnector(connector);
+		
 		server.setStopAtShutdown(true);
 		server.setStopTimeout(100);
+		
 		Router router = Router.instance();
 		if (isDevelopmentEnvironment()){
 			router.setLoader(new SWFClassLoader(getClass().getClassLoader()));
@@ -70,27 +67,14 @@ public class JettyServer {
 			router.setLoader(getClass().getClassLoader());
 		}
 		
-		ContextHandler ctxHandler = new ContextHandler();
-		ctxHandler.setHandler(router);
 		SessionHandler sessionHandler = new SessionHandler();
-		sessionHandler.setHandler(ctxHandler);
-		sessionHandler.setMaxInactiveInterval(Config.instance().getIntProperty("swf.jetty.session.timeout.seconds",10*60)); //10 minutes;
+		sessionHandler.setHandler(router);
+		sessionHandler.setMaxInactiveInterval(Config.instance().getIntProperty("swf.jetty.session.timeout.seconds",20*60));
 		
 		server.setHandler(sessionHandler);
-		
 		server.start();
 		server.join();
 	}
 	
-	private void addConnectors(Server server){
-		
-		ServerConnector connector = new ServerConnector(server);
-		connector.setPort(this.port);
-
-		List<Connector> connectors = new ArrayList<>(); 
-		connectors.add(connector);
-		server.setConnectors(connectors.toArray(new Connector[]{}));
-		
-	}
 
 }

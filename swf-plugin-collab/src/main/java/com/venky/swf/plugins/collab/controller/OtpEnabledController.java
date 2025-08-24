@@ -15,8 +15,9 @@ import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.View;
 import com.venky.swf.views.controls.page.HotLink;
 import com.venky.swf.views.model.ModelEditView;
+import org.eclipse.jetty.server.Request;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -107,7 +108,7 @@ public abstract class OtpEnabledController<T extends Model & OtpEnabled> extends
         if (otpEnabledModel == null){
             throw new RuntimeException( "Could not send otp to " + StringUtil.camelize(otpField));
         }
-        HttpServletRequest request = getPath().getRequest();
+        Request request = getPath().getRequest();
 
 
         if (!request.getMethod().equalsIgnoreCase("POST")) {

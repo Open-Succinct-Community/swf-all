@@ -47,7 +47,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <openhtml.version>[1.0.10,)</openhtml.version>
-        <jetty.version>11.0.14</jetty.version>
+        <jetty.version>12.1.0</jetty.version>
     </properties>
 
     <dependencies>
@@ -60,6 +60,12 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-session</artifactId>
             <version>${jetty.version}</version>
             <scope>compile</scope>
         </dependency>

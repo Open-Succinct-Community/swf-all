@@ -33,15 +33,18 @@ import com.venky.swf.views.controls.page.layout.Glyphicon;
 import com.venky.swf.views.controls.page.layout.LineBreak;
 import com.venky.swf.views.controls.page.layout.Paragraph;
 import com.venky.swf.views.controls.page.layout.Title;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.Session;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -161,10 +164,10 @@ public abstract class HtmlView extends View{
     }
     @Override
     public void write(int httpStatusCode) throws IOException{
-        HttpServletResponse response = getPath().getResponse();
-        response.setContentType("text/html;charset=utf-8");
+        Response response = getPath().getResponse();
+        response.getHeaders().put(HttpHeader.CONTENT_TYPE,"text/html;charset=utf-8");
         response.setStatus(httpStatusCode);
-        response.getOutputStream().println(this.toString());
+        response.write(true, ByteBuffer.wrap(this.toString().getBytes(StandardCharsets.UTF_8)),getPath().getCallback());
     }
     
     @Override
@@ -351,7 +354,7 @@ public abstract class HtmlView extends View{
     
     @SuppressWarnings("unchecked")
 	protected void showErrorsIfAny(_IControl body,int index, boolean includeStatusMessage){
-    	HttpSession session = getPath().getSession();
+    	Session session = getPath().getSession();
     	if (session != null && includeStatusMessage){
     		body.addControl(index,getStatus());
 			List<String> errorMessages = getPath().getErrorMessages();

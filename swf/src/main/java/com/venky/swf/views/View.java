@@ -6,8 +6,8 @@ package com.venky.swf.views;
 
 import com.venky.swf.db.Database;
 import com.venky.swf.path._IPath;
+import org.eclipse.jetty.http.HttpStatus;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -26,9 +26,7 @@ public abstract class View implements _IView{
         }
         return path;
     }
-    public boolean isBeingRedirected(){
-    	return false;
-    }
+    
 
     public void setPath(_IPath path){
         synchronized (this) {
@@ -37,7 +35,7 @@ public abstract class View implements _IView{
     }
 
     public void write() throws IOException {
-        write(HttpServletResponse.SC_OK);
+        write(HttpStatus.OK_200);
     }
     
 }

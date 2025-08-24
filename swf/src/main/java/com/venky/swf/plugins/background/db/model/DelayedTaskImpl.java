@@ -6,10 +6,8 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.Transaction;
 import com.venky.swf.db.table.ModelImpl;
 import com.venky.swf.plugins.background.core.AsyncTaskManager;
-import com.venky.swf.plugins.background.core.AsyncTaskManagerFactory;
 import com.venky.swf.plugins.background.core.CoreTask;
 import com.venky.swf.plugins.background.core.CoreTask.Priority;
-import com.venky.swf.plugins.background.core.DbTaskManager;
 import com.venky.swf.plugins.background.core.SerializationHelper;
 import com.venky.swf.plugins.background.core.Task;
 import com.venky.swf.routing.Config;
@@ -83,7 +81,9 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 					PrintWriter w = new PrintWriter(sw);
 					ex.printStackTrace(w);
 					Config.instance().getLogger(getClass().getName()).warning(sw.toString());
-					txn.rollback(ex);
+					if (txn != null) {
+						txn.rollback(ex);
+					}
 					locked.setLastError(new StringReader(sw.toString()));
 					locked.setNumAttempts(locked.getNumAttempts()+1);
 				}

@@ -97,7 +97,6 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 			throw new RuntimeException(e);
 		}
 	}
-	@SuppressWarnings("unchecked")
 	default <W extends AsyncTaskManager> Class<W> getDefaultTaskManagerClass(){
 		return (Class<W>)AsyncTaskManager.class;
 	}
