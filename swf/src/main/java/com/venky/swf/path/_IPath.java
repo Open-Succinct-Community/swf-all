@@ -66,6 +66,8 @@ public interface _IPath {
 	
 	public Map<String,String> getHeaders();
 	
+	public String getHeader(String name);
+	
 	_IPath  constructNewPath(String target);
 
 }

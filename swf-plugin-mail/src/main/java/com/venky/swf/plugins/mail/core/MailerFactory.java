@@ -1,6 +1,5 @@
 package com.venky.swf.plugins.mail.core;
 
-import com.venky.swf.plugins.mail.core.grid.SendGridMailer;
 import com.venky.swf.plugins.mail.core.smtp.SMTPMailer;
 
 import java.util.HashMap;
@@ -20,19 +19,16 @@ public class MailerFactory {
 		return instance;
 	}
 	public static final String PROTOCOL_SMTP = "SMTP";
-	public static final String PROTOCOL_SEND_GRID = "SENDGRID";
 
 	private MailerFactory() {
 		mailer.put(PROTOCOL_SMTP, new SMTPMailer());
-		mailer.put(PROTOCOL_SEND_GRID, new SendGridMailer());
 	}
-	private Map<String,Mailer> mailer = new HashMap<String, Mailer>();
+	private final Map<String,Mailer> mailer = new HashMap<>();
 	public void registerMailer(String protocol, Mailer m){
 		mailer.put(protocol,m);
 	}
 	
 	public Mailer getMailer(String protocol){
-		Mailer m = mailer.get(protocol);
-		return m;
+		return mailer.get(protocol);
 	}
 }

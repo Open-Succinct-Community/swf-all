@@ -6,6 +6,8 @@ import com.venky.swf.routing.Config;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class TaskManager implements _TaskManager{
 	static {
@@ -58,10 +60,16 @@ public class TaskManager implements _TaskManager{
 	public void execute(Runnable runnable) {
 		runnable.run();
 	}
+	
 	@Override
-	public void submit(Runnable runnable) {
-		CoreTask coreTask = (runnable instanceof CoreTask)? (CoreTask)runnable : new RunnerTask(runnable);
-		AsyncTaskManagerFactory.getInstance().addAll(List.of(coreTask));
+	public Future<?> submit(Runnable runnable) {
+		List<Future<?>> futures  = submit(List.of(runnable));
+		return futures.get(0);
+	}
+	
+	@Override
+	public List<Future<?>> submit(List<Runnable> runnables) {
+		return AsyncTaskManagerFactory.getInstance().addAll(runnables.stream().map(runnable -> ((runnable instanceof CoreTask)? (CoreTask)runnable : new RunnerTask(runnable))).collect(Collectors.toList()));
 	}
 	
 	public static class RunnerTask implements CoreTask {

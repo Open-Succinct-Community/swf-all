@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
 
 public class AsyncTaskManagerFactory {
     private static volatile AsyncTaskManagerFactory sSoleInstance;
@@ -82,9 +83,11 @@ public class AsyncTaskManagerFactory {
     }
 
 
-    public <T extends CoreTask> void addAll(Collection<T> tasks) {
+    public <T extends CoreTask> List<Future<?>> addAll(Collection<T> tasks) {
         Map<AsyncTaskManager,List<CoreTask>> tasksMap = group(tasks);
-        tasksMap.forEach((atm,l)->atm.addAll(l));
+        List<Future<?>> futures = new ArrayList<>();
+        tasksMap.forEach((atm,l)->futures.addAll(atm.addAll(l)));
+        return futures;
     }
 
     private <T extends CoreTask> Map<AsyncTaskManager,List<CoreTask>> group(Collection<T> tasks){

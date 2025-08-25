@@ -16,6 +16,9 @@ public abstract class RequestProcessor implements Runnable {
     protected  _IPath iPath;
     protected  _IView iView ;
     
+    public _IPath getPath() {
+        return iPath;
+    }
     
     public RequestProcessor(Request request, Response response, Callback callback){
         this(request.getHttpURI().getPath(),request,response,callback);

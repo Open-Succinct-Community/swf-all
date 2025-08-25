@@ -6,6 +6,7 @@ import com.venky.swf.plugins.background.core.task.manager.HttpTaskManager;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
 import com.venky.swf.routing.jetty.RequestProcessor;
+import com.venky.swf.views._IView;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -15,7 +16,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 
 public class HttpTask extends RequestProcessor implements Task {
-
+    
     public HttpTask(Request request, Response response, Callback callback) {
         super(request,response,callback);
     }
@@ -78,7 +79,11 @@ public class HttpTask extends RequestProcessor implements Task {
     
     @Override
     public void execute() {
-        iView = iPath.invoke(); //Most Expensive!!
+        iView = createView();
+    }
+    
+    protected _IView createView(){
+        return iPath.invoke(); //Most Expensive!!
     }
 
     @Override

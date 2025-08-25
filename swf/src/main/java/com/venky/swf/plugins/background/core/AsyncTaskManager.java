@@ -10,6 +10,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 public class AsyncTaskManager  {
 	WeightedPriorityQueueVirtualThreadExecutor service = new WeightedPriorityQueueVirtualThreadExecutor();
@@ -20,16 +22,14 @@ public class AsyncTaskManager  {
 	
 	
 
-	public void addAll(Collection<? extends CoreTask> tasks) {
+	public List<Future<?>> addAll(Collection<? extends CoreTask> tasks) {
 		if (tasks.isEmpty()) {
-			return;
+			return List.of();
 		}
 		if (service.isShutdown()) {
 			throw new RuntimeException("Execution Service Shutting down!");
 		}
-		for (CoreTask task : tasks){
-			service.submit(task);
-		}
+		return tasks.stream().map((task)->service.submit(task)).collect(Collectors.toList());
 	}
 
 	public void shutdown() {
