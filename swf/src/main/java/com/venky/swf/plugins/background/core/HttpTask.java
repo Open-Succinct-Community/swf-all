@@ -33,7 +33,7 @@ public class HttpTask extends RequestProcessor implements Task {
     public void onSuccess() {
         try {
             Task.super.onSuccess();
-            iView.write(HttpStatus.OK_200);
+            iView.write();
             if (!iView.isBeingForwarded()) {
                 iPath.getCallback().succeeded();
             }
