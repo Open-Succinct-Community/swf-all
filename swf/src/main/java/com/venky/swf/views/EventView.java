@@ -7,7 +7,9 @@ import com.venky.swf.routing.Config;
 import org.eclipse.jetty.http.HttpFields.Mutable;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,7 +34,7 @@ public class EventView extends View {
             headers.put("Cache-Control","no-store");
             headers.put("Connection","keep-alive");
             headers.put("Transfer-Encoding","chunked");
-            response.write(false, ByteBuffer.wrap("retry: 1000\n\n".getBytes(StandardCharsets.UTF_8)),getPath().getCallback());
+            Content.Sink.write(response,false, "retry: 1000\n\n", Callback.NOOP);
         }
     }
 
@@ -46,10 +48,9 @@ public class EventView extends View {
     public void write(String event, boolean isLastEvent) throws IOException{
         Response response = getPath().getResponse();
         String wireEvent  = String.format("data: %s\n\n", event);
-        ByteBuffer payload = ByteBuffer.wrap(wireEvent.getBytes(StandardCharsets.UTF_8));
-
+        
         addHeaders(HttpStatus.OK_200);
-        response.write(false,payload,getPath().getCallback()); //Mention last always as false as we close explicitly based on this.last;
+        Content.Sink.write(response,false,wireEvent,Callback.NOOP); //Mention last always as false as we close explicitly based on this.last;
         Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Server Sent Event\n" + wireEvent);
 
         this.beingForwarded = !isLastEvent;
