@@ -7,7 +7,6 @@ import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
 import com.venky.swf.routing.jetty.RequestProcessor;
 import com.venky.swf.views._IView;
-import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;

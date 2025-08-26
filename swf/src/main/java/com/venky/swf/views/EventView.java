@@ -2,6 +2,7 @@ package com.venky.swf.views;
 
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
+import com.venky.swf.path._IPath;
 import com.venky.swf.routing.Config;
 import org.eclipse.jetty.http.HttpFields.Mutable;
 import org.eclipse.jetty.http.HttpHeader;
@@ -15,17 +16,18 @@ import java.util.logging.Level;
 
 public class EventView extends View {
 
-    public EventView(Path path){
+    public EventView(_IPath path){
         super(path);
     }
 
     private boolean headersAdded = false;
-    private void addHeaders() throws IOException{
+    private boolean beingForwarded = true;
+    private void addHeaders(int status) throws IOException{
         if (!headersAdded){
             headersAdded = true;
             Response response = getPath().getResponse();
             Mutable headers = response.getHeaders();
-            response.setStatus(HttpStatus.OK_200);
+            response.setStatus(status);
             headers.put(HttpHeader.CONTENT_TYPE,"%s; charset=%s".formatted(MimeType.TEXT_EVENT_STREAM.toString(),StandardCharsets.UTF_8.toString()));
             headers.put("Cache-Control","no-store");
             headers.put("Connection","keep-alive");
@@ -36,19 +38,25 @@ public class EventView extends View {
 
     public void write(int httpStatusCode){
         try {
-            addHeaders();
+            addHeaders(httpStatusCode);
         }catch (Exception ex){
             //
         }
     }
-    public void write(String event) throws IOException{
+    public void write(String event, boolean isLastEvent) throws IOException{
         Response response = getPath().getResponse();
         String wireEvent  = String.format("data: %s\n\n", event);
         ByteBuffer payload = ByteBuffer.wrap(wireEvent.getBytes(StandardCharsets.UTF_8));
 
-        addHeaders();
-        response.write(false,payload,getPath().getCallback());
+        addHeaders(HttpStatus.OK_200);
+        response.write(false,payload,getPath().getCallback()); //Mention last always as false as we close explicitly based on this.last;
         Config.instance().getLogger(getClass().getName()).log(Level.INFO,"Server Sent Event\n" + wireEvent);
-    }
 
+        this.beingForwarded = !isLastEvent;
     }
+    
+    @Override
+    public boolean isBeingForwarded() {
+        return beingForwarded;
+    }
+}
