@@ -91,6 +91,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
@@ -136,21 +137,15 @@ public class Path implements _IPath{
                 @Override
                 public void succeeded(Parts result) {
                     for (Part part: result){
-                        byte[] content;
-                        try {
-                            content = Content.Source.asByteBuffer(part.getContentSource()).array();
-                            if (content.length == 0){
-                                content = null;
-                            }else {
-                                formInput.put(part.getName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(part.getFileName()));
-                                formInput.put(part.getName() + "_CONTENT_NAME", part.getName());
-                                formInput.put(part.getName() + "_CONTENT_SIZE", part.getLength());
-                            }
-                            formInput.put(part.getName(), content == null ? null : new ByteArrayInputStream(content));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
+                        byte[] content = StringUtil.readBytes(getInputStream());
+                        if (content.length == 0){
+                            content = null;
+                        }else {
+                            formInput.put(part.getName() + "_CONTENT_TYPE", MimetypesFileTypeMap.getDefaultFileTypeMap().getContentType(part.getFileName()));
+                            formInput.put(part.getName() + "_CONTENT_NAME", part.getName());
+                            formInput.put(part.getName() + "_CONTENT_SIZE", part.getLength());
                         }
-                        
+                        formInput.put(part.getName(), content == null ? null : new ByteArrayInputStream(content));
                     }
                 }
                 
@@ -250,12 +245,20 @@ public class Path implements _IPath{
         Optional<HttpCookie> cookieOptional = getCookies().stream().filter(c->c.getName().equals(name)).findFirst();
         return cookieOptional.orElse(null);
     }
-
+    
+    public static byte[] readAllBytes(Request request) {
+        try (InputStream stream = Content.Source.asInputStream(request)) {
+            return StringUtil.readBytes(stream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     private ByteArrayInputStream inputStream = null;
     public ByteArrayInputStream getInputStream() {
         try {
             if (inputStream == null) {
-                inputStream = new ByteArrayInputStream(Content.Source.asByteBuffer(getRequest()).array()) ;
+                inputStream = new ByteArrayInputStream(readAllBytes(request)) ;
             }
             inputStream.close();
         }catch (IOException ex){
