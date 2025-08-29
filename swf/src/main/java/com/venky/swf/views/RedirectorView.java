@@ -10,8 +10,10 @@ import com.venky.swf.routing.Config;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,8 +72,9 @@ public class RedirectorView extends View{
         if (redirectUrl.startsWith("/")){
             redirectUrl= Config.instance().getServerBaseUrl() + redirectUrl;
         }
-        response.setStatus(HttpStatus.MOVED_TEMPORARILY_302);
         response.getHeaders().put(HttpHeader.LOCATION,redirectUrl);
+        response.setStatus(HttpStatus.MOVED_TEMPORARILY_302);
+        response.write(false, ByteBuffer.wrap(new byte[]{}), Callback.NOOP);
     }
 
     @Override

@@ -16,7 +16,7 @@ import com.venky.swf.routing.Config;
 
 
 
-public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable{
+public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable, Prioritized{
 	default void onStart(){
 
 	}

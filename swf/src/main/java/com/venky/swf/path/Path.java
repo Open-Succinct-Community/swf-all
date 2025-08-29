@@ -78,7 +78,6 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -91,7 +90,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
@@ -226,6 +224,9 @@ public class Path implements _IPath{
     }
 
     public Session getSession() {
+        if (session == null ){
+            session = request.getSession(false);
+        }
         return session;
     }
 
@@ -274,6 +275,10 @@ public class Path implements _IPath{
     public String getOriginalRequestUrl(){
         return StringUtil.valueOf(request.getHttpURI());
     }
+    public String getOriginalRequestPath(){
+        return StringUtil.valueOf(request.getHttpURI().getPath());
+    }
+    
     
     protected void logHeaders(){
         if (request != null){
@@ -595,8 +600,8 @@ public class Path implements _IPath{
     }
     private String getBackTarget(boolean checkIfOrigRequest){
         StringBuilder backTarget = new StringBuilder();
-        if (checkIfOrigRequest && !getTarget().equals(getOriginalRequestUrl())){
-            Path p = constructNewPath(getOriginalRequestUrl());
+        if (checkIfOrigRequest && !getTarget().equals(getOriginalRequestPath())){
+            Path p = constructNewPath(getOriginalRequestPath());
             return p.getBackTarget();
         }else {
             if (controllerPathIndex > 0 && controllerPathIndex < pathelements.size()) {
@@ -735,22 +740,6 @@ public class Path implements _IPath{
         }
         session.setAttribute("autoInvalidate", autoInvalidate);
         setSession(session);
-        if (Config.instance().getExternalURIScheme().equals("https")) {
-            addSameSiteCookieAttribute();
-        }
-    }
-    private void addSameSiteCookieAttribute() {
-        Response response = getResponse();
-        Collection<String> headers = response.getHeaders().getValuesList("Set-Cookie");
-        boolean firstHeader = true;
-        for (String header : headers) { // there can be multiple Set-Cookie attributes
-            if (firstHeader) {
-                response.getHeaders().put("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
-                firstHeader = false;
-                continue;
-            }
-            response.getHeaders().add("Set-Cookie", String.format("%s; %s", header, "SameSite=None; Secure"));
-        }
     }
 
 

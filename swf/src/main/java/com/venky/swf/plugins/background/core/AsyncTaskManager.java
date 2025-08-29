@@ -2,7 +2,7 @@ package com.venky.swf.plugins.background.core;
 
 import com.venky.core.io.ByteArrayInputStream;
 import com.venky.swf.db.Database;
-import com.venky.swf.plugins.background.core.threadpool.WeightedPriorityQueueVirtualThreadExecutor;
+import com.venky.swf.plugins.background.core.threadpool.TrackedExecutorServiceManager;
 import com.venky.swf.plugins.background.db.model.DelayedTask;
 import com.venky.swf.plugins.background.extensions.InMemoryTaskQueueManager;
 
@@ -14,14 +14,11 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class AsyncTaskManager  {
-	WeightedPriorityQueueVirtualThreadExecutor service = new WeightedPriorityQueueVirtualThreadExecutor();
-	
 	public AsyncTaskManager() {
 	
 	}
 	
 	
-
 	public List<Future<?>> addAll(Collection<? extends CoreTask> tasks) {
 		if (tasks.isEmpty()) {
 			return List.of();
@@ -73,8 +70,12 @@ public class AsyncTaskManager  {
 			//Trigger PersistedTaskPollingAgent through Cron. KEep loosely coupled.
 		}
 	}
+	
+	TrackedExecutorServiceManager service = new TrackedExecutorServiceManager();
+	
+	
 	public int count(){
-		return service.getQueue().size();
+		return service.count();
 	}
 	
 	

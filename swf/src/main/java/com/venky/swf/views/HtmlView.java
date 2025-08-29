@@ -36,6 +36,7 @@ import com.venky.swf.views.controls.page.layout.Title;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Session;
+import org.eclipse.jetty.util.Callback;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -167,7 +168,7 @@ public abstract class HtmlView extends View{
         Response response = getPath().getResponse();
         response.getHeaders().put(HttpHeader.CONTENT_TYPE,"text/html;charset=utf-8");
         response.setStatus(httpStatusCode);
-        response.write(true, ByteBuffer.wrap(this.toString().getBytes(StandardCharsets.UTF_8)),getPath().getCallback());
+        response.write(true, ByteBuffer.wrap(this.toString().getBytes(StandardCharsets.UTF_8)), Callback.NOOP);
     }
     
     @Override
@@ -227,7 +228,7 @@ public abstract class HtmlView extends View{
     		}
     	};
     	public String getSessionKey(){
-    		return "ui."+ toString() + ".msg";
+    		return "ui."+ name() + ".msg";
     	}
     }
     

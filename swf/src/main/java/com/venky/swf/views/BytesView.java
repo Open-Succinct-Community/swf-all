@@ -7,6 +7,7 @@ package com.venky.swf.views;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
 import com.venky.swf.path.Path;
 import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -60,6 +61,6 @@ public class BytesView extends View{
         }
         response.setStatus(httpStatusCode);
         //response.setContentLength(bytes.length);
-        response.write(true,ByteBuffer.wrap(bytes),getPath().getCallback());
+        response.write(false,ByteBuffer.wrap(bytes), Callback.NOOP);
     }
 }

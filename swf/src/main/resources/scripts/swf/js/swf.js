@@ -282,7 +282,7 @@ $(document).ready(function () {
     });
 });
 document.addEventListener( "DOMContentLoaded" , function(){
-    if (mermaid){
+    if (typeof mermaid !== typeof undefined){
         var targets = document.querySelectorAll(".mermaid");
         targets.forEach(target => {
             // create an observer instance

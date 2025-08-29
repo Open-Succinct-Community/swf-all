@@ -4,8 +4,10 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.Router;
 import com.venky.swf.routing.SWFClassLoader;
+import org.eclipse.jetty.http.HttpCookie.SameSite;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.session.SessionHandler;
 import org.eclipse.jetty.util.thread.VirtualThreadPool;
 
@@ -58,7 +60,7 @@ public class JettyServer {
 		server.addConnector(connector);
 		
 		server.setStopAtShutdown(true);
-		server.setStopTimeout(100);
+		server.setStopTimeout(10000L);
 		
 		Router router = Router.instance();
 		if (isDevelopmentEnvironment()){
@@ -67,11 +69,18 @@ public class JettyServer {
 			router.setLoader(getClass().getClassLoader());
 		}
 		
+		
 		SessionHandler sessionHandler = new SessionHandler();
 		sessionHandler.setHandler(router);
 		sessionHandler.setMaxInactiveInterval(Config.instance().getIntProperty("swf.jetty.session.timeout.seconds",20*60));
+		sessionHandler.setHttpOnly(true);
+		sessionHandler.setSecureRequestOnly(true);
+		sessionHandler.setSameSite(SameSite.STRICT);
 		
-		server.setHandler(sessionHandler);
+		
+		ContextHandler contextHandler = new ContextHandler();
+		contextHandler.setHandler(sessionHandler);
+		server.setHandler(contextHandler);
 		server.start();
 		server.join();
 	}
