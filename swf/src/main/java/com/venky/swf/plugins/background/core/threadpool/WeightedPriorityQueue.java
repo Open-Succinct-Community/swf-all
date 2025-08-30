@@ -6,9 +6,9 @@ import com.venky.core.util.ObjectUtil;
 import com.venky.swf.plugins.background.core.CoreTask.NormalizedWeightScheme;
 import com.venky.swf.plugins.background.core.CoreTask.Priority;
 import com.venky.swf.plugins.background.core.CoreTask.PriorityWeightScheme;
-import com.venky.swf.plugins.background.core.Prioritized;
 import com.venky.swf.routing.Config;
 
+import java.lang.reflect.Method;
 import java.util.AbstractQueue;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -103,7 +103,13 @@ public class WeightedPriorityQueue extends AbstractQueue<Runnable>  {
 	
 	@Override
 	public boolean offer(Runnable runnable) {
-		return cache.get(((Prioritized) runnable).getTaskPriority()).offer(runnable);
+		try {
+			Method method = runnable.getClass().getMethod("getTaskPriority");
+			return cache.get((Priority) method.invoke(runnable)).offer(runnable);
+		}catch (Exception ex){
+			return cache.get(Priority.DEFAULT).offer(runnable);
+		}
+		
 	}
 	
 	@Override

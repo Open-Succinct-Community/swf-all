@@ -17,6 +17,18 @@
             <url>LICENSE.txt</url>
         </license>
     </licenses>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>24</source>
+                    <target>24</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <scm>
         <connection>scm:git:git@github.com:venkatramanm/swf-all.git</connection>
         <developerConnection>scm:git:git@github.com:venkatramanm/swf-all.git</developerConnection>
@@ -59,11 +71,19 @@
             <artifactId>reflection</artifactId>
             <version>[1.15,)</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-dbcp2</artifactId>
             <version>2.13.0</version>
         </dependency>
+        -->
+        <dependency>
+            <groupId>io.agroal</groupId>
+            <artifactId>agroal-pool</artifactId>
+            <version>2.8</version> 
+        </dependency>
+
 
         <dependency>
             <groupId>org.freemarker</groupId>

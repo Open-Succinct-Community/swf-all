@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,12 @@ import com.venky.swf.db.Database;
 import com.venky.swf.db.JdbcTypeHelper;
 import com.venky.swf.db.platform.Platform;
 import com.venky.swf.routing.Config;
+import io.agroal.api.AgroalDataSource;
+import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration.TransactionIsolation;
+import io.agroal.api.configuration.AgroalConnectionPoolConfiguration.ConnectionValidator;
+import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
+import io.agroal.api.security.NamePrincipal;
+import io.agroal.api.security.SimplePassword;
 
 public class ConnectionManager {
 	private static ConnectionManager _instance ; 
@@ -108,7 +115,9 @@ public class ConnectionManager {
             if (!isConnectionPooled(pool)){
                 return null;
             }
-            Properties info = Platform.getConnectionProperties(pool);
+			
+			
+			Properties info = Platform.getConnectionProperties(pool);
             info.setProperty("driverClassName",getDriverClass(pool).getName());
             info.setProperty("validationQuery",Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".validationQuery"), "select 1 as dbcp_connection_test"));
             info.setProperty("testOnBorrow", "true");
@@ -117,36 +126,52 @@ public class ConnectionManager {
             info.setProperty("maxActive", "-1"); // for dbcp
             info.setProperty("maxTotal","-1"); // For dbcp2
 			info.setProperty("maxWaitMillis","-1");
-            
+			
+			
             String poolFix = ObjectUtil.isVoid(pool) ? "" : "\\." + pool;
             for (String key : Config.instance().getPropertyKeys("swf\\.jdbc"+poolFix+"\\.datasource\\..*")){
             	String newKey = key.replaceAll("swf\\.jdbc"+poolFix+"\\.datasource\\.","");
             	info.setProperty(newKey, Config.instance().getProperty(key));
             }
-            
-            //Config.instance().getLogger(getClass().getName()).finest("Connection Pool Properties:\n" + info.toString());
+			
+			AgroalDataSourceConfigurationSupplier configurationSupplier =
+					new AgroalDataSourceConfigurationSupplier()
+							.connectionPoolConfiguration(cp -> cp
+									.maxSize(100)  // max connections in the pool
+									.minSize(5)   // keep a couple of idle connections
+									.acquisitionTimeout(Duration.ofSeconds(5))
+									.leakTimeout(Duration.ofSeconds(5))
+									.connectionFactoryConfiguration(cf -> cf
+											.jdbcUrl(info.getProperty("url"))
+											.principal(new NamePrincipal(info.getProperty("username")))
+											.credential(new SimplePassword(info.getProperty("password")))
+											.connectionProviderClassName(info.getProperty("driverClassName"))
+											.autoCommit(false)
+											.jdbcTransactionIsolation(TransactionIsolation.READ_COMMITTED)
+									)
+							);
+			//Config.instance().getLogger(getClass().getName()).finest("Connection Pool Properties:\n" + info.toString());
             
             try {
+				/*
                 Class<?> c = Class.forName("org.apache.commons.dbcp2.BasicDataSourceFactory");
                 Method m = c.getMethod("createDataSource", Properties.class);
                 return (DataSource) m.invoke(c, info);
+                
+				 */
+				return AgroalDataSource.from(configurationSupplier);
             }catch (Exception e) {
-				MultiException ex = new MultiException();
-				ex.add(e);
-            	try {
-					Class<?> c = Class.forName("org.apache.commons.dbcp.BasicDataSourceFactory");
-					Method m = c.getMethod("createDataSource", Properties.class);
-					return (DataSource) m.invoke(c, info);
-				}catch (Exception e2){
-            		ex.add(e2);
-					throw ex;
-				}
+				setConnectionPooled(pool,false);
+				return null;
             }
         }
         public boolean isConnectionPooled(String pool){
             String value = Config.instance().getProperty(getNormalizedPropertyName("swf.jdbc."+pool+".connection.pooling"), "true");
             return Boolean.valueOf(StringUtil.valueOf(Database.getJdbcTypeHelper(pool).getTypeRef(Boolean.class).getTypeConverter().valueOf(value)));
         }
+		public void setConnectionPooled(String pool, boolean pooled){
+			Config.instance().setProperty(getNormalizedPropertyName("swf.jdbc."+pool+".connection.pooling"), pooled? "true" : "false");
+		}
     };
 
 

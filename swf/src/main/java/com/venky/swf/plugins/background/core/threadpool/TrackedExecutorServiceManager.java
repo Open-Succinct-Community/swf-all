@@ -43,7 +43,8 @@ public class TrackedExecutorServiceManager {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
         for (Priority value : Priority.values()) {
-            serviceMap.putIfAbsent(value, Executors.newWorkStealingPool(10));
+            //serviceMap.putIfAbsent(value, Executors.newWorkStealingPool(10));
+            serviceMap.putIfAbsent(value,Executors.newVirtualThreadPerTaskExecutor());
         }
     }
     
