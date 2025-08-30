@@ -1,24 +1,39 @@
 package com.venky.swf.plugins.background.core;
 
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.io.StringWriter;
-import java.util.logging.Level;
-
 import com.venky.cache.Cache;
-import com.venky.core.log.SWFLogger;
 import com.venky.core.log.TimerStatistics;
 import com.venky.core.log.TimerStatistics.Timer;
 import com.venky.core.math.GCDFinder;
 import com.venky.core.util.ExceptionUtil;
-import com.venky.core.util.MultiException;
+import com.venky.core.util.ObjectHolder;
 import com.venky.swf.routing.Config;
 
+import java.io.PrintWriter;
+import java.io.Serial;
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
-public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable, Prioritized{
+
+public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable {
+	
+	default Logger getLogger(){
+		return Config.instance().getLogger(getClass().getName());
+	}
+	default void log(String text){
+		log(text,null);
+	}
+	default void log(String text, Throwable ex){
+		if (ex == null) {
+			getLogger().log(Level.INFO, " ( Class %s , Id: %d , ThreadId %s , Priority : %s , Message : %s )".formatted(getTaskIdentifier(), getTaskId(), Thread.currentThread().threadId() , getTaskPriority().name(), text));
+		}else {
+			getLogger().log(Level.WARNING, " ( Class %s , Id: %d , ThreadId %s , Priority : %s , Message : %s )".formatted(getTaskIdentifier(), getTaskId(), Thread.currentThread().threadId() , getTaskPriority().name(), text),ex);
+		}
+	}
 	default void onStart(){
-
 	}
 	default String getTaskIdentifier(){
 		return getClass().getName();
@@ -28,7 +43,6 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 	default void run() {
 		Timer timer = Config.instance().getLogger(getTaskIdentifier()).startTimer();
 		try {
-			
 			onStart();
 			execute();
 			onSuccess();
@@ -36,30 +50,26 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 			StringWriter sw = new StringWriter();
 			PrintWriter p = new PrintWriter(sw);
 			ExceptionUtil.getRootCause(ex).printStackTrace(p); p.close();
-			Config.instance().getLogger(getTaskIdentifier()).log(Level.WARNING,"Task encountered exception " + sw);
 			onException(ex);
 		}finally{
 			timer.stop();
 			try {
-				Config.instance().getLogger(getTaskIdentifier()).log(Level.INFO,"Completed Task:" + getTaskIdentifier());
 				onComplete();
 				TimerStatistics.dumpStatistics();
 			}catch(Exception ex) {
-				Config.instance().getLogger(getTaskIdentifier()).log(Level.WARNING,"Exception while completing task." , ex);
+				log("Exception while completing task." , ex);
 			}
 		}
 	}
 	
-	public void execute();
+	void execute();
 
 	default void onSuccess(){
-
+	
 	}
 	default void onException(Throwable ex){
-
 	}
 	default void onComplete(){
-
 	}
 	
 	default Priority getTaskPriority(){
@@ -69,7 +79,7 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 	default long getTaskId(){
 		return -1L;
 	}
-
+	
 	
 	@Override
 	default int compareTo(CoreTask o) {
@@ -83,7 +93,6 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 		return ret;
 	}
 
-	@SuppressWarnings("unchecked")
 	default AsyncTaskManager getAsyncTaskManager(){
 		//return AsyncTaskManagerFactory.getInstance().get(IndexTaskManager.class);
 		String className = Config.instance().getProperty(String.format("%s.manager.class",getClass().getName()));
@@ -101,7 +110,7 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 		return (Class<W>)AsyncTaskManager.class;
 	}
 
-	public enum Priority {
+	enum Priority {
 		HIGH(-1),
 		DEFAULT(0),
 		LOW(1);
@@ -114,7 +123,7 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
         public int getValue() { return value; }
 		
 	}
-	public static Priority getPriority(int value){ 
+	static Priority getPriority(int value){
 		for (Priority p : Priority.values()){ 
 			if (value == p.getValue()) {
 				return p;
@@ -122,21 +131,20 @@ public interface CoreTask extends Serializable , Comparable<CoreTask> , Runnable
 		}
 		return Priority.DEFAULT;
 	}
-	public static interface PriorityWeightScheme { 
+	interface PriorityWeightScheme {
 		//public int getWeight(Priority priority);
-		default public int getWeight(Priority priority){ 
+		default int getWeight(Priority priority){
 			return Config.instance().getIntProperty("swf.plugins.background.core.Task.Priority."+priority.toString()+".Weight", (2-priority.getValue()));
 		}
 		
 	}
-	
-	public static class NormalizedWeightScheme implements PriorityWeightScheme{
+	class NormalizedWeightScheme implements PriorityWeightScheme{
 		
 		public NormalizedWeightScheme(PriorityWeightScheme scheme){
 			loadNormalizedWeights(scheme);
 		}
 		Cache<Priority,Integer> cache = new Cache<>(Priority.values().length,0) {
-
+			@Serial
 			private static final long serialVersionUID = 4722723656835020302L;
 
 			@Override

@@ -82,7 +82,8 @@ public class Transaction implements _IDatabase._ITransaction {
     	Timer t = cat.startTimer(ctx,Config.instance().isTimerAdditive());
     	try {
             Database.getInstance().getTransactionManager().commit(this);
-    	}finally{ 
+            Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" Committed : " + Database.getCaller());
+    	}finally{
     		t.stop();
     	}
 	}
@@ -91,7 +92,8 @@ public class Transaction implements _IDatabase._ITransaction {
     	Timer t = cat.startTimer(ctx,Config.instance().isTimerAdditive());
     	try {
     	    Database.getInstance().getTransactionManager().rollback(this,th);
-    	}finally{ 
+            Config.instance().getLogger(Database.class.getName()).fine("Transaction:"+transactionNo+" Rolledback : " + Database.getCaller());
+    	}finally{
     		t.stop();
     	}
     }

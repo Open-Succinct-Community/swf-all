@@ -1,22 +1,49 @@
 package com.venky.swf.plugins.background.core.threadpool;
 
 import com.venky.core.util.Bucket;
+import com.venky.swf.plugins.background.core.CoreTask;
 import com.venky.swf.plugins.background.core.CoreTask.Priority;
-import com.venky.swf.plugins.background.core.Prioritized;
+import com.venky.swf.plugins.background.core.TaskHolder;
+import com.venky.swf.routing.Config;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TrackedExecutorServiceManager {
     Map<Priority,ExecutorService> serviceMap = new ConcurrentHashMap<>();
     Bucket pending = new Bucket();
     
-    public TrackedExecutorServiceManager(){
+    private static volatile TrackedExecutorServiceManager sSoleInstance;
+    
+    public static TrackedExecutorServiceManager getInstance() {
+        if (sSoleInstance == null) { //if there is no instance available... create new one
+            synchronized (TrackedExecutorServiceManager.class) {
+                if (sSoleInstance == null)
+                    sSoleInstance = new TrackedExecutorServiceManager();
+            }
+        }
+        
+        return sSoleInstance;
+    }
+    
+    //Make singleton from serialize and deserialize operation.
+    protected TrackedExecutorServiceManager readResolve() {
+        return getInstance();
+    }
+    
+    
+    private TrackedExecutorServiceManager(){
+        //Prevent form the reflection api.
+        if (sSoleInstance != null) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+        }
         for (Priority value : Priority.values()) {
-            serviceMap.putIfAbsent(value, Executors.newVirtualThreadPerTaskExecutor());
+            serviceMap.putIfAbsent(value, Executors.newWorkStealingPool(10));
         }
     }
     
@@ -44,11 +71,16 @@ public class TrackedExecutorServiceManager {
             value.shutdown();
         }
     }
-    public  <R extends Runnable  & Prioritized> Future<?> submit(R runnable){
-        return serviceMap.get(runnable.getTaskPriority()).submit(new TrackedRunnable<>(runnable,pending));
+    public  <R extends CoreTask> Future<?> submit(R runnable){
+        return serviceMap.get(runnable.getTaskPriority()).submit(new TrackedRunnable<>((runnable.getClass() != TaskHolder.class ? new TaskHolder(runnable) : runnable) ,pending));//To ensure taskId comes.
     }
     
-    private static class TrackedRunnable<R extends Runnable & Prioritized> implements Runnable , Prioritized{
+    public static Logger getLogger(){
+        return Config.instance().getLogger(TrackedExecutorServiceManager.class.getName());
+    }
+    
+    
+    private static class TrackedRunnable<R extends CoreTask> implements Runnable {
         
         @Override
         public void run() {
@@ -56,7 +88,11 @@ public class TrackedExecutorServiceManager {
                 runnable.run();
             }finally {
                 pending.decrement();
+                this.logStatus();
             }
+        }
+        public void logStatus(){
+            getLogger().log(Level.INFO, "( ClassName : %s , Priority : %s , Num Tasks Pending : %d )".formatted(runnable.getClass().getName(),runnable.getTaskPriority().name(), pending.intValue()));
         }
         
         
@@ -67,11 +103,6 @@ public class TrackedExecutorServiceManager {
             pending.increment();
         }
         final Bucket pending ;
-        
-        @Override
-        public Priority getTaskPriority() {
-            return runnable.getTaskPriority();
-        }
     }
     
     public int count() {

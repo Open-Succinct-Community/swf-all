@@ -71,7 +71,7 @@ public class AsyncTaskManager  {
 		}
 	}
 	
-	TrackedExecutorServiceManager service = new TrackedExecutorServiceManager();
+	TrackedExecutorServiceManager service = TrackedExecutorServiceManager.getInstance();
 	
 	
 	public int count(){

@@ -69,7 +69,7 @@ public class AppInstaller implements Installer{
 	}
     private static <M extends Model> void mkdir(Table<M> currentTable){
         if (mkdir(currentTable.getTableName())){
-            TaskManager.instance().execute(new TableRecordSetIndexer(currentTable.getTableName(),new ArrayList<>()));
+            TaskManager.instance().submit(new TableRecordSetIndexer(currentTable.getTableName(),new ArrayList<>()));// Submit in the right thread.
             TaskManager.instance().executeAsync(new TableIndexer<>(currentTable),false);
         }
     }

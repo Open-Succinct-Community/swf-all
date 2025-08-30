@@ -492,7 +492,7 @@ public class Database implements _IDatabase{
             if (elem.getClassName().startsWith("sun.") || elem.getClassName().startsWith("java.") || elem.getClassName().startsWith("jdk.")) {
                 continue;
             }
-			if (elem.getClassName().matches( "com\\.venky\\.swf\\.(routing|db|sql)\\.")){
+			if (elem.getClassName().matches( "com\\.venky\\.swf\\.(routing|db|sql)\\..*")){
 				continue;
 			}
             return elem.toString();

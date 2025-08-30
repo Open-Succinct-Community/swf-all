@@ -11,10 +11,6 @@ public class TaskHolder implements CoreTask {
 	 */
 	private static final long serialVersionUID = 5587808806039003066L;
 
-	@Override
-	public void onStart() {
-		task.onStart();
-	}
 
 	@Override
 	public void execute() {
@@ -28,17 +24,26 @@ public class TaskHolder implements CoreTask {
 	}
 	
 	@Override
+	public void onStart() {
+		log("Task Execution Started");
+		task.onStart();
+	}
+
+	@Override
 	public void onSuccess() {
+		log("Task Execution Successful");
 		task.onSuccess();
 	}
 
 	@Override
 	public void onException(Throwable ex) {
+		log("Task Executed with exception ", ex);
 		task.onException(ex);
 	}
 
 	@Override
 	public void onComplete() {
+		log("Task Finished ");
 		task.onComplete();
 	}
 
@@ -70,9 +75,7 @@ public class TaskHolder implements CoreTask {
 	}
 	
 	
-	private static AtomicLong fakeIdGenerator = new AtomicLong();
-
-	String hostName = null;
+	private static final AtomicLong fakeIdGenerator = new AtomicLong();
 	public TaskHolder(CoreTask task){
 		this.task = task;
 		this.taskPriority = (task.getTaskPriority() == null)? Priority.DEFAULT : task.getTaskPriority();
@@ -80,12 +83,9 @@ public class TaskHolder implements CoreTask {
 		this.hostName = Config.instance().getHostName();
 	}
 	
+	String hostName = null;
 	public String getHostName() {
 		return hostName;
-	}
-	
-	public CoreTask innerTask(){
-		return task;
 	}
 
 	@Override
