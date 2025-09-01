@@ -20,6 +20,10 @@ public class DelayedTaskImpl extends ModelImpl<DelayedTask> {
 	public DelayedTaskImpl(){
 		//For Serialization.
 	}
+	
+	public boolean isDatabaseAccessed() {
+		return true;
+	}
 
 	public DelayedTaskImpl(DelayedTask proxy) {
 		super(proxy);

@@ -15,6 +15,11 @@ import java.io.Reader;
 @MENU("Tasks")
 @EXPORTABLE(false)
 public interface DelayedTask extends Task, Model {
+	
+	@Override
+	@IS_VIRTUAL
+	boolean isDatabaseAccessed() ;
+	
 	public InputStream getData();
 	public void setData(InputStream stream);
 	
