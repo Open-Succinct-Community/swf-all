@@ -30,6 +30,7 @@ public interface Task extends CoreTask{
     @Override
     default void onComplete() {
         if (isDatabaseAccessed()) {
+            //May be close any way.
             Database.getInstance().close();
         }
     }
