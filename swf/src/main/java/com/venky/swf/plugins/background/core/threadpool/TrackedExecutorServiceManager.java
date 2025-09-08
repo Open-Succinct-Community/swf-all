@@ -93,7 +93,12 @@ public class TrackedExecutorServiceManager {
             }
         }
         public void logStatus(){
-            getLogger().log(Level.INFO, "( ClassName : %s , Priority : %s , Num Tasks Pending : %d )".formatted(runnable.getClass().getName(),runnable.getTaskPriority().name(), pending.intValue()));
+            getLogger().log(Level.INFO, "( Class: %s , Id :%d , ThreadId %s , Priority : %s , Num Tasks Pending : %d )".formatted(
+                    runnable.getClass().getName(),
+                    runnable.getTaskId(),
+                    Thread.currentThread().threadId(),
+                    runnable.getTaskPriority().name(), pending.intValue()));
+            
         }
         
         
