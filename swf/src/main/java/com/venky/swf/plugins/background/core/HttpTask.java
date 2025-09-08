@@ -37,7 +37,7 @@ public class HttpTask extends RequestProcessor implements Task {
                 iPath.getCallback().succeeded();
             }
         } catch (IOException e) {
-            //
+            Config.instance().getLogger(getClass().getName()).log(Level.INFO,"onSuccess Failed",e);
         }
     }
     
