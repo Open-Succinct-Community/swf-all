@@ -28,11 +28,11 @@ public class HttpTask extends RequestProcessor implements Task {
     @Override
     public void onSuccess() {
         try {
-            Task.super.onSuccess();
             iView.write();
             if (!iView.isBeingForwarded()) {
                 iPath.getCallback().succeeded();
             }
+            Task.super.onSuccess();
         } catch (IOException e) {
             log("onSuccess Failed",e);
         }

@@ -43,7 +43,7 @@ public class ForwardedView extends View{
     
     public void write(int httpStatus) throws IOException {
         try {
-            Router.instance().getTaskManager().submit(new HttpTask(getPath().constructNewPath(getForwaredToUrl())));
+            Router.instance().getTaskManager().submitAsync(new HttpTask(getPath().constructNewPath(getForwaredToUrl())));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

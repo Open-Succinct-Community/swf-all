@@ -72,6 +72,15 @@ public class TaskManager implements _TaskManager{
 		return AsyncTaskManagerFactory.getInstance().addAll(runnables.stream().map(runnable -> ((runnable instanceof CoreTask)? (CoreTask)runnable : new RunnerTask(runnable))).collect(Collectors.toList()));
 	}
 	
+	@Override
+	public void submitAsync(Runnable runnable) {
+		submitAsync(List.of(runnable));
+	}
+	@Override
+	public void submitAsync(List<Runnable> runnables) {
+		AsyncTaskManagerFactory.getInstance().executeAsync(runnables.stream().map(runnable -> ((runnable instanceof CoreTask)? (CoreTask)runnable : new RunnerTask(runnable))).collect(Collectors.toList()),false);
+	}
+	
 	public static class RunnerTask implements CoreTask {
 		Runnable runnable ;
 		public RunnerTask(Runnable runable){
