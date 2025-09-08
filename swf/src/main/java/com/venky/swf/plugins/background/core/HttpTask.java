@@ -3,8 +3,6 @@ package com.venky.swf.plugins.background.core;
 import com.venky.core.util.MultiException;
 import com.venky.swf.path._IPath;
 import com.venky.swf.plugins.background.core.task.manager.HttpTaskManager;
-import com.venky.swf.routing.Config;
-import com.venky.swf.routing.Router;
 import com.venky.swf.routing.jetty.RequestProcessor;
 import com.venky.swf.views._IView;
 import org.eclipse.jetty.server.Request;
@@ -12,7 +10,6 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 public class HttpTask extends RequestProcessor implements Task {
     
@@ -37,7 +34,7 @@ public class HttpTask extends RequestProcessor implements Task {
                 iPath.getCallback().succeeded();
             }
         } catch (IOException e) {
-            Config.instance().getLogger(getClass().getName()).log(Level.INFO,"onSuccess Failed",e);
+            log("onSuccess Failed",e);
         }
     }
     
@@ -49,7 +46,7 @@ public class HttpTask extends RequestProcessor implements Task {
             if (iPath.getSession() != null) {
                 if (iPath.redirectOnException()) {
                     iPath.addErrorMessage(ex.getMessage());
-                    Config.instance().getLogger(Router.class.getName()).log(Level.INFO, "Request failed", ex);
+                    log("Request Failed",ex);
                     if (iPath.getTarget().equals(iPath.getBackTarget())) {
                         iView = router.createRedirectorView(iPath, "/dashboard");
                     } else {
@@ -67,7 +64,7 @@ public class HttpTask extends RequestProcessor implements Task {
             multiException.add(ex);
             multiException.add(ioException);
             iPath.getCallback().failed(ioException);
-            Config.instance().getLogger(getClass().getName()).log(Level.WARNING,"Exception found  ",multiException);
+            log("Exception found  ",multiException);
         }
     }
     
