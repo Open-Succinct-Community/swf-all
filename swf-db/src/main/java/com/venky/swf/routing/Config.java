@@ -317,7 +317,7 @@ public class Config {
     private List<String> installers = null;
     public List<String> getInstallers(){
     	if (installers == null){
-    		installers = new ArrayList<>(getPropertyValueList(CONFIGURATION_INSTALLERS));
+    		installers = getPropertyValueList(CONFIGURATION_INSTALLERS);
 			Collections.reverse(installers);// To make sure framework installers are installed first.
     	}
     	return installers;
