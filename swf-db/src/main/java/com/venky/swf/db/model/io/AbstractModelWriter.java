@@ -305,15 +305,19 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 			parentFieldsToAdd.add("ID");
 		}
 
-		if (templateFields != null){
+		if (templateFields != null ){
 			List<String> parentFieldsToAddBasedOnTemplate = new SequenceSet<>();
 			if (templateFields.get(referredModelClass.getSimpleName()) != null) {
 				//Never add parent class with null template.
 				parentFieldsToAddBasedOnTemplate.addAll(getFields(referredModelReflector,templateFields.get(referredModelClass.getSimpleName())));
 			}
 			if (!parentFieldsToAddBasedOnTemplate.isEmpty()){
-				parentFieldsToAdd.clear();
-				parentFieldsToAdd.addAll(parentFieldsToAddBasedOnTemplate);
+				if (parentsAlreadyConsidered.contains(referredModelClass.getSimpleName())) {
+					parentFieldsToAdd.retainAll(parentFieldsToAddBasedOnTemplate);
+				}else {
+					parentFieldsToAdd.clear();
+					parentFieldsToAdd.addAll(parentFieldsToAddBasedOnTemplate);
+				}
 			}
         }
 		//* Which parent's children to include */
