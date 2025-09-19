@@ -1,1 +1,1 @@
-mvn dependency:tree |grep -e in.succinct.*compile -e com.github.venkatramanm.*compile|cut -f2- -d ':' | sed -e 's@^@target/dependency/@g'  -e 's/:jar:/-/' -e "s/:compile/.jar${separator}/" |tr -d '\n' 
+mvn -o dependency:tree |grep -e in.succinct.*compile -e com.github.venkatramanm.*compile|cut -f2- -d ':' | sed -e 's@^@target/dependency/@g'  -e 's/:jar:/-/' -e "s/:compile/.jar${separator}/" |tr -d '\n'
