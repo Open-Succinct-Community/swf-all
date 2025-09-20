@@ -38,5 +38,6 @@ public interface BankAccount {
     public String getBranchAddress();
     public void setBranchAddress(String address);
     
-    
+    String getMerchantCategoryCode();
+    void setMerchantCategoryCode(String merchantCategoryCode);
 }
