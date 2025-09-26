@@ -190,12 +190,13 @@ public abstract class AbstractModelWriter<M extends Model,T> extends ModelIO<M> 
 				if (!isParentIgnored(aParent,parentsAlreadyConsidered) || fields != null) {
 					String refElementName = referredModelGetter.getName().substring("get".length());
 					T refElement = formatHelper.createElementAttribute(refElementName);
-					parentsAlreadyConsidered.add(aParent.getSimpleName());
-					try {
+					//parentsAlreadyConsidered.add(aParent.getSimpleName());
+					//try {
+					//ParentsAlreadyConsidered must be set only before writing children.
 						write(aParent, ((Number) value).longValue(), refElement, parentsAlreadyConsidered, considerChildren,templateFields);
-					}finally {
-						parentsAlreadyConsidered.remove(aParent.getSimpleName());
-					}
+					//}finally {
+					//	parentsAlreadyConsidered.remove(aParent.getSimpleName());
+					//}
 				}
 			}else {
 				String attributeName = TimerUtils.time(cat,"getAttributeName()" , ()->getAttributeName(field));
