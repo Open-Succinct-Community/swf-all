@@ -81,7 +81,7 @@ public class OauthController extends Controller {
         });
 
         prepareSession();
-        return new RedirectorView(getPath(),queryParams.toString());
+        return new RedirectorView(getPath(),queryParams.toString(),"");
     }
 
     @Override

@@ -53,7 +53,9 @@ public class OidProvider {
         u.setName(name);
         u = Database.getTable(User.class).getRefreshed(u);
         
-        u.setApiKey(apiKey); //Api key may have changed!! Read by name and update api key.
+        if (apiKey != null) {
+            u.setApiKey(apiKey); //Api key may have changed!! Read by name and update api key.
+        }
         u.save(); //Very important so that all child objects can be created as this user.
         User currentUser = Database.getInstance().getCurrentUser();
         

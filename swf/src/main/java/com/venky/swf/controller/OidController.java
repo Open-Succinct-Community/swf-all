@@ -16,6 +16,7 @@ import com.venky.swf.integration.FormatHelper;
 import com.venky.swf.path.Path;
 import com.venky.swf.routing.Config;
 import com.venky.swf.routing.KeyCase;
+import com.venky.swf.util.OidProvider;
 import com.venky.swf.views.HtmlView;
 import com.venky.swf.views.HtmlView.StatusType;
 import com.venky.swf.views.RedirectorView;
@@ -330,11 +331,7 @@ public class OidController extends Controller{
 
 	private User initializeUser(String selectedOpenId , JSONObject userObject) {
 		FormatHelper.instance(userObject).change_key_case(KeyCase.SNAKE,KeyCase.CAMEL);
-
-		User u = ModelIOFactory.getReader(User.class, JSONObject.class).read(userObject,true);
-		u = Database.getTable(User.class).getRefreshed(u);
-		u.save();
-		return u;
+		return OidProvider.initializeUser(userObject,null);
 	}
 
 	protected RedirectorView redirectSuccess(String redirectedTo){
