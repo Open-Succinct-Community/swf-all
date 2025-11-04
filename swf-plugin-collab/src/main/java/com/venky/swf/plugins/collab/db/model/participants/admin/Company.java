@@ -144,6 +144,7 @@ public interface Company extends Model, BankAccount{
 
 	@Override
 	@Index
+	@PARTICIPANT
 	Long getCreatorUserId();
 
 	@Override

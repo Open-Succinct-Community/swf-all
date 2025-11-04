@@ -31,17 +31,27 @@ public class CompanyParticipantExtension extends ParticipantExtension<Company>{
 		User u = (User)user;
 		if ("SELF_COMPANY_ID".equalsIgnoreCase(fieldName)){
 			ret = getAssociatedCompanyIds(u);
+		}else if ("CREATOR_USER_ID".equalsIgnoreCase(fieldName)){
+			if (partial.getId() > 0){
+				ret = new SequenceSet<>();
+				if (user.getId() == partial.getCreatorUserId()){
+					ret.add(partial.getId());
+				}else {
+					ret.addAll(u.getCreatedCompanies().stream().map(Company::getId).toList());
+				}
+			}
+			
 		}else if ("CUSTOMER_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getCustomers().stream().map(CompanyRelationship::getCustomerId).collect(Collectors.toList()));
+				ret.addAll(partial.getCustomers().stream().map(CompanyRelationship::getCustomerId).toList());
 			}else {
 				return new ArrayList<>();
 			}
 		}else if ("VENDOR_ID".equalsIgnoreCase(fieldName)){
 			if (partial.getId() > 0){
 				ret = new SequenceSet<>();
-				ret.addAll(partial.getVendors().stream().map(CompanyRelationship::getVendorId).collect(Collectors.toList()));
+				ret.addAll(partial.getVendors().stream().map(CompanyRelationship::getVendorId).toList());
 			}else {
 				ret = new ArrayList<>();
 			}
