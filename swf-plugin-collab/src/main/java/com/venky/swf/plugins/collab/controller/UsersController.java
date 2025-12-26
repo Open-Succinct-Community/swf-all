@@ -130,7 +130,7 @@ public class UsersController extends com.venky.swf.controller.UsersController {
 
         Link link = new Link();
         link.setUrl(Config.instance().getProperty("swf.password.reset.link",
-                Config.instance().getServerBaseUrl() + "/users/reset_password")+"?ApiKey=" + user.getApiKey());
+                Config.instance().getServerBaseUrl() + "/users/reset_password")+"?ApiKey=" + user.getApiKey() + "&u=" + ( user.getLongName()  == null ? user.getName() : user.getLongName()) );
         link.setText("here");
 
 
