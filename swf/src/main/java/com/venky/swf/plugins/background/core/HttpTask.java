@@ -28,11 +28,14 @@ public class HttpTask extends RequestProcessor implements Task {
     @Override
     public void onSuccess() {
         try {
-            iView.write();
             if (!iView.isBeingForwarded()) {
+                Task.super.onSuccess();//Needed for redirected views.
+                iView.write();
                 iPath.getCallback().succeeded();
+            }else {
+                iView.write();
+                Task.super.onSuccess(); //Just to make sure for forwarded views to run their task after commit.
             }
-            Task.super.onSuccess();
         } catch (IOException e) {
             log("onSuccess Failed",e);
         }
