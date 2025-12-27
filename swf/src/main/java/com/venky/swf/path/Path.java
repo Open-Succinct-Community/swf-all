@@ -1552,7 +1552,8 @@ public class Path implements _IPath{
                     }
                 }
             }
-            if (getRequest().getMethod().equalsIgnoreCase(HttpMethod.GET.toString())){
+            if (!ObjectUtil.isVoid(getRequest().getHttpURI().toURI().getQuery())){
+                //Any type of HTTP method may have querry parameters.
                 try {
                     Fields parameters = Request.getParameters(getRequest());
                     for(Field parameter: parameters){
