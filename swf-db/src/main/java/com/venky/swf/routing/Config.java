@@ -109,15 +109,23 @@ public class Config {
     	if (host.get() != null){
     		return host.get();
 		}else {
-			return getProperty("swf.host","localhost");
+			return getProperty("swf.host",getExternalIp());
 		}
 	}
 
+	
 	public void loadExternalIp(){
-		if (properties.getProperty("swf.host") == null){
+		if (properties.getProperty("swf.external.ip") == null){
 			String externalIp = StringUtil.read(new Call<String>().url("https://api.ipify.org/").getResponseStream());
-			properties.put("swf.host", externalIp);
+			if (ObjectUtil.isVoid(externalIp)){
+				externalIp = "localhost";
+			}
+			properties.put("swf.external.ip",externalIp);
 		}
+	}
+	public String getExternalIp(){
+		loadExternalIp();
+		return getProperty("swf.external.ip");
 	}
 	public int getPortNumber(){
     	return Integer.parseInt(getPort());
