@@ -172,6 +172,7 @@ public class Call<T> implements Serializable {
                 }else {
                     curlBuilder.method("GET",BodyPublishers.ofByteArray(parameterByteArray));
                 }
+                fakeCurlRequest.append( " -X GET");
             }else {
                 curlBuilder.POST(BodyPublishers.ofByteArray(parameterByteArray));
             }
@@ -191,21 +192,19 @@ public class Call<T> implements Serializable {
 
             fakeCurlRequest.append("'").append(sUrl).append("'");
             fakeCurlRequest.append(" ");
-            if (method != HttpMethod.GET) {
-                if (inputFormat == InputFormat.INPUT_STREAM){
-                    String contentType = requestHeaders.get("content-type");
-                    MimeType mimeType = null;
-                    if (!ObjectUtil.isVoid(contentType)){
-                        mimeType = MimeType.getMimeType(contentType);
-                    }
-                    if (ObjectUtil.isVoid(contentType) || mimeType == null || !mimeType.isText() ){
-                        fakeCurlRequest.append("-d '").append("**Raw binary Stream**").append("'");
-                    }else {
-                        fakeCurlRequest.append("-d '").append(new String(parameterByteArray)).append("'");
-                    }
-                }else {
-                    fakeCurlRequest.append("-d '").append(parameterString).append("'");
+            if (inputFormat == InputFormat.INPUT_STREAM){
+                String contentType = requestHeaders.get("content-type");
+                MimeType mimeType = null;
+                if (!ObjectUtil.isVoid(contentType)){
+                    mimeType = MimeType.getMimeType(contentType);
                 }
+                if (ObjectUtil.isVoid(contentType) || mimeType == null || !mimeType.isText() ){
+                    fakeCurlRequest.append("-d '").append("**Raw binary Stream**").append("'");
+                }else {
+                    fakeCurlRequest.append("-d '").append(new String(parameterByteArray)).append("'");
+                }
+            }else if (inputFormat != InputFormat.FORM_FIELDS){
+                fakeCurlRequest.append("-d '").append(parameterString).append("'");
             }
             HttpRequest request  = curlBuilder.build();
             HttpResponse<InputStream> response = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build().send(request, BodyHandlers.ofInputStream());
