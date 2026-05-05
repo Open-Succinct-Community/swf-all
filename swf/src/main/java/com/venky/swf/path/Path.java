@@ -69,6 +69,7 @@ import org.eclipse.jetty.util.Fields.Field;
 import org.eclipse.jetty.util.Promise.Invocable;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -1008,6 +1009,7 @@ public class Path implements _IPath{
     private final SWFLogger cat = Config.instance().getLogger(getClass().getName());
     public _IView invoke() throws AccessDeniedException{
         setCustomCnameProcessing();
+        Database.getInstance().setContext(_IPath.class.getName(),this); // Regresion ...
 
         MultiException ex = null;
         List<Method> methods = getActionMethods(action(), parameter());
