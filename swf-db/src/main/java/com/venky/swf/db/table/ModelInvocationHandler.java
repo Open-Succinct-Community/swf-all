@@ -54,6 +54,7 @@ import com.venky.swf.sql.parser.SQLExpressionParser;
 import com.venky.swf.util.SharedKeys;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -61,11 +62,13 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -453,12 +456,22 @@ public class ModelInvocationHandler implements InvocationHandler {
 			if (ModelImpl.class.equals(implClass)) {
 				return new ModelImpl<M>(m);
 			}else {
-				ParameterizedType pt = (ParameterizedType)implClass.getGenericSuperclass();
-				try {
-					Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
-					return implClass.getConstructor(modelClass).newInstance(m);
-				} catch (Exception e) {
-					throw new RuntimeException("Don't know how to instantiate " + implClass.getName() , e);
+				if (implClass.getGenericSuperclass() instanceof ParameterizedType pt){
+					try {
+						Class<? extends Model> modelClass = (Class<? extends Model>) pt.getActualTypeArguments()[0];
+						return implClass.getConstructor(modelClass).newInstance(m);
+					} catch (Exception e) {
+						throw new RuntimeException("Don't know how to instantiate " + implClass.getName() , e);
+					}
+				}else {
+					Optional<Constructor<?>> o = Arrays.stream(implClass.getConstructors()).filter(c->c.getParameterCount() == 1 && Model.class.isAssignableFrom(c.getParameterTypes()[0])).findFirst();
+					 if (o.isPresent()){
+						 try {
+							 return o.get().newInstance(m);
+						 }catch (Exception e){
+							 throw new RuntimeException(e);
+						 }
+					 }
 				}
 			}
 		}
