@@ -125,7 +125,7 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                     if (referredModel != null) {
                         if (referredModel.getRawRecord().isNewRecord()) {
                             if (!isInvalidReferencesAllowed()) {
-                                throw new RuntimeException("Oops! Please select the correct " + referredModelClass.getSimpleName());
+                                throw new RuntimeException("Please select " + referredModelClass.getSimpleName() + " from allowed list. ");
                             }else {
                                 getReflector().set(m, getReflector().getReferenceField(referredModelGetter), null);
                             }
