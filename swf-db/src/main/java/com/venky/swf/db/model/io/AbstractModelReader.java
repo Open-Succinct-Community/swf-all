@@ -1,6 +1,7 @@
 package com.venky.swf.db.model.io;
 
 import com.venky.core.string.StringUtil;
+import com.venky.core.util.ObjectUtil;
 import com.venky.swf.db.Database;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.mimes.MimeType;
@@ -8,6 +9,7 @@ import com.venky.swf.db.model.Model;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.db.table.Table.ColumnDescriptor;
 import com.venky.swf.integration.FormatHelper;
+import com.venky.swf.routing.Config;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -146,6 +148,14 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
         }
 
     }
+    
+    private final Set<String> fieldsAllowedToBePassedInApi = new HashSet<>(){{
+        add("ID");
+        add("LOCK_ID");
+    }};
+    private boolean isProtected(String fieldName){
+        return getReflector().isFieldProtected(fieldName) && !fieldsAllowedToBePassedInApi.contains(fieldName);
+    }
 
     private void set(M m, FormatHelper<T> helper) {
 
@@ -166,7 +176,12 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
             if (!getReflector().isVoid(attrValue) || !columnDescriptor.isNullable()){
                 value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
             }
-            getReflector().set(m, fieldName, value);
+            if (!isProtected(fieldName)) {
+                getReflector().set(m, fieldName, value);
+            }else {
+                Config.instance().getLogger(getClass().getName()).info("%s is protected in Model %s".formatted(fieldName,getReflector().getModelClass().getSimpleName()) );
+            }
+            
         }
 
         Map<String, List<String>> groupedFields = getReflector().getGroupedFields();
@@ -193,8 +208,9 @@ public abstract class AbstractModelReader<M extends Model, T> extends ModelIO<M>
                 if (!getReflector().isVoid(attrValue) || !columnDescriptor.isNullable()){
                     value = Database.getJdbcTypeHelper(getReflector().getPool()).getTypeRef(valueClass).getTypeConverter().valueOf(attrValue);
                 }
-                getReflector().set(m, fieldName, value);
-
+                if (!isProtected(fieldName)) {
+                    getReflector().set(m, fieldName, value);
+                }
             });
         });
 
