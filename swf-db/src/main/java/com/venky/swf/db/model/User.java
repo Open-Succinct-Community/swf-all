@@ -4,34 +4,29 @@
  */
 package com.venky.swf.db.model;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-
 import com.venky.cache.Cache;
-import com.venky.geo.GeoLocation;
 import com.venky.swf.db.annotations.column.COLUMN_DEF;
-import com.venky.swf.db.annotations.column.COLUMN_NAME;
 import com.venky.swf.db.annotations.column.COLUMN_SIZE;
-import com.venky.swf.db.annotations.column.HOUSEKEEPING;
 import com.venky.swf.db.annotations.column.IS_NULLABLE;
 import com.venky.swf.db.annotations.column.IS_VIRTUAL;
 import com.venky.swf.db.annotations.column.PASSWORD;
 import com.venky.swf.db.annotations.column.UNIQUE_KEY;
 import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
-import com.venky.swf.db.annotations.column.pm.PARTICIPANT;
 import com.venky.swf.db.annotations.column.relationship.CONNECTED_VIA;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
 import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
-import com.venky.swf.db.annotations.model.CONFIGURATION;
 import com.venky.swf.db.annotations.model.EXPORTABLE;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
 import com.venky.swf.db.model.reflection.ModelReflector;
 import com.venky.swf.sql.Expression;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -55,7 +50,7 @@ public interface User extends Model {
     @IS_NULLABLE
     @UNIQUE_KEY("API")
     @HIDDEN
-    @PROTECTION
+    @PROTECTION(Kind.NON_EDITABLE)
     @COLUMN_DEF(StandardDefault.NULL)
     @EXPORTABLE(false)
     public String getApiKey();
@@ -78,12 +73,12 @@ public interface User extends Model {
     
     @PASSWORD
     @HIDDEN
-    @PROTECTION
+    @PROTECTION(Kind.NON_EDITABLE)
     public String getPassword();
     public void setPassword(String password);
 
     @HIDDEN
-    @PROTECTION
+    @PROTECTION(Kind.NON_EDITABLE)
     @IS_VIRTUAL
     public String getPassword2();
     public void setPassword2(String password2); // Used for signup. !!
