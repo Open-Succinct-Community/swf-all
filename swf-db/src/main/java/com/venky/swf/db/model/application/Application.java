@@ -10,6 +10,7 @@ import com.venky.swf.db.annotations.column.defaulting.StandardDefault;
 import com.venky.swf.db.annotations.column.indexing.Index;
 import com.venky.swf.db.annotations.column.ui.HIDDEN;
 import com.venky.swf.db.annotations.column.ui.PROTECTION;
+import com.venky.swf.db.annotations.column.ui.PROTECTION.Kind;
 import com.venky.swf.db.annotations.column.validations.Enumeration;
 import com.venky.swf.db.annotations.model.HAS_DESCRIPTION_FIELD;
 import com.venky.swf.db.annotations.model.MENU;
@@ -33,7 +34,7 @@ public interface    Application extends Model {
 
     @PASSWORD
     @HIDDEN
-    @PROTECTION
+    @PROTECTION(Kind.NON_EDITABLE)
     public String getSecret();
     public void setSecret(String secret);
 
